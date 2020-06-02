@@ -1,12 +1,12 @@
 ~ Definitions that may become builtin or part of std ~
 
-Define Either[]      be [Do Clone];
-Define Not[A]        be [Do A False True];
-Define Both[A and B] be [Do A B A];
-Define If[]          be [Do Do Do];
-Define When[P A]     be [Do Do P A []];
+Define [Either]       be [Do Clone];
+Define [Not A]        be [Do A False True];
+Define [Both A and B] be [Do A B A];
+Define [If]           be [Do Do Do];
+Define [When P A]     be [Do Do P A []];
 
-Define the Fib [of N] as
+Define the [Fib of N] as
 ~ Calculate the Nth Fibonacci number, very inefficiently. ~
 [
   If [2, > N] then 

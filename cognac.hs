@@ -147,8 +147,12 @@ parseinformalsyntax =
 
 compile :: [Tree String] -> String
 
-compile (Node body : Node args : Leaf name : Leaf "Define" : xs) =
-  "cognate_define(" ++ lc name ++ ", {\n"
+compile (Node body : Node call : Leaf "Define" : xs) =
+  let name = last call
+      args = init call in
+  "cognate_define(" ++ lc (case name of 
+                             Leaf str -> str
+                             _ -> error "Invalid function name!") ++ ", {\n"
   ++ compile (intersperse (Leaf "Let") (reverse args) ++ [Leaf "Let" | not (null args)] ++ body)
   ++ "});\n{\n"
   ++ compile xs ++
