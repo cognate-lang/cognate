@@ -8,16 +8,16 @@
 
 // Macro to define external cognate function.
 #define cognate_func(name, body) \
-  __attribute__((unused)) void cognate_func_ ## name () body \
+  void cognate_func_ ## name () body \
 
 // Macro for defining external cognate variables with specified type.
 #define cognate_var(name, type, value) \
-  __attribute__((unused)) void cognate_func_ ## name () { \
+  void cognate_func_ ## name () { \
     push(type, value); }
 
 // Macro for defining external cognate variables from raw cognate_objects.
 #define cognate_var_obj(name, value) \
-  __attribute__((unused)) static void cognate_func_ ## name() { \
+  static void cognate_func_ ## name() { \
     push_object(value); }
 
 #define call(name) cognate_func_##name();

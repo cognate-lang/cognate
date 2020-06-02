@@ -204,7 +204,7 @@ compile (Leaf token : xs)
 
 compile [] = ""
 
-compilerFlags = ["-fblocks", "-lBlocksRuntime", "-Wall", "-Wpedantic", "-O3", "-s"]
+compilerFlags = ["-fblocks", "-lBlocksRuntime", "-Wall", "-Wpedantic", "-Wno-unused", "-O3", "-s"]
 compiler = "clang"
 
 getPath =

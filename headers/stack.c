@@ -7,7 +7,6 @@
 #include "gc.h"
 
 #define INITIAL_LIST_SIZE 8
-// Make 8 when I have fixed stack expansion
 
 #define push(object_type, object) \
   push_object((cognate_object){.type=object_type, .object_type=object})
@@ -38,33 +37,26 @@ static void init_stack()
 static void push_object(cognate_object object)
 {
   // This was expanding the stack when it wasn't needed :(
- 
   if (stack.top == stack_end)
     expand_stack((stack.top - stack.start) << 1);
-
   *stack.top++ = object;
 }
 
 static cognate_object pop_object(void)
 { 
-
-  //printf("POPPING");
   if (stack.top == stack.start) throw_error("Stack underflow!");
-  //printf("DONE POPPING");
   return *--stack.top;
 }
 
 static cognate_object peek_object(void)
 {
   if (stack.top == stack.start) throw_error("Stack underflow!");
-
   return *(stack.top - 1);
 }
 
 static void expand_stack(size_t new_size)
 {
   // ASSUMES THAT THE STACK IS FULL!!!
-  // Valgrind throws invalid write errors here.
   size_t old_size = stack.top - stack.start;
   stack.start = (cognate_object*) realloc (stack.start, new_size * sizeof(cognate_object));
   stack.top = stack.start + old_size;
