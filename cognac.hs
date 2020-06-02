@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 import System.Process
 import System.Environment
 import Data.List.Split
@@ -104,8 +106,7 @@ parsebrackets tokens =
   where
     leaves = -- Tokens without nodes (allowing me to search it like a normal list)
       map -- Map a function that returns leaves but converts nodes to empty strings onto tokens, returning a [String] for easy processing
-      (\x ->
-        case x of
+      (\case
           Leaf y ->
             y
           Node _ ->
