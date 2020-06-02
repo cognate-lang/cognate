@@ -1,3 +1,9 @@
+{- This program compiles Cognate programs (ending in .cog) to C programs of the same name.
+ - It then calls a C compiler (clang by default) to compile that to an executable.
+ - For this to occur, the files in the headers/ and gc/ directories are needed.
+ - Also, the C compiler must support the Blocks extension, providing lexical closures.
+ - To compile this, you must use the GHC haskell compiler, with the MissingH and Split extensions. -}
+
 {-# LANGUAGE LambdaCase #-}
 
 import System.Process
@@ -28,7 +34,7 @@ parsefile = -- Parsefile takes a string (the file text) as an argument and retur
   unwords . parsecomments . splitOn "~" -- When you realise that americans can't type tildas :(
   -- Parse line comments somewhere...
   -- unwords $ parsecharacters $ splitOn "\'" $ -- Convert characters to ASCII value integers
-  {- unwords $ parsestrings $ splitOn "\"" -} -- Convert strings to lists of characters (except i haven't implemented lists yet!)
+  -- unwords $ parsestrings $ splitOn "\"" -- Convert strings to lists of characters (except i haven't implemented lists yet!)
 
 replacesymbols =
   unwords .
@@ -55,16 +61,16 @@ brackets      = openbrackets ++ closebrackets
 permittedsymbols = delims    ++ brackets      ++ numbers ++ lowerletters ++ upperletters
 formalsymbols = delims       ++ brackets      ++ numbers ++ upperletters
 
-parsestrings :: [String] -> [String]
+{- parsestrings :: [String] -> [String]
 parsestrings (x:y:xs) =
   x : "Tuple" : intercalate " Tuple " (init str) : last str : parsestrings xs
     where str = map (\s -> " \'" ++ [s] ++ "\'") y
-parsestrings x = x
+parsestrings x = x  -}
 
-parsecharacters :: [String] -> [String]
+{- parsecharacters :: [String] -> [String]
 parsecharacters (x:y:xs) =
   x : " Symbol " : show (ord $ head y) : parsecharacters xs
-parsecharacters x = x
+parsecharacters x = x -}
 
 padtokens :: String -> String
 padtokens =
@@ -160,21 +166,18 @@ compile (Node body : Node call : Leaf "Define" : xs) =
   "}\n"
 
 -- Bind is more elegant, but cannot reccur. Maybe a compromise, where the function is defined at the start of the current block.
-{-
-compile (Leaf name : Leaf "Bind" : xs) =
+{- compile (Leaf name : Leaf "Bind" : xs) =
   "void(^cognate_"
   ++ lc name
   ++ ")(void)=pop(block);"
-  ++ compile xs
--}
+  ++ compile xs -}
 
 compile (Leaf name : Leaf "Let" : xs) =
   -- Define a temporary variable. Then define a function that pushes that variable to the stack. Bit of a bodge, hopefully clang fixes it.
   "cognate_let(" ++ lc name ++ ");\n{\n"
   ++ compile xs ++ "}\n"
 
-{-
-compile (Leaf name : Leaf "Set" : xs) =
+{- compile (Leaf name : Leaf "Set" : xs) =
   -- Todo. Put macro over this like i did with let.
   "temp_"
   ++ lc name
@@ -182,16 +185,15 @@ compile (Leaf name : Leaf "Set" : xs) =
   ++ lc name
   ++ "=^{push_object(temp_"
   ++ lc name ++ ");};"
-  ++ compile xs
--}
+  ++ compile xs -}
+
 -- Primitive Do inlining.
-{-
-compile (Node expr : Leaf "Do" : xs) =
+{- compile (Node expr : Leaf "Do" : xs) =
   "{\n" ++
     compile expr ++
   "}\n" ++
-  compile xs
--}
+  compile xs -}
+
 compile (Node expr : xs) =
   "push(block,\n^{\n"
   ++ compile expr
