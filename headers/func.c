@@ -1,0 +1,86 @@
+#ifndef FUNC_C
+#define FUNC_C
+
+#include "stack.c"
+#include "type.c"
+#include "io.c"
+#include <Block.h>
+
+// Macro to define external cognate function.
+#define cognate_func(name, body) \
+  __attribute__((unused)) void cognate_func_ ## name () body \
+
+// Macro for defining external cognate variables with specified type.
+#define cognate_var(name, type, value) \
+  __attribute__((unused)) void cognate_func_ ## name () { \
+    push(type, value); }
+
+// Macro for defining external cognate variables from raw cognate_objects.
+#define cognate_var_obj(name, value) \
+  __attribute__((unused)) static void cognate_func_ ## name() { \
+    push_object(value); }
+
+#define call(name) cognate_func_##name();
+
+cognate_func(do,             { pop(block)();                             })
+cognate_func(print,          { print_object(pop_object()); printf("\n"); })
+
+cognate_func(sum,            { push(number, pop(number) + pop(number));               })
+cognate_func(product,        { push(number, pop(number) * pop(number));               })
+cognate_func(divisor,        { double n = pop(number); push(number, pop(number) / n); })
+cognate_func(difference,     { double n = pop(number); push(number, pop(number) - n); })
+
+cognate_func(drop,           { pop_object();                                                                                     })
+cognate_func(clone,          { push_object(peek_object());                                                                       })
+cognate_func(swap,           { cognate_object a = pop_object(); cognate_object b = pop_object(); push_object(a); push_object(b); })
+
+cognate_var(true,  block, ^{ call(swap); call(drop); })
+cognate_var(false, block, ^{ call(drop); })
+
+
+cognate_func(equal,          { if (pop(number) == pop(number)) call(true) else call(false); })
+cognate_func(preceed,        { if (pop(number) >  pop(number)) call(true) else call(false); })
+cognate_func(exceed,         { if (pop(number) <  pop(number)) call(true) else call(false); })
+cognate_func(equalorpreceed, { if (pop(number) >= pop(number)) call(true) else call(false); })
+cognate_func(equalorexceed,  { if (pop(number) <= pop(number)) call(true) else call(false); })
+/*
+cognate_func(tail, { 
+                            cognate_list lst = *pop(list);
+                            cognate_list lst2 = (cognate_list){.start = lst.start + 1, .top = lst.top};
+                            if (lst.start == lst.top) throw_error("Tail encountered empty list!");
+                            push(list, &lst2);
+                   });
+*/
+cognate_func(index,{ 
+                            int index = pop(number);
+                            cognate_list lst = *pop(list);
+                            if (lst.start + index > lst.top) throw_error("Index out of bounds!");
+                            push_object(lst . start [index]);
+                   })
+cognate_func(length,{
+                            cognate_list lst = *pop(list);
+                            //printf("%i - %i = %i\n", (int) lst . top, (int) lst . start, (int) lst . top - (int) lst . start);
+                            push(number, lst . top - lst . start);
+                    })
+cognate_func(list,  { 
+                            // Get the block argument
+                            void(^expr)(void) = pop(block); 
+                            // Move the stack to temporary storage
+                            cognate_list temp_stack = stack;
+                            cognate_object* temp_stack_end = stack_end;
+                            // Allocate a list as the stack
+                            init_stack();
+                            // Eval expr
+                            expr();
+                            // Store the resultant list
+                            static cognate_list lst;
+                            lst = stack;
+                            // Restore the original stack
+                            stack = temp_stack;
+                            stack_end = temp_stack_end;
+                            // Push the created list to the stack
+                            // Maybe lst should be realloced here because it will be larger than it needs to be.
+                            push(list, &lst);
+                    })
+
+#endif
