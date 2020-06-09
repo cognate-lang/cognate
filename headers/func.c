@@ -29,13 +29,17 @@ cognate_func(sum,            { push(number, pop(number) + pop(number));         
 cognate_func(product,        { push(number, pop(number) * pop(number));               })
 cognate_func(divisor,        { double n = pop(number); push(number, pop(number) / n); })
 cognate_func(difference,     { double n = pop(number); push(number, pop(number) - n); })
+cognate_func(modulo,         { int n = pop(number); push(number, (int)pop(number) % n); }) // TODO: add checking if integer.
+
+cognate_func(random,         { double low = pop(number); double high = pop(number); double step = pop(number); 
+                               push(number, low + (double)(rand() % (int)((high - low) / step)) * step); })
 
 cognate_func(drop,           { pop_object();                                                                                     })
 cognate_func(clone,          { push_object(peek_object());                                                                       })
 cognate_func(swap,           { cognate_object a = pop_object(); cognate_object b = pop_object(); push_object(a); push_object(b); })
 
 cognate_var(true,  block, ^{ call(swap); call(drop); })
-cognate_var(false, block, ^{ call(drop); })
+cognate_var(false, block, ^{ call(drop);             })
 
 
 cognate_func(equal,          { if (pop(number) == pop(number)) call(true) else call(false); })
@@ -45,42 +49,43 @@ cognate_func(equalorpreceed, { if (pop(number) >= pop(number)) call(true) else c
 cognate_func(equalorexceed,  { if (pop(number) <= pop(number)) call(true) else call(false); })
 /*
 cognate_func(tail, { 
-                            cognate_list lst = *pop(list);
-                            cognate_list lst2 = (cognate_list){.start = lst.start + 1, .top = lst.top};
-                            if (lst.start == lst.top) throw_error("Tail encountered empty list!");
-                            push(list, &lst2);
-                   });
+  cognate_list lst = *pop(list);
+  cognate_list lst2 = (cognate_list){.start = lst.start + 1, .top = lst.top};
+  if (lst.start == lst.top) 
+    throw_error("Tail encountered empty list!");
+  push(list, &lst2);
+});
 */
 cognate_func(index,{ 
-                            int index = pop(number);
-                            cognate_list lst = *pop(list);
-                            if (lst.start + index > lst.top) throw_error("Index out of bounds!");
-                            push_object(lst . start [index]);
-                   })
+  int index = pop(number);
+  cognate_list lst = *pop(list);
+  if (lst.start + index > lst.top)
+    throw_error("Index out of bounds!");
+  push_object(lst . start [index]);
+})
 cognate_func(length,{
-                            cognate_list lst = *pop(list);
-                            //printf("%i - %i = %i\n", (int) lst . top, (int) lst . start, (int) lst . top - (int) lst . start);
-                            push(number, lst . top - lst . start);
-                    })
+  cognate_list lst = *pop(list);
+  push(number, lst . top - lst . start);
+})
 cognate_func(list,  { 
-                            // Get the block argument
-                            void(^expr)(void) = pop(block); 
-                            // Move the stack to temporary storage
-                            cognate_list temp_stack = stack;
-                            cognate_object* temp_stack_end = stack_end;
-                            // Allocate a list as the stack
-                            init_stack();
-                            // Eval expr
-                            expr();
-                            // Store the resultant list
-                            static cognate_list lst;
-                            lst = stack;
-                            // Restore the original stack
-                            stack = temp_stack;
-                            stack_end = temp_stack_end;
-                            // Push the created list to the stack
-                            // Maybe lst should be realloced here because it will be larger than it needs to be.
-                            push(list, &lst);
-                    })
+  // Get the block argument
+  void(^expr)(void) = pop(block); 
+  // Move the stack to temporary storage
+  cognate_list temp_stack = stack;
+  cognate_object* temp_stack_end = stack_end;
+  // Allocate a list as the stack
+  init_stack();
+  // Eval expr
+  expr();
+  // Store the resultant list
+  static cognate_list lst;
+  lst = stack;
+  // Restore the original stack
+  stack = temp_stack;
+  stack_end = temp_stack_end;
+  // Push the created list to the stack
+  // Maybe lst should be realloced here because it will be larger than it needs to be.
+  push(list, &lst);
+})
 
 #endif

@@ -54,7 +54,7 @@ replacesymbols =
 openbrackets  = [ '(','{','[' ]
 closebrackets = [ ')','}',']' ]
 delims        = [ ';',','     ]
-numbers       = [ '0'..'9'    ]
+numbers       =  '.':['0'..'9']
 upperletters  = [ 'A'..'Z'    ]
 lowerletters  = [ 'a'..'z'    ]
 brackets      = openbrackets ++ closebrackets
@@ -154,12 +154,13 @@ parseinformalsyntax =
 
 compile :: [Tree String] -> String
 
-compile (Node body : Node call : Leaf "Define" : xs) =
+compile (Node body : Node call : Leaf "Let" : xs) =
   let name = last call
       args = init call in
-  "cognate_define(" ++ lc (case name of 
-                             Leaf str -> str
-                             _ -> error "Invalid function name!") ++ ", {\n"
+  "cognate_define(" ++ lc 
+    (case name of 
+      Leaf str -> str
+      _        -> error "Invalid function name!") ++ ", {\n"
   ++ compile (intersperse (Leaf "Let") (reverse args) ++ [Leaf "Let" | not (null args)] ++ body)
   ++ "});\n{\n"
   ++ compile xs ++
@@ -188,11 +189,11 @@ compile (Leaf name : Leaf "Let" : xs) =
   ++ compile xs -}
 
 -- Primitive Do inlining.
-{- compile (Node expr : Leaf "Do" : xs) =
+compile (Node expr : Leaf "Do" : xs) =
   "{\n" ++
     compile expr ++
   "}\n" ++
-  compile xs -}
+  compile xs
 
 compile (Node expr : xs) =
   "push(block,\n^{\n"

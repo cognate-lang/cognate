@@ -1,6 +1,7 @@
 #ifndef COGNATE_C
 #define COGNATE_C
 
+#include <time.h>
 #include "stack.c"
 #include "func.c"
 #include "io.c"
@@ -30,14 +31,18 @@
   }
 
 
-
 static void init()
 {
+  // Seed the random number generator properly.
+  struct timespec ts;
+  timespec_get(&ts, TIME_UTC);
+  srand(ts.tv_nsec ^ ts.tv_sec);
+  // Generate a stack.
   init_stack();
 }
 
 static void cleanup()
 {
-  free(stack.start);
+  // Do stuff.
 }
 #endif

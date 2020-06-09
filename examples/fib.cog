@@ -1,25 +1,21 @@
 ~ Definitions that may become builtin or part of std ~
+~ Lambda-Calculus bools are slow, but easy to define ~
+Let (Either)       be (Do Clone);
+Let (Not A)        be (Do A False True);
+Let (Both A and B) be (Do A B A);
+Let (If)           be (Do Do Do);
+Let (When P A)     be (Do Do P A ());
 
-Define [Either]       be [Do Clone];
-Define [Not A]        be [Do A False True];
-Define [Both A and B] be [Do A B A];
-Define [If]           be [Do Do Do];
-Define [When P A]     be [Do Do P A []];
-
-Define the [Fib of N] as
-~ Calculate the Nth Fibonacci number.
-  This algorithm is very inefficient, but that makes it a good benchmark ~
-[
-  If [2, > N] then 
-  [
-    return 1 
-  ]
-  else then 
-  [
-    return the Sum of the
-      Fib of - 1 N and the
+Let the (Fib of N) be
+~ Calculate the Nth Fibonacci number. ~
+~ This algorithm is very inefficient, but that makes it a good benchmark ~
+{
+  If (2, > N) then (return 1)
+  else {
+    Sum
+      Fib of - 1 N and
       Fib of - 2 N
-  ]
-];
+  }
+};
 
-Print the Fib of 20; 
+Print the Fib of 20;
