@@ -51,8 +51,8 @@ replacesymbols =
 
 
 -- Constants!!!
-openbrackets  = [ '(','{','[' ]
-closebrackets = [ ')','}',']' ]
+openbrackets  = [ '(' ]
+closebrackets = [ ')' ]
 delims        = [ ';',','     ]
 numbers       =  '.':['0'..'9']
 upperletters  = [ 'A'..'Z'    ]

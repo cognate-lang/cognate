@@ -9,13 +9,13 @@ Let (When P A)     be (Do Do P A ());
 Let the (Fib of N) be
 ~ Calculate the Nth Fibonacci number. ~
 ~ This algorithm is very inefficient, but that makes it a good benchmark ~
-{
+(
   If (2, > N) then (return 1)
-  else {
+  else (
     Sum
       Fib of - 1 N and
       Fib of - 2 N
-  }
-};
+  )
+);
 
 Print the Fib of 20;
