@@ -6,6 +6,9 @@
 #include <stdlib.h>
 #include "gc.h"
 
+#define malloc GC_MALLOC
+#define realloc GC_REALLOC
+
 #define INITIAL_LIST_SIZE 8
 
 #define push(object_type, object) \

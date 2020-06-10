@@ -436,7 +436,7 @@ GC_word	gc/include/gc/gc.h	/^    typedef unsigned __int64 GC_word;$/;"	t
 GC_word	gc/include/gc/gc.h	/^    typedef unsigned long long GC_word;$/;"	t
 GC_word	gc/include/gc/gc.h	/^  typedef unsigned long GC_word;$/;"	t
 HIDE_POINTER	gc/include/gc/gc.h	1390;"	d
-INITIAL_LIST_SIZE	headers/stack.c	9;"	d	file:
+INITIAL_LIST_SIZE	headers/stack.c	12;"	d	file:
 IO_C	headers/io.c	2;"	d	file:
 MAX_DEPTH	gc/include/gc/cord_pos.h	27;"	d
 REVEAL_POINTER	gc/include/gc/gc.h	1391;"	d
@@ -500,8 +500,10 @@ main	examples/fib.c	/^int main()$/;"	f
 main	examples/random.c	/^int main()$/;"	f
 main	examples/range.c	/^int main()$/;"	f
 main	examples/square.c	/^int main()$/;"	f
+main	test.c	/^int main()$/;"	f
 malloc	gc/include/gc/leak_detector.h	33;"	d
 malloc	gc/include/gc/leak_detector.h	34;"	d
+malloc	headers/stack.c	9;"	d	file:
 markers_m1	gc/include/gc/gc.h	/^  GC_word markers_m1;$/;"	m	struct:GC_prof_stats_s
 mem_base	gc/include/gc/gc.h	/^  void * mem_base; \/* Base of memory stack. *\/$/;"	m	struct:GC_stack_base
 memalign	gc/include/gc/leak_detector.h	55;"	d
@@ -514,9 +516,9 @@ path	gc/include/gc/cord_pos.h	/^    struct CORD_pe path[MAX_DEPTH + 1];$/;"	m	st
 path_len	gc/include/gc/cord_pos.h	/^    int path_len;$/;"	m	struct:CORD_Pos
 pe_cord	gc/include/gc/cord_pos.h	/^    CORD pe_cord;$/;"	m	struct:CORD_pe
 pe_start_pos	gc/include/gc/cord_pos.h	/^    size_t pe_start_pos;$/;"	m	struct:CORD_pe
-peek	headers/stack.c	17;"	d	file:
+peek	headers/stack.c	20;"	d	file:
 peek_object	headers/stack.c	/^static cognate_object peek_object(void)$/;"	f	file:
-pop	headers/stack.c	14;"	d	file:
+pop	headers/stack.c	17;"	d	file:
 pop_object	headers/stack.c	/^static cognate_object pop_object(void)$/;"	f	file:
 posix_memalign	gc/include/gc/leak_detector.h	57;"	d
 posix_memalign	gc/include/gc/leak_detector.h	58;"	d
@@ -534,10 +536,11 @@ pthread_join	gc/include/gc/gc_pthread_redirects.h	98;"	d
 pthread_sigmask	gc/include/gc/gc_pthread_redirects.h	102;"	d
 pthread_sigmask	gc/include/gc/gc_pthread_redirects.h	103;"	d
 ptrdiff_t	gc/include/gc/gc_config_macros.h	/^    typedef long ptrdiff_t;$/;"	t
-push	headers/stack.c	11;"	d	file:
+push	headers/stack.c	14;"	d	file:
 push_object	headers/stack.c	/^static void push_object(cognate_object object)$/;"	f	file:
 realloc	gc/include/gc/leak_detector.h	39;"	d
 realloc	gc/include/gc/leak_detector.h	40;"	d
+realloc	headers/stack.c	10;"	d	file:
 reclaimed_bytes_before_gc	gc/include/gc/gc.h	/^  GC_word reclaimed_bytes_before_gc;$/;"	m	struct:GC_prof_stats_s
 reg_base	gc/include/gc/gc.h	/^    void * reg_base; \/* Base of separate register stack. *\/$/;"	m	struct:GC_stack_base
 stack	headers/stack.c	/^cognate_list stack;$/;"	v
