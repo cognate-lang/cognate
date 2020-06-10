@@ -11,3 +11,12 @@ Cognate is compiled directly to C. Even my naive attempt at a compiler is able t
 
 ### Cognate is simple
 Cognate has only a handful of syntax elements. In future, this will allow me to elegantly introduce compile time macros and reflection, similar to those found in lisp dialects, that manipulate the syntax tree directly. I am also looking at implementing Forth-style code metaprogramming with immediate words, etc. 
+### Installing Cognate
+Currently, Cognate is not in a particularly usable state, and thus, you probably don't want to install it. Cognate currently does not have a build system, but is not too hard to install on unix-based systems:
+1) Run ```git clone https://github.com/stavromuellerbeta/cognate```.
+2) Run ```cd cognate```.
+3) Install the GHC haskell compiler and cabal-install through your distrubutions's package manager.
+4) Run ```cabal update```.
+5) Run ```cabal install MissingH```.
+6) Compile CognaC with ```ghc cognac```.
+7) The CognaC executable is now in your current directory.
