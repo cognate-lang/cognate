@@ -10,4 +10,4 @@ As the above program shows, words starting with lowercase letters are ignored by
 Cognate is compiled directly to C. Even my naive attempt at a compiler is able to outperform most interpreted languages, leaving python and ruby in the dust. As time goes on. As time goes on, I will be able to optimise the compiler and gain even more performance. Furthermore, cognate produces very small binaries and could be used for a high level language in an embedded environment.
 
 ### Cognate is simple
-Cognate has only a handful of syntax elements. In future, this will allow me to elegantly introduce compile time macros and reflection, similar to those in lisp dialects, that manipulate the syntax tree directly.
+Cognate has only a handful of syntax elements. In future, this will allow me to elegantly introduce compile time macros and reflection, similar to those found in lisp dialects, that manipulate the syntax tree directly. I am also looking at implementing Forth-style code metaprogramming with immediate words, etc. 

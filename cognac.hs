@@ -1,8 +1,4 @@
-{- This program compiles Cognate programs (ending in .cog) to C programs of the same name.
- - It then calls a C compiler (clang by default) to compile that to an executable.
- - For this to occur, the files in the headers/ and gc/ directories are needed.
- - Also, the C compiler must support the Blocks extension, providing lexical closures.
- - To compile this, you must use the GHC haskell compiler, with the MissingH and Split extensions. -}
+-- TODO: Rewrite all of this properly.
 
 {-# LANGUAGE LambdaCase #-}
 
