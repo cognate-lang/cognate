@@ -6,6 +6,7 @@ Let (the Range from A to B with step S) be
   List from
   (
     ~ Nested helper function, invisible outside its scope ~
+    ~ Will stack overflow on large ranges due to lack of TCO ~
     Let (Count from X) be
     (
       When (X, <= B)
