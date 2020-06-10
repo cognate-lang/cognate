@@ -17,6 +17,6 @@ Currently, Cognate is not in a particularly usable state, and thus, you probably
 2) Run ```cd cognate```.
 3) Install the GHC haskell compiler and cabal-install through your distrubutions's package manager.
 4) Run ```cabal update```.
-5) Run ```cabal install MissingH```.
+5) Run ```cabal install MissingH split```.
 6) Compile CognaC with ```ghc cognac```.
 7) The CognaC executable is now in your current directory.
