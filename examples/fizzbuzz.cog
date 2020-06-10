@@ -1,0 +1,16 @@
+~ TODO                                             ~
+~ 'Normal' If-Else statements instead of When      ~
+~ % operator for Modulo - or just Mod?             ~
+~ Decide what is happening with Print and Newlines ~
+~ Actually bother defining Range and Map           ~
+
+Let (FizzBuzz N) be
+(
+  When (N, Modulo 3, == 0) (Print "Fizz");
+  When (N, Modulo 5, == 0) (Print "Buzz");
+  When (N, Modulo 3, != 0, and
+        N, Modulo 5, != 0, Both) (Print N);
+  Print a Newline;
+);
+
+Map (FizzBuzz) over the Range from 1 to 1000 with step 1;
