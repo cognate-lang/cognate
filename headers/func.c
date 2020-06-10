@@ -37,6 +37,7 @@ cognate_func(random,         { double low = pop(number); double high = pop(numbe
 cognate_func(drop,           { pop_object();                                                                                     })
 cognate_func(clone,          { push_object(peek_object());                                                                       })
 cognate_func(swap,           { cognate_object a = pop_object(); cognate_object b = pop_object(); push_object(a); push_object(b); })
+cognate_func(clear,          { init_stack();                                                                                     })
 
 cognate_var(true,  block, ^{ call(swap); call(drop); })
 cognate_var(false, block, ^{ call(drop);             })
