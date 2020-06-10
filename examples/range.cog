@@ -1,0 +1,21 @@
+Let (When P A) be (Do Do Do P A ());
+
+Let (the Range from A to B with step S) be
+~ Similar to python's xrange() function ~
+(
+  List from
+  (
+    ~ Nested helper function, invisible outside its scope ~
+    Let (Count from X) be
+    (
+      When (X, <= B)
+      (
+        return X; 
+        Count from + X S;
+      );
+    );
+    Count from A;
+  );
+);
+
+Print the Range from 0 to 100 with step 2;
