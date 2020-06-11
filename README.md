@@ -19,7 +19,7 @@ Cognate is optimised for functional programming - not complicated over-the-top f
 The stack, around which cognate is designed, allows Cognate to do things which many other languages cannot. One example is multiple return values. While other languages - such as python - require the use of tuples to return multiple values, Cognate uses the stack to achieve this without the use of any data structures. Cognate also uses the stack to allow expressions to be written in point-free notation.
 
 ### Installing Cognate
-Currently, Cognate is not in a particularly usable state, and thus, you probably don't want to install it. Cognate currently does not have a build system, but is not too hard to install on unix-based systems:
+Currently, Cognate is not in a particularly usable state, and thus, you probably don't want to install it. Cognate currently does not have a build system, but is not too hard to install on unix-based systems. These instructions explain how to install the CognaC compiler for Cognate from this repository.
 1) Run ```git clone https://github.com/stavromuellerbeta/cognate```.
 2) Run ```cd cognate```.
 3) Install the GHC haskell compiler and cabal-install through your distrubutions's package manager.
