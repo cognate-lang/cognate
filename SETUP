@@ -13,18 +13,21 @@ SRC=$(pwd)
 GC="8.0.4"
 
 # Blocks Runtime
-git clone https://github.com/mackyle/blocksruntime $SRC/blocksruntime
-cd $SRC/blocksruntime
+git clone https://github.com/mackyle/blocksruntime $SRC/lib/br
+cd $SRC/lib/br
 CC=clang ./buildlib
+cd $SRC
 
 # Boehm
 wget https://www.hboehm.info/gc/gc_source/gc-$GC.tar.gz
 tar xvfz gc-$GC.tar.gz
 cd $SRC/gc-$GC
-./configure --prefix=$SRC/gc --disable-threads
+./configure --prefix=$SRC/lib/gc --disable-threads
 make
 make install
 cd $SRC
+rm -rf gc-$GC
+rm gc-$GC.tar.gz
 
 # Install Split
 cabal update

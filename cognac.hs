@@ -219,9 +219,9 @@ main =
     let compilerFlags = 
           words $ "-fblocks -Wall -Wpedantic -Wno-unused -O3 -s -I " 
           ++ path ++ "/headers -I" 
-          ++ path ++ "/gc/include " 
-          ++ path ++ "/gc/lib/libgc.so " 
-          ++ path ++ "/blocksruntime/libBlocksRuntime.a"
+          ++ path ++ "/lib/gc/include " 
+          ++ path ++ "/lib/gc/lib/libgc.so " 
+          ++ path ++ "/lib/br/libBlocksRuntime.a"
 
     let in_file = head args
     let out_file = head (splitOn "." in_file) ++ ".c"
