@@ -12,18 +12,12 @@ read -p "Press any key to continue..."
 SRC=$(pwd)
 GC="8.0.4"
 
-# Get Blocks Runtime
+# Blocks Runtime
 git clone https://github.com/mackyle/blocksruntime $SRC/blocksruntime
 cd $SRC/blocksruntime
-
-# Build Blocks Runtime
 CC=clang ./buildlib
 
-# Install Blocks Runtime
-sudo ./installlib
-cd $SRC
-
-# Get Boehm
+# Boehm
 wget https://www.hboehm.info/gc/gc_source/gc-$GC.tar.gz
 tar xvfz gc-$GC.tar.gz
 cd $SRC/gc-$GC

@@ -205,7 +205,7 @@ compile (Leaf token : xs)
 
 compile [] = ""
 
-compilerFlags = ["-fblocks", "-lBlocksRuntime", "-Wall", "-Wpedantic", "-Wno-unused", "-O3", "-s"]
+compilerFlags = ["-fblocks", "-Wall", "-Wpedantic", "-Wno-unused", "-O3", "-s"]
 compiler = "clang"
 
 getPath =
@@ -215,19 +215,25 @@ main :: IO ()
 main =
   do
     path <- getPath
-    let headers = path ++ "/headers"
-    let gc = path ++ "/gc/include"
     args <- getArgs
+    let compilerFlags = 
+          words $ "-fblocks -Wall -Wpedantic -Wno-unused -O3 -s -I " 
+          ++ path ++ "/headers -I" 
+          ++ path ++ "/gc/include " 
+          ++ path ++ "/gc/lib/libgc.so " 
+          ++ path ++ "/blocksruntime/libBlocksRuntime.a"
+
     let in_file = head args
     let out_file = head (splitOn "." in_file) ++ ".c"
     let compiler_args = tail args
+
     putStrLn "  ____                         ____ \n / ___|___   __ _ _ __   __ _ / ___|\n| |   / _ \\ / _` | '_ \\ / _` | |    \n| |__| (_) | (_| | | | | (_| | |___\n \\____\\___/ \\__, |_| |_|\\__,_|\\____|\n            |___/                   "
     putStrLn "Cognate Compiler - Version 0.0.1"
     putStrLn $ "Compiling " ++ in_file ++ " to " ++ out_file ++ "... "
     source <- readFile in_file
     writeFile out_file $ "#include\"cognate.c\"\nint main()\n{\ninit();\n" ++ compile (parsefile source) ++ "cleanup();\nreturn 0;\n}\n"
     putStrLn $ "Compiling " ++ out_file ++ " to " ++ stripExtension in_file ++ "... "
-    rawSystem compiler ([out_file, "-o", stripExtension in_file] ++ compilerFlags ++ compiler_args ++ ["-I"] ++ [headers] ++ ["-I"] ++ [gc] ++ ["gc/lib/libgc.so"])
+    rawSystem compiler ([out_file, "-o", stripExtension in_file] ++ compilerFlags ++ compiler_args)
     putStrLn "Done!"
     return ()
 
