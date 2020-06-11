@@ -4,13 +4,14 @@
 
 import System.Process
 import System.Environment
-import Data.List.Split
 import Data.List
 import Data.Char
-import Data.List.Utils
 import Data.Ratio
 import Data.Maybe
 import Control.Exception
+import Data.List.Split
+
+replace from to = intercalate to . splitOn from
 
 data Tree a =
   Leaf a | Node [Tree a]
