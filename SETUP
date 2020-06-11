@@ -34,4 +34,5 @@ cd $SRC
 
 # Install Split
 cabal update
-cabal new-install split --lib
+cabal new-install split --lib # For new versions of cabal
+cabal install split           # For old versions of cabal
