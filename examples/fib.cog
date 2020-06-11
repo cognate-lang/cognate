@@ -10,7 +10,7 @@ Let the (Fib of N) be
 ~ Calculate the Nth Fibonacci number. ~
 ~ This algorithm is very inefficient, but that makes it a good benchmark ~
 (
-  If (2, > N) then (return 1)
+  If (2, > N) (return 1)
   else (
     Sum
       Fib of - 1 N and
