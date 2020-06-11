@@ -20,7 +20,7 @@ The stack, around which cognate is designed, allows Cognate to do things which m
 
 ### Building Cognate
 Currently, Cognate is not in a particularly usable state, and thus, you probably don't want to install it. Cognate currently does not have a build system, but is not too hard to build on Linux systems. These instructions explain how to build the CognaC compiler for Cognate from this repository.
-1) Install git, ghc, cabal-install, clang, and make through your distribution's package manager
+1) Install git, ghc, cabal-install, clang, tar, wget, and make through your distribution's package manager
 2) Run ```git clone https://github.com/stavromuellerbeta/cognate```.
 3) Run ```cd cognate```.
 4) Run ```chmod +x SETUP BUILD```
