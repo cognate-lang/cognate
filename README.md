@@ -19,4 +19,4 @@ Currently, Cognate is not in a particularly usable state, and thus, you probably
 4) Run ```cabal update```.
 5) Run ```cabal install MissingH split --lib```.
 6) Compile CognaC with ```ghc cognac```.
-7) CognaC is install - run with ```./cognac examples/fib.cog```
+7) CognaC is installed - run it with ```./cognac examples/fib.cog```
