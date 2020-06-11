@@ -6,9 +6,11 @@ echo "+ ghc"
 echo "+ cabal-install"
 echo "+ clang"
 echo "+ git"
+echo "+ make"
 read -p "Press any key to continue..."
 
 SRC=$(pwd)
+GC="8.0.4"
 
 # Get Blocks Runtime
 git clone https://github.com/mackyle/blocksruntime $SRC/blocksruntime
@@ -22,9 +24,9 @@ sudo ./installlib
 cd $SRC
 
 # Get Boehm
-wget https://www.hboehm.info/gc/gc_source/gc-8.0.4.tar.gz
-tar xvfz gc-8.0.4.tar.gz
-cd $SRC/gc-8.0.4
+wget https://www.hboehm.info/gc/gc_source/gc-$GC.tar.gz
+tar xvfz gc-$GC.tar.gz
+cd $SRC/gc-$GC
 ./configure --prefix=$SRC/gc --disable-threads
 make
 make install
