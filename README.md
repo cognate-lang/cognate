@@ -22,7 +22,7 @@ The stack, around which cognate is designed, allows Cognate to do things which m
 Currently, Cognate is not in a particularly usable state, and thus, you probably don't want to install it. Cognate currently does not have a build system, but is not too hard to install on unix-based systems. These instructions explain how to install the CognaC compiler for Cognate from this repository.
 1) Run ```git clone https://github.com/stavromuellerbeta/cognate```.
 2) Run ```cd cognate```.
-3) Install the GHC haskell compiler and cabal-install through your distrubutions's package manager.
+3) Install the GHC haskell compiler, cabal-install through your distrubutions's package manager.
 4) Run ```cabal update```.
 5) Run ```cabal new-install split --lib```.
 6) Compile CognaC with ```ghc cognac```.

@@ -1,0 +1,34 @@
+#!/bin/bash
+# TODO: Replace with proper build system!
+
+echo "Before continuing, make sure that you have the following programs installed:"
+echo "+ ghc"
+echo "+ cabal-install"
+echo "+ clang"
+echo "+ git"
+read -p "Press any key to continue..."
+
+SRC=$(pwd)
+
+# Get Blocks Runtime
+git clone https://github.com/mackyle/blocksruntime $SRC/blocksruntime
+cd $SRC/blocksruntime
+
+# Build Blocks Runtime
+CC=clang ./buildlib
+
+# Install Blocks Runtime
+sudo ./installlib
+cd $SRC
+
+# Get Boehm
+wget https://www.hboehm.info/gc/gc_source/gc-8.0.4.tar.gz
+tar xvfz gc-8.0.4.tar.gz
+cd $SRC/gc-8.0.4
+./configure --prefix=$SRC/gc --disable-threads
+make
+make install
+cd $SRC
+
+# Install Split
+cabal new-install split --lib
