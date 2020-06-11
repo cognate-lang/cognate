@@ -11,6 +11,13 @@ Cognate is compiled directly to C. Even my naive attempt at a compiler is able t
 
 ### Cognate is simple
 Cognate has only a handful of syntax elements. In future, this will allow me to elegantly introduce compile time macros and reflection, similar to those found in lisp dialects, that manipulate the syntax tree directly. I am also looking at implementing Forth-style code metaprogramming with immediate words, etc. 
+
+### Cognate is functional
+Cognate is optimised for functional programming - not complicated over-the-top functional programming with monads and applicative functors, but functional programming non-the-less. In Cognate, a bracketed expression (known as a Block) represents a closure - an anonymous function that inherits variables from where it was defined. These allow functions to be passed as arguments and returned from other functions. Cognate also discourages variable mutation, preferring to shadow variables instead, limiting side-effects.
+
+### Cognate is powerful
+The stack, around which cognate is designed, allows Cognate to do things which many other languages cannot. One example is multiple return values. While other languages - such as python - require the use of tuples to return multiple values, Cognate uses the stack to achieve this without the use of any data structures. Cognate also uses the stack to allow expressions to be written in point-free notation.
+
 ### Installing Cognate
 Currently, Cognate is not in a particularly usable state, and thus, you probably don't want to install it. Cognate currently does not have a build system, but is not too hard to install on unix-based systems:
 1) Run ```git clone https://github.com/stavromuellerbeta/cognate```.
