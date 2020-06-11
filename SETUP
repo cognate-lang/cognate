@@ -12,6 +12,8 @@ read -p "Press any key to continue..."
 SRC=$(pwd)
 GC="8.0.4"
 
+mkdir $SRC/lib
+
 # Blocks Runtime
 git clone https://github.com/mackyle/blocksruntime $SRC/lib/br
 cd $SRC/lib/br
