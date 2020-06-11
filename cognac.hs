@@ -216,7 +216,7 @@ main =
   do
     path <- getPath
     let headers = path ++ "/headers"
-    let gc = path ++ "/gc"
+    let gc = path ++ "/gc/include"
     args <- getArgs
     let in_file = head args
     let out_file = head (splitOn "." in_file) ++ ".c"
