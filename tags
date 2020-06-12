@@ -35,9 +35,6 @@ list	headers/type.c	/^    struct cognate_list *list;$/;"	m	union:cognate_object:
 list	headers/type.c	/^typedef enum {block, number, list} cognate_type;$/;"	e	enum:__anon1	file:
 lookup_type	headers/type.c	/^static char* lookup_type(cognate_type type)$/;"	f	file:
 main	examples/fib.c	/^int main()$/;"	f
-main	examples/random.c	/^int main()$/;"	f
-main	examples/range.c	/^int main()$/;"	f
-main	examples/square.c	/^int main()$/;"	f
 malloc	headers/stack.c	9;"	d	file:
 number	headers/type.c	/^    double number;$/;"	m	union:cognate_object::__anon2	file:
 number	headers/type.c	/^typedef enum {block, number, list} cognate_type;$/;"	e	enum:__anon1	file:
