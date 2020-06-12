@@ -217,11 +217,8 @@ main =
     path <- getPath
     args <- getArgs
     let compilerFlags = 
-          words $ "-fblocks -Wall -Wpedantic -Wno-unused -O3 -s -I " 
-          ++ path ++ "/headers -I" 
-          ++ path ++ "/lib/gc/include " 
-          ++ path ++ "/lib/gc/lib/libgc.so " 
-          ++ path ++ "/lib/br/libBlocksRuntime.a"
+          words $ "-fblocks -lBlocksRuntime -l:libgc.a -Wall -Wpedantic -Wno-unused -O3 -s -I " 
+          ++ path ++ "/headers" 
 
     let in_file = head args
     let out_file = head (splitOn "." in_file) ++ ".c"
