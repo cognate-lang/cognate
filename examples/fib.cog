@@ -13,7 +13,7 @@ Let the (Fib of N) be
   If (2, > N) (return 1)
   else (
     Sum
-      Fib of - 1 N and
+      Fib of - 1 N with
       Fib of - 2 N
   )
 );

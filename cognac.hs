@@ -13,11 +13,11 @@ import Data.List.Split
 
 replace from to = intercalate to . splitOn from
 
-data Tree a =
-  Leaf a | Node [Tree a]
+data Tree =
+  Leaf String | Node [Tree]
   deriving (Eq, Show)
 
-parsefile :: String -> [Tree String]
+parsefile :: String -> [Tree]
 -- Let's be honest, most of the parsing functions are obselete now.
 parsefile = -- Parsefile takes a string (the file text) as an argument and returns a list of strings (tokens) in the file
   parsesemicolons . -- Reverse sections bounded by semicolons
@@ -94,7 +94,7 @@ parsenumbers (x:xs)
   | otherwise = x : xs
 
 -- <Bodge>
-parsebrackets :: [Tree String] -> [Tree String]
+parsebrackets :: [Tree] -> [Tree]
 
 parsebrackets tokens =
   if closepos /= -1 then -- If there are brackets present, convert them to a list and recur.
@@ -127,7 +127,7 @@ parsebrackets tokens =
           -1
 -- </bodge> If it ain't broke, don't fix it.
 
-parsesemicolons :: [Tree String] -> [Tree String]
+parsesemicolons :: [Tree] -> [Tree]
 
 parsesemicolons =
   map nodes .
@@ -149,7 +149,25 @@ parseinformalsyntax =
         head word `elem` formalsymbols
 
 
-compile :: [Tree String] -> String
+compile :: [Tree] -> String
+
+compile (Node body : Node call : Leaf "Alias" : xs) = 
+  let name = last call
+      args = init call in
+        compile $ macroexpand name args body xs
+          where
+            macroexpand :: Tree -> [Tree] -> [Tree] -> [Tree] -> [Tree]
+            macroexpand _ _ _ [] = []
+            macroexpand name args body (x:xs)
+              | (x:xs) !! length args == name = 
+                foldl replacemacroarg body (zip call xs)
+                  ++ drop (length args) xs
+              | otherwise = x : macroexpand name args body xs
+            replacemacroarg [] (_,_) = []
+            replacemacroarg (x : xs) (argname, argvalue)
+              | argname == x = argvalue : replacemacroarg xs (argname, argvalue)
+              | otherwise = x : replacemacroarg xs (argname, argvalue)
+
 
 compile (Node body : Node call : Leaf "Let" : xs) =
   let name = last call
@@ -208,6 +226,9 @@ compile [] = ""
 compilerFlags = ["-fblocks", "-Wall", "-Wpedantic", "-Wno-unused", "-O3", "-s"]
 compiler = "clang"
 
+formatFlags = ["-i"]
+formatter = "clang-format"
+
 getPath =
   intercalate "/" . init . splitOn "/" <$> getExecutablePath
 
@@ -229,6 +250,7 @@ main =
     putStrLn $ "Compiling " ++ in_file ++ " to " ++ out_file ++ "... "
     source <- readFile in_file
     writeFile out_file $ "#include\"cognate.c\"\nint main()\n{\ninit();\n" ++ compile (parsefile source) ++ "cleanup();\nreturn 0;\n}\n"
+    rawSystem formatter (formatFlags ++ [out_file])
     putStrLn $ "Compiling " ++ out_file ++ " to " ++ stripExtension in_file ++ "... "
     rawSystem compiler ([out_file, "-o", stripExtension in_file] ++ compilerFlags ++ compiler_args)
     putStrLn "Done!"
