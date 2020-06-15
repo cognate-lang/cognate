@@ -249,7 +249,7 @@ main =
     putStrLn "Cognate Compiler - Version 0.0.1"
     putStrLn $ "Compiling " ++ in_file ++ " to " ++ out_file ++ "... "
     source <- readFile in_file
-    writeFile out_file $ "#include\"cognate.c\"\nint main()\n{\ninit();\n" ++ compile (parsefile source) ++ "cleanup();\nreturn 0;\n}\n"
+    writeFile out_file $ "#include\"cognate.c\"\nint main()\n{\ninit();\n" ++ compile (parsefile source) ++ "return 0;\n}\n"
     rawSystem formatter (formatFlags ++ [out_file])
     putStrLn $ "Compiling " ++ out_file ++ " to " ++ stripExtension in_file ++ "... "
     rawSystem compiler ([out_file, "-o", stripExtension in_file] ++ compilerFlags ++ compiler_args)

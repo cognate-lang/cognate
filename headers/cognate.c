@@ -40,9 +40,4 @@ static void init()
   // Generate a stack.
   init_stack();
 }
-
-static void cleanup()
-{
-  // Do stuff.
-}
 #endif
