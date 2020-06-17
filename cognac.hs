@@ -151,16 +151,16 @@ parseinformalsyntax =
 
 compile :: [Tree] -> String
 
-compile (Node body : Node call : Leaf "Alias" : xs) = 
+compile (Node body : Node call : Leaf "Alias" : rest) = 
   let name = last call
       args = init call in
-        compile $ macroexpand name args body xs
+        compile $ macroexpand name args body rest
           where
             macroexpand :: Tree -> [Tree] -> [Tree] -> [Tree] -> [Tree]
             macroexpand _ _ _ [] = []
             macroexpand name args body (x:xs)
               | (x:xs) !! length args == name = 
-                foldl replacemacroarg body (zip call xs)
+                foldl replacemacroarg body (zip call (x:xs))
                   ++ drop (length args) xs
               | otherwise = x : macroexpand name args body xs
             replacemacroarg [] (_,_) = []
