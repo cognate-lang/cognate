@@ -11,6 +11,7 @@ typedef enum {block, number, list} cognate_type;
 struct __attribute__((packed)) cognate_list
 {
   struct cognate_object *start,
+                        //*end, // For storing amount of free allocated space. Not currently needed.
                         *top;
 };
 
