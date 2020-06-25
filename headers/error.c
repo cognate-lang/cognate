@@ -17,7 +17,7 @@ noreturn static void type_error(char* expected, char* recieved)
 
 noreturn static void throw_error(char* message)
 {
-  printf("%s\n", message);
+  puts(message);
   exit(-1);
 }
 

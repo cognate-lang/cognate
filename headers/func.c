@@ -21,7 +21,7 @@
     push_object(value); }
 
 #ifdef DEBUG
-  #define call(name) {printf("CALLING: "#name"\n"); cognate_func_##name();}
+  #define call(name) {puts("CALLING: "#name); cognate_func_##name();}
 #else 
   #define call(name) cognate_func_##name();
 #endif
