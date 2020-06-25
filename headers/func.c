@@ -8,7 +8,7 @@
 
 // Macro to define external cognate function.
 #define cognate_func(name, body) \
-  void cognate_func_ ## name () body \
+  void cognate_func_ ## name () body
 
 // Macro for defining external cognate variables with specified type.
 #define cognate_var(name, type, value) \
@@ -20,10 +20,14 @@
   static void cognate_func_ ## name() { \
     push_object(value); }
 
-#define call(name) cognate_func_##name();
+#ifdef DEBUG
+  #define call(name) {printf("CALLING: "#name"\n"); cognate_func_##name();}
+#else 
+  #define call(name) cognate_func_##name();
+#endif
 
 cognate_func(do,             { pop(block)();                             })
-cognate_func(print,          { print_object(pop_object()); printf("\n"); })
+cognate_func(print,          { print_object(pop_object()); puts(""); })
 
 cognate_func(sum,            { push(number, pop(number) + pop(number));               })
 cognate_func(product,        { push(number, pop(number) * pop(number));               })
@@ -44,20 +48,22 @@ cognate_var(false, block, ^{ call(drop);             })
 
 
 cognate_func(equal,          { if (pop(number) == pop(number)) call(true) else call(false); })
+cognate_func(notequal,       { if (pop(number) != pop(number)) call(true) else call(false); })
 cognate_func(preceed,        { if (pop(number) >  pop(number)) call(true) else call(false); })
 cognate_func(exceed,         { if (pop(number) <  pop(number)) call(true) else call(false); })
 cognate_func(equalorpreceed, { if (pop(number) >= pop(number)) call(true) else call(false); })
 cognate_func(equalorexceed,  { if (pop(number) <= pop(number)) call(true) else call(false); })
-/*
-cognate_func(tail, { 
-  cognate_list lst = *pop(list);
-  cognate_list lst2 = (cognate_list){.start = lst.start + 1, .top = lst.top};
-  if (lst.start == lst.top) 
+
+void cognate_func_tail() { 
+  cognate_list* lst = pop(list);
+  if (lst->start == lst->top) 
     throw_error("Tail encountered empty list!");
+  static cognate_list lst2;
+  lst2 = (cognate_list){.start = lst->start + 1, .top = lst->top};
   push(list, &lst2);
-});
-*/
-cognate_func(index,{ 
+}
+
+cognate_func(index, { 
   int index = pop(number);
   cognate_list lst = *pop(list);
   if (lst.start + index > lst.top)
@@ -65,10 +71,15 @@ cognate_func(index,{
   push_object(lst . start [index]);
 })
 cognate_func(length,{
-  cognate_list lst = *pop(list);
-  push(number, lst . top - lst . start);
+  cognate_list* lst = pop(list);
+  push(number, lst -> top - lst -> start);
 })
 cognate_func(list,  { 
+
+  // All list-related errors spawn from this one function.
+  // One function to bring them all,
+  // And in the darkness bind them.
+
   // Get the block argument
   void(^expr)(void) = pop(block); 
   // Move the stack to temporary storage
@@ -79,8 +90,7 @@ cognate_func(list,  {
   // Eval expr
   expr();
   // Store the resultant list
-  static cognate_list lst;
-  lst = stack;
+  cognate_list lst = stack;
   // Restore the original stack
   stack = temp_stack;
   stack_end = temp_stack_end;

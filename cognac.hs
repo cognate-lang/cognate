@@ -36,6 +36,7 @@ parsefile = -- Parsefile takes a string (the file text) as an argument and retur
 replacesymbols =
   unwords .
   replace [ "==" ] [ "Equal"          ] .
+  replace [ "!=" ] [ "NotEqual"       ] .
   replace [ "<"  ] [ "Preceed"        ] .
   replace [ ">"  ] [ "Exceed"         ] .
   replace [ ">=" ] [ "EqualOrExceed"  ] .
@@ -151,6 +152,7 @@ parseinformalsyntax =
 
 compile :: [Tree] -> String
 
+{-
 compile (Node body : Node call : Leaf "Alias" : rest) = 
   -- TODO: Fix
   let name = last call
@@ -173,7 +175,6 @@ compile (Node body : Node call : Leaf "Alias" : rest) =
                                Leaf _ -> x
                                Node y -> Node $ replacemacroarg y (argname, argvalue)) : replacemacroarg xs (argname, argvalue)
 
-{-
 macroreplace :: Tree -> [Tree] -> [Tree] -> [Tree]
 macroreplace _ _ [] = []
 macroreplace oldtoken newtokens (Node token : oldAST) =
@@ -275,7 +276,7 @@ main =
     putStrLn "Cognate Compiler - Version 0.0.1"
     putStrLn $ "Compiling " ++ in_file ++ " to " ++ out_file ++ "... "
     source <- readFile in_file
-    writeFile out_file $ "#include\"cognate.c\"\nint main()\n{\ninit();\n" ++ compile (macroexpand $ parsefile source) ++ "return 0;\n}\n"
+    writeFile out_file $ "#include\"cognate.c\"\nint main()\n{\ninit();\n" ++ compile (parsefile source) ++ "return 0;\n}\n"
     rawSystem formatter (formatFlags ++ [out_file])
     putStrLn $ "Compiling " ++ out_file ++ " to " ++ stripExtension in_file ++ "... "
     rawSystem compiler ([out_file, "-o", stripExtension in_file] ++ compilerFlags ++ compiler_args)

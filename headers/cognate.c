@@ -1,12 +1,14 @@
 #ifndef COGNATE_C
 #define COGNATE_C
 
+#include "debug.c"
 #include <time.h>
 #include "stack.c"
 #include "func.c"
 #include "io.c"
 #include "error.c"
 #include "type.c"
+
 
 // Macro to define internal cognate function.
 // If stack corruption errors occur, try defining functions here as static like with variables.

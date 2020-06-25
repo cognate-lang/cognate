@@ -11,8 +11,14 @@
 
 #define INITIAL_LIST_SIZE 8
 
-#define push(object_type, object) \
-  push_object((cognate_object){.type=object_type, .object_type=object})
+#ifdef DEBUG
+  #define push(object_type, object) \
+    {puts("PUSHING: "#object); \
+    push_object((cognate_object){.type=object_type, .object_type=object});}
+#else
+  #define push(object_type, object) \
+    push_object((cognate_object){.type=object_type, .object_type=object})
+#endif
 
 #define pop(object_type) \
   check_type(object_type, pop_object()) . object_type
