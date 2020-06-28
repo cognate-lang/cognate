@@ -26,6 +26,10 @@
   #define call(name) cognate_func_##name();
 #endif
 
+#define malloc GC_MALLOC
+#define realloc GC_REALLOC
+
+
 cognate_func(do,             { pop(block)();                             })
 cognate_func(print,          { print_object(pop_object()); puts(""); })
 
@@ -75,13 +79,8 @@ cognate_func(length,{
   push(number, lst -> top - lst -> start);
 })
 cognate_func(list,  { 
-
-  // All list-related errors spawn from this one function.
-  // One function to bring them all,
-  // And in the darkness bind them.
-
   // Get the block argument
-  void(^expr)(void) = pop(block); 
+  void(^expr)(void) = pop(block);
   // Move the stack to temporary storage
   cognate_list temp_stack = stack;
   cognate_object* temp_stack_end = stack_end;
@@ -90,13 +89,31 @@ cognate_func(list,  {
   // Eval expr
   expr();
   // Store the resultant list
-  cognate_list lst = stack;
+  cognate_list* lst = (cognate_list*)malloc(sizeof(stack));
+  *lst = stack;
   // Restore the original stack
   stack = temp_stack;
   stack_end = temp_stack_end;
+  // Realloc the list to save on memory. May reduce performance when generating lists.
+  // This probabl;y depends on how optimised the GC is. Will benchmark later.
+  realloc(lst->start, (lst->top - lst->start) * sizeof(cognate_object));
   // Push the created list to the stack
-  // Maybe lst should be realloced here because it will be larger than it needs to be.
-  push(list, &lst);
+  push(list, lst);
 })
+
+cognate_func(tuple,
+{
+  // Allocate the list object.
+  cognate_list* lst = (cognate_list*)malloc(sizeof(cognate_list));
+  // Initialise the list.
+  *lst = (cognate_list){ .start = (cognate_object*)malloc(sizeof(cognate_object) * 2) };
+  lst->top = lst->start + 2;
+  // Fill the list.
+  lst->start[0] = pop_object();
+  lst->start[1] = pop_object();
+  // Push the list.
+  push(list, lst);
+})
+
 
 #endif

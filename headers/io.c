@@ -19,6 +19,7 @@ static void print_object (cognate_object object)
                    printf("[");
                    for (cognate_object *i = lst . start; i != lst . top; ++i)
                    {
+                     if (i == NULL) throw_error("Null pointer exception!");
                      print_object(*i); // Segfault when trying to dereference i here.
                      if (i + 1 != lst . top) printf(", ");
                    }
