@@ -21,9 +21,17 @@
     push_object(value); }
 
 #ifdef DEBUG
-  #define call(name) {puts("CALLING: "#name); cognate_func_##name();}
+  #ifdef MAX_RECURSION_DEPTH
+    #define call(name) {puts("CALLING: "#name); check_recursion_depth(); cognate_func_##name();}
+  #else
+    #define call(name) {puts("CALLING: "#name); cognate_func_##name();}
+  #endif
 #else 
-  #define call(name) cognate_func_##name();
+  #ifdef MAX_RECURSION_DEPTH
+    #define call(name) {check_recursion_depth(); cognate_func_##name();}
+  #else
+    #define call(name) cognate_func_##name();
+  #endif
 #endif
 
 #define malloc GC_MALLOC
@@ -59,12 +67,12 @@ cognate_func(equalorpreceed, { if (pop(number) >= pop(number)) call(true) else c
 cognate_func(equalorexceed,  { if (pop(number) <= pop(number)) call(true) else call(false); })
 
 void cognate_func_tail() { 
-  cognate_list* lst = pop(list);
+  cognate_list *lst = (cognate_list*)malloc(sizeof(cognate_list));
+  *lst = *pop(list);
   if (lst->start == lst->top) 
     throw_error("Tail encountered empty list!");
-  static cognate_list lst2;
-  lst2 = (cognate_list){.start = lst->start + 1, .top = lst->top};
-  push(list, &lst2);
+  lst->start++;
+  push(list, lst);
 }
 
 cognate_func(index, { 
@@ -79,6 +87,7 @@ cognate_func(length,{
   push(number, lst -> top - lst -> start);
 })
 cognate_func(list,  { 
+  // I solemnly swear that I will NEVER RETURN THE ADDRESS OF A LOCAL VARIABLE!
   // Get the block argument
   void(^expr)(void) = pop(block);
   // Move the stack to temporary storage
@@ -91,12 +100,10 @@ cognate_func(list,  {
   // Store the resultant list
   cognate_list* lst = (cognate_list*)malloc(sizeof(stack));
   *lst = stack;
+  //TODO: Shrink the list to fit here.
   // Restore the original stack
   stack = temp_stack;
   stack_end = temp_stack_end;
-  // Realloc the list to save on memory. May reduce performance when generating lists.
-  // This probabl;y depends on how optimised the GC is. Will benchmark later.
-  realloc(lst->start, (lst->top - lst->start) * sizeof(cognate_object));
   // Push the created list to the stack
   push(list, lst);
 })

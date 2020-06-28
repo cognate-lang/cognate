@@ -19,15 +19,5 @@ Let (the Range from A to B with step S) be
   );
 );
 
-Print the Range from 0 to 100 with step 2;
-
-~ 
-When For loops are implemented, we will be able to do
-
-For I in the Range from 0 to 100 with step 2
-(
-  ...
-);
-
-Which IMO is even more readable than python's for loop.
-~
+Print the List (0,2,4,6,8,10,12,14);
+Print the Range from 0 to 15 with step 2;

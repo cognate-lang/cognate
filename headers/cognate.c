@@ -1,14 +1,10 @@
 #ifndef COGNATE_C
 #define COGNATE_C
 
-#include "debug.c"
-#include <time.h>
-#include "stack.c"
-#include "func.c"
-#include "io.c"
-#include "error.c"
-#include "type.c"
-
+#ifdef MAX_RECURSION_DEPTH
+static void init_recursion_depth_check();
+static void check_recursion_depth();
+#endif
 
 // Macro to define internal cognate function.
 // If stack corruption errors occur, try defining functions here as static like with variables.
@@ -32,9 +28,25 @@
     lbl_call_##name:;\
   }
 
+#define tco_call(name) \
+  goto lbl_def_##name;
+
+//#define MAX_RECURSION_DEPTH 10000
+
+#include "debug.c"
+#include <time.h>
+#include "stack.c"
+#include "func.c"
+#include "io.c"
+#include "error.c"
+#include "type.c"
 
 static void init()
 {
+  #ifdef MAX_RECURSION_DEPTH
+  // Mark top of RETURN stack.
+  init_recursion_depth_check();
+  #endif
   // Seed the random number generator properly.
   struct timespec ts;
   timespec_get(&ts, TIME_UTC);
@@ -42,4 +54,25 @@ static void init()
   // Generate a stack.
   init_stack();
 }
+
+#ifdef MAX_RECURSION_DEPTH
+static char* return_stack_start;
+static void check_recursion_depth()
+{
+  // Gets the size of the return stack (not cognate's stack!).
+  // Can be used to 'catch' stack overflow errors.
+  char var; // Address of local var is top of return stack!!!
+  int return_stack_size = (&var) - return_stack_start;
+  if (return_stack_size > MAX_RECURSION_DEPTH || return_stack_size < -MAX_RECURSION_DEPTH)
+  {
+    throw_error("Maximum recursion depth exceeded!");
+  }
+}
+static void init_recursion_depth_check()
+{
+  char var;
+  return_stack_start = &var;
+}
+#endif
+
 #endif
