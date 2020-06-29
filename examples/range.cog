@@ -20,3 +20,7 @@ Let (the Range from A to B with step S) be
 );
 
 get the Range from 0 to 10000 with step 2;
+Print;
+
+get the Range from 0 to 100 with step 3;
+Print;

@@ -92,7 +92,8 @@ cognate_func(list,  {
   void(^expr)(void) = pop(block);
   // Move the stack to temporary storage
   cognate_list temp_stack = stack;
-  cognate_object* temp_stack_end = stack_end;
+  size_t temp_stack_size = stack_size;
+  size_t temp_stack_size_next = stack_size_next;
   // Allocate a list as the stack
   init_stack();
   // Eval expr
@@ -103,7 +104,8 @@ cognate_func(list,  {
   //TODO: Shrink the list to fit here.
   // Restore the original stack
   stack = temp_stack;
-  stack_end = temp_stack_end;
+  stack_size = temp_stack_size;
+  stack_size_next = temp_stack_size_next;
   // Push the created list to the stack
   push(list, lst);
 })
