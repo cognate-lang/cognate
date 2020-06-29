@@ -1,11 +1,6 @@
 #ifndef COGNATE_C
 #define COGNATE_C
 
-#ifdef MAX_RECURSION_DEPTH
-static void init_recursion_depth_check();
-static void check_recursion_depth();
-#endif
-
 // Macro to define internal cognate function.
 // If stack corruption errors occur, try defining functions here as static like with variables.
 #define cognate_define(name, body) \
@@ -31,7 +26,12 @@ static void check_recursion_depth();
 #define tco_call(name) \
   goto lbl_def_##name;
 
-//#define MAX_RECURSION_DEPTH 10000
+//#define MAX_RECURSION_DEPTH 1048576
+
+#ifdef MAX_RECURSION_DEPTH
+static void init_recursion_depth_check();
+static void check_recursion_depth();
+#endif
 
 #include "debug.c"
 #include <time.h>

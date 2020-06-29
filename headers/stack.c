@@ -6,12 +6,13 @@
 #include <stdlib.h>
 #include "gc.h"
 
-#define malloc GC_MALLOC
+#define malloc  GC_MALLOC // Use boehm to manage memory for us
 #define realloc GC_REALLOC
 
-#define INITIAL_LIST_SIZE 8
+#define INITIAL_LIST_SIZE 16 // Larger increases performance, smaller lowers memory usage for small lists.
+#define LIST_GROWTH_RATIO 1.5 // Should be close to the golden ratio.
 
-#ifdef DEBUG
+#ifdef DEBUG // Push an object to the stack. Print if debugging.
   #define push(object_type, object) \
     {puts("PUSHING: "#object); \
     push_object((cognate_object){.type=object_type, .object_type=object});}
@@ -47,7 +48,7 @@ static void push_object(cognate_object object)
 {
   // This was expanding the stack when it wasn't needed :(
   if (stack.top == stack_end)
-    expand_stack((stack.top - stack.start) << 1);
+    expand_stack((stack.top - stack.start) * LIST_GROWTH_RATIO);
   *stack.top++ = object;
 }
 

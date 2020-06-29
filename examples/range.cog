@@ -19,5 +19,4 @@ Let (the Range from A to B with step S) be
   );
 );
 
-Print the List (0,2,4,6,8,10,12,14);
-Print the Range from 0 to 15 with step 2;
+Print the Range from 0 to 10000 with step 2;
