@@ -21,17 +21,9 @@
     push_object(value); }
 
 #ifdef DEBUG
-  #ifdef MAX_RECURSION_DEPTH
-    #define call(name) {puts("CALLING: "#name); check_recursion_depth(); cognate_func_##name();}
-  #else
-    #define call(name) {puts("CALLING: "#name); cognate_func_##name();}
-  #endif
+  #define call(name) {fprintf(stderr, "[DEBUG]%s:%d -> Calling %s\n", __FILE__, __LINE__, #name); /*check_recursion_depth();*/ cognate_func_##name();}
 #else 
-  #ifdef MAX_RECURSION_DEPTH
-    #define call(name) {check_recursion_depth(); cognate_func_##name();}
-  #else
-    #define call(name) cognate_func_##name();
-  #endif
+  #define call(name) {/*check_recursion_depth();*/ cognate_func_##name();}
 #endif
 
 #define malloc GC_MALLOC

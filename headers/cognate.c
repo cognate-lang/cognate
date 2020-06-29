@@ -26,12 +26,12 @@
 #define tco_call(name) \
   goto lbl_def_##name;
 
-//#define MAX_RECURSION_DEPTH 1048576
+/*
+#define MAX_RECURSION_DEPTH 1048576
 
-#ifdef MAX_RECURSION_DEPTH
 static void init_recursion_depth_check();
 static void check_recursion_depth();
-#endif
+*/
 
 #include "debug.c"
 #include <time.h>
@@ -43,10 +43,9 @@ static void check_recursion_depth();
 
 static void init()
 {
-  #ifdef MAX_RECURSION_DEPTH
-  // Mark top of RETURN stack.
-  init_recursion_depth_check();
-  #endif
+  // Mark top of RETURN stack (for recursion depth checking).
+  //init_recursion_depth_check();
+
   // Seed the random number generator properly.
   struct timespec ts;
   timespec_get(&ts, TIME_UTC);
@@ -55,7 +54,7 @@ static void init()
   init_stack();
 }
 
-#ifdef MAX_RECURSION_DEPTH
+/*
 static char* return_stack_start;
 static void check_recursion_depth()
 {
@@ -73,6 +72,6 @@ static void init_recursion_depth_check()
   char var;
   return_stack_start = &var;
 }
-#endif
+*/
 
 #endif

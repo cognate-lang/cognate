@@ -14,7 +14,7 @@
 
 #ifdef DEBUG // Push an object to the stack. Print if debugging.
   #define push(object_type, object) \
-    {puts("PUSHING: "#object); \
+    {fprintf(stderr, "[DEBUG]%s:%d -> Pushing %s\n", __FILE__, __LINE__, #object); \
     push_object((cognate_object){.type=object_type, .object_type=object});}
 #else
   #define push(object_type, object) \
@@ -70,7 +70,7 @@ static void expand_stack()
   // New stack size = current stack size + previous stack size.
 
   #ifdef DEBUG
-    printf("EXPANDING: list/stack from length %lu to %lu\n", stack_size, stack_size_next); 
+    fprintf(stderr, "[DEBUG]%s:%d -> Expanding list/stack from length %lu to %lu\n", __FILE__, __LINE__, stack_size, stack_size_next); 
   #endif
 
   stack.start = (cognate_object*) realloc (stack.start, stack_size_next * sizeof(cognate_object));
