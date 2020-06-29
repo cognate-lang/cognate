@@ -13,4 +13,4 @@ Let (FizzBuzz N) be
   Print a Newline;
 );
 
-Map (FizzBuzz) over the Range from 1 to 1000 with step 1;
+(FizzBuzz), For each in Range from 1 to 1000 with step 1;

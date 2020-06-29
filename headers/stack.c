@@ -9,8 +9,9 @@
 #define malloc  GC_MALLOC // Use boehm to manage memory for us
 #define realloc GC_REALLOC
 
-#define INITIAL_LIST_SIZE 16 // Larger increases performance, smaller lowers memory usage for small lists.
-#define LIST_GROWTH_RATIO 1.5 // Should be close to the golden ratio.
+#define INITIAL_LIST_SIZE 8
+#define NEXT_LIST_SIZE 13
+//#define LIST_GROWTH_RATIO 1.5
 
 #ifdef DEBUG // Push an object to the stack. Print if debugging.
   #define push(object_type, object) \
@@ -31,7 +32,7 @@ static void init_stack(void);
 static void push_object(cognate_object);
 static cognate_object pop_object(void);
 static cognate_object peek_object(void);
-static void expand_stack(size_t);
+static void expand_stack();
 
 cognate_list stack;
 cognate_object* stack_end;
@@ -46,9 +47,8 @@ static void init_stack()
 
 static void push_object(cognate_object object)
 {
-  // This was expanding the stack when it wasn't needed :(
   if (stack.top == stack_end)
-    expand_stack((stack.top - stack.start) * LIST_GROWTH_RATIO);
+    expand_stack();
   *stack.top++ = object;
 }
 
@@ -64,13 +64,26 @@ static cognate_object peek_object(void)
   return *(stack.top - 1);
 }
 
-static void expand_stack(size_t new_size)
+static void expand_stack()
 {
-  // ASSUMES THAT THE STACK IS FULL!!!
-  size_t old_size = stack.top - stack.start;
-  stack.start = (cognate_object*) realloc (stack.start, new_size * sizeof(cognate_object));
-  stack.top = stack.start + old_size;
-  stack_end = stack.start + new_size;
+  // Simple stack expansion with growth ratio.
+  //expand_stack((stack.top - stack.start) * LIST_GROWTH_RATIO);
+  
+  // More advanced fibonacci stack expansion.
+  // The ideal expansion ratio is the golden ratio.
+  // The fibonacci sequence approaches the golden ratio.
+  // It also frees blocks of memory exactly the right size to be allocated later.
+  static size_t t1 = INITIAL_LIST_SIZE; // Current list size.
+  static size_t t2 = NEXT_LIST_SIZE; // New list size.
+
+  stack.start = (cognate_object*) realloc (stack.start, t2 * sizeof(cognate_object));
+  stack.top = stack.start + t1;
+  stack_end = stack.start + t2;
+
+  t1 ^= t2;
+  t2 ^= t1;
+  t1 ^= t2;
+  t2 += t1;
 }
 
 #endif
