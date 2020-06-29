@@ -8,19 +8,20 @@ COGNATE_C	headers/cognate.c	2;"	d	file:
 DEBUG_C	headers/debug.c	2;"	d	file:
 ERROR_C	headers/error.c	2;"	d	file:
 FUNC_C	headers/func.c	2;"	d	file:
-INITIAL_LIST_SIZE	headers/stack.c	12;"	d	file:
 IO_C	headers/io.c	2;"	d	file:
 STACK_C	headers/stack.c	2;"	d	file:
+STACK_SIZE	headers/stack.c	12;"	d	file:
+STACK_SIZE_NEXT	headers/stack.c	13;"	d	file:
 TYPE_C	headers/type.c	2;"	d	file:
-WHERE	headers/debug.c	3;"	d	file:
-attempt_tco	headers/cognate.c	23;"	d	file:
+attempt_tco	headers/cognate.c	16;"	d	file:
 block	headers/type.c	/^typedef enum {block, number, list} cognate_type;$/;"	e	enum:__anon1	file:
-call	headers/func.c	23;"	d	file:
+call	headers/func.c	24;"	d	file:
+call	headers/func.c	26;"	d	file:
 check_type	headers/type.c	/^static cognate_object check_type(cognate_type expected_type, cognate_object object)$/;"	f	file:
-cleanup	headers/cognate.c	/^static void cleanup()$/;"	f	file:
-cognate_define	headers/cognate.c	13;"	d	file:
+cognate_define	headers/cognate.c	6;"	d	file:
 cognate_func	headers/func.c	10;"	d	file:
-cognate_let	headers/cognate.c	17;"	d	file:
+cognate_func_tail	headers/func.c	/^void cognate_func_tail() { $/;"	f
+cognate_let	headers/cognate.c	10;"	d	file:
 cognate_list	headers/type.c	/^struct __attribute__((packed)) cognate_list$/;"	s	file:
 cognate_list	headers/type.c	/^typedef struct cognate_list   cognate_list;$/;"	t	typeref:struct:cognate_list	file:
 cognate_object	headers/type.c	/^struct __attribute__((packed)) cognate_object$/;"	s	file:
@@ -28,27 +29,36 @@ cognate_object	headers/type.c	/^typedef struct cognate_object cognate_object;$/;
 cognate_type	headers/type.c	/^typedef enum {block, number, list} cognate_type;$/;"	t	typeref:enum:__anon1	file:
 cognate_var	headers/func.c	14;"	d	file:
 cognate_var_obj	headers/func.c	19;"	d	file:
-expand_stack	headers/stack.c	/^static void expand_stack(size_t new_size)$/;"	f	file:
+expand_stack	headers/stack.c	/^static void expand_stack()$/;"	f	file:
 init	headers/cognate.c	/^static void init()$/;"	f	file:
 init_stack	headers/stack.c	/^static void init_stack()$/;"	f	file:
 list	headers/type.c	/^    struct cognate_list *list;$/;"	m	union:cognate_object::__anon2	typeref:struct:cognate_object::__anon2::cognate_list	file:
 list	headers/type.c	/^typedef enum {block, number, list} cognate_type;$/;"	e	enum:__anon1	file:
 lookup_type	headers/type.c	/^static char* lookup_type(cognate_type type)$/;"	f	file:
-main	examples/fib.c	/^int main()$/;"	f
+main	examples/alias.c	/^int main() {$/;"	f
+main	examples/fib.c	/^int main() {$/;"	f
+main	examples/loop.c	/^int main() {$/;"	f
+main	examples/range.c	/^int main() {$/;"	f
+main	examples/tuple.c	/^int main() {$/;"	f
+malloc	headers/func.c	29;"	d	file:
 malloc	headers/stack.c	9;"	d	file:
 number	headers/type.c	/^    double number;$/;"	m	union:cognate_object::__anon2	file:
 number	headers/type.c	/^typedef enum {block, number, list} cognate_type;$/;"	e	enum:__anon1	file:
-peek	headers/stack.c	20;"	d	file:
-peek_object	headers/stack.c	/^static cognate_object peek_object(void)$/;"	f	file:
-pop	headers/stack.c	17;"	d	file:
-pop_object	headers/stack.c	/^static cognate_object pop_object(void)$/;"	f	file:
+peek	headers/stack.c	27;"	d	file:
+peek_object	headers/stack.c	/^static cognate_object peek_object()$/;"	f	file:
+pop	headers/stack.c	24;"	d	file:
+pop_object	headers/stack.c	/^static cognate_object pop_object()$/;"	f	file:
 print_object	headers/io.c	/^static void print_object (cognate_object object)$/;"	f	file:
-push	headers/stack.c	14;"	d	file:
+push	headers/stack.c	16;"	d	file:
+push	headers/stack.c	20;"	d	file:
 push_object	headers/stack.c	/^static void push_object(cognate_object object)$/;"	f	file:
+realloc	headers/func.c	30;"	d	file:
 realloc	headers/stack.c	10;"	d	file:
 stack	headers/stack.c	/^cognate_list stack;$/;"	v
-stack_end	headers/stack.c	/^cognate_object* stack_end;$/;"	v
+stack_size	headers/stack.c	/^size_t stack_size;$/;"	v
+stack_size_next	headers/stack.c	/^size_t stack_size_next;$/;"	v
 start	headers/type.c	/^  struct cognate_object *start,$/;"	m	struct:cognate_list	typeref:struct:cognate_list::cognate_object	file:
+tco_call	headers/cognate.c	26;"	d	file:
 throw_error	headers/error.c	/^noreturn static void throw_error(char* message)$/;"	f	file:
 top	headers/type.c	/^                        *top;$/;"	m	struct:cognate_list	typeref:struct:cognate_list::	file:
 type	headers/type.c	/^  cognate_type type : 4;$/;"	m	struct:cognate_object	file:
