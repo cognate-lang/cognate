@@ -23,7 +23,7 @@ Currently, Cognate is not in a particularly usable state, and thus, you probably
 1) Install git, ghc, cabal-install, clang, tar, wget, and make through your distribution's package manager
 2) Run ```git clone https://github.com/stavromuellerbeta/cognate```.
 3) Run ```cd cognate```.
-4) Run ```chmod +x setup build```
-5) Run ```./setup``` to setup the environment.
-6) Run ```./build``` to build the compiler.
+4) Run ```chmod +x SETUP BUILD```
+5) Run ```./SETUP``` to setup the environment.
+6) Run ```./BUILD``` to build the compiler.
 7) CognaC is installed - run it with ```./cognac examples/fib.cog```
