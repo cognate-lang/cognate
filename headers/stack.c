@@ -49,13 +49,14 @@ static void init_stack()
 static void push_object(cognate_object object)
 {
   if (stack.start + stack_size == stack.top)
-      expand_stack();
+    expand_stack();
   *stack.top++ = object;
 }
 
 static cognate_object pop_object()
 { 
-  if (stack.top == stack.start) throw_error("Stack underflow!");
+  if (stack.top == stack.start) 
+    throw_error("Stack underflow!");
   return *--stack.top;
 }
 

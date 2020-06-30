@@ -208,6 +208,19 @@ compile (Node body : Node call : Leaf "Let" : xs) =
   ++ compile xs ++
   "}\n"
 
+compile (Node body : Node call : Leaf "Set" : xs) =
+  let name = last call
+      args = init call in
+  "cognate_redefine(" ++ lc 
+    (case name of 
+      Leaf str -> str
+      _        -> error "Invalid function name!") ++ ", {\n"
+  ++ compile (intersperse (Leaf "Let") (reverse args) ++ [Leaf "Let" | not (null args)] ++ body)
+  ++ "});\n{\n"
+  ++ compile xs ++
+  "}\n"
+
+
 -- Bind is more elegant, but cannot reccur. Maybe a compromise, where the function is defined at the start of the current block.
 {- compile (Leaf name : Leaf "Bind" : xs) =
   "void(^cognate_"
@@ -218,6 +231,10 @@ compile (Node body : Node call : Leaf "Let" : xs) =
 compile (Leaf name : Leaf "Let" : xs) =
   -- Define a temporary variable. Then define a function that pushes that variable to the stack. Bit of a bodge, hopefully clang fixes it.
   "cognate_let(" ++ lc name ++ ");\n{\n"
+  ++ compile xs ++ "}\n"
+
+compile (Leaf name : Leaf "Set" : xs) =
+  "cognate_set(" ++ lc name ++ ");\n{\n" 
   ++ compile xs ++ "}\n"
 
 {- compile (Leaf name : Leaf "Set" : xs) =
