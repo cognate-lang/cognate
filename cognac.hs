@@ -199,6 +199,8 @@ macroexpand [] = []
 compile (Node body : Node call : Leaf "Let" : xs) =
   let name = last call
       args = init call in
+  -- TODO: Use cognate_define_immutable_norecursive where function does not refer to itself and is not mutated.
+  --       This will increase performance as define_immutable_nonrecursive is faster.
   "cognate_define(" ++ lc 
     (case name of 
       Leaf str -> str
@@ -222,14 +224,13 @@ compile (Node body : Node call : Leaf "Set" : xs) =
 
 
 -- Bind is more elegant, but cannot reccur. Maybe a compromise, where the function is defined at the start of the current block.
-{- compile (Leaf name : Leaf "Bind" : xs) =
-  "void(^cognate_"
-  ++ lc name
+{- compile (Leaf name : Leaf "Bind" : xs) = "void(^cognate_" ++ lc name
   ++ ")(void)=pop(block);"
   ++ compile xs -}
 
 compile (Leaf name : Leaf "Let" : xs) =
-  -- Define a temporary variable. Then define a function that pushes that variable to the stack. Bit of a bodge, hopefully clang fixes it.
+  -- TODO: Use cognate_let_immutable when xs does not contain 'Set name' pattern and therefore does not mutate.
+  --       This should increase performance as let_immutable is faster. 
   "cognate_let(" ++ lc name ++ ");\n{\n"
   ++ compile xs ++ "}\n"
 
@@ -237,15 +238,6 @@ compile (Leaf name : Leaf "Set" : xs) =
   "cognate_set(" ++ lc name ++ ");\n{\n" 
   ++ compile xs ++ "}\n"
 
-{- compile (Leaf name : Leaf "Set" : xs) =
-  -- Todo. Put macro over this like i did with let.
-  "temp_"
-  ++ lc name
-  ++ "=pop_object();cognate_"
-  ++ lc name
-  ++ "=^{push_object(temp_"
-  ++ lc name ++ ");};"
-  ++ compile xs -}
 
 -- Primitive Do inlining.
 compile (Node expr : Leaf "Do" : xs) =
@@ -262,7 +254,7 @@ compile (Node expr : xs) =
 
 compile (Leaf token : xs)
   | all (`elem` ('.':'-':['0'..'9'])) token = "push(number," ++ token ++ ");\n" ++ compile xs
---  | null xs = "attempt_tco(" ++ lc token ++ ");\n"
+-- | null xs = "attempt_tco(" ++ lc token ++ ");\n"
   | otherwise = "call(" ++ lc token ++ ");\n" ++ compile xs
 
 compile [] = ""
