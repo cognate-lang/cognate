@@ -71,7 +71,7 @@ static void expand_stack()
     fprintf(stderr, "[DEBUG]%s:%d -> Expanding list/stack from length %lu to %lu\n", __FILE__, __LINE__, stack_size, (size_t)(stack_size * LIST_GROWTH_FACTOR)); 
   #endif
 
-  stack.start = (cognate_object*) realloc (stack.start, stack_size * LIST_GROWTH_FACTOR * sizeof(cognate_object));
+  realloc (stack.start, stack_size * LIST_GROWTH_FACTOR * sizeof(cognate_object));
   stack.top = stack.start + stack_size;
   stack_size *= LIST_GROWTH_FACTOR;
 }
