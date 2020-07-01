@@ -91,13 +91,12 @@ cognate_func(list,  {
   expr();
   // Store the resultant list
   cognate_list* lst = (cognate_list*)malloc(sizeof(stack));
-  *lst = stack;
+  lst->start = realloc(stack.start, (stack.top - stack.start) * sizeof(cognate_object));
+  lst->top = stack.top - stack.start + lst->start;
   //TODO: Shrink the list to fit here.
   // Restore the original stack
   stack = temp_stack;
   stack_size = temp_stack_size;
-  // Realloc list to save memory.
-  realloc(lst->start, (lst->top - lst->start) * sizeof(cognate_object));
   // Push the created list to the stack
   push(list, lst);
 })
