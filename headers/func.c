@@ -89,7 +89,7 @@ cognate_func(list,  {
   init_stack();
   // Eval expr
   expr();
-  // Store the resultant list
+  // Store the resultant list, realloc-ing to fit snugly in memory.
   cognate_list* lst = (cognate_list*)malloc(sizeof(stack));
   lst->start = realloc(stack.start, (stack.top - stack.start) * sizeof(cognate_object));
   lst->top = stack.top - stack.start + lst->start;
