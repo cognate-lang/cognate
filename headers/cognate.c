@@ -8,7 +8,7 @@
 
 // If function is not mutated and does not refer to itself, this faster macro can be used to define it.
 #define cognate_define_immutable_nonrecursive(name, body) \
-  const __block void(^ cognate_func_ ## name)(void) = ^body
+  const void(^ cognate_func_ ## name)(void) = ^body
 
 #define cognate_redefine(name, body) \
   cognate_func_ ## name = ^body

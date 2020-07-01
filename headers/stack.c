@@ -9,8 +9,8 @@
 #define malloc  GC_MALLOC // Use boehm to manage memory for us
 #define realloc GC_REALLOC
 
-#define STACK_SIZE 8 // Constant values for initialising stack sizes.
-#define STACK_SIZE_NEXT 13
+#define INITIAL_LIST_SIZE 16 // Constant values for initialising stack sizes.
+#define LIST_GROWTH_FACTOR 1.5
 
 #ifdef DEBUG // Push an object to the stack. Print if debugging.
   #define push(object_type, object) \
@@ -35,15 +35,12 @@ static void expand_stack();
 
 cognate_list stack;
 size_t stack_size;
-size_t stack_size_next;
 
 static void init_stack()
 {
   //printf("ALLOCATING %i BYTES\n", INITIAL_LIST_SIZE * sizeof(cognate_object));
   // Allocate dynamic stack memory.
-  stack.top = stack.start = (cognate_object*) malloc (STACK_SIZE * sizeof(cognate_object));
-  stack_size = STACK_SIZE;
-  stack_size_next = STACK_SIZE_NEXT;
+  stack.top = stack.start = (cognate_object*) malloc ((stack_size = INITIAL_LIST_SIZE) * sizeof(cognate_object));
 }
 
 static void push_object(cognate_object object)
@@ -68,19 +65,15 @@ static cognate_object peek_object()
 
 static void expand_stack()
 {
-  // New stack size = current stack size + previous stack size.
+  // New stack size = current stack size * growth factor.
 
   #ifdef DEBUG
-    fprintf(stderr, "[DEBUG]%s:%d -> Expanding list/stack from length %lu to %lu\n", __FILE__, __LINE__, stack_size, stack_size_next); 
+    fprintf(stderr, "[DEBUG]%s:%d -> Expanding list/stack from length %lu to %lu\n", __FILE__, __LINE__, stack_size, (size_t)(stack_size * LIST_GROWTH_FACTOR)); 
   #endif
 
-  stack.start = (cognate_object*) realloc (stack.start, stack_size_next * sizeof(cognate_object));
+  stack.start = (cognate_object*) realloc (stack.start, stack_size * LIST_GROWTH_FACTOR * sizeof(cognate_object));
   stack.top = stack.start + stack_size;
-
-  stack_size      ^= stack_size_next;
-  stack_size_next ^= stack_size;
-  stack_size      ^= stack_size_next;
-  stack_size_next += stack_size;
+  stack_size *= LIST_GROWTH_FACTOR;
 }
 
 #endif

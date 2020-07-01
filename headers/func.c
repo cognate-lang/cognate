@@ -85,7 +85,6 @@ cognate_func(list,  {
   // Move the stack to temporary storage
   cognate_list temp_stack = stack;
   size_t temp_stack_size = stack_size;
-  size_t temp_stack_size_next = stack_size_next;
   // Allocate a list as the stack
   init_stack();
   // Eval expr
@@ -97,7 +96,8 @@ cognate_func(list,  {
   // Restore the original stack
   stack = temp_stack;
   stack_size = temp_stack_size;
-  stack_size_next = temp_stack_size_next;
+  // Realloc list to save memory.
+  realloc(lst->start, (lst->top - lst->start) * sizeof(cognate_object));
   // Push the created list to the stack
   push(list, lst);
 })
