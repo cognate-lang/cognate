@@ -3,7 +3,7 @@
 
 // Macro to define internal cognate function.
 // __block attribute allows recursion and mutation at performance cost.
-#define cognate_define(name, body) \
+#define cognate_define_mutable_recursive(name, body) \
   const __block void(^ cognate_func_ ## name)(void) = ^body
 
 // If function is not mutated and does not refer to itself, this faster macro can be used to define it.
@@ -15,7 +15,7 @@
 
 // Macro for defining internal cognate variables.
 // __block attribute allows mutation at performance cost.
-#define cognate_let(name) \
+#define cognate_let_mutable(name) \
   const cognate_object cognate_variable_ ## name = pop_object(); \
   const __block void(^ cognate_func_ ## name)(void) = ^{push_object(cognate_variable_ ## name);};
 

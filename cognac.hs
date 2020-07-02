@@ -221,7 +221,11 @@ compile (Node body : Node call : Leaf "Let" : xs) =
       args = init call in
   -- Defines immutable and nonrecursive if function does not refer to itself in its body and 'Set' is not found in xs.
   -- TODO: Search for 'Set (Name...)' as opposed to just 'Set'.
-  (if name `isMutated` xs || body `doesCall` name then "cognate_define(" else "cognate_define_immutable_nonrecursive(") ++ lc 
+  (if name `isMutated` xs || body `doesCall` name then 
+    "cognate_define_mutable_recursive(" 
+  else 
+    "cognate_define_immutable_nonrecursive(") 
+  ++ lc 
     (case name of 
       Leaf str -> str
       _        -> error "Invalid function name!") ++ ", {\n"
@@ -251,7 +255,11 @@ compile (Node body : Node call : Leaf "Set" : xs) =
 
 compile (Leaf name : Leaf "Let" : xs) =
   -- Var is marked as immutable if xs does not contain 'Set'. TODO: mark var as immutable if xs does not contain 'Set Var'
-  (if Leaf name `isMutated` xs then "cognate_let(" else "cognate_let_immutable(") ++ lc name ++ ");\n{\n"
+  (if Leaf name `isMutated` xs then 
+    "cognate_let_mutable(" 
+  else 
+    "cognate_let_immutable(") 
+  ++ lc name ++ ");\n{\n"
   ++ compile xs ++ "}\n"
 
 compile (Leaf name : Leaf "Set" : xs) =
