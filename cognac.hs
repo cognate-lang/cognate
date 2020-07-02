@@ -196,10 +196,24 @@ macroexpand (x : xs) = x : macroexpand xs
 macroexpand [] = []
 -}
 
-treeElem :: Tree -> [Tree] -> Bool
-treeElem (Leaf x) (Leaf l:tr) = x == l || Leaf x `treeElem` tr
-treeElem (Leaf x) (Node n:tr) = Leaf x `treeElem` n || Leaf x `treeElem` tr
-treeElem _ [] = False
+doesCall :: [Tree] -> Tree -> Bool
+doesCall (Leaf l:tr) x = x == Leaf l    || tr `doesCall` x
+doesCall (Node n:tr) x = n `doesCall` x || tr `doesCall` x
+doesCall [] _ = False
+
+isMutated :: Tree -> [Tree] -> Bool
+
+isMutated name (Leaf x : Leaf "Set" : xs) =
+  Leaf x == name || isMutated name xs
+
+isMutated name (Node fn : Leaf "Set" : xs) =
+  last fn == name || isMutated name fn || isMutated name xs
+
+isMutated name (Node x : xs) = isMutated name x || isMutated name xs
+
+isMutated name (_ : xs) = isMutated name xs
+
+isMutated _ _ = False
 
 
 compile (Node body : Node call : Leaf "Let" : xs) =
@@ -207,7 +221,7 @@ compile (Node body : Node call : Leaf "Let" : xs) =
       args = init call in
   -- Defines immutable and nonrecursive if function does not refer to itself in its body and 'Set' is not found in xs.
   -- TODO: Search for 'Set (Name...)' as opposed to just 'Set'.
-  (if Leaf "Set" `treeElem` xs || name `treeElem` body then "cognate_define(" else "cognate_define_immutable_nonrecursive(") ++ lc 
+  (if name `isMutated` xs || body `doesCall` name then "cognate_define(" else "cognate_define_immutable_nonrecursive(") ++ lc 
     (case name of 
       Leaf str -> str
       _        -> error "Invalid function name!") ++ ", {\n"
@@ -237,7 +251,7 @@ compile (Node body : Node call : Leaf "Set" : xs) =
 
 compile (Leaf name : Leaf "Let" : xs) =
   -- Var is marked as immutable if xs does not contain 'Set'. TODO: mark var as immutable if xs does not contain 'Set Var'
-  (if Leaf "Set" `treeElem` xs then "cognate_let(" else "cognate_let_immutable(") ++ lc name ++ ");\n{\n"
+  (if Leaf name `isMutated` xs then "cognate_let(" else "cognate_let_immutable(") ++ lc name ++ ");\n{\n"
   ++ compile xs ++ "}\n"
 
 compile (Leaf name : Leaf "Set" : xs) =
