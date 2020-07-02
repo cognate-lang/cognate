@@ -15,7 +15,7 @@ struct __attribute__((packed)) cognate_list
                         *top;
 };
 
-
+// Removing packing will give sligh performance gains at cost or more memory.
 struct __attribute__((packed)) cognate_object
 {
   union
@@ -35,11 +35,11 @@ static char* lookup_type(cognate_type);
 
 static cognate_object check_type(cognate_type expected_type, cognate_object object)
 {
-  if (object.type != expected_type) 
+  if (object.type == expected_type) 
   {
-    type_error(lookup_type(expected_type), lookup_type(object.type));
+    return object;
   }
-  return object;
+  type_error(lookup_type(expected_type), lookup_type(object.type));
 }
 
 static char* lookup_type(cognate_type type)
