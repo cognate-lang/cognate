@@ -196,12 +196,18 @@ macroexpand (x : xs) = x : macroexpand xs
 macroexpand [] = []
 -}
 
+treeElem :: Tree -> [Tree] -> Bool
+treeElem (Leaf x) (Leaf l:tr) = x == l || Leaf x `treeElem` tr
+treeElem (Leaf x) (Node n:tr) = Leaf x `treeElem` n || Leaf x `treeElem` tr
+treeElem _ [] = False
+
+
 compile (Node body : Node call : Leaf "Let" : xs) =
   let name = last call
       args = init call in
-  -- TODO: Use cognate_define_immutable_norecursive where function does not refer to itself and is not mutated.
-  --       This will increase performance as define_immutable_nonrecursive is faster.
-  "cognate_define(" ++ lc 
+  -- Defines immutable and nonrecursive if function does not refer to itself in its body and 'Set' is not found in xs.
+  -- TODO: Search for 'Set (Name...)' as opposed to just 'Set'.
+  (if Leaf "Set" `treeElem` xs || name `treeElem` body then "cognate_define(" else "cognate_define_immutable_nonrecursive(") ++ lc 
     (case name of 
       Leaf str -> str
       _        -> error "Invalid function name!") ++ ", {\n"
@@ -223,15 +229,15 @@ compile (Node body : Node call : Leaf "Set" : xs) =
   "}\n"
 
 
+
 -- Bind is more elegant, but cannot reccur. Maybe a compromise, where the function is defined at the start of the current block.
 {- compile (Leaf name : Leaf "Bind" : xs) = "void(^cognate_" ++ lc name
   ++ ")(void)=pop(block);"
   ++ compile xs -}
 
 compile (Leaf name : Leaf "Let" : xs) =
-  -- TODO: Use cognate_let_immutable when xs does not contain 'Set name' pattern and therefore does not mutate.
-  --       This should increase performance as let_immutable is faster. 
-  "cognate_let(" ++ lc name ++ ");\n{\n"
+  -- Var is marked as immutable if xs does not contain 'Set'. TODO: mark var as immutable if xs does not contain 'Set Var'
+  (if Leaf "Set" `treeElem` xs then "cognate_let(" else "cognate_let_immutable(") ++ lc name ++ ");\n{\n"
   ++ compile xs ++ "}\n"
 
 compile (Leaf name : Leaf "Set" : xs) =
