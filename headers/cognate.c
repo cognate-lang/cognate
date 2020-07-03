@@ -4,6 +4,7 @@
 // Macro to define internal cognate function.
 // __block attribute allows recursion and mutation at performance cost.
 
+// Remove following line to remove Jump support.
 #define create_jump_anchor(name) static jmp_buf jump_to_##name; setjmp(jump_to_##name);
 
 // TODO: different declaration for jump-able functions.
@@ -32,7 +33,7 @@
   const cognate_object cognate_variable_ ## name = pop_object(); \
   cognate_func_ ## name = ^{push_object(cognate_variable_ ## name);};
 
-
+// Again, remove to remove jump support.
 #define jump(func) \
   longjmp(jump_to_##func, 1);
 
