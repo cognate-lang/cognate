@@ -12,7 +12,9 @@ static void print_object (cognate_object object)
   // This really needs refactoring. I need to work out why this fixed the previous error. 
   switch (object.type)
   {
-    case number: printf("%g", object.number); break;
+    // Double precision float has 15sf precision.
+    // Switch to scientific notation after 15 digits to eleminate rounding errors.
+    case number: printf("%.15g", object.number); break;
 
     case list  : { 
                    cognate_list lst = *object.list;
