@@ -207,18 +207,6 @@ doesCall (Leaf l:tr) x = x == Leaf l    || tr `doesCall` x
 doesCall (Node n:tr) x = n `doesCall` x || tr `doesCall` x
 doesCall [] _ = False
 
--- Remove to remove jump support.
-doesJump :: [Tree] -> Tree -> Bool
-
-doesJump (Leaf x : Leaf "Jump" : xs) name =
-  Leaf x == name || doesJump xs name 
-
-doesJump (Node x : xs) name = doesJump x name || doesJump xs name
-
-doesJump (_ : xs) name = doesJump xs name
-
-doesJump _ _ = False
-
 isMutated :: Tree -> [Tree] -> Bool
 
 isMutated name (Leaf x : Leaf "Set" : xs) =
@@ -247,8 +235,6 @@ compile (Node body : Node call : Leaf "Let" : xs) =
   else 
     "cognate_define_immutable_nonrecursive(") 
   ++ lc name ++ ", {\n" 
-    -- Remove this line to remove support for Jump.
-    ++ (if body `doesJump` rawName then "create_jump_anchor(" ++ lc name ++ ");\n" else "")
   ++ compile (intersperse (Leaf "Let") (reverse args) ++ [Leaf "Let" | not (null args)] ++ body)
   ++ "});\n{\n"
   ++ compile xs ++
@@ -300,17 +286,12 @@ compile (Node expr : xs) =
   ++ "});\n"
   ++ compile xs
 
--- Remove to remove Jump support.
-compile (Leaf token : Leaf "Jump" : _) =
-  "jump(" ++ lc token ++ ");\n"
-
 compile (Leaf token : xs)
   | all (`elem` ('.':'-':['0'..'9'])) token = "push(number," ++ token ++ ");\n" ++ compile xs
   | otherwise = "call(" ++ lc token ++ ");\n" ++ compile xs
 
 compile [] = ""
 
-compilerFlags = ["-fblocks", "-Wall", "-Wpedantic", "-Wno-unused", "-O3", "-s"]
 compiler = "clang"
 
 formatFlags = ["-i"]
