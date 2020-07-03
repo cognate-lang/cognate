@@ -28,14 +28,19 @@ parsefile = -- Parsefile takes a string (the file text) as an argument and retur
   map parsesymbols .
   replacesymbols .
   padtokens . -- Space out special characters.
-  unwords . parsecomments . splitOn "~" . parselinecomments
+  parseblockcomments . 
+  parselinecomments
   -- unwords $ parsecharacters $ splitOn "\'" $ -- Convert characters to ASCII value integers
   -- unwords $ parsestrings $ splitOn "\"" -- Convert strings to lists of characters (except i haven't implemented lists yet!)
 
-
+parselinecomments :: String -> String
 parselinecomments str =
   let strings = splitOn "~~" str in
     unwords $ head strings : map (dropWhile (/= '\n')) (tail strings)
+
+parseblockcomments :: String -> String
+parseblockcomments = unwords . dropEvens . splitOn "~"
+  where dropEvens (x : y : xs) = x : dropEvens xs
 
 replacesymbols =
   unwords .
@@ -88,10 +93,6 @@ parsesymbols :: Char -> Char
 parsesymbols str -- Remove all those pesky symbols.
   | str `elem` permittedsymbols = str
   | otherwise = ' '
-
-parsecomments :: [String] -> [String]
-parsecomments (x:y:xs) = x : parsecomments xs
-parsecomments x = x
 
 parsenumbers :: String -> String
 parsenumbers (x:xs)
