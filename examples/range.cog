@@ -12,11 +12,11 @@ Let (the Range from A to B with step S) be
       When (X, <= B)
       (
         return X; 
-        Count from + X S;
+        Jump to Count from + X S;
       );
     );
     Count from A;
   );
 );
 
-Print the Range from 0 to 10000 with step 2;
+Print the Range from 0 to 10000000 with step 2;

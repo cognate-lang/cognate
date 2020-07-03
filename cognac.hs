@@ -41,6 +41,7 @@ parselinecomments str =
 parseblockcomments :: String -> String
 parseblockcomments = unwords . dropEvens . splitOn "~"
   where dropEvens (x : y : xs) = x : dropEvens xs
+        dropEvens x = x
 
 replacesymbols =
   unwords .
@@ -206,6 +207,17 @@ doesCall (Leaf l:tr) x = x == Leaf l    || tr `doesCall` x
 doesCall (Node n:tr) x = n `doesCall` x || tr `doesCall` x
 doesCall [] _ = False
 
+doesJump :: [Tree] -> Tree -> Bool
+
+doesJump (Leaf x : Leaf "Jump" : xs) name =
+  Leaf x == name || doesJump xs name 
+
+doesJump (Node x : xs) name = doesJump x name || doesJump xs name
+
+doesJump (_ : xs) name = doesJump xs name
+
+doesJump _ _ = False
+
 isMutated :: Tree -> [Tree] -> Bool
 
 isMutated name (Leaf x : Leaf "Set" : xs) =
@@ -222,18 +234,18 @@ isMutated _ _ = False
 
 
 compile (Node body : Node call : Leaf "Let" : xs) =
-  let name = last call
+  let rawName = last call
+      name = case rawName of
+               Leaf str -> str
+               _        -> error "Invalid function name!"
       args = init call in
   -- Defines immutable and nonrecursive if function does not refer to itself in its body and 'Set' is not found in xs.
   -- TODO: Search for 'Set (Name...)' as opposed to just 'Set'.
-  (if name `isMutated` xs || body `doesCall` name then 
+  (if rawName `isMutated` xs || body `doesCall` rawName then 
     "cognate_define_mutable_recursive(" 
   else 
     "cognate_define_immutable_nonrecursive(") 
-  ++ lc 
-    (case name of 
-      Leaf str -> str
-      _        -> error "Invalid function name!") ++ ", {\n"
+  ++ lc name ++ ", {\n" ++ (if body `doesJump` rawName then "create_jump_anchor(" ++ lc name ++ ");\n" else "")
   ++ compile (intersperse (Leaf "Let") (reverse args) ++ [Leaf "Let" | not (null args)] ++ body)
   ++ "});\n{\n"
   ++ compile xs ++
@@ -285,9 +297,11 @@ compile (Node expr : xs) =
   ++ "});\n"
   ++ compile xs
 
+compile (Leaf token : Leaf "Jump" : _) =
+  "jump(" ++ lc token ++ ");\n"
+
 compile (Leaf token : xs)
   | all (`elem` ('.':'-':['0'..'9'])) token = "push(number," ++ token ++ ");\n" ++ compile xs
--- | null xs = "attempt_tco(" ++ lc token ++ ");\n"
   | otherwise = "call(" ++ lc token ++ ");\n" ++ compile xs
 
 compile [] = ""

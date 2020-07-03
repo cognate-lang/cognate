@@ -3,6 +3,10 @@
 
 // Macro to define internal cognate function.
 // __block attribute allows recursion and mutation at performance cost.
+
+#define create_jump_anchor(name) static jmp_buf jump_to_##name; setjmp(jump_to_##name);
+
+// TODO: different declaration for jump-able functions.
 #define cognate_define_mutable_recursive(name, body) \
   const __block void(^ cognate_func_ ## name)(void) = ^body
 
@@ -28,20 +32,9 @@
   const cognate_object cognate_variable_ ## name = pop_object(); \
   cognate_func_ ## name = ^{push_object(cognate_variable_ ## name);};
 
-// This macro attempts to prevent unnecessary use of the return stack. It should only be used at the end of a block.
-// Keep for later.
-#define attempt_tco(name) \
-  if ( &&lbl_call_##name == __builtin_return_address(0) ) \
-  { \
-    goto lbl_def_##name; \
-  } \
-  else { \
-    cognate_func_##name (); \
-    lbl_call_##name:;\
-  }
 
-#define tco_call(name) \
-  goto lbl_def_##name;
+#define jump(func) \
+  longjmp(jump_to_##func, 1);
 
 /*
 #define MAX_RECURSION_DEPTH 1048576
@@ -57,6 +50,7 @@ static void check_recursion_depth();
 #include "io.c"
 #include "error.c"
 #include "type.c"
+#include <setjmp.h>
 
 static void init()
 {
