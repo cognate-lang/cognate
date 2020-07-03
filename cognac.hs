@@ -28,10 +28,14 @@ parsefile = -- Parsefile takes a string (the file text) as an argument and retur
   map parsesymbols .
   replacesymbols .
   padtokens . -- Space out special characters.
-  unwords . parsecomments . splitOn "~" -- When you realise that americans can't type tildas :(
-  -- Parse line comments somewhere...
+  unwords . parsecomments . splitOn "~" . parselinecomments
   -- unwords $ parsecharacters $ splitOn "\'" $ -- Convert characters to ASCII value integers
   -- unwords $ parsestrings $ splitOn "\"" -- Convert strings to lists of characters (except i haven't implemented lists yet!)
+
+
+parselinecomments str =
+  let strings = splitOn "~~" str in
+    unwords $ head strings : map (dropWhile (/= '\n')) (tail strings)
 
 replacesymbols =
   unwords .

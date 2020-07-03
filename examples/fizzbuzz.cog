@@ -1,8 +1,8 @@
-~ TODO                                             ~
-~ 'Normal' If-Else statements instead of When      ~
-~ % operator for Modulo - or just Mod?             ~
-~ Decide what is happening with Print and Newlines ~
-~ Actually bother defining Range and Map           ~
+~ TODO                                             
+  'Normal' If-Else statements instead of When      
+  % operator for Modulo - or just Mod?             
+  Decide what is happening with Print and Newlines 
+  Actually bother defining Range and Map           ~
 
 Let (FizzBuzz N) be
 (

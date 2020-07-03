@@ -1,12 +1,12 @@
 Let (When P A) be (Do Do Do P A ());
 
 Let (the Range from A to B with step S) be
-~ Similar to python's xrange() function ~
+~~ Similar to python's xrange() function
 (
   List from
   (
-    ~ Nested helper function, invisible outside its scope ~
-    ~ Will stack overflow on large ranges due to lack of TCO ~
+    ~~ Nested helper function, invisible outside its scope
+    ~~ Will stack overflow on large ranges due to lack of TCO
     Let (Count from X) be
     (
       When (X, <= B)
