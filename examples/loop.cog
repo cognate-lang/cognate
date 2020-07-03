@@ -1,0 +1,15 @@
+Let (Head) be (Index 0);
+Let (When Condition Body) be (Do Do Do Condition Body ());
+
+Let (For each in Lst do Body) be
+(
+  When (Length of Lst, != 0)
+  (
+    push Head of Lst;
+    Do evaluate Body;
+    loop For each in Tail of Lst
+      Body;
+  );
+);
+
+(Print), For each in List (1,2,3,4,5,6,7,8,9);
