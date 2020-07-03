@@ -26,4 +26,4 @@ Currently, Cognate is not in a particularly usable state, and thus, you probably
 4) Run ```chmod +x SETUP BUILD```
 5) Run ```./SETUP``` to setup the environment.
 6) Run ```./BUILD``` to build the compiler.
-7) CognaC is installed - run it with ```./cognac examples/fib.cog```
+7) CognaC is installed. Compile the example 'fib' program with ```./cognac examples/fib.cog``` and run with ```./examples/fib```.
