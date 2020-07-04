@@ -202,35 +202,28 @@ macroexpand (x : xs) = x : macroexpand xs
 macroexpand [] = []
 -}
 
-doesCall :: [Tree] -> Tree -> Bool
-doesCall (Leaf l:tr) x = x == Leaf l    || tr `doesCall` x
-doesCall (Node n:tr) x = n `doesCall` x || tr `doesCall` x
-doesCall [] _ = False
+doesCall :: [Tree] -> String -> Bool
+expr `doesCall` func = func `elem` flatten expr
 
-isMutated :: Tree -> [Tree] -> Bool
+doesMutate :: [Tree] -> String -> Bool
+(Leaf var  : Leaf "Set" : xs) `doesMutate` var'  = var       == var'       || xs `doesMutate` var'
+(Node func : Leaf "Set" : xs) `doesMutate` func' = last func == Leaf func' || xs `doesMutate` func'
+_ `doesMutate` _ = False
 
-isMutated name (Leaf x : Leaf "Set" : xs) =
-  Leaf x == name || isMutated name xs
-
-isMutated name (Node fn : Leaf "Set" : xs) =
-  last fn == name || isMutated name fn || isMutated name xs
-
-isMutated name (Node x : xs) = isMutated name x || isMutated name xs
-
-isMutated name (_ : xs) = isMutated name xs
-
-isMutated _ _ = False
+flatten :: [Tree] -> [String]
+flatten (Node x : xs) = flatten x ++ flatten xs
+flatten (Leaf x : xs) = x : flatten xs
+flatten [] = []
 
 
 compile (Node body : Node call : Leaf "Let" : xs) =
-  let rawName = last call
-      name = case rawName of
+  let name = case last call of
                Leaf str -> str
                _        -> error "Invalid function name!"
       args = init call in
   -- Defines immutable and nonrecursive if function does not refer to itself in its body and 'Set' is not found in xs.
   -- TODO: Search for 'Set (Name...)' as opposed to just 'Set'.
-  (if rawName `isMutated` xs || body `doesCall` rawName then 
+  (if xs `doesMutate` name || body `doesCall` name then 
     "cognate_define_mutable_recursive(" 
   else 
     "cognate_define_immutable_nonrecursive(") 
@@ -261,7 +254,7 @@ compile (Node body : Node call : Leaf "Set" : xs) =
 
 compile (Leaf name : Leaf "Let" : xs) =
   -- Var is marked as immutable if xs does not contain 'Set'. TODO: mark var as immutable if xs does not contain 'Set Var'
-  (if Leaf name `isMutated` xs then 
+  (if xs `doesMutate` name then 
     "cognate_let_mutable(" 
   else 
     "cognate_let_immutable(") 
