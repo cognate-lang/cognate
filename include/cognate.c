@@ -1,9 +1,6 @@
 #ifndef COGNATE_C
 #define COGNATE_C
 
-// Security thing
-#define FORTIFY_SOURCE 2
-
 // Macro to define internal cognate function.
 // __block attribute allows recursion and mutation at performance cost.
 

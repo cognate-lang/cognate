@@ -6,8 +6,15 @@ Cognate is a stack oriented, dynamically typed, functional programming language 
 ### Cognate is readable
 As the above program shows, words starting with lower-case letters are ignored by the compiler (and are not highlighted). This allows comments and code to be easily bundled together, enhancing readability and allowing programmers to more easily express their intentions. While this means that Cognate can be very verbose, verbosity can be a good thing - this 'informal syntax' gives extra information to anyone reading the source.
 
-### Cognate is fast
-Cognate is compiled directly to C. Even my naive attempt at a compiler is able to outperform most interpreted languages, leaving python and ruby in the dust. The included 'fib' example already runs at within 2x the performance of its Haskell equivalent (compiled with GHC and -O3). As time goes on, I will be able to optimise the compiler and gain even more performance. Furthermore, cognate produces very small binaries and could be used for a high level language in an embedded environment.
+### Cognate is relatively fast
+CognaC compiles Cognate directly to C. This produces very efficient binaries and allows Cognate to run much faster than most interpreted languages such as Python or Ruby. However, it is easily outpaced by other compiled languages like Haskell and C++ that optimise more aggressively. However, Cognate has a huge potential for optimisation. In future, I will be able to implement many of these optimisations and make Cognate even faster. It is also worth noting that CognaC produces very small binaries. This could make Cognate a candidate for a scripting language in embedded environments.
+
+|                 | Python 3 | Ruby | CocnaC | Haskell (GHC) | Lisp (SBCL) | C++ (G++) | C (GCC) | Golang |
+|-----------------|----------|------|--------|---------------|-------------|-----------|---------|--------|
+| fib(35) runtime | 4.00s    | 1.34 | 1.26s  | 0.72s         | 0.19s       | 0.04s     | 0.04s   | 0.08   |
+| fib binary size | N/A      | N/A  | 36k    | 964k          | N/A         | 24k       | 20k     | 2M     |
+
+(If newer language versions produce different results, please submit an issue so I can update this table)
 
 ### Cognate is simple
 Cognate has only a handful of syntax elements. In future, this will allow me to elegantly introduce compile time macros and reflection, similar to those found in lisp dialects, that manipulate the syntax tree directly. I am also looking at implementing Forth-style code metaprogramming with immediate words, etc. 
