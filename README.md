@@ -4,16 +4,16 @@ Cognate is a stack oriented, functional programming language designed to help pr
 ![Program to compute the 42nd Fibonacci number](fibonacci.png?raw=true)
 
 ### Cognate is readable
-As the above program shows, words starting with lower-case letters are ignored by the compiler (and are not highlighted). This allows comments and code to be easily bundled together, enhancing readability and allowing programmers to more easily express their intentions. While this means that Cognate can be very verbose, verbosity can be a good thing - this "informal syntax" gives extra information to anyone reading the source.
+As the above program shows, words starting with lower-case letters are ignored by the compiler (and are not highlighted). This allows comments and code to be easily bundled together, enhancing readability and allowing programmers to more easily express their intentions. While this means that Cognate can be very verbose, verbosity can be a good thing - this 'informal syntax' gives extra information to anyone reading the source.
 
 ### Cognate is fast
-Cognate is compiled directly to C. Even my naive attempt at a compiler is able to outperform most interpreted languages, leaving python and ruby in the dust. As time goes on, I will be able to optimise the compiler and gain even more performance. Furthermore, cognate produces very small binaries and could be used for a high level language in an embedded environment.
+Cognate is compiled directly to C. Even my naive attempt at a compiler is able to outperform most interpreted languages, leaving python and ruby in the dust. The included 'fib' example already runs at within 2x the performance of its Haskell equivalent (compiled with GHC and -O3). As time goes on, I will be able to optimise the compiler and gain even more performance. Furthermore, cognate produces very small binaries and could be used for a high level language in an embedded environment.
 
 ### Cognate is simple
 Cognate has only a handful of syntax elements. In future, this will allow me to elegantly introduce compile time macros and reflection, similar to those found in lisp dialects, that manipulate the syntax tree directly. I am also looking at implementing Forth-style code metaprogramming with immediate words, etc. 
 
 ### Cognate is functional
-Cognate is optimised for functional programming - not complicated over-the-top functional programming with monads and applicative functors, but functional programming non-the-less. In Cognate, a bracketed expression (known as a Block) represents a closure - an anonymous function that inherits variables from where it was defined. These allow functions to be passed as arguments and returned from other functions. Cognate also discourages variable mutation, preferring to shadow variables instead, limiting side-effects.
+Cognate is optimised for functional programming - not complicated over-the-top (in my opinion) functional programming with monads and applicative functors as you might see in a Haskell program, but the dynamically typed functional programming often seen in scheme and other lisp dialects. In Cognate, a bracketed expression (known as a Block) represents a closure - an anonymous function that inherits variables from where it was defined. These allow functions to be passed as arguments and returned from other functions. Cognate also discourages variable mutation in favour of shadowing variables instead and limiting side-effects.
 
 ### Cognate is powerful
 The stack, around which cognate is designed, allows Cognate to do things which many other languages cannot. One example is multiple return values. While other languages - such as python - require the use of tuples to return multiple values, Cognate uses the stack to achieve this without the use of any data structures. Cognate also uses the stack to allow expressions to be written in point-free notation.
