@@ -7,7 +7,7 @@ Let (For each in Lst do Body) be
   (
     push Head of Lst;
     Do evaluate Body;
-    Jump For each in Tail of Lst
+    For each in Tail of Lst
       Body;
   );
 );
