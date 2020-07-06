@@ -11,6 +11,8 @@ import Data.Maybe
 import Control.Exception
 import Data.List.Split
 
+version = "0.0.1"
+
 replace from to = intercalate to . splitOn from
 
 data Tree =
@@ -223,20 +225,17 @@ compile (Node body : Node call : Leaf "Let" : xs) =
       args = init call in
   -- Defines immutable and nonrecursive if function does not refer to itself in its body and 'Set' is not found in xs.
   -- TODO: Search for 'Set (Name...)' as opposed to just 'Set'.
-  (if xs `doesMutate` name || body `doesCall` name then 
-    "cognate_define_mutable_recursive(" 
-  else 
-    "cognate_define_immutable_nonrecursive(") 
-  ++ lc name ++ ", {\n" 
+  "function(" ++ lc name ++ ", " ++ (if xs `doesMutate` name || body `doesCall` name then 
+    "mutable" else "immutable") ++ ",{" 
   ++ compile (intersperse (Leaf "Let") (reverse args) ++ [Leaf "Let" | not (null args)] ++ body)
-  ++ "});\n{\n"
+  ++ "});{"
   ++ compile xs ++
   "}\n"
 
 compile (Node body : Node call : Leaf "Set" : xs) =
   let name = last call
       args = init call in
-  "cognate_redefine(" ++ lc 
+  "mutate_function(" ++ lc 
     (case name of 
       Leaf str -> str
       _        -> error "Invalid function name!") ++ ", {\n"
@@ -254,16 +253,13 @@ compile (Node body : Node call : Leaf "Set" : xs) =
 
 compile (Leaf name : Leaf "Let" : xs) =
   -- Var is marked as immutable if xs does not contain 'Set'. TODO: mark var as immutable if xs does not contain 'Set Var'
-  (if xs `doesMutate` name then 
-    "cognate_let_mutable(" 
-  else 
-    "cognate_let_immutable(") 
-  ++ lc name ++ ");\n{\n"
-  ++ compile xs ++ "}\n"
+  "variable(" ++ lc name ++ ","
+  ++ (if xs `doesMutate` name then "mutable" else "immutable")++ ");{"
+  ++ compile xs ++ "}"
 
 compile (Leaf name : Leaf "Set" : xs) =
-  "cognate_set(" ++ lc name ++ ");\n{\n" 
-  ++ compile xs ++ "}\n"
+  "mutate_variable(" ++ lc name ++ ");{" 
+  ++ compile xs ++ "}"
 
 
 -- Primitive Do inlining.
@@ -293,6 +289,9 @@ formatter = "clang-format"
 getPath =
   intercalate "/" . init . splitOn "/" <$> getExecutablePath
 
+
+header in_file = "// Compiled from " ++ in_file ++ " by CognaC version " ++ version ++ "\n"
+
 main :: IO ()
 main =
   do
@@ -300,17 +299,17 @@ main =
     args <- getArgs
     let compilerFlags = 
           words $ "-fblocks -lBlocksRuntime -l:libgc.a -Wall -Wpedantic -Wno-unused -O3 -s -I " 
-          ++ path ++ "/headers" 
+          ++ path ++ "/include" 
 
     let in_file = head args
     let out_file = head (splitOn "." in_file) ++ ".c"
     let compiler_args = tail args
 
     putStrLn "  ____                         ____ \n / ___|___   __ _ _ __   __ _ / ___|\n| |   / _ \\ / _` | '_ \\ / _` | |    \n| |__| (_) | (_| | | | | (_| | |___\n \\____\\___/ \\__, |_| |_|\\__,_|\\____|\n            |___/                   "
-    putStrLn "Cognate Compiler - Version 0.0.1"
+    putStrLn $ "Cognate Compiler - Version " ++ version
     putStrLn $ "Compiling " ++ in_file ++ " to " ++ out_file ++ "... "
     source <- readFile in_file
-    writeFile out_file $ "#include\"cognate.c\"\nint main()\n{\ninit();\n" ++ compile (parsefile source) ++ "return 0;\n}\n"
+    writeFile out_file $ header in_file ++ "#include\"cognate.c\"\nint main()\n{\ninit();\n" ++ compile (parsefile source) ++ "return 0;\n}\n"
     rawSystem formatter (formatFlags ++ [out_file])
     putStrLn $ "Compiling " ++ out_file ++ " to " ++ stripExtension in_file ++ "... "
     rawSystem compiler ([out_file, "-o", stripExtension in_file] ++ compilerFlags ++ compiler_args)
