@@ -160,50 +160,6 @@ parseinformalsyntax =
 
 compile :: [Tree] -> String
 
-{-
-compile (Node body : Node call : Leaf "Alias" : rest) = 
-  -- TODO: Fix
-  let name = last call
-      args = init call in
-        compile $ macroexpand name args body rest
-          where
-            macroexpand :: Tree -> [Tree] -> [Tree] -> [Tree] -> [Tree]
-            macroexpand _ _ _ [] = []
-            macroexpand name args body (x:xs)
-              | (x:xs) !! length args == name = 
-                foldl replacemacroarg body (zip call (x:xs))
-                  ++ drop (length args) xs
-              | otherwise = (case x of Leaf _ -> x
-                                       Node y -> Node $ macroexpand name args body y)
-                            : macroexpand name args body xs
-            replacemacroarg [] (_,_) = []
-            replacemacroarg (x : xs) (argname, argvalue)
-              | argname == x = argvalue : replacemacroarg xs (argname, argvalue)
-              | otherwise = (case x of
-                               Leaf _ -> x
-                               Node y -> Node $ replacemacroarg y (argname, argvalue)) : replacemacroarg xs (argname, argvalue)
-
-macroreplace :: Tree -> [Tree] -> [Tree] -> [Tree]
-macroreplace _ _ [] = []
-macroreplace oldtoken newtokens (Node token : oldAST) =
-  macroexpand $! Node (macroreplace oldtoken newtokens token) : macroreplace oldtoken newtokens oldAST
-macroreplace oldtoken newtokens (token : oldAST)
-  | token == oldtoken = macroexpand $! macroreplace oldtoken newtokens newtokens ++ macroreplace oldtoken newtokens oldAST
-  | token /= oldtoken = macroexpand $! token : macroreplace oldtoken newtokens oldAST
-
-macroexpand :: [Tree] -> [Tree]
-macroexpand (Node expr : Node name_and_args : Leaf "Alias" : oldAST) =
-  let name = last name_and_args
-      args = reverse $ init name_and_args in
-      macroexpand $ macroreplace name (macroexpand (intersperse (Leaf "Alias") args ++ [Leaf "Alias"] ++ expr)) oldAST
-
-macroexpand (Node expr : xs) = Node (macroexpand expr) : xs
-macroexpand (expr : Node name_and_args : Leaf "Alias" : oldAST) = macroexpand $ expr : Node name_and_args : Leaf "Alias" : oldAST
-macroexpand (expr : name : (Leaf "Alias") : oldAST) = macroexpand $ macroreplace name [expr] oldAST 
-macroexpand (x : xs) = x : macroexpand xs
-macroexpand [] = []
--}
-
 doesCall :: [Tree] -> String -> Bool
 expr `doesCall` func = func `elem` flatten expr
 
