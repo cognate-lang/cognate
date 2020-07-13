@@ -15,7 +15,7 @@ struct __attribute__((packed)) cognate_list
                         *top;
 };
 
-// Removing packing will give sligh performance gains at cost or more memory.
+// Removing packing will give slight performance gains at cost of more memory.
 struct __attribute__((packed)) cognate_object
 {
   union
