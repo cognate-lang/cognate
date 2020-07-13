@@ -7,7 +7,6 @@
 COGNATE_C	include/cognate.c	2;"	d	file:
 DEBUG_C	include/debug.c	2;"	d	file:
 ERROR_C	include/error.c	2;"	d	file:
-FORTIFY_SOURCE	include/cognate.c	5;"	d	file:
 FUNC_C	include/func.c	2;"	d	file:
 INITIAL_LIST_SIZE	include/stack.c	12;"	d	file:
 IO_C	include/io.c	2;"	d	file:
@@ -27,8 +26,8 @@ expand_stack	include/stack.c	/^static void expand_stack()$/;"	f	file:
 external_function	include/func.c	10;"	d	file:
 external_function_tail	include/func.c	/^void external_function_tail() { $/;"	f
 external_variable	include/func.c	14;"	d	file:
-function	include/cognate.c	13;"	d	file:
-immutable	include/cognate.c	11;"	d	file:
+function	include/cognate.c	10;"	d	file:
+immutable	include/cognate.c	8;"	d	file:
 init	include/cognate.c	/^static void init()$/;"	f	file:
 init_stack	include/stack.c	/^static void init_stack()$/;"	f	file:
 list	include/type.c	/^    struct cognate_list *list;$/;"	m	union:cognate_object::__anon2	typeref:struct:cognate_object::__anon2::cognate_list	file:
@@ -39,9 +38,9 @@ main	examples/loop.c	/^int main() {$/;"	f
 main	examples/range.c	/^int main() {$/;"	f
 malloc	include/func.c	24;"	d	file:
 malloc	include/stack.c	9;"	d	file:
-mutable	include/cognate.c	10;"	d	file:
-mutate_function	include/cognate.c	16;"	d	file:
-mutate_variable	include/cognate.c	25;"	d	file:
+mutable	include/cognate.c	7;"	d	file:
+mutate_function	include/cognate.c	13;"	d	file:
+mutate_variable	include/cognate.c	22;"	d	file:
 number	include/type.c	/^    double number;$/;"	m	union:cognate_object::__anon2	file:
 number	include/type.c	/^typedef enum {block, number, list} cognate_type;$/;"	e	enum:__anon1	file:
 peek	include/stack.c	27;"	d	file:
@@ -61,4 +60,4 @@ throw_error	include/error.c	/^noreturn static void throw_error(char* message)$/;
 top	include/type.c	/^                        *top;$/;"	m	struct:cognate_list	typeref:struct:cognate_list::	file:
 type	include/type.c	/^  cognate_type type : 4;$/;"	m	struct:cognate_object	file:
 type_error	include/error.c	/^noreturn static void type_error(char* expected, char* recieved)$/;"	f	file:
-variable	include/cognate.c	21;"	d	file:
+variable	include/cognate.c	18;"	d	file:
