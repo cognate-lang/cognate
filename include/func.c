@@ -109,5 +109,9 @@ external_function(tuple,
   push(list, lst);
 })
 
+external_function(stack,
+{
+  push(list, &stack));
+}
 
 #endif
