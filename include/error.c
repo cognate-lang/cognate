@@ -12,21 +12,32 @@ noreturn static void throw_error(char* message);
 noreturn static void type_error(char* expected, char* recieved)
 {
   static char error_message[80];
-  sprintf(error_message, "Type Error!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1. Expected type '%s' but recieved type '%s'", expected, recieved);
+  sprintf(error_message, "Type Error! Expected type '%s' but recieved type '%s'", expected, recieved);
   throw_error(error_message);
 }
 
 noreturn static void throw_error(char* message)
 {
-  puts("/------------------------------- Cognate Error! --------------------------------\\");
-  puts("| Cognate has encountered an unrecoverable error and cannot continue execution. |");
-  puts("| Useful information, such as the expected cause of error, is printed below.    |");
-  while (strlen(message) > 77)
+  // Uses utf8 box-drawing characters and ansi colour codes to print a pretty error message.
+  int i;
+  printf("\342\224\214");
+  for (i = 0; i < 30; ++i) printf("\342\224\200");
+  printf("\342\224\244 \033[0;1mCognate Error!\033[0m \342\224\234");
+  for (i = 0; i < 30; ++i) printf("\342\224\200");
+  puts("\342\224\220");
+  puts("\342\224\202 Cognate has reached an unrecoverable state and cannot continue execution.    \342\224\202");
+  puts("\342\224\202 The expected cause of error is printed below.                                \342\224\202");
+  puts("\342\224\202                                                                              \342\224\202");
+  while (strlen(message) > 76)
   {
-    printf("| %.*s |\n", 77, message);
-    message += 77;
+    printf("\342\224\202 \033[31;1m%.*s\033[0m \342\224\202\n", 76, message);
+    message += 76;
   }
-  printf("| %s |\n", message); // TODO: pad right '|'.
+  printf("\342\224\202 \033[31;1m%s\033[0m", message);
+  for (i = 77 - strlen(message); i > 0; --i) printf(" ");
+  printf("\342\224\202\n\342\224\224");
+  for (i = 0; i < 78; ++i) printf("\342\224\200");
+  puts("\342\224\230");
   exit(-1);
 }
 

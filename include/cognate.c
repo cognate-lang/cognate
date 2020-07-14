@@ -44,7 +44,6 @@ static void init()
 {
   // Mark top of RETURN stack (for recursion depth checking).
   //init_recursion_depth_check();
-
   // Seed the random number generator properly.
   struct timespec ts;
   timespec_get(&ts, TIME_UTC);
