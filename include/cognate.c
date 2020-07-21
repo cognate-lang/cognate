@@ -8,7 +8,7 @@
 #define immutable const
 
 #define function(name, flags, body) \
-  flags void(^ cognate_function_ ## name)(void) = ^body
+  flags __attribute__((unused)) void(^ cognate_function_ ## name)(void) = ^body
 
 #define mutate_function(name, body) \
   cognate_function_ ## name = ^body
@@ -16,7 +16,7 @@
 // Macro for defining internal cognate variables.
 // __block attribute allows mutation at performance cost.
 #define variable(name, flags) \
-  immutable cognate_object cognate_variable_ ## name = pop_any(); \
+  immutable __attribute__((unused)) cognate_object cognate_variable_ ## name = pop_any(); \
   flags void(^ cognate_function_ ## name)(void) = ^{push_object(cognate_variable_ ## name);};
 
 #define mutate_variable(name) \

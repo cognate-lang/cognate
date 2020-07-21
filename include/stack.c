@@ -15,10 +15,10 @@
 #ifdef DEBUG // Push an object to the stack. Print if debugging.
   #define push(object_type, object) \
     {fprintf(stderr, "[DEBUG]%s:%d -> Pushing %s\n", __FILE__, __LINE__, #object); \
-    push_object((cognate_object){.type=object_type, .object_type=object});}
+    push_object((cognate_object){.object_type=object, .type=object_type});}
 #else
   #define push(object_type, object) \
-    push_object((cognate_object){.type=object_type, .object_type=object})
+    push_object((cognate_object){.object_type=object, .type=object_type})
 #endif
 
 #define pop(object_type) \

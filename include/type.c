@@ -1,7 +1,6 @@
 #ifndef TYPE_C
 #define TYPE_C
 
-#include <stdnoreturn.h>
 #include <stdio.h>
 #include "error.c"
 #include <Block.h>
@@ -31,7 +30,7 @@ typedef struct cognate_object cognate_object;
 typedef struct cognate_list   cognate_list;
 
 static cognate_object check_type(cognate_type, cognate_object);
-static char* lookup_type(cognate_type);
+static const char* lookup_type(cognate_type);
 
 static cognate_object check_type(cognate_type expected_type, cognate_object object)
 {
@@ -42,7 +41,7 @@ static cognate_object check_type(cognate_type expected_type, cognate_object obje
   type_error(lookup_type(expected_type), lookup_type(object.type));
 }
 
-static char* lookup_type(cognate_type type)
+static const char* lookup_type(cognate_type type)
 {
   switch(type)
   {

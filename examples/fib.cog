@@ -1,3 +1,5 @@
+~~ TODO: Non lambda-calculus bools
+
 ~~ Definitions that may become builtin or part of std
 ~~ Lambda-Calculus bools are slow, but easy to define
 Let (Either)       be (Do Clone);

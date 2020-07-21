@@ -31,7 +31,7 @@ external_function(sum,            { push(number, pop(number) + pop(number));    
 external_function(product,        { push(number, pop(number) * pop(number));               })
 external_function(divisor,        { double n = pop(number); push(number, pop(number) / n); })
 external_function(difference,     { double n = pop(number); push(number, pop(number) - n); })
-external_function(modulo,         { int n = pop(number); push(number, (int)pop(number) % n); }) // TODO: add checking if integer.
+external_function(modulo,         { int n = pop(number); push(number, (double)((int)pop(number) % n)); }) // TODO: add checking if integer.
 
 external_function(random,         { double low = pop(number); double high = pop(number); double step = pop(number); 
                                push(number, low + (double)(rand() % (int)((high - low) / step)) * step); })
@@ -52,14 +52,14 @@ external_function(exceed,         { if (pop(number) <  pop(number)) call(true) e
 external_function(equalorpreceed, { if (pop(number) >= pop(number)) call(true) else call(false); })
 external_function(equalorexceed,  { if (pop(number) <= pop(number)) call(true) else call(false); })
 
-void external_function_tail() { 
+external_function(tail, { 
   cognate_list *lst = (cognate_list*)malloc(sizeof(cognate_list));
   *lst = *pop(list);
   if (lst->start == lst->top) 
     throw_error("Tail encountered empty list!");
   lst->start++;
   push(list, lst);
-}
+})
 
 external_function(index, { 
   int index = pop(number);
@@ -70,7 +70,7 @@ external_function(index, {
 })
 external_function(length,{
   cognate_list* lst = pop(list);
-  push(number, lst -> top - lst -> start);
+  push(number, (double)(lst -> top - lst -> start));
 })
 external_function(list,  { 
   // I solemnly swear that I will NEVER RETURN THE ADDRESS OF A LOCAL VARIABLE!
@@ -85,7 +85,7 @@ external_function(list,  {
   expr();
   // Store the resultant list, realloc-ing to fit snugly in memory.
   cognate_list* lst = (cognate_list*)malloc(sizeof(stack));
-  lst->start = realloc(stack.start, (stack.top - stack.start) * sizeof(cognate_object));
+  lst->start = (cognate_object*) realloc(stack.start, (stack.top - stack.start) * sizeof(cognate_object));
   lst->top = stack.top - stack.start + lst->start;
   //TODO: Shrink the list to fit here.
   // Restore the original stack
