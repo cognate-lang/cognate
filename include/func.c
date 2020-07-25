@@ -25,7 +25,7 @@
 #define realloc GC_REALLOC
 
 external_function(do,             { pop(block)();                             })
-external_function(print,          { print_object(pop_any()); puts(""); })
+external_function(print,          { print_object(pop_any(), 1); puts("");  })
 
 external_function(sum,            { push(number, pop(number) + pop(number));               })
 external_function(product,        { push(number, pop(number) * pop(number));               })
@@ -60,7 +60,6 @@ external_function(tail, {
   lst->start++;
   push(list, lst);
 })
-
 external_function(index, { 
   int index = pop(number);
   cognate_list lst = *pop(list);
@@ -84,8 +83,8 @@ external_function(list,  {
   // Eval expr
   expr();
   // Store the resultant list, realloc-ing to fit snugly in memory.
-  cognate_list* lst = (cognate_list*)malloc(sizeof(stack));
-  lst->start = (cognate_object*) realloc(stack.start, (stack.top - stack.start) * sizeof(cognate_object));
+  cognate_list* lst = (cognate_list*)malloc(sizeof(cognate_list));
+  lst->start = (cognate_object*)realloc(stack.start, (stack.top - stack.start) * sizeof(cognate_object));
   lst->top = stack.top - stack.start + lst->start;
   //TODO: Shrink the list to fit here.
   // Restore the original stack
@@ -95,12 +94,28 @@ external_function(list,  {
   push(list, lst);
 })
 
+external_function(characters, {
+  char* str = pop(string);  
+  cognate_list* lst = (cognate_list*)malloc(sizeof(cognate_list));
+  lst->start = (cognate_object*)malloc(sizeof(cognate_object) * (strlen(str) + 1));
+  lst->top = lst->start + strlen(str);
+  for (int i = strlen(str); i >= 0; --i)
+  {
+    char *temp = (char*)malloc(sizeof(char));
+    *temp = str[i];
+    lst->start[i] = ((cognate_object){.type=string, .string=temp});
+  }
+  push(list, lst);
+})
+
+
+
 external_function(tuple,
 {
   // Allocate the list object.
   cognate_list* lst = (cognate_list*)malloc(sizeof(cognate_list));
   // Initialise the list.
-  *lst = (cognate_list){ .start = (cognate_object*)malloc(sizeof(cognate_object) * 2) };
+  lst->start = (cognate_object*)malloc(sizeof(cognate_object) * 2);
   lst->top = lst->start + 2;
   // Fill the list.
   lst->start[0] = pop_any();
