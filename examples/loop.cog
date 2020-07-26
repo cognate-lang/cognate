@@ -1,5 +1,5 @@
 Let (Head) be (Index 0);
-Let (When Condition Body) be (Do Do Do Condition Body ());
+Let (When Condition Body) be (If Condition then Body else (nothing));
 
 Let (For each in Lst do Body) be
 (

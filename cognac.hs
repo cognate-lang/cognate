@@ -181,12 +181,13 @@ compile (Node body : Node call : Leaf "Let" : xs) =
       args = init call in
   -- Defines immutable and nonrecursive if function does not refer to itself in its body and 'Set' is not found in xs.
   -- TODO: Search for 'Set (Name...)' as opposed to just 'Set'.
-  "function(" ++ lc name ++ ", " ++ (if xs `doesMutate` name || body `doesCall` name then 
+  if xs `doesCall` name then
+  ("function(" ++ lc name ++ ", " ++ (if xs `doesMutate` name || body `doesCall` name then 
     "mutable" else "immutable") ++ ",{" 
   ++ compile (intersperse (Leaf "Let") (reverse args) ++ [Leaf "Let" | not (null args)] ++ body)
   ++ "});{"
   ++ compile xs ++
-  "}\n"
+  "}\n") else compile xs
 
 compile (Node body : Node call : Leaf "Set" : xs) =
   let name = last call
@@ -209,9 +210,9 @@ compile (Node body : Node call : Leaf "Set" : xs) =
 
 compile (Leaf name : Leaf "Let" : xs) =
   -- Var is marked as immutable if xs does not contain 'Set'. TODO: mark var as immutable if xs does not contain 'Set Var'
-  "variable(" ++ lc name ++ ","
+  if xs `doesCall` name then ("variable(" ++ lc name ++ ","
   ++ (if xs `doesMutate` name then "mutable" else "immutable")++ ");{"
-  ++ compile xs ++ "}"
+  ++ compile xs ++ "}") else compile xs
 
 compile (Leaf name : Leaf "Set" : xs) =
   "mutate_variable(" ++ lc name ++ ");{" 
