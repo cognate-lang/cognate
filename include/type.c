@@ -5,7 +5,7 @@
 #include "error.c"
 #include <Block.h>
 
-typedef enum {string, block, number, list} cognate_type;
+typedef enum {boolean, string, block, number, list} cognate_type;
 
 struct __attribute__((packed)) cognate_list
 {
@@ -20,6 +20,7 @@ struct __attribute__((packed)) cognate_object
   union
   {
     char* string;
+    _Bool boolean;
     void (^block)(void);
     double number;
     struct cognate_list *list;
@@ -46,6 +47,7 @@ static const char* lookup_type(cognate_type type)
 {
   switch(type)
   {
+    case boolean: return "Boolean";
     case string : return "String";
     case block  : return "Block";
     case number : return "Number";

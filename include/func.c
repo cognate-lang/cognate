@@ -37,20 +37,21 @@ external_function(random,         { double low = pop(number); double high = pop(
                                push(number, low + (double)(rand() % (int)((high - low) / step)) * step); })
 
 external_function(drop,           { pop_any();                                                                                     })
-external_function(clone,          { push_object(peek_object());                                                                       })
-external_function(swap,           { cognate_object a = pop_any(); cognate_object b = pop_any(); push_object(a); push_object(b); })
-external_function(clear,          { init_stack();                                                                                     })
+external_function(twin,           { push_any(peek_object());                                                                       })
+external_function(triplet,        { cognate_object a = peek_object(); push_any(a); push_any(a);                                    })
+external_function(swap,           { cognate_object a = pop_any(); cognate_object b = pop_any(); push_any(a); push_any(b);          })
+external_function(clear,          { init_stack();                                                                                  })
 
-external_variable(true,  block, ^{ call(swap); call(drop); })
-external_variable(false, block, ^{ call(drop);             })
+external_variable(true,  block, ^{ push(boolean, 1); })
+external_variable(false, block, ^{ push(boolean, 0); })
 
 
-external_function(equal,          { if (pop(number) == pop(number)) call(true) else call(false); })
-external_function(notequal,       { if (pop(number) != pop(number)) call(true) else call(false); })
-external_function(preceed,        { if (pop(number) >  pop(number)) call(true) else call(false); })
-external_function(exceed,         { if (pop(number) <  pop(number)) call(true) else call(false); })
-external_function(equalorpreceed, { if (pop(number) >= pop(number)) call(true) else call(false); })
-external_function(equalorexceed,  { if (pop(number) <= pop(number)) call(true) else call(false); })
+external_function(equal,          { push(boolean, pop(number) == pop(number)); })
+external_function(notequal,       { push(boolean, pop(number) != pop(number)); })
+external_function(preceed,        { push(boolean, pop(number) >  pop(number)); })
+external_function(exceed,         { push(boolean, pop(number) <  pop(number)); })
+external_function(equalorpreceed, { push(boolean, pop(number) >= pop(number)); })
+external_function(equalorexceed,  { push(boolean, pop(number) <= pop(number)); })
 
 external_function(tail, { 
   cognate_list *lst = (cognate_list*)malloc(sizeof(cognate_list));
@@ -65,7 +66,7 @@ external_function(index, {
   cognate_list lst = *pop(list);
   if (lst.start + index > lst.top)
     throw_error("Index out of bounds!");
-  push_object(lst . start [index]);
+  push_any(lst . start [index]);
 })
 external_function(length,{
   cognate_list* lst = pop(list);
@@ -126,7 +127,23 @@ external_function(tuple,
 
 external_function(stack,
 {
-  push(list, &stack));
-}
+  push(list, &stack);
+})
+
+external_function(if,
+{
+  pop(block)();
+  if (pop(boolean)) 
+  {
+    void(^temp)(void) = pop(block);
+    pop(block);
+    temp();
+  } 
+  else 
+  {
+    pop(block);
+    pop(block)();
+  }
+})
 
 #endif

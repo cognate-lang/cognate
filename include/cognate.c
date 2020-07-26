@@ -17,11 +17,11 @@
 // __block attribute allows mutation at performance cost.
 #define variable(name, flags) \
   immutable __attribute__((unused)) cognate_object cognate_variable_ ## name = pop_any(); \
-  flags void(^ cognate_function_ ## name)(void) = ^{push_object(cognate_variable_ ## name);};
+  flags void(^ cognate_function_ ## name)(void) = ^{push_any(cognate_variable_ ## name);};
 
 #define mutate_variable(name) \
   const cognate_object cognate_variable_ ## name = pop_any(); \
-  cognate_function_ ## name = ^{push_object(cognate_variable_ ## name);};
+  cognate_function_ ## name = ^{push_any(cognate_variable_ ## name);};
 
 
 /*
