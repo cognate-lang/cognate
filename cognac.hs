@@ -31,9 +31,9 @@ parsefile = -- Parsefile takes a string (the file text) as an argument and retur
   replacesymbols .
   padtokens . -- Space out special characters.
   parseblockcomments . 
-  parselinecomments
+  parselinecomments .
   -- unwords $ parsecharacters $ splitOn "\'" $ -- Convert characters to ASCII value integers
-  -- unwords $ parsestrings $ splitOn "\"" -- Convert strings to lists of characters (except i haven't implemented lists yet!)
+  parsestrings -- Convert strings to lists of characters
 
 parselinecomments :: String -> String
 parselinecomments str =
@@ -76,6 +76,15 @@ parsestrings (x:y:xs) =
   x : "Tuple" : intercalate " Tuple " (init str) : last str : parsestrings xs
     where str = map (\s -> " \'" ++ [s] ++ "\'") y
 parsestrings x = x  -}
+
+parsestrings :: String -> String
+parsestrings =
+  createStrings . splitOn "'"
+    where
+      createStrings :: [String] -> String
+      createStrings (x:y:xs) =
+        x ++ " StringLiteral (" ++ intercalate [head delims] (map (show . ord) y) ++ ") " ++ createStrings xs
+      createStrings [s] = s
 
 {- parsecharacters :: [String] -> [String]
 parsecharacters (x:y:xs) =
@@ -226,11 +235,22 @@ compile (Node expr : Leaf "Do" : xs) =
   "}\n" ++
   compile xs
 
+compile (Node str : Leaf "StringLiteral" : xs) =
+  "push(string,\"" ++ sanitise (map (chr . readNumber) str) ++ "\");" ++ compile xs
+    where 
+      readNumber :: Tree -> Int
+      readNumber (Leaf num) = read num
+      readNumber (Node _) = error "String literal parse error!"
+      sanitise ('"':xs) = "\\\"" ++ sanitise xs
+      sanitise (x:xs) = x : sanitise xs
+      sanitise x = x
+
 compile (Node expr : xs) =
   "push(block,\n^{\n"
   ++ compile expr
   ++ "});\n"
   ++ compile xs
+
 
 compile (Leaf token : xs)
   | all (`elem` ('.':'-':['0'..'9'])) token = "push(number," ++ token ++ ");\n" ++ compile xs
