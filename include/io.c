@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 #include "type.c"
-#include "debug.c"
 
 static void print_object (cognate_object object, _Bool quotes);
 

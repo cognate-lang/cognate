@@ -31,7 +31,6 @@ static void init_recursion_depth_check();
 static void check_recursion_depth();
 */
 
-#include "debug.c"
 #include <time.h>
 #include "stack.c"
 #include "func.c"

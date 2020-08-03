@@ -12,7 +12,7 @@
 #define INITIAL_LIST_SIZE 16 // Constant values for initialising stack sizes.
 #define LIST_GROWTH_FACTOR 1.5
 
-#ifdef DEBUG // Push an object to the stack. Print if debugging.
+#ifdef EBUG // Push an object to the stack. Print if debugging.
   #define push(object_type, object) \
     {fprintf(stderr, "[DEBUG]%s:%d -> Pushing %s\n", __FILE__, __LINE__, #object); \
     push_any((cognate_object){.object_type=object, .type=object_type});}
@@ -67,7 +67,7 @@ static void expand_stack()
 {
   // New stack size = current stack size * growth factor.
 
-  #ifdef DEBUG
+  #ifdef EBUG
     fprintf(stderr, "[DEBUG]%s:%d -> Expanding list/stack from length %lu to %lu\n", __FILE__, __LINE__, stack_size, (size_t)(stack_size * LIST_GROWTH_FACTOR)); 
   #endif
 
