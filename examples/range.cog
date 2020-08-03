@@ -1,4 +1,4 @@
-Let (When P A) be (Do Do Do P A ());
+Let (When P A) be (If P then A else ());
 
 Let (the Range from A to B with step S) be
 ~~ Similar to python's xrange() function
