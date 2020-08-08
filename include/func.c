@@ -53,21 +53,60 @@ external_function(exceed,         { push(boolean, pop(number) <  pop(number)); }
 external_function(equalorpreceed, { push(boolean, pop(number) >= pop(number)); })
 external_function(equalorexceed,  { push(boolean, pop(number) <= pop(number)); })
 
-external_function(tail, { 
+external_function(discard, { 
+  // O(n) where n is the number of element being Discarded.
+  double num = pop(number);
+  int num_discarding = num;
+  if (num != num_discarding) throw_error("Cannot Discard a non-integer number of elements!");
+  if (num_discarding < 0) throw_error("Cannot Discard a negative number of elements!");
   cognate_object obj = pop_any();
   switch(obj.type)
   {
     case string: 
-      if (obj.string[0] == '\0') throw_error("Tail get empty string!");
-      push(string, ++obj.string); 
+      for (int i = num_discarding-1; i >= 0; ++i)
+        if (obj.string[i] == '\0') 
+          throw_error("String is too small to Discard from!");
+      push(string, obj.string + num_discarding); 
       break;
     case list: {
       cognate_list *lst = (cognate_list*)malloc(sizeof(cognate_list));
       *lst = *obj.list;
-      if (lst->start++ == lst->top) throw_error("Tail got empty list!");
+      if ((lst->start += num_discarding) > lst->top) throw_error("List is too small to Discard from!");
       push(list, lst);
     } break;
     default: type_error("List or String", lookup_type(obj.type));
+  }
+})
+
+external_function(take, {
+  // O(n) where n is the number of element being Taken.
+  double num = pop(number);
+  int num_taking = num;
+  if (num != num_taking) throw_error("Cannot Take a non-integer number of elements!");
+  if (num_taking < 0) throw_error("Cannot Take a negative number of elements!");
+  cognate_object obj = pop_any();
+  switch(obj.type)
+  {
+    case string: {
+      for (int i = num_taking-1; i >= 0; --i)
+        if (obj.string[i] == '\0') 
+          throw_error("String is too small to Take from!");
+      char* str = (char*) malloc (sizeof(char) * num_taking);
+      strcpy(str, obj.string);
+      str[num_taking] = '\0';
+      push(string, str);
+      break;
+    }
+    case list: {
+      cognate_list *lst = (cognate_list*) malloc (sizeof(cognate_list));
+      *lst = *obj.list;
+      if (lst->start + num_taking > lst->top) throw_error("List is too small to Take from!");
+      lst->top = lst->start + num_taking;
+      push(list, lst);
+    }
+    break;
+  default: type_error("List or String", lookup_type(obj.type));
+
   }
 })
 
@@ -97,8 +136,8 @@ external_function(length,{
   switch(obj.type)
   {
     case string: push(number, (double)strlen(obj.string)); break;
-    case list: push(number, (double)(obj.list->top - obj.list -> start));
-    default: type_error("List or STring", lookup_type(obj.type)); break;
+    case list: push(number, (double)(obj.list->top - obj.list -> start)); break;
+    default: type_error("List or String", lookup_type(obj.type)); break;
   }
 })
 

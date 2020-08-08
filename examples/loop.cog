@@ -1,4 +1,5 @@
 Let (Head) be (Index 0);
+Let (Tail) be (Discard 1);
 Let (When Condition Body) be (If Condition then Body else (nothing));
 
 Let (For each in Lst do Body) be
