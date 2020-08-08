@@ -37,7 +37,7 @@ static void check_recursion_depth();
 #include "io.c"
 #include "error.c"
 #include "type.c"
-#include <setjmp.h>
+//#include <setjmp.h>
 
 static void init()
 {

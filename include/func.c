@@ -54,24 +54,54 @@ external_function(equalorpreceed, { push(boolean, pop(number) >= pop(number)); }
 external_function(equalorexceed,  { push(boolean, pop(number) <= pop(number)); })
 
 external_function(tail, { 
-  cognate_list *lst = (cognate_list*)malloc(sizeof(cognate_list));
-  *lst = *pop(list);
-  if (lst->start == lst->top) 
-    throw_error("Tail encountered empty list!");
-  lst->start++;
-  push(list, lst);
+  cognate_object obj = pop_any();
+  switch(obj.type)
+  {
+    case string: 
+      if (obj.string[0] == '\0') throw_error("Tail get empty string!");
+      push(string, ++obj.string); 
+      break;
+    case list: {
+      cognate_list *lst = (cognate_list*)malloc(sizeof(cognate_list));
+      *lst = *obj.list;
+      if (lst->start++ == lst->top) throw_error("Tail got empty list!");
+      push(list, lst);
+    } break;
+    default: type_error("List or String", lookup_type(obj.type));
+  }
 })
+
 external_function(index, { 
   int index = pop(number);
-  cognate_list lst = *pop(list);
-  if (lst.start + index > lst.top)
-    throw_error("Index out of bounds!");
-  push_any(lst . start [index]);
+  cognate_object obj = pop_any();
+  switch(obj.type)
+  {
+    case string: 
+      if (strlen(obj.string) <= index)
+        throw_error("String index out of bounds!");
+      char* str = (char*)malloc(sizeof(char));
+      *str = obj.string[index];
+      push(string, str);
+      break;
+    case list:
+      if (obj.list->start + index > obj.list->top)
+        throw_error("List index out of bounds!");
+      push_any(obj.list->start [index]);
+      break;
+    default: type_error("List or String", lookup_type(obj.type)); break;
+  }
 })
+
 external_function(length,{
-  cognate_list* lst = pop(list);
-  push(number, (double)(lst -> top - lst -> start));
+  cognate_object obj = pop_any();
+  switch(obj.type)
+  {
+    case string: push(number, (double)strlen(obj.string)); break;
+    case list: push(number, (double)(obj.list->top - obj.list -> start));
+    default: type_error("List or STring", lookup_type(obj.type)); break;
+  }
 })
+
 external_function(list,  { 
   // I solemnly swear that I will NEVER RETURN THE ADDRESS OF A LOCAL VARIABLE!
   // Get the block argument
@@ -109,8 +139,6 @@ external_function(characters, {
   push(list, lst);
 })
 
-
-
 external_function(tuple,
 {
   // Allocate the list object.
@@ -143,6 +171,42 @@ external_function(if,
   {
     pop(block);
     pop(block)();
+  }
+})
+
+external_function(append,
+{
+  cognate_object obj1 = pop_any();
+  cognate_object obj2 = pop_any();
+  switch(obj1.type)
+  {
+    case string:
+      if (obj2.type != string) type_error("String", lookup_type(obj2.type));
+      {
+        int list1_size = strlen(obj1.string);
+        int list2_size = strlen(obj2.string);
+        int new_list_size = list1_size + list2_size;
+        char* str = (char*)malloc(sizeof(char) * new_list_size);
+        strcpy(str, obj2.string);
+        strcat(str, obj1.string);
+        push(string, str);
+      } 
+      break;
+    case list: 
+      if (obj2.type != list) type_error("List", lookup_type(obj2.type));
+      {
+        int list1_len = obj1.list->top - obj1.list->start;
+        int list2_len = obj2.list->top - obj2.list->start;
+        int new_list_len = list1_len + list2_len;
+        cognate_list *lst = (cognate_list*) malloc (sizeof(cognate_list));
+        lst->start = (cognate_object*) malloc (sizeof(cognate_object) * new_list_len);
+        lst->top = lst->start + new_list_len;
+        memcpy(lst->start, obj2.list->start, list2_len * sizeof(cognate_object));
+        memcpy(lst->start+list2_len, obj1.list->start, list1_len * sizeof(cognate_object));
+        push(list, lst);
+      }
+      break;
+    default: type_error("List or String", lookup_type(obj1.type)); 
   }
 })
 

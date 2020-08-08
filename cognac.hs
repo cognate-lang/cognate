@@ -30,10 +30,10 @@ parsefile = -- Parsefile takes a string (the file text) as an argument and retur
   map parsesymbols .
   replacesymbols .
   padtokens . -- Space out special characters.
-  parseblockcomments . 
-  parselinecomments .
   -- unwords $ parsecharacters $ splitOn "\'" $ -- Convert characters to ASCII value integers
-  parsestrings -- Convert strings to lists of characters
+  parsestrings . -- Convert strings to lists of characters
+  parseblockcomments . 
+  parselinecomments
 
 parselinecomments :: String -> String
 parselinecomments str =
