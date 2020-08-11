@@ -26,33 +26,6 @@
   const cognate_object cognate_variable_ ## name = pop_any(); \
   cognate_function_ ## name = ^{push_any(cognate_variable_ ## name);};
 
-#define record(name, size) \
-  int this_type = next_type++; \
-  immutable void(^ cognate_function_ ## name)(void) = \
-  ^{ \
-    cognate_object *rec = (cognate_object*) malloc (sizeof(cognate_object) * size); \
-    for (int i = 0; i < size; ++i) \
-    { \
-      rec[i] = pop_any(); \
-    } \
-    push_any((cognate_object){.type=this_type, .record=rec}); \
-  }; \
-  immutable void(^ cognate_function_is_ ## name)(void) = \
-  ^{ \
-    push(boolean, pop_any().type == this_type); \
-  }
-
-// Field definitions MUST come directly after record definitions
-// because each record definition increments the type counter.
-
-#define field(name, pos) \
-  immutable void(^ cognate_function_ ## name)(void) = \
-  ^{ \
-    cognate_object rec = pop_any(); \
-    if (rec.type == this_type) { push_any(rec.record[pos]); } \
-    else { throw_error("No field '"#name"' in record!"); } \
-  };
-
 
 /*
 #define MAX_RECURSION_DEPTH 1048576
@@ -67,6 +40,7 @@ static void check_recursion_depth();
 #include "io.c"
 #include "error.c"
 #include "type.c"
+#include "record.c"
 //#include <setjmp.h>
 
 static void init()
