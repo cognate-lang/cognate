@@ -19,7 +19,7 @@
 // because each record definition increments the type counter.
 
 #define field(name) \
-  const int record_ ## name ## _pos = ++current_record_pos; \
+  const int record_ ## name ## _pos = current_record_pos++; \
   immutable void(^ cognate_function_ ## name)(void) = \
   ^{ \
     cognate_object rec = pop_any(); \
