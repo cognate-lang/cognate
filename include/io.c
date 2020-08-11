@@ -29,7 +29,8 @@ static void print_object (cognate_object object, _Bool quotes)
                    printf("]");
                  }
                  break;
-    default    : type_error("Number or List", lookup_type(object.type)); break;
+    case boolean: printf("%s", object.boolean ? "True" : "False"); break;
+    default    : type_error("Number, List, or Boolean", lookup_type(object.type)); break;
   }
 }
 

@@ -5,7 +5,10 @@
 #include "error.c"
 #include <Block.h>
 
-typedef enum {boolean, string, block, number, list} cognate_type;
+
+typedef enum {boolean=0, string=1, block=2, number=3, list=4} cognate_type;
+
+static int next_type = list + 1;
 
 struct __attribute__((packed)) cognate_list
 {
@@ -24,8 +27,9 @@ struct __attribute__((packed)) cognate_object
     void (^block)(void);
     double number;
     struct cognate_list *list;
+    struct cognate_object *record;
   };
-  cognate_type type : 4;
+  cognate_type type : 32;
 };
 
 typedef struct cognate_object cognate_object;

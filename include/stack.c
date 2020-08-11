@@ -8,13 +8,15 @@
 
 #define malloc  GC_MALLOC // Use boehm to manage memory for us
 #define realloc GC_REALLOC
+// IF THERE ARE ANY STACK ERRORS, CHANGE malloc_atomic TO JUST malloc
+#define malloc_atomic GC_MALLOC_ATOMIC
 
 #define INITIAL_LIST_SIZE 16 // Constant values for initialising stack sizes.
 #define LIST_GROWTH_FACTOR 1.5
 
 #ifdef EBUG // Push an object to the stack. Print if debugging.
   #define push(object_type, object) \
-    {fprintf(stderr, "[DEBUG]%s:%d -> Pushing %s\n", __FILE__, __LINE__, #object); \
+    {fprintf(stderr, "[DEBUG] %s:%d -> Pushing %s\n", __FILE__, __LINE__, #object); \
     push_any((cognate_object){.object_type=object, .type=object_type});}
 #else
   #define push(object_type, object) \
@@ -40,7 +42,7 @@ static void init_stack()
 {
   //printf("ALLOCATING %i BYTES\n", INITIAL_LIST_SIZE * sizeof(cognate_object));
   // Allocate dynamic stack memory.
-  stack.top = stack.start = (cognate_object*) malloc ((stack_size = INITIAL_LIST_SIZE) * sizeof(cognate_object));
+  stack.top = stack.start = (cognate_object*) GC_MALLOC_ATOMIC ((stack_size = INITIAL_LIST_SIZE) * sizeof(cognate_object));
 }
 
 static void push_any(cognate_object object)
@@ -68,7 +70,7 @@ static void expand_stack()
   // New stack size = current stack size * growth factor.
 
   #ifdef EBUG
-    fprintf(stderr, "[DEBUG]%s:%d -> Expanding list/stack from length %lu to %lu\n", __FILE__, __LINE__, stack_size, (size_t)(stack_size * LIST_GROWTH_FACTOR)); 
+    fprintf(stderr, "[DEBUG] %s:%d -> Expanding list/stack from length %lu to %lu\n", __FILE__, __LINE__, stack_size, (size_t)(stack_size * LIST_GROWTH_FACTOR)); 
   #endif
 
   stack.start = (cognate_object*) realloc (stack.start, stack_size * LIST_GROWTH_FACTOR * sizeof(cognate_object));
