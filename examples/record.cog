@@ -1,0 +1,17 @@
+Record Person
+(
+  Forename,
+  Surname,
+  Age,
+  Gender
+);
+
+Let Bob be a Person called 'Bob' 'Smith' who is a 34 year old 'male';
+
+Print 'Forename:', Print Forename of Bob;
+Print 'Surname:',  Print Surname  of Bob;
+Print 'Age:',      Print Age      of Bob;
+Print 'Gender:',   Print Gender   of Bob;
+
+Print 'Is person:';
+Print Is_person Bob;

@@ -68,7 +68,7 @@ numbers       =  '-':'.':['0'..'9']
 upperletters  = [ 'A'..'Z'    ]
 lowerletters  = [ 'a'..'z'    ]
 brackets      = openbrackets ++ closebrackets
-permittedsymbols = delims    ++ brackets      ++ numbers ++ lowerletters ++ upperletters
+permittedsymbols = delims    ++ brackets      ++ numbers ++ lowerletters ++ upperletters ++ ['_']
 formalsymbols = delims       ++ brackets      ++ numbers ++ upperletters
 
 {- parsestrings :: [String] -> [String]
