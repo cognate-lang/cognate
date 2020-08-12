@@ -53,10 +53,10 @@ external_function(exceed,         { push(boolean, pop(number) <  pop(number)); }
 external_function(equalorpreceed, { push(boolean, pop(number) >= pop(number)); })
 external_function(equalorexceed,  { push(boolean, pop(number) <= pop(number)); })
 
-external_function(is_number, {push(boolean, pop_any().type == number);})
-external_function(is_list, {push(boolean, pop_any().type == list);})
-external_function(is_string, {push(boolean, pop_any().type == string);})
-external_function(is_block, {push(boolean, pop_any().type == block);})
+external_function(numberp, {push(boolean, pop_any().type == number);})
+external_function(listp, {push(boolean, pop_any().type == list);})
+external_function(stringp, {push(boolean, pop_any().type == string);})
+external_function(blockp, {push(boolean, pop_any().type == block);})
 
 external_function(discard, { 
   // O(n) where n is the number of element being Discarded.

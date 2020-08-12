@@ -17,7 +17,7 @@
     } \
     push_any((cognate_object){.type=this_type, .record=rec}); \
   }; \
-  immutable void(^ cognate_function_is_ ## name)(void) = \
+  immutable void(^ cognate_function_ ## name ## p)(void) = \
   ^{ \
     push(boolean, pop_any().type == this_type); \
   }

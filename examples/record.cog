@@ -3,10 +3,10 @@
 
 Record Person
 (
-  Forename (Is_string),
-  Surname  (Is_string),
-  Age      (Is_number),
-  Gender   (Is_string)
+  Forename (StringP),
+  Surname  (StringP),
+  Age      (NumberP),
+  Gender   (StringP)
 );
 
 Let Bob be a Person called 'Bob' 'Smith' who is a 34 year old 'male';
@@ -17,4 +17,4 @@ Print 'Age:',      Print Age      of Bob;
 Print 'Gender:',   Print Gender   of Bob;
 
 Print 'Is person:';
-Print Is_person Bob;
+Print PersonP Bob;
