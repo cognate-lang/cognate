@@ -177,6 +177,7 @@ expr `doesCall` func = func `elem` flatten expr
 doesMutate :: [Tree] -> String -> Bool
 (Leaf var  : Leaf "Set" : xs) `doesMutate` var'  = var       == var'       || xs `doesMutate` var'
 (Node func : Leaf "Set" : xs) `doesMutate` func' = last func == Leaf func' || xs `doesMutate` func'
+(Node blk : xs) `doesMutate` var' = blk `doesMutate` var' || xs `doesMutate` var'
 (_ : xs) `doesMutate` var' = xs `doesMutate` var'
 _ `doesMutate` _ = False
 

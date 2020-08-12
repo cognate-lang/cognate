@@ -42,8 +42,8 @@ external_function(triplet,        { cognate_object a = peek_any(); push_any(a); 
 external_function(swap,           { cognate_object a = pop_any(); cognate_object b = pop_any(); push_any(a); push_any(b);          })
 external_function(clear,          { init_stack();                                                                                  })
 
-external_variable(true,  block, ^{ push(boolean, 1); })
-external_variable(false, block, ^{ push(boolean, 0); })
+external_variable(true,  boolean, 1)
+external_variable(false, boolean, 0)
 
 
 external_function(equal,          { push(boolean, pop(number) == pop(number)); })

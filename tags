@@ -18,6 +18,7 @@ boolean	include/type.c	/^typedef enum {boolean=0, string=1, block=2, number=3, l
 call	include/func.c	19;"	d	file:
 call	include/func.c	21;"	d	file:
 check_type	include/type.c	/^static cognate_object check_type(cognate_type expected_type, cognate_object object)$/;"	f	file:
+checked_field	include/record.c	37;"	d	file:
 cognate_list	include/type.c	/^struct __attribute__((packed)) cognate_list$/;"	s	file:
 cognate_list	include/type.c	/^typedef struct cognate_list   cognate_list;$/;"	t	typeref:struct:cognate_list	file:
 cognate_object	include/type.c	/^struct __attribute__((packed)) cognate_object$/;"	s	file:
@@ -26,7 +27,7 @@ cognate_type	include/type.c	/^typedef enum {boolean=0, string=1, block=2, number
 expand_stack	include/stack.c	/^static void expand_stack()$/;"	f	file:
 external_function	include/func.c	10;"	d	file:
 external_variable	include/func.c	14;"	d	file:
-field	include/record.c	21;"	d	file:
+field	include/record.c	28;"	d	file:
 function	include/cognate.c	10;"	d	file:
 immutable	include/cognate.c	8;"	d	file:
 init	include/cognate.c	/^static void init()$/;"	f	file:
@@ -38,7 +39,10 @@ main	examples/fib.c	/^int main() {$/;"	f
 main	examples/hello.c	/^int main() {$/;"	f
 main	examples/loop.c	/^int main() {$/;"	f
 main	examples/range.c	/^int main() {$/;"	f
+main	examples/record.c	/^int main() {$/;"	f
 main	examples/tuple.c	/^int main() {$/;"	f
+main	tests/functions.c	/^int main() {$/;"	f
+main	tests/variables.c	/^int main() {$/;"	f
 malloc	include/cognate.c	13;"	d	file:
 malloc	include/func.c	24;"	d	file:
 malloc	include/stack.c	9;"	d	file:
@@ -51,7 +55,7 @@ noreturn	include/error.c	8;"	d	file:
 number	include/type.c	/^    double number;$/;"	m	union:cognate_object::__anon2	file:
 number	include/type.c	/^typedef enum {boolean=0, string=1, block=2, number=3, list=4} cognate_type;$/;"	e	enum:__anon1	file:
 peek	include/stack.c	29;"	d	file:
-peek_object	include/stack.c	/^static cognate_object peek_object()$/;"	f	file:
+peek_any	include/stack.c	/^static cognate_object peek_any()$/;"	f	file:
 pop	include/stack.c	26;"	d	file:
 pop_any	include/stack.c	/^static cognate_object pop_any()$/;"	f	file:
 print_object	include/io.c	/^static void print_object (cognate_object object, _Bool quotes)$/;"	f	file:
