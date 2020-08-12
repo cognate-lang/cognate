@@ -37,8 +37,8 @@ external_function(random,         { double low = pop(number); double high = pop(
                                push(number, low + (double)(rand() % (int)((high - low) / step)) * step); })
 
 external_function(drop,           { pop_any();                                                                                     })
-external_function(twin,           { push_any(peek_object());                                                                       })
-external_function(triplet,        { cognate_object a = peek_object(); push_any(a); push_any(a);                                    })
+external_function(twin,           { push_any(peek_any());                                                                       })
+external_function(triplet,        { cognate_object a = peek_any(); push_any(a); push_any(a);                                    })
 external_function(swap,           { cognate_object a = pop_any(); cognate_object b = pop_any(); push_any(a); push_any(b);          })
 external_function(clear,          { init_stack();                                                                                  })
 

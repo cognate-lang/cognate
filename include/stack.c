@@ -27,12 +27,12 @@
   check_type(object_type, pop_any()) . object_type
 
 #define peek(object_type) \
-  check_type(object_type, peek_object()) . object_type
+  check_type(object_type, peek_any()) . object_type
 
 static void init_stack();
 static void push_any(cognate_object);
 static cognate_object pop_any();
-static cognate_object peek_object();
+static cognate_object peek_any();
 static void expand_stack();
 
 cognate_list stack;
@@ -59,7 +59,7 @@ static cognate_object pop_any()
   return *--stack.top;
 }
 
-static cognate_object peek_object()
+static cognate_object peek_any()
 {
   if (stack.top == stack.start) throw_error("Stack underflow!");
   return *(stack.top - 1);
