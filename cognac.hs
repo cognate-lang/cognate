@@ -184,11 +184,14 @@ flatten (Leaf x : xs) = x : flatten xs
 flatten [] = []
 
 compile (Node body : Leaf name : Leaf "Record" : xs) =
-  "record(" ++ lc name ++ ", " ++ show (length body) ++ ");\n" ++
+  "record(" ++ lc name ++ ", " ++ show (recordSize body) ++ ");\n" ++
   unwords (map makeField body) ++ compile xs
     where
       makeField (Node _) = "" -- In future, nodes will be checking predicates. 
       makeField (Leaf s) = "field(" ++ lc s ++ ");"
+      recordSize (Leaf _ : xs) = 1 + recordSize xs
+      recordSize (Node _ : xs) =     recordSize xs
+      recordSize [] = 0
 
 
 compile (Node body : Node call : Leaf "Let" : xs) =
