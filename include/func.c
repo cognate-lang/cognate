@@ -53,10 +53,10 @@ external_function(exceed,         { push(boolean, pop(number) <  pop(number)); }
 external_function(equalorpreceed, { push(boolean, pop(number) >= pop(number)); })
 external_function(equalorexceed,  { push(boolean, pop(number) <= pop(number)); })
 
-external_function(numberp, {push(boolean, pop_any().type == number);})
-external_function(listp, {push(boolean, pop_any().type == list);})
-external_function(stringp, {push(boolean, pop_any().type == string);})
-external_function(blockp, {push(boolean, pop_any().type == block);})
+external_function(number_, {push(boolean, pop_any().type == number);}) // Question marks are converted to underscores.
+external_function(listp_, {push(boolean, pop_any().type == list);})    // However all other synbols are too.
+external_function(string_, {push(boolean, pop_any().type == string);}) // So this is a temporary hack!
+external_function(block_, {push(boolean, pop_any().type == block);})
 
 external_function(discard, { 
   // O(n) where n is the number of element being Discarded.

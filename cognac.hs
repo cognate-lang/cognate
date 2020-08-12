@@ -67,8 +67,9 @@ delims        = [ ';',','     ]
 numbers       =  '-':'.':['0'..'9']
 upperletters  = [ 'A'..'Z'    ]
 lowerletters  = [ 'a'..'z'    ]
+whitespace    = [ ' ', '\t', '\n' ]
 brackets      = openbrackets ++ closebrackets
-permittedsymbols = delims    ++ brackets      ++ numbers ++ lowerletters ++ upperletters ++ ['_']
+permittedsymbols = delims    ++ brackets      ++ numbers ++ lowerletters ++ upperletters
 formalsymbols = delims       ++ brackets      ++ numbers ++ upperletters
 
 {- parsestrings :: [String] -> [String]
@@ -103,8 +104,9 @@ padtokens =
 
 parsesymbols :: Char -> Char
 parsesymbols str -- Remove all those pesky symbols.
+  | str `elem` whitespace = ' '
   | str `elem` permittedsymbols = str
-  | otherwise = ' '
+  | otherwise = '_' -- Convert unusable symbols to underscores.
 
 parsenumbers :: String -> String
 parsenumbers (x:xs)

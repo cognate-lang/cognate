@@ -3,10 +3,10 @@
 
 Record Person
 (
-  Forename (StringP),
-  Surname  (StringP),
-  Age      (NumberP),
-  Gender   (StringP)
+  Forename (String?),
+  Surname  (String?),
+  Age      (Number?),
+  Gender   (String?)
 );
 
 Let Bob be a Person called 'Bob' 'Smith' who is a 34 year old 'male';
