@@ -29,10 +29,12 @@ noreturn static void throw_error(const char* message)
   puts("\342\224\202 Cognate has reached an unrecoverable state and cannot continue execution.    \342\224\202");
   puts("\342\224\202 The expected cause of error is printed below.                                \342\224\202");
   puts("\342\224\202                                                                              \342\224\202");
-  while (strlen(message) > 76)
+  int len = strlen(message);
+  while (len > 76)
   {
     printf("\342\224\202 \033[31;1m%.*s\033[0m \342\224\202\n", 76, message);
     message += 76;
+    len     -= 76;
   }
   printf("\342\224\202 \033[31;1m%s\033[0m", message);
   for (i = 77 - strlen(message); i > 0; --i) putchar(' ');

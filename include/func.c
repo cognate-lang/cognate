@@ -45,9 +45,14 @@ external_function(clear,          { init_stack();                               
 external_variable(true,  boolean, 1)
 external_variable(false, boolean, 0)
 
+external_function(either, { push(boolean, pop(boolean) || pop(boolean)); })
+external_function(both,   { push(boolean, pop(boolean) && pop(boolean)); })
+external_function(one_of, { _Bool a = pop(boolean); _Bool b = pop(boolean); push(boolean, (a && !b) || (!a && b)); })
+external_function(not,    { push(boolean, !pop(boolean)); })
 
-external_function(equal,          { push(boolean, pop(number) == pop(number)); })
-external_function(notequal,       { push(boolean, pop(number) != pop(number)); })
+
+external_function(equal,          { push(boolean,  compare_objects(pop_any(),pop_any())); })
+external_function(unequal,        { push(boolean, !compare_objects(pop_any(),pop_any())); })
 external_function(preceed,        { push(boolean, pop(number) >  pop(number)); })
 external_function(exceed,         { push(boolean, pop(number) <  pop(number)); })
 external_function(equalorpreceed, { push(boolean, pop(number) >= pop(number)); })
@@ -60,7 +65,7 @@ external_function(block_, {push(boolean, pop_any().type == block);})
 
 external_function(discard, { 
   // O(n) where n is the number of element being Discarded.
-  double num = pop(number);
+  double num = (int)pop(number);
   int num_discarding = num;
   if (num != num_discarding) throw_error("Cannot Discard a non-integer number of elements!");
   if (num_discarding < 0) throw_error("Cannot Discard a negative number of elements!");
@@ -68,7 +73,7 @@ external_function(discard, {
   switch(obj.type)
   {
     case string: 
-      for (int i = num_discarding-1; i >= 0; ++i)
+      for (int i = num_discarding-1; i >= 0; --i)
         if (obj.string[i] == '\0') 
           throw_error("String is too small to Discard from!");
       push(string, obj.string + num_discarding); 
@@ -204,17 +209,17 @@ external_function(stack,
 
 external_function(if,
 {
-  pop(block)();
+  void(^cond)(void) = pop(block);
+  void(^ifTrue)(void) = pop(block);
+  void(^ifFalse)(void) = pop(block);
+  cond();
   if (pop(boolean)) 
   {
-    void(^temp)(void) = pop(block);
-    pop(block);
-    temp();
+    ifTrue();
   } 
   else 
   {
-    pop(block);
-    pop(block)();
+    ifFalse();
   }
 })
 

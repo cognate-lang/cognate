@@ -1,0 +1,55 @@
+If (Both True and True, == True)
+   (Print 'PASS: True AND True')
+   (Print 'FAIL: True AND True');
+
+If (Both True and False, == False)
+   (Print 'PASS: True AND False')
+   (Print 'FAIL: True AND False');
+
+If (Both False and True, == False)
+   (Print 'PASS: False AND True')
+   (Print 'FAIL: False AND True');
+
+If (Both False and False, == False)
+   (Print 'PASS: False AND False')
+   (Print 'FAIL: False AND False');
+
+If (Either True or True, == True)
+   (Print 'PASS: True OR True')
+   (Print 'FAIL: True OR True');
+
+If (Either True and False, == True)
+   (Print 'PASS: True OR False')
+   (Print 'FAIL: True OR False');
+
+If (Either False and True, == True)
+   (Print 'PASS: False OR True')
+   (Print 'FAIL: False OR True');
+
+If (Either False and False, == False)
+   (Print 'PASS: False OR False')
+   (Print 'FAIL: False OR False');
+
+If (One_of True or True, == False)
+   (Print 'PASS: True XOR True')
+   (Print 'FAIL: True XOR True');
+
+If (One_of True and False, == True)
+   (Print 'PASS: True XOR False')
+   (Print 'FAIL: True XOR False');
+
+If (One_of False and True, == True)
+   (Print 'PASS: False XOR True')
+   (Print 'FAIL: False XOR True');
+
+If (One_of False and False, == False)
+   (Print 'PASS: False XOR False')
+   (Print 'FAIL: False XOR False');
+
+If (Not True, == False)
+   (Print 'PASS: NOT True')
+   (Print 'PASS: NOT True');
+
+If (Not False, == True)
+   (Print 'PASS: NOT False')
+   (Print 'PASS: NOT False');

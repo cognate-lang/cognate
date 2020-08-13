@@ -1,0 +1,22 @@
+~ Let A be 4; ~ ~~ Let A be 4;
+Let A be 5; ~~ Let A be 4; ~ Let A be 4; ~
+~ Let A be 4; ~ ~~ Let A be 4;
+
+If (A, == 5)
+   (Print 'PASS: Comments')
+   (Print 'FAIL: Comments');
+
+
+' \' Let B be 4; \' ' ' " Let B be 4; " '
+Let B be 5; '' 'Let B be 4;'
+' Let B be 4; \'  Let B be 4 '
+Clear;
+
+If (B, == 5)
+   (Print 'PASS: Strings')
+   (Print 'FAIL: Strings');
+
+
+If (1.5, == Divisor by 2 of 3)
+   (Print 'PASS: Floating point numbers')
+   (Print 'FAIL: Floating point numbers');

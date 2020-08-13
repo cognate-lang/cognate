@@ -1,0 +1,33 @@
+#!/bin/bash
+
+
+# Clear log file
+> tests/log.txt
+
+
+# Iterate over files to test
+for file in $(ls tests | grep .cog)
+do
+  echo "Testing $file..."
+  # Compile
+  ./cognac tests/$file > /dev/null
+  echo "Testing $file..." >> tests/log.txt
+  # Check if file exists (successful compilation)
+  if test -f "$file"; then
+    # Run - outputting to logfile
+    ./tests/$(echo $file | cut -f 1 -d '.') >> tests/log.txt
+  else
+    # File not exists is error
+    echo "FAIL: File does not compile!" >> tests/log.txt
+  fi
+done
+
+# Number of tests failed
+FAILS=$(cat tests/log.txt | egrep -h "FAIL|Cognate Error!" | wc -l)
+
+if [ $FAILS -eq "0" ]; then
+  echo "All tests passed!"
+else
+  echo $"$FAILS test(s) failed! See log.txt"
+fi
+

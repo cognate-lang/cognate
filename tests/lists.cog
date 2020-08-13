@@ -1,0 +1,27 @@
+Let Foo be List (1,2,3);
+Let Bar be List (4,5,6,7,8);
+Let Baz be List (9,10);
+
+If (Baz, == Tuple 9 10)
+   (Print 'PASS: Comparing lists and tuples')
+   (Print 'FAIL: Comparing lists and tuples');
+
+If (Append Bar to Foo, == List (1,2,3,4,5,6,7,8)) 
+   (Print 'PASS: Appending lists')
+   (Print 'FAIL: Appending lists');
+
+If (Discard 2 from Bar, == List (6,7,8))
+   (Print 'PASS: Discarding from lists')
+   (Print 'FAIL: Discarding from lists');
+
+If (Take 2 from Bar, == List (4,5))
+   (Print 'PASS: Taking from lists')
+   (Print 'FAIL: Taking from lists');
+
+If (Length of Foo, == 3)
+   (Print 'PASS: length of lists')
+   (Print 'FAIL: length of lists');
+
+If (Index 4 of Bar, == 8)
+   (Print 'PASS: indexing lists')
+   (Print 'FAIL: indexing lists');

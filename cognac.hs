@@ -48,7 +48,7 @@ parseblockcomments = unwords . dropEvens . splitOn "~"
 replacesymbols =
   unwords .
   replace [ "==" ] [ "Equal"          ] .
-  replace [ "!=" ] [ "NotEqual"       ] .
+  replace [ "!=" ] [ "Unequal"        ] .
   replace [ "<"  ] [ "Preceed"        ] .
   replace [ ">"  ] [ "Exceed"         ] .
   replace [ ">=" ] [ "EqualOrExceed"  ] .
@@ -80,12 +80,13 @@ parsestrings x = x  -}
 
 parsestrings :: String -> String
 parsestrings =
-  createStrings . splitOn "'"
+  createStrings . splitOn "'" . replace "\\'" "¸" -- Another string substitution bodge.
     where
       createStrings :: [String] -> String
       createStrings (x:y:xs) =
         x ++ " StringLiteral (" ++ intercalate [head delims] (map (show . ord) y) ++ ") " ++ createStrings xs
       createStrings [s] = s
+      createStrings [] = ""
 
 {- parsecharacters :: [String] -> [String]
 parsecharacters (x:y:xs) =
@@ -256,9 +257,10 @@ compile (Node str : Leaf "StringLiteral" : xs) =
       readNumber :: Tree -> Int
       readNumber (Leaf num) = read num
       readNumber (Node _) = error "String literal parse error!"
-      sanitise ('"':xs) = "\\\"" ++ sanitise xs
-      sanitise (x:xs) = x : sanitise xs
-      sanitise x = x
+      sanitise = 
+        replace "\"" "\\\"" .
+        replace "\\'" "'" .
+        replace "¸" "'"
 
 compile (Node expr : xs) =
   "push(block,\n^{\n"

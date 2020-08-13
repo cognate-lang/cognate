@@ -1,0 +1,57 @@
+Testing booleans.cog...
+PASS: True AND True
+PASS: True AND False
+PASS: False AND True
+PASS: False AND False
+PASS: True OR True
+PASS: True OR False
+PASS: False OR True
+PASS: False OR False
+PASS: True XOR True
+PASS: True XOR False
+PASS: False XOR True
+PASS: False XOR False
+PASS: NOT True
+PASS: NOT False
+Testing functions.cog...
+PASS: Function call and return
+PASS: Function shadowing
+PASS: Function shadowing in block
+PASS: Function modification
+PASS: Function modification in block
+PASS: Recursion
+Testing lists.cog...
+PASS: Comparing lists and tuples
+PASS: Appending lists
+PASS: Discarding from lists
+PASS: Taking from lists
+PASS: length of lists
+PASS: indexing lists
+Testing maths.cog...
+PASS: Addition
+PASS: Subtraction
+PASS: Multiplication
+PASS: Division
+PASS: Modulus
+Testing parsing.cog...
+PASS: Comments
+PASS: Strings
+PASS: Floating point numbers
+Testing stack.cog...
+PASS: Drop
+PASS: Swap
+PASS: Twin
+PASS: Triplet
+PASS: Stack as list
+Testing strings.cog...
+PASS: Appending strings
+PASS: Discarding from strings
+PASS: Taking from strings
+PASS: length of strings
+PASS: indexing strings
+Testing variables.cog...
+PASS: Variable assignment
+PASS: Variable shadowing
+PASS: Variable shadowing in block
+PASS: Variable modification
+PASS: Variable modification in block
