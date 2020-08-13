@@ -1,5 +1,5 @@
 #define record(name, size) \
-  __block void(^*record_predicates)(void) = calloc(size, sizeof(void(^)(void)) * size); \
+  __block void(^*record_predicates)(void) = malloc(sizeof(void(^)(void)) * size); \
   int current_record_pos = 0; \
   const int this_type = next_type++; \
   immutable void(^ cognate_function_ ## name)(void) = \
@@ -25,16 +25,7 @@
 // Field definitions MUST come directly after record definitions
 // because each record definition increments the type counter.
 
-#define field(name) \
-  const int record_ ## name ## _pos = current_record_pos++; \
-  immutable void(^ cognate_function_ ## name)(void) = \
-  ^{ \
-    cognate_object rec = pop_any(); \
-    if (rec.type == this_type) { push_any(rec.record[record_ ## name ## _pos]); } \
-    else { throw_error("No field '"#name"' in record!"); } \
-  };
-
-#define checked_field(name, predicate) \
+#define field(name, predicate) \
   record_predicates[current_record_pos] = predicate; \
   const int record_ ## name ## _pos = current_record_pos++; \
   immutable void(^ cognate_function_ ## name)(void) = \
@@ -43,5 +34,4 @@
     if (rec.type == this_type) { push_any(rec.record[record_ ## name ## _pos]); } \
     else { throw_error("No field '"#name"' in record!"); } \
   };
-
 

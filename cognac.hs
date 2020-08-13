@@ -190,8 +190,8 @@ compile (Node body : Leaf name : Leaf "Record" : xs) =
   "record(" ++ lc name ++ ", " ++ show (recordSize body) ++ ");\n" ++
   makeFields body ++ compile xs
     where
-      makeFields (Node p : Leaf s : xs) = "checked_field(" ++ lc s ++ ", ^{" ++ compile p ++ "});" ++ makeFields xs
-      makeFields (Leaf s : xs) = "field(" ++ lc s ++ ");" ++ makeFields xs
+      makeFields (Node p : Leaf s : xs) = "field(" ++ lc s ++ ", ^{" ++ compile p ++ "});" ++ makeFields xs
+      makeFields (Leaf s : xs) = "field(" ++ lc s ++ ", NULL);" ++ makeFields xs
       makeFields [] = ""
       recordSize (Leaf _ : xs) = 1 + recordSize xs
       recordSize (Node _ : xs) =     recordSize xs
