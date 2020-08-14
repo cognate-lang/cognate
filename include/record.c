@@ -1,5 +1,5 @@
 #define record(name, size) \
-  __block void(^*record_predicates)(void) = malloc(sizeof(void(^)(void)) * size); \
+  void(^*record_predicates)(void) = (void(^[size])(void)){0}; \
   int current_record_pos = 0; \
   const int this_type = next_type++; \
   immutable void(^ cognate_function_ ## name)(void) = \
