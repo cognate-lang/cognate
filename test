@@ -13,7 +13,7 @@ do
   ./cognac tests/$file > /dev/null
   echo "Testing $file..." >> tests/log.txt
   # Check if file exists (successful compilation)
-  if test -f "$file"; then
+  if test -f "tests/$(echo $file | cut -f 1 -d '.')"; then
     # Run - outputting to logfile
     ./tests/$(echo $file | cut -f 1 -d '.') >> tests/log.txt
   else
