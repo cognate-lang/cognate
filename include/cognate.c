@@ -8,7 +8,7 @@
 #define immutable const
 
 #define function(name, flags, body) \
-  flags void(^ cognate_function_ ## name)(void) = ^body
+  flags cognate_block cognate_function_ ## name = ^body
 
 #define malloc GC_MALLOC
 #define realloc GC_REALLOC
@@ -20,7 +20,7 @@
 // __block attribute allows mutation at performance cost.
 #define variable(name, flags) \
   immutable cognate_object cognate_variable_ ## name = pop_any(); \
-  flags void(^ cognate_function_ ## name)(void) = ^{push_any(cognate_variable_ ## name);};
+  flags cognate_block cognate_function_ ## name = ^{push_any(cognate_variable_ ## name);};
 
 #define mutate_variable(name) \
   const cognate_object cognate_variable_ ## name = pop_any(); \

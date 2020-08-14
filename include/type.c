@@ -8,6 +8,8 @@
 
 typedef enum {boolean=0, string=1, block=2, number=3, list=4} cognate_type;
 
+typedef void(^cognate_block)();
+
 static int next_type = list + 1;
 
 struct __attribute__((packed)) cognate_list
@@ -24,7 +26,7 @@ struct __attribute__((packed)) cognate_object
   {
     char* string;
     _Bool boolean;
-    void (^block)(void);
+    cognate_block block;
     double number;
     struct cognate_list *list;
     struct cognate_object *record;

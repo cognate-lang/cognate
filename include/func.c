@@ -154,7 +154,7 @@ external_function(length,{
 external_function(list,  { 
   // I solemnly swear that I will NEVER RETURN THE ADDRESS OF A LOCAL VARIABLE!
   // Get the block argument
-  void(^expr)(void) = pop(block);
+  cognate_block expr = pop(block);
   // Move the stack to temporary storage
   cognate_list temp_stack = stack;
   size_t temp_stack_size = stack_size;
@@ -209,9 +209,9 @@ external_function(stack,
 
 external_function(if,
 {
-  void(^cond)(void) = pop(block);
-  void(^ifTrue)(void) = pop(block);
-  void(^ifFalse)(void) = pop(block);
+  cognate_block cond    = pop(block);
+  cognate_block ifTrue  = pop(block);
+  cognate_block ifFalse = pop(block);
   cond();
   if (pop(boolean)) 
   {
