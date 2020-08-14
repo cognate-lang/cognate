@@ -263,9 +263,9 @@ compile (Node str : Leaf "StringLiteral" : xs) =
         replace "¸" "'"
 
 compile (Node expr : xs) =
-  "push(block,\n^{\n"
+  "push(block,\nBlock_copy(^{\n"
   ++ compile expr
-  ++ "});\n"
+  ++ "}));\n"
   ++ compile xs
 
 
