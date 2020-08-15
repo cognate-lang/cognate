@@ -259,4 +259,7 @@ external_function(append,
   }
 })
 
+// Not my finest hour. I fixed the performance slowdown, but now block must be explicitly copied to the heap...
+external_function(copy, {push(block, Block_copy(pop(block)));})
+
 #endif
