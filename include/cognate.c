@@ -1,12 +1,9 @@
 #ifndef COGNATE_C
 #define COGNATE_C
 
-// Macro to define internal cognate function.
-// __block attribute allows recursion and mutation at performance cost.
-
 int scope_depth = 0;
 
-#define mutable  __block
+#define mutable   __block
 #define immutable const
 
 #define function(name, flags, body) \
@@ -15,14 +12,12 @@ int scope_depth = 0;
 #define unsafe_function(name, flags, body) \
   flags cognate_block cognate_function_ ## name = unsafe_block(body);
 
-#define malloc GC_MALLOC
+#define malloc  GC_MALLOC
 #define realloc GC_REALLOC
 
 #define mutate_function(name, body) \
   cognate_function_ ## name = safe_block(body);
 
-// Macro for defining internal cognate variables.
-// __block attribute allows mutation at performance cost.
 #define variable(name, flags) \
   immutable cognate_object cognate_variable_ ## name = pop_any(); \
   flags cognate_block cognate_function_ ## name = ^{push_any(cognate_variable_ ## name);};
@@ -34,25 +29,19 @@ int scope_depth = 0;
 #define safe_block(body) \
 ({ \
   cognate_block blk = ^{ \
-    scope_depth++; \
+    ++scope_depth; \
     body \
-    scope_depth--; \
+    --scope_depth; \
     copy_blocks(); \
   }; \
-  int* x = (int*)blk + 3; \
-  *x = scope_depth; \
+  *block_depth(blk) = scope_depth; \
   blk; \
 })
 
 #define unsafe_block(body) \
 ({ \
-  cognate_block blk = ^{ \
-    scope_depth++; \
-    body \
-    scope_depth--; \
-  }; \
-  int* x = (int*)blk + 3; \
-  *x = scope_depth; \
+  cognate_block blk = ^body; \
+  *block_depth(blk) = scope_depth; \
   blk; \
 })
 
@@ -105,20 +94,25 @@ static void init_recursion_depth_check()
 }
 */
 
+int *block_depth(cognate_block blk)
+{
+  return (int*)blk+3; 
+}
+
+cognate_block copy_block(cognate_block blk)
+{
+  blk = Block_copy(blk);
+  *block_depth(blk) = 0;
+  return blk;
+}
 
 void copy_blocks()
 {
   for (cognate_object *i = stack_uncopied; i < stack.top; ++i)
   {
-    if (i->type==block)
+    if (i->type==block && *block_depth(i->block) > scope_depth)
     {
-      int* depth = (int*)i->block + 3; // Scope depth when block declared.
-      if (*depth > scope_depth)
-      {
-        i->block = Block_copy(i->block); // Copy block to heap.
-        *depth = 0; // If depth is zero, block will never be copied.
-        // Setting depth to zero after copying prevents copying again. 
-      } //else break; // Remove the else break.
+      i->block = copy_block(i->block); // Copy block to heap.
     }
   }
   stack_uncopied = stack.top;
@@ -127,7 +121,7 @@ void copy_blocks()
 cognate_object check_block(cognate_object obj)
 {
   if (obj.type==block)
-    obj.block=Block_copy(obj.block);
+    obj.block=copy_block(obj.block);
   return obj;
 }
 
