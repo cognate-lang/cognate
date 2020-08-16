@@ -207,7 +207,11 @@ compile (Node body : Node call : Leaf "Let" : xs) =
   -- Defines immutable and nonrecursive if function does not refer to itself in its body and 'Set' is not found in xs.
   -- TODO: Search for 'Set (Name...)' as opposed to just 'Set'.
   if xs `doesCall` name then
-  ("function(" ++ lc name ++ ", " ++ (if xs `doesMutate` name || body `doesCall` name then 
+    ((if (any isNode body) then 
+        "unsafe_function(" 
+      else 
+        "function(") 
+    ++ lc name ++ ", " ++ (if xs `doesMutate` name || body `doesCall` name then 
     "mutable" else "immutable") ++ ",{" 
   ++ compile (intersperse (Leaf "Let") (reverse args) ++ [Leaf "Let" | not (null args)] ++ body)
   ++ "});{"
@@ -235,9 +239,9 @@ compile (Node body : Node call : Leaf "Set" : xs) =
 
 compile (Leaf name : Leaf "Let" : xs) =
   -- Var is marked as immutable if xs does not contain 'Set'. TODO: mark var as immutable if xs does not contain 'Set Var'
-  if xs `doesCall` name then ("variable(" ++ lc name ++ ","
+  if xs `doesCall` name then "variable(" ++ lc name ++ ","
   ++ (if xs `doesMutate` name then "mutable" else "immutable")++ ");{"
-  ++ compile xs ++ "}") else compile xs
+  ++ compile xs ++ "}" else compile xs
 
 compile (Leaf name : Leaf "Set" : xs) =
   "mutate_variable(" ++ lc name ++ ");{" 
@@ -245,11 +249,13 @@ compile (Leaf name : Leaf "Set" : xs) =
 
 
 -- Primitive Do inlining.
+{-
 compile (Node expr : Leaf "Do" : xs) =
   "{\n" ++
     compile expr ++
   "}\n" ++
   compile xs
+-}
 
 compile (Node str : Leaf "StringLiteral" : xs) =
   "push(string,\"" ++ sanitise (map (chr . readNumber) str) ++ "\");" ++ compile xs
@@ -263,7 +269,7 @@ compile (Node str : Leaf "StringLiteral" : xs) =
         replace "¸" "'"
 
 compile (Node expr : xs) =
-  "push(block,\nsafe_block({\n"
+  "push(block,\n" ++ (if any isNode expr then "safe_block" else "unsafe_block") ++ "({\n"
   ++ compile expr
   ++ "}));\n"
   ++ compile xs
@@ -276,6 +282,13 @@ compile (Leaf token : xs)
 compile [] = ""
 
 compiler = "clang"
+
+isLeaf (Leaf _) = True
+isLeaf (Node _) = False
+
+isNode (Node _) = True
+isNode (Leaf _) = False
+
 
 formatFlags = ["-i"]
 formatter = "clang-format"
@@ -292,7 +305,7 @@ main =
     path <- getPath
     args <- getArgs
     let compilerFlags = 
-          words $ "-fblocks -lBlocksRuntime -l:libgc.so -Wall -Wpedantic -Wno-unused -O3 -s -I " ++ path ++ "/include" 
+          words $ "-fblocks -lBlocksRuntime -l:libgc.so -Wall -Wno-unused -O3 -s -I " ++ path ++ "/include" 
     let in_file = head args
     let out_file = head (splitOn "." in_file) ++ ".c"
     let compiler_args = tail args

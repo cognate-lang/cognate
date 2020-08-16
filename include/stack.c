@@ -37,12 +37,14 @@ static void expand_stack();
 
 cognate_list stack;
 size_t stack_size;
+cognate_object* stack_uncopied;
 
 static void init_stack()
 {
   //printf("ALLOCATING %i BYTES\n", INITIAL_LIST_SIZE * sizeof(cognate_object));
   // Allocate dynamic stack memory.
   stack.top = stack.start = (cognate_object*) GC_MALLOC_ATOMIC ((stack_size = INITIAL_LIST_SIZE) * sizeof(cognate_object));
+  stack_uncopied = stack.top;
 }
 
 static void push_any(cognate_object object)
@@ -56,6 +58,7 @@ static cognate_object pop_any()
 { 
   if (stack.top == stack.start) 
     throw_error("Stack underflow!");
+  stack_uncopied--;
   return *--stack.top;
 }
 
@@ -72,8 +75,10 @@ static void expand_stack()
   #ifdef EBUG
     fprintf(stderr, "[DEBUG] %s:%d -> Expanding list/stack from length %lu to %lu\n", __FILE__, __LINE__, stack_size, (size_t)(stack_size * LIST_GROWTH_FACTOR)); 
   #endif
-
+ 
+  int temp = stack_uncopied - stack.start;
   stack.start = (cognate_object*) realloc (stack.start, stack_size * LIST_GROWTH_FACTOR * sizeof(cognate_object));
+  stack_uncopied = stack.start + temp;
   stack.top = stack.start + stack_size;
   stack_size *= LIST_GROWTH_FACTOR;
 }

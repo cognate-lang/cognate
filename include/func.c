@@ -188,20 +188,6 @@ external_function(characters, {
   push(list, lst);
 })
 
-external_function(tuple,
-{
-  // Allocate the list object.
-  cognate_list* lst = (cognate_list*)malloc(sizeof(cognate_list));
-  // Initialise the list.
-  lst->start = (cognate_object*)malloc(sizeof(cognate_object) * 2);
-  lst->top = lst->start + 2;
-  // Fill the list.
-  lst->start[0] = pop_any();
-  lst->start[1] = pop_any();
-  // Push the list.
-  push(list, lst);
-})
-
 external_function(stack,
 {
   push(list, &stack);

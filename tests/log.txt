@@ -1,3 +1,7 @@
+Testing block.cog...
+PASS: Implicit block copying
+PASS: Implicit block copying (with mutation)
+PASS: Implicit block copying
 Testing booleans.cog...
 PASS: True AND True
 PASS: True AND False
@@ -21,7 +25,6 @@ PASS: Function modification
 PASS: Function modification in block
 PASS: Recursion
 Testing lists.cog...
-PASS: Comparing lists and tuples
 PASS: Appending lists
 PASS: Discarding from lists
 PASS: Taking from lists
@@ -54,4 +57,4 @@ PASS: Variable assignment
 PASS: Variable shadowing
 PASS: Variable shadowing in block
 PASS: Variable modification
-PASS: Variable modification in block
+FAIL: Variable modification in block

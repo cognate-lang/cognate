@@ -11,7 +11,10 @@
       else { \
         cognate_object item = peek_any(); \
         record_predicates[i](); \
-        if (pop(boolean)) rec[i] = item; \
+        if (pop(boolean)) \
+        { \
+          rec[i] = check_block(item); \
+        } \
         else throw_error("Item assertion failed for record '"#name"'"); \
       } \
     } \
