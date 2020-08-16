@@ -208,9 +208,9 @@ compile (Node body : Node call : Leaf "Let" : xs) =
   -- TODO: Search for 'Set (Name...)' as opposed to just 'Set'.
   if xs `doesCall` name then
     ((if (any isNode body) then 
-        "unsafe_function(" 
+        "function(" 
       else 
-        "function(") 
+        "unsafe_function(") 
     ++ lc name ++ ", " ++ (if xs `doesMutate` name || body `doesCall` name then 
     "mutable" else "immutable") ++ ",{" 
   ++ compile (intersperse (Leaf "Let") (reverse args) ++ [Leaf "Let" | not (null args)] ++ body)

@@ -1,8 +1,6 @@
 #ifndef COGNATE_C
 #define COGNATE_C
 
-int scope_depth = 0;
-
 #define mutable   __block
 #define immutable const
 
@@ -26,25 +24,31 @@ int scope_depth = 0;
   immutable cognate_object cognate_variable_ ## name = check_block(pop_any()); \
   cognate_function_ ## name = ^{push_any(cognate_variable_ ## name);};
   
-#define safe_block(body) \
-({ \
-  cognate_block blk = ^{ \
-    ++scope_depth; \
-    body \
-    --scope_depth; \
-    copy_blocks(); \
-  }; \
-  *block_depth(blk) = scope_depth; \
-  blk; \
-})
-
 #define unsafe_block(body) \
 ({ \
-  cognate_block blk = ^body; \
-  *block_depth(blk) = scope_depth; \
+  cognate_block blk = \
+  ^{ \
+    body \
+    cognate_object *temp_thing = stack_uncopied; \
+    stack_uncopied = stack.top; \
+    copy_blocks(); \
+    stack_uncopied = temp_thing; \
+  }; \
   blk; \
 })
 
+#define safe_block(body) \
+({ \
+  cognate_block blk = \
+  ^{ \
+    cognate_object *temp_thing = stack_uncopied; \
+    stack_uncopied = stack.top; \
+    body \
+    copy_blocks(); \
+    stack_uncopied = temp_thing; \
+  }; \
+  blk; \
+})
 
 /*
 #define MAX_RECURSION_DEPTH 1048576
@@ -93,26 +97,29 @@ static void init_recursion_depth_check()
   return_stack_start = &var;
 }
 */
-
+/*
 int *block_depth(cognate_block blk)
 {
   return (int*)blk+3; 
 }
-
+*/
 cognate_block copy_block(cognate_block blk)
 {
   blk = Block_copy(blk);
-  *block_depth(blk) = 0;
   return blk;
 }
 
 void copy_blocks()
 {
-  for (cognate_object *i = stack_uncopied; i < stack.top; ++i)
+  // When this prints a huge negative number, the stack has probably overflown and corrupted stack_uncopied.
+  printf("Scanning %li items\n", stack.top - stack_uncopied);
+  for (;stack_uncopied < stack.top; ++stack_uncopied)
   {
-    if (i->type==block && *block_depth(i->block) > scope_depth)
+    if (stack_uncopied->type==block)
     {
-      i->block = copy_block(i->block); // Copy block to heap.
+      puts("Copying block");
+      stack_uncopied->block = copy_block(stack_uncopied->block); // Copy block to heap.
+      puts("Copied block");
     }
   }
   stack_uncopied = stack.top;
