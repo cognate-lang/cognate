@@ -24,7 +24,7 @@
 #define malloc GC_MALLOC
 #define realloc GC_REALLOC
 
-external_function(do,             { pop(block)();                             })
+external_function(do,             { pop(block)();                          })
 external_function(print,          { print_object(pop_any(), 1); puts("");  })
 
 external_function(sum,            { push(number, pop(number) + pop(number));               })
@@ -259,7 +259,5 @@ external_function(append,
   }
 })
 
-// Not my finest hour. I fixed the performance slowdown, but now block must be explicitly copied to the heap...
-external_function(copy, {push(block, Block_copy(pop(block)));})
 
 #endif

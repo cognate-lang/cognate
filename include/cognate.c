@@ -4,17 +4,17 @@
 // Macro to define internal cognate function.
 // __block attribute allows recursion and mutation at performance cost.
 
-#define mutable const __block
+#define mutable  __block
 #define immutable const
 
 #define function(name, flags, body) \
-  flags cognate_block cognate_function_ ## name = ^body
+  flags cognate_block cognate_function_ ## name = safe_block(body);
 
 #define malloc GC_MALLOC
 #define realloc GC_REALLOC
 
 #define mutate_function(name, body) \
-  cognate_function_ ## name = ^body
+  cognate_function_ ## name = safe_block(body);
 
 // Macro for defining internal cognate variables.
 // __block attribute allows mutation at performance cost.
@@ -23,9 +23,14 @@
   flags cognate_block cognate_function_ ## name = ^{push_any(cognate_variable_ ## name);};
 
 #define mutate_variable(name) \
-  const cognate_object cognate_variable_ ## name = pop_any(); \
+  immutable cognate_object cognate_variable_ ## name = pop_any(); \
   cognate_function_ ## name = ^{push_any(cognate_variable_ ## name);};
-
+  
+#define safe_block(body) \
+  ^{ \
+    body \
+    copy_blocks(); \
+  }
 
 /*
 #define MAX_RECURSION_DEPTH 1048576
@@ -74,5 +79,22 @@ static void init_recursion_depth_check()
   return_stack_start = &var;
 }
 */
+
+
+void copy_blocks()
+{
+  for (cognate_object *i = stack.start; i <= stack.top; ++i)
+  {
+    if (i->type==block)
+    {
+      i->block = Block_copy(i->block);
+    }
+  }
+}
+
+
+
+
+
 
 #endif
