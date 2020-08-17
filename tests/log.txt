@@ -1,12 +1,6 @@
 Testing block.cog...
-Copying block
-Copied block
-Copying block
-Copied block
 PASS: Implicit block copying
 PASS: Implicit block copying (with mutation)
-Copying block
-Copied block
 PASS: Implicit block copying
 Testing booleans.cog...
 PASS: True AND True
@@ -63,4 +57,4 @@ PASS: Variable assignment
 PASS: Variable shadowing
 PASS: Variable shadowing in block
 PASS: Variable modification
-FAIL: Variable modification in block
+PASS: Variable modification in block

@@ -7,7 +7,7 @@ Let the (Fib of N) be
     Sum
       Fib of - 1 N with
       Fib of - 2 N
-  )
+  );
 );
 
 ~~Print 'The 35th fibonacci number is...';

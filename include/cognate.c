@@ -22,17 +22,16 @@
 
 #define mutate_variable(name) \
   immutable cognate_object cognate_variable_ ## name = check_block(pop_any()); \
-  cognate_function_ ## name = ^{push_any(cognate_variable_ ## name);};
+  cognate_function_ ## name = Block_copy(^{push_any(cognate_variable_ ## name);});
   
 #define unsafe_block(body) \
 ({ \
   cognate_block blk = \
   ^{ \
-    body \
-    cognate_object *temp_thing = stack_uncopied; \
+    ptrdiff_t temp_thing = stack_uncopied - stack.start; \
     stack_uncopied = stack.top; \
-    copy_blocks(); \
-    stack_uncopied = temp_thing; \
+    body \
+    stack_uncopied = temp_thing + stack.start; \
   }; \
   blk; \
 })
@@ -41,11 +40,11 @@
 ({ \
   cognate_block blk = \
   ^{ \
-    cognate_object *temp_thing = stack_uncopied; \
+    ptrdiff_t temp_thing = stack_uncopied - stack.start; \
     stack_uncopied = stack.top; \
     body \
     copy_blocks(); \
-    stack_uncopied = temp_thing; \
+    stack_uncopied = temp_thing + stack.start; \
   }; \
   blk; \
 })
@@ -97,38 +96,22 @@ static void init_recursion_depth_check()
   return_stack_start = &var;
 }
 */
-/*
-int *block_depth(cognate_block blk)
-{
-  return (int*)blk+3; 
-}
-*/
-cognate_block copy_block(cognate_block blk)
-{
-  blk = Block_copy(blk);
-  return blk;
-}
 
 void copy_blocks()
 {
-  // When this prints a huge negative number, the stack has probably overflown and corrupted stack_uncopied.
-  printf("Scanning %li items\n", stack.top - stack_uncopied);
   for (;stack_uncopied < stack.top; ++stack_uncopied)
   {
     if (stack_uncopied->type==block)
     {
-      puts("Copying block");
-      stack_uncopied->block = copy_block(stack_uncopied->block); // Copy block to heap.
-      puts("Copied block");
+      stack_uncopied->block = Block_copy(stack_uncopied->block); // Copy block to heap.
     }
   }
-  stack_uncopied = stack.top;
 }
 
 cognate_object check_block(cognate_object obj)
 {
   if (obj.type==block)
-    obj.block=copy_block(obj.block);
+    obj.block=Block_copy(obj.block);
   return obj;
 }
 
