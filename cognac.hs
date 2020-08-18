@@ -207,16 +207,16 @@ compile (Node body : Node call : Leaf "Let" : xs) =
   -- Defines immutable and nonrecursive if function does not refer to itself in its body and 'Set' is not found in xs.
   -- TODO: Search for 'Set (Name...)' as opposed to just 'Set'.
   if xs `doesCall` name then
-    ((if (any isNode body) then 
-        "function(" 
-      else 
-        "unsafe_function(") 
-    ++ lc name ++ ", " ++ (if xs `doesMutate` name || body `doesCall` name then 
-    "mutable" else "immutable") ++ ",{" 
-  ++ compile (intersperse (Leaf "Let") (reverse args) ++ [Leaf "Let" | not (null args)] ++ body)
-  ++ "});{"
-  ++ compile xs ++
-  "}\n") else compile xs
+    "function(" 
+      ++ lc name ++ ", " 
+      ++ (if xs `doesMutate` name || body `doesCall` name then "mutable," else "immutable,") 
+      ++ (if any isNode body then "copy," else "nocopy,") 
+      ++ "{" 
+        ++ compile (intersperse (Leaf "Let") (reverse args) ++ [Leaf "Let" | not (null args)] ++ body)
+        ++ "});{"
+    ++ compile xs ++
+    "}\n" 
+  else compile xs
 
 compile (Node body : Node call : Leaf "Set" : xs) =
   let name = last call
@@ -249,13 +249,11 @@ compile (Leaf name : Leaf "Set" : xs) =
 
 
 -- Primitive Do inlining.
-{-
 compile (Node expr : Leaf "Do" : xs) =
   "{\n" ++
     compile expr ++
   "}\n" ++
   compile xs
--}
 
 compile (Node str : Leaf "StringLiteral" : xs) =
   "push(string,\"" ++ sanitise (map (chr . readNumber) str) ++ "\");" ++ compile xs
@@ -269,7 +267,7 @@ compile (Node str : Leaf "StringLiteral" : xs) =
         replace "¸" "'"
 
 compile (Node expr : xs) =
-  "push(block,\n" ++ (if any isNode expr then "safe_block" else "unsafe_block") ++ "({\n"
+  "push(block,\nmake_block(" ++ (if any isNode expr then "copy," else "nocopy,") ++ "{\n"
   ++ compile expr
   ++ "}));\n"
   ++ compile xs

@@ -4,17 +4,14 @@
 #define mutable   __block
 #define immutable const
 
-#define function(name, flags, body) \
-  flags cognate_block cognate_function_ ## name = safe_block(body);
-
-#define unsafe_function(name, flags, body) \
-  flags cognate_block cognate_function_ ## name = unsafe_block(body);
+#define function(name, flags, copy, body) \
+  flags cognate_block cognate_function_ ## name = make_block(copy, body);
 
 #define malloc  GC_MALLOC
 #define realloc GC_REALLOC
 
 #define mutate_function(name, body) \
-  cognate_function_ ## name = safe_block(body);
+  cognate_function_ ## name = make_block(1, body);
 
 #define variable(name, flags) \
   immutable cognate_object cognate_variable_ ## name = pop_any(); \
@@ -23,28 +20,19 @@
 #define mutate_variable(name) \
   immutable cognate_object cognate_variable_ ## name = check_block(pop_any()); \
   cognate_function_ ## name = Block_copy(^{push_any(cognate_variable_ ## name);});
-  
-#define unsafe_block(body) \
-({ \
-  cognate_block blk = \
-  ^{ \
-    ptrdiff_t temp_thing = stack_uncopied - stack.start; \
-    stack_uncopied = stack.top; \
-    body \
-    stack_uncopied = temp_thing + stack.start; \
-  }; \
-  blk; \
-})
 
-#define safe_block(body) \
+#define copy   1
+#define nocopy 0
+  
+#define make_block(copy, body) \
 ({ \
   cognate_block blk = \
   ^{ \
-    ptrdiff_t temp_thing = stack_uncopied - stack.start; \
+    const ptrdiff_t temp_uncopied = stack_uncopied - stack.start; \
     stack_uncopied = stack.top; \
     body \
-    copy_blocks(); \
-    stack_uncopied = temp_thing + stack.start; \
+    if (copy) copy_blocks(); \
+    stack_uncopied = temp_uncopied + stack.start; \
   }; \
   blk; \
 })
@@ -99,6 +87,7 @@ static void init_recursion_depth_check()
 
 void copy_blocks()
 {
+  //printf("Scanning %lu items\n", stack.top-stack_uncopied);
   for (;stack_uncopied < stack.top; ++stack_uncopied)
   {
     if (stack_uncopied->type==block)

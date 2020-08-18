@@ -34,10 +34,9 @@ static void push_any(cognate_object);
 static cognate_object pop_any();
 static cognate_object peek_any();
 static void expand_stack();
-static size_t min(size_t, size_t);
 
 cognate_list stack;
-size_t stack_size;
+ptrdiff_t stack_size;
 cognate_object* stack_uncopied;
 
 static void init_stack()
@@ -81,11 +80,6 @@ static void expand_stack()
   stack_uncopied = stack.start + temp;
   stack.top = stack.start + stack_size;
   stack_size *= LIST_GROWTH_FACTOR;
-}
-
-static size_t min(size_t x, size_t y)
-{
-  return y ^ ((x ^ y) & -(x < y));
 }
 
 #endif
