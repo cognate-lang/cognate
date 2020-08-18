@@ -1,43 +1,43 @@
-#!/bin/sh
+#!/bin/bash
 # TODO: Replace with proper build system!
 
+echo "This install script was written for Linux, not MacOS. If you are on MacOS, this probably won't work!"
 echo "Before continuing, make sure that you have the following programs installed:"
 echo "+ ghc"
 echo "+ cabal-install"
 echo "+ clang"
 echo "+ git"
 echo "+ make"
+echo "+ autoconf"
+echo "+ libtool"
 echo "+ tar"
 echo "+ wget"
 read -p "Press any key to continue..."
 
 SRC=$(pwd)
-GC="8.0.4"
 TMPDIR="/tmp/cognac-setup"
 
-mkdir $TMPDIR
+mkdir -p $TMPDIR
 
-# Blocks Runtime
-git clone https://github.com/mackyle/blocksruntime $TMPDIR/br
-cd $TMPDIR/br
+# Blocks Runtime for lexical closures
+cd $TMPDIR
+git clone https://github.com/mackyle/blocksruntime
+cd blocksruntime
 CC=clang ./buildlib
-sudo ./installib
-cd $TMPDIR
-rm -rf $TMPDIR/br
+sudo ./installlib
 
-# Boehm
+# Boehm garbage collector
 cd $TMPDIR
-wget https://www.hboehm.info/gc/gc_source/gc-$GC.tar.gz
-tar xvfz gc-$GC.tar.gz
-cd $TMPDIR/gc-$GC
+git clone git://github.com/ivmai/bdwgc.git
+cd bdwgc
+git clone git://github.com/ivmai/libatomic_ops.git
+./autogen.sh
 ./configure --prefix=/usr --disable-threads
-make
-make install
-cd $TMPDIR
-rm -rf $TMPDIR/gc-$GC
-rm $TMPDIR/gc-$GC.tar.gz
+make -j
+sudo make install
 
-# Install Split
+
+# Split (haskell string lib)
 cd $SRC
 cabal update
 cabal new-install split --lib # For new versions of cabal

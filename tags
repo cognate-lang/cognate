@@ -12,45 +12,54 @@ IO_C	include/io.c	2;"	d	file:
 LIST_GROWTH_FACTOR	include/stack.c	15;"	d	file:
 STACK_C	include/stack.c	2;"	d	file:
 TYPE_C	include/type.c	2;"	d	file:
+block	include/type.c	/^    cognate_block block;$/;"	m	union:cognate_object::__anon2	file:
 block	include/type.c	/^typedef enum {boolean=0, string=1, block=2, number=3, list=4} cognate_type;$/;"	e	enum:__anon1	file:
 boolean	include/type.c	/^    _Bool boolean;$/;"	m	union:cognate_object::__anon2	file:
 boolean	include/type.c	/^typedef enum {boolean=0, string=1, block=2, number=3, list=4} cognate_type;$/;"	e	enum:__anon1	file:
 call	include/func.c	19;"	d	file:
 call	include/func.c	21;"	d	file:
+check_block	include/cognate.c	/^cognate_object check_block(cognate_object obj)$/;"	f
 check_type	include/type.c	/^static cognate_object check_type(cognate_type expected_type, cognate_object object)$/;"	f	file:
-checked_field	include/record.c	37;"	d	file:
 cognate_list	include/type.c	/^struct __attribute__((packed)) cognate_list$/;"	s	file:
 cognate_list	include/type.c	/^typedef struct cognate_list   cognate_list;$/;"	t	typeref:struct:cognate_list	file:
 cognate_object	include/type.c	/^struct __attribute__((packed)) cognate_object$/;"	s	file:
 cognate_object	include/type.c	/^typedef struct cognate_object cognate_object;$/;"	t	typeref:struct:cognate_object	file:
 cognate_type	include/type.c	/^typedef enum {boolean=0, string=1, block=2, number=3, list=4} cognate_type;$/;"	t	typeref:enum:__anon1	file:
+compare_objects	include/type.c	/^static const _Bool compare_objects(cognate_object ob1, cognate_object ob2)$/;"	f	file:
+copy	include/cognate.c	7;"	d	file:
+copy_blocks	include/cognate.c	/^void copy_blocks()$/;"	f
 expand_stack	include/stack.c	/^static void expand_stack()$/;"	f	file:
 external_function	include/func.c	10;"	d	file:
 external_variable	include/func.c	14;"	d	file:
-field	include/record.c	28;"	d	file:
+field	include/record.c	31;"	d	file:
 function	include/cognate.c	10;"	d	file:
-immutable	include/cognate.c	8;"	d	file:
+immutable	include/cognate.c	5;"	d	file:
 init	include/cognate.c	/^static void init()$/;"	f	file:
 init_stack	include/stack.c	/^static void init_stack()$/;"	f	file:
 list	include/type.c	/^    struct cognate_list *list;$/;"	m	union:cognate_object::__anon2	typeref:struct:cognate_object::__anon2::cognate_list	file:
 list	include/type.c	/^typedef enum {boolean=0, string=1, block=2, number=3, list=4} cognate_type;$/;"	e	enum:__anon1	file:
 lookup_type	include/type.c	/^static const char* lookup_type(cognate_type type)$/;"	f	file:
 main	examples/fib.c	/^int main() {$/;"	f
-main	examples/hello.c	/^int main() {$/;"	f
-main	examples/loop.c	/^int main() {$/;"	f
 main	examples/range.c	/^int main() {$/;"	f
-main	examples/record.c	/^int main() {$/;"	f
-main	examples/tuple.c	/^int main() {$/;"	f
+main	tests/block.c	/^int main() {$/;"	f
+main	tests/booleans.c	/^int main() {$/;"	f
 main	tests/functions.c	/^int main() {$/;"	f
+main	tests/lists.c	/^int main() {$/;"	f
+main	tests/maths.c	/^int main() {$/;"	f
+main	tests/parsing.c	/^int main() {$/;"	f
+main	tests/stack.c	/^int main() {$/;"	f
+main	tests/strings.c	/^int main() {$/;"	f
 main	tests/variables.c	/^int main() {$/;"	f
+make_block	include/cognate.c	28;"	d	file:
 malloc	include/cognate.c	13;"	d	file:
 malloc	include/func.c	24;"	d	file:
 malloc	include/stack.c	9;"	d	file:
 malloc_atomic	include/stack.c	12;"	d	file:
-mutable	include/cognate.c	7;"	d	file:
+mutable	include/cognate.c	4;"	d	file:
 mutate_function	include/cognate.c	16;"	d	file:
-mutate_variable	include/cognate.c	25;"	d	file:
+mutate_variable	include/cognate.c	23;"	d	file:
 next_type	include/type.c	/^static int next_type = list + 1;$/;"	v	file:
+nocopy	include/cognate.c	8;"	d	file:
 noreturn	include/error.c	8;"	d	file:
 number	include/type.c	/^    double number;$/;"	m	union:cognate_object::__anon2	file:
 number	include/type.c	/^typedef enum {boolean=0, string=1, block=2, number=3, list=4} cognate_type;$/;"	e	enum:__anon1	file:
@@ -68,7 +77,8 @@ realloc	include/stack.c	10;"	d	file:
 record	include/record.c	1;"	d	file:
 record	include/type.c	/^    struct cognate_object *record;$/;"	m	union:cognate_object::__anon2	typeref:struct:cognate_object::__anon2::cognate_object	file:
 stack	include/stack.c	/^cognate_list stack;$/;"	v
-stack_size	include/stack.c	/^size_t stack_size;$/;"	v
+stack_modified	include/stack.c	/^cognate_object* stack_modified;$/;"	v
+stack_size	include/stack.c	/^ptrdiff_t stack_size;$/;"	v
 start	include/type.c	/^  struct cognate_object *start,$/;"	m	struct:cognate_list	typeref:struct:cognate_list::cognate_object	file:
 string	include/type.c	/^    char* string;$/;"	m	union:cognate_object::__anon2	file:
 string	include/type.c	/^typedef enum {boolean=0, string=1, block=2, number=3, list=4} cognate_type;$/;"	e	enum:__anon1	file:
@@ -76,4 +86,4 @@ throw_error	include/error.c	/^noreturn static void throw_error(const char* messa
 top	include/type.c	/^                        *top;$/;"	m	struct:cognate_list	typeref:struct:cognate_list::	file:
 type	include/type.c	/^  cognate_type type : 32;$/;"	m	struct:cognate_object	file:
 type_error	include/error.c	/^noreturn static void type_error(const char* expected, const char* recieved)$/;"	f	file:
-variable	include/cognate.c	21;"	d	file:
+variable	include/cognate.c	19;"	d	file:
