@@ -221,12 +221,13 @@ compile (Node body : Node call : Leaf "Let" : xs) =
 compile (Node body : Node call : Leaf "Set" : xs) =
   let name = last call
       args = init call in
-  "mutate_function(" ++ lc 
-    (case name of 
-      Leaf str -> str
-      _        -> error "Invalid function name!") ++ ", {\n"
-  ++ compile (intersperse (Leaf "Let") (reverse args) ++ [Leaf "Let" | not (null args)] ++ body)
-  ++ "});\n{\n"
+  "mutate_function(" 
+    ++ lc (case name of 
+            Leaf str -> str ++ ","
+            _        -> error "Invalid function name!") 
+    ++ (if any isNode body then "copy, {" else "nocopy, {")
+    ++ compile (intersperse (Leaf "Let") (reverse args) ++ [Leaf "Let" | not (null args)] ++ body)
+    ++ "});\n{\n"
   ++ compile xs ++
   "}\n"
 

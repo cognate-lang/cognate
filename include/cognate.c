@@ -4,14 +4,17 @@
 #define mutable   __block
 #define immutable const
 
-#define function(name, flags, copy, body) \
-  flags cognate_block cognate_function_ ## name = make_block(copy, body);
+#define copy   1
+#define nocopy 0
+
+#define function(name, flags, docopy, body) \
+  flags cognate_block cognate_function_ ## name = make_block(docopy, body);
 
 #define malloc  GC_MALLOC
 #define realloc GC_REALLOC
 
-#define mutate_function(name, body) \
-  cognate_function_ ## name = make_block(1, body);
+#define mutate_function(name, docopy, body) \
+  cognate_function_ ## name = make_block(docopy, body);
 
 #define variable(name, flags) \
   immutable cognate_object cognate_variable_ ## name = pop_any(); \
@@ -19,23 +22,18 @@
 
 #define mutate_variable(name) \
   immutable cognate_object cognate_variable_ ## name = check_block(pop_any()); \
-  cognate_function_ ## name = Block_copy(^{push_any(cognate_variable_ ## name);});
+  cognate_function_ ## name = ^{push_any(cognate_variable_ ## name);};
 
-#define copy   1
-#define nocopy 0
   
-#define make_block(copy, body) \
-({ \
-  cognate_block blk = \
+#define make_block(docopy, body) \
   ^{ \
-    const ptrdiff_t temp_uncopied = stack_uncopied - stack.start; \
-    stack_uncopied = stack.top; \
+    /* Temp variable causes ~10% performance loss :( */\
+    const ptrdiff_t temp_modified = stack_modified - stack.start; \
+    stack_modified = stack.top; \
     body \
-    if (copy) copy_blocks(); \
-    stack_uncopied = temp_uncopied + stack.start; \
-  }; \
-  blk; \
-})
+    if (docopy) copy_blocks(); \
+    stack_modified = temp_modified + stack.start; \
+  }
 
 /*
 #define MAX_RECURSION_DEPTH 1048576
@@ -87,12 +85,12 @@ static void init_recursion_depth_check()
 
 void copy_blocks()
 {
-  //printf("Scanning %lu items\n", stack.top-stack_uncopied);
-  for (;stack_uncopied < stack.top; ++stack_uncopied)
+  //printf("Scanning %lu items\n", stack.top-stack_modified);
+  for (;stack_modified < stack.top; ++stack_modified)
   {
-    if (stack_uncopied->type==block)
+    if (stack_modified->type==block)
     {
-      stack_uncopied->block = Block_copy(stack_uncopied->block); // Copy block to heap.
+      stack_modified->block = Block_copy(stack_modified->block); // Copy block to heap.
     }
   }
 }
