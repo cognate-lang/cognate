@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # TODO: Replace with proper build system!
 
 echo "This install script was written for Linux, not MacOS. If you are on MacOS, this probably won't work!"
