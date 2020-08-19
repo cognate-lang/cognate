@@ -55,7 +55,7 @@ static void init()
 
 cognate_object check_block(cognate_object obj)
 {
-  obj.type==block && (obj.block = Block_copy(obj.block));
+  (obj.type==block) && (obj.block = Block_copy(obj.block));
   return obj;
 }
 
@@ -64,7 +64,8 @@ void copy_blocks()
 {
   while (stack.modified != stack.items.top)
   {
-    stack.modified++->type==block && (stack.modified->block = Block_copy(stack.modified->block)); // Copy block to heap.
+    (stack.modified->type==block) && (stack.modified->block = Block_copy(stack.modified->block)); // Copy block to heap.
+    stack.modified++;
   }
 }
 

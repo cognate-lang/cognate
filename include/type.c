@@ -16,11 +16,10 @@ static int next_type = list + 1;
 struct __attribute__((packed)) cognate_list
 {
   struct cognate_object *start,
-                        //*end, // For storing amount of free allocated space. Not currently needed.
                         *top;
 };
 
-// Removing packing will give slight performance gains at cost of more memory.
+// Removing packing will give slight (almost none) performance gains at cost of more memory.
 struct __attribute__((packed)) cognate_object
 {
   union
@@ -83,8 +82,9 @@ static const _Bool compare_objects(cognate_object ob1, cognate_object ob2)
         if (len != ob2.list->top - ob2.list->start) return 0; // Not equal if differing length.
         cognate_list lst1 = *ob1.list;
         cognate_list lst2 = *ob2.list;
-        for (; len > 0; --len)
+        while (len > 0)
         {
+          --len;
           if (!compare_objects(lst1.start[len], lst2.start[len])) // Compare each list object.
           {
             return 0;

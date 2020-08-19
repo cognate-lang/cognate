@@ -1,3 +1,6 @@
+#ifndef RECORD_C
+#define RECORD_C
+
 #define record(name, size) \
   void(^*record_predicates)(void) = (void(^[size])(void)){0}; \
   int current_record_pos = 0; \
@@ -38,3 +41,4 @@
     else { throw_error("No field '"#name"' in record!"); } \
   };
 
+#endif

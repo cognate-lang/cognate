@@ -165,6 +165,8 @@ external_function(list,  {
   cognate_list* lst = (cognate_list*)malloc(sizeof(cognate_list));
   *lst = stack.items;
   //TODO: Shrink the list to fit here.
+  lst->start = realloc(lst->start, (lst->top - lst->start) * sizeof(cognate_object));
+  lst->top = lst->start - stack.items.start + stack.items.top;
   // Restore the original stack
   stack = temp_stack;
   // Push the created list to the stack
