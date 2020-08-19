@@ -8,11 +8,11 @@
 
 // Macro to define external cognate function.
 #define external_function(name, body) \
-  void cognate_function_ ## name () body
+  static void cognate_function_ ## name () body
 
 // Macro for defining external cognate variables with specified type.
 #define external_variable(name, type, value) \
-  void cognate_function_ ## name () { \
+  static void cognate_function_ ## name () { \
     push(type, value); }
 
 #ifdef EBUG
@@ -156,20 +156,17 @@ external_function(list,  {
   // Get the block argument
   cognate_block expr = pop(block);
   // Move the stack to temporary storage
-  cognate_list temp_stack = stack;
-  size_t temp_stack_size = stack_size;
+  cognate_stack temp_stack = stack;
   // Allocate a list as the stack
   init_stack();
   // Eval expr
   expr();
   // Store the resultant list, realloc-ing to fit snugly in memory.
   cognate_list* lst = (cognate_list*)malloc(sizeof(cognate_list));
-  lst->start = (cognate_object*)realloc(stack.start, (stack.top - stack.start) * sizeof(cognate_object));
-  lst->top = stack.top - stack.start + lst->start;
+  *lst = stack.items;
   //TODO: Shrink the list to fit here.
   // Restore the original stack
   stack = temp_stack;
-  stack_size = temp_stack_size;
   // Push the created list to the stack
   push(list, lst);
 })
@@ -190,7 +187,7 @@ external_function(characters, {
 
 external_function(stack,
 {
-  push(list, &stack);
+  push(list, &stack.items);
 })
 
 external_function(if,

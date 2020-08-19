@@ -10,7 +10,6 @@ echo "+ git"
 echo "+ make"
 echo "+ autoconf"
 echo "+ libtool"
-echo "+ tar"
 echo "+ wget"
 read -p "Press any key to continue..."
 

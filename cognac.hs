@@ -1,4 +1,16 @@
--- TODO: Rewrite all of this properly.
+-- This is the parser for the CognaC compiler.
+-- It processes a Cognate program and outputs a C program,
+-- which is then compiled and linked against the runtime located in the include/ directory.
+
+-- Compared to the runtime code, this is pretty messy. Most of the bodges are found here.
+-- That is because I eventually plan to rewrite all of this in Cognate itself.
+
+-- TODO: Rewrite all of this in Cognate.
+
+-- Known Parsing Bugs:
+--  Tilde inside string is still parsed as comment. 
+--  Only ASCII is supported - not extended ASCII
+
 
 {-# LANGUAGE LambdaCase #-}
 
@@ -33,7 +45,13 @@ parsefile = -- Parsefile takes a string (the file text) as an argument and retur
   -- unwords $ parsecharacters $ splitOn "\'" $ -- Convert characters to ASCII value integers
   parsestrings . -- Convert strings to lists of characters
   parseblockcomments . 
-  parselinecomments
+  parselinecomments .
+  filterAscii
+
+filterAscii :: String -> String
+filterAscii str
+  | all (\c -> ord c < 128) str = str
+  | otherwise = error "Parse Error: ASCII only!"
 
 parselinecomments :: String -> String
 parselinecomments str =
@@ -202,7 +220,7 @@ compile (Node body : Leaf name : Leaf "Record" : xs) =
 compile (Node body : Node call : Leaf "Let" : xs) =
   let name = case last call of
                Leaf str -> str
-               _        -> error "Invalid function name!"
+               _        -> error "Parse Error: Invalid function name!"
       args = init call in
   -- Defines immutable and nonrecursive if function does not refer to itself in its body and 'Set' is not found in xs.
   -- TODO: Search for 'Set (Name...)' as opposed to just 'Set'.
@@ -224,7 +242,7 @@ compile (Node body : Node call : Leaf "Set" : xs) =
   "mutate_function(" 
     ++ lc (case name of 
             Leaf str -> str ++ ","
-            _        -> error "Invalid function name!") 
+            _        -> error "Parse Error: Invalid function name!") 
     ++ (if any isNode body then "copy, {" else "nocopy, {")
     ++ compile (intersperse (Leaf "Let") (reverse args) ++ [Leaf "Let" | not (null args)] ++ body)
     ++ "});\n{\n"
@@ -261,7 +279,7 @@ compile (Node str : Leaf "StringLiteral" : xs) =
     where 
       readNumber :: Tree -> Int
       readNumber (Leaf num) = read num
-      readNumber (Node _) = error "String literal parse error!"
+      readNumber (Node _) = error "Parse Error: Cannot parse malformed string literal!"
       sanitise = 
         replace "\"" "\\\"" .
         replace "\\'" "'" .
@@ -301,24 +319,24 @@ header in_file = "// Compiled from " ++ in_file ++ " by CognaC version " ++ vers
 main :: IO ()
 main =
   do
-    path <- getPath
     args <- getArgs
     let compilerFlags = 
-          words $ "-fblocks -lBlocksRuntime -l:libgc.so -Wall -Wno-unused -O3 -s -I " ++ path ++ "/include" 
+          words "-fblocks -lBlocksRuntime -l:libgc.so -Wall -Wno-unused -O3 -s -I /home/finn/.local/include -I include"
     let in_file = head args
     let out_file = head (splitOn "." in_file) ++ ".c"
     let compiler_args = tail args
-
-    putStrLn "  ____                         ____ \n / ___|___   __ _ _ __   __ _ / ___|\n| |   / _ \\ / _` | '_ \\ / _` | |    \n| |__| (_) | (_| | | | | (_| | |___\n \\____\\___/ \\__, |_| |_|\\__,_|\\____|\n            |___/                   "
-    putStrLn $ "Cognate Compiler - Version " ++ version
-    putStrLn $ "Compiling " ++ in_file ++ " to " ++ out_file ++ "... "
-    source <- readFile in_file
-    writeFile out_file $ header in_file ++ "#include\"cognate.c\"\nint main()\n{\ninit();\n" ++ compile (parsefile source) ++ "return 0;\n}\n"
-    rawSystem formatter (formatFlags ++ [out_file])
-    putStrLn $ "Compiling " ++ out_file ++ " to " ++ stripExtension in_file ++ "... "
-    rawSystem compiler ([out_file, "-o", stripExtension in_file] ++ compilerFlags ++ compiler_args)
-    putStrLn "Done!"
-    return ()
+    if not (".cog" `isSuffixOf` in_file) then error "Parse Error: Source file must end with .cog file extension" 
+    else do
+      putStrLn "  ____                         ____ \n / ___|___   __ _ _ __   __ _ / ___|\n| |   / _ \\ / _` | '_ \\ / _` | |    \n| |__| (_) | (_| | | | | (_| | |___\n \\____\\___/ \\__, |_| |_|\\__,_|\\____|\n            |___/                   "
+      putStrLn $ "Cognate Compiler - Version " ++ version
+      putStrLn $ "Compiling " ++ in_file ++ " to " ++ out_file ++ "... "
+      source <- readFile in_file
+      writeFile out_file $ header in_file ++ "#include\"cognate.c\"\nint main()\n{\ninit();\n" ++ compile (parsefile source) ++ "return 0;\n}\n"
+      rawSystem formatter (formatFlags ++ [out_file])
+      putStrLn $ "Compiling " ++ out_file ++ " to " ++ stripExtension in_file ++ "... "
+      rawSystem compiler ([out_file, "-o", stripExtension in_file] ++ compilerFlags ++ compiler_args)
+      putStrLn "Done!"
+      return ()
 
 stripExtension = head . splitOn "."
 lc = map toLower

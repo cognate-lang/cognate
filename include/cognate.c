@@ -28,11 +28,11 @@
 #define make_block(docopy, body) \
   ^{ \
     /* Temp variable causes ~10% performance loss :( */\
-    const ptrdiff_t temp_modified = stack_modified - stack.start; \
-    stack_modified = stack.top; \
+    const ptrdiff_t temp_modified = stack.modified - stack.items.start; \
+    stack.modified = stack.items.top; \
     body \
     if (docopy) copy_blocks(); \
-    stack_modified = temp_modified + stack.start; \
+    stack.modified = temp_modified + stack.items.start; \
   }
 
 /*
@@ -86,11 +86,11 @@ static void init_recursion_depth_check()
 void copy_blocks()
 {
   //printf("Scanning %lu items\n", stack.top-stack_modified);
-  for (;stack_modified < stack.top; ++stack_modified)
+  for (;stack.modified < stack.items.top; ++stack.modified)
   {
-    if (stack_modified->type==block)
+    if (stack.modified->type==block)
     {
-      stack_modified->block = Block_copy(stack_modified->block); // Copy block to heap.
+      stack.modified->block = Block_copy(stack.modified->block); // Copy block to heap.
     }
   }
 }

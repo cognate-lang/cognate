@@ -24,6 +24,8 @@ cognate_list	include/type.c	/^struct __attribute__((packed)) cognate_list$/;"	s	
 cognate_list	include/type.c	/^typedef struct cognate_list   cognate_list;$/;"	t	typeref:struct:cognate_list	file:
 cognate_object	include/type.c	/^struct __attribute__((packed)) cognate_object$/;"	s	file:
 cognate_object	include/type.c	/^typedef struct cognate_object cognate_object;$/;"	t	typeref:struct:cognate_object	file:
+cognate_stack	include/stack.c	/^struct cognate_stack$/;"	s	file:
+cognate_stack	include/stack.c	/^typedef struct cognate_stack cognate_stack;$/;"	t	typeref:struct:cognate_stack	file:
 cognate_type	include/type.c	/^typedef enum {boolean=0, string=1, block=2, number=3, list=4} cognate_type;$/;"	t	typeref:enum:__anon1	file:
 compare_objects	include/type.c	/^static const _Bool compare_objects(cognate_object ob1, cognate_object ob2)$/;"	f	file:
 copy	include/cognate.c	7;"	d	file:
@@ -36,6 +38,7 @@ function	include/cognate.c	10;"	d	file:
 immutable	include/cognate.c	5;"	d	file:
 init	include/cognate.c	/^static void init()$/;"	f	file:
 init_stack	include/stack.c	/^static void init_stack()$/;"	f	file:
+items	include/stack.c	/^  cognate_list    items;    \/\/ The list holding the stack itself.$/;"	m	struct:cognate_stack	file:
 list	include/type.c	/^    struct cognate_list *list;$/;"	m	union:cognate_object::__anon2	typeref:struct:cognate_object::__anon2::cognate_list	file:
 list	include/type.c	/^typedef enum {boolean=0, string=1, block=2, number=3, list=4} cognate_type;$/;"	e	enum:__anon1	file:
 lookup_type	include/type.c	/^static const char* lookup_type(cognate_type type)$/;"	f	file:
@@ -55,6 +58,7 @@ malloc	include/cognate.c	13;"	d	file:
 malloc	include/func.c	24;"	d	file:
 malloc	include/stack.c	9;"	d	file:
 malloc_atomic	include/stack.c	12;"	d	file:
+modified	include/stack.c	/^  cognate_object* modified; \/\/ Lowest stack element modified by current block.$/;"	m	struct:cognate_stack	file:
 mutable	include/cognate.c	4;"	d	file:
 mutate_function	include/cognate.c	16;"	d	file:
 mutate_variable	include/cognate.c	23;"	d	file:
@@ -76,9 +80,8 @@ realloc	include/func.c	25;"	d	file:
 realloc	include/stack.c	10;"	d	file:
 record	include/record.c	1;"	d	file:
 record	include/type.c	/^    struct cognate_object *record;$/;"	m	union:cognate_object::__anon2	typeref:struct:cognate_object::__anon2::cognate_object	file:
-stack	include/stack.c	/^cognate_list stack;$/;"	v
-stack_modified	include/stack.c	/^cognate_object* stack_modified;$/;"	v
-stack_size	include/stack.c	/^ptrdiff_t stack_size;$/;"	v
+size	include/stack.c	/^  ptrdiff_t       size;     \/\/ Allocated size of the stack.$/;"	m	struct:cognate_stack	file:
+stack	include/stack.c	/^cognate_stack stack;$/;"	v
 start	include/type.c	/^  struct cognate_object *start,$/;"	m	struct:cognate_list	typeref:struct:cognate_list::cognate_object	file:
 string	include/type.c	/^    char* string;$/;"	m	union:cognate_object::__anon2	file:
 string	include/type.c	/^typedef enum {boolean=0, string=1, block=2, number=3, list=4} cognate_type;$/;"	e	enum:__anon1	file:

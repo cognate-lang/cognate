@@ -35,36 +35,43 @@ static cognate_object pop_any();
 static cognate_object peek_any();
 static void expand_stack();
 
-cognate_list stack;
-ptrdiff_t stack_size;
-cognate_object* stack_modified;
+struct cognate_stack
+{
+  cognate_list    items;    // The list holding the stack itself.
+  ptrdiff_t       size;     // Allocated size of the stack.
+  cognate_object* modified; // Lowest stack element modified by current block.
+};
+
+typedef struct cognate_stack cognate_stack;
+
+cognate_stack stack;
 
 static void init_stack()
 {
   //printf("ALLOCATING %i BYTES\n", INITIAL_LIST_SIZE * sizeof(cognate_object));
   // Allocate dynamic stack memory.
-  stack_modified = stack.top = stack.start = (cognate_object*) GC_MALLOC_ATOMIC ((stack_size = INITIAL_LIST_SIZE) * sizeof(cognate_object));
+  stack.modified = stack.items.top = stack.items.start = (cognate_object*) GC_MALLOC_ATOMIC ((stack.size = INITIAL_LIST_SIZE) * sizeof(cognate_object));
 }
 
 static void push_any(cognate_object object)
 {
-  if (stack.start + stack_size == stack.top)
+  if (stack.items.start + stack.size == stack.items.top)
     expand_stack();
-  *stack.top++ = object;
+  *stack.items.top++ = object;
 }
 
 static cognate_object pop_any()
 { 
-  if (stack.top == stack.start) 
+  if (stack.items.top == stack.items.start) 
     throw_error("Stack underflow!");
-  stack_modified -= (stack_modified == stack.top);
-  return *--stack.top;
+  stack.modified -= (stack.modified == stack.items.top);
+  return *--stack.items.top;
 }
 
 static cognate_object peek_any()
 {
-  if (stack.top == stack.start) throw_error("Stack underflow!");
-  return *(stack.top - 1);
+  if (stack.items.top == stack.items.start) throw_error("Stack underflow!");
+  return *(stack.items.top - 1);
 }
 
 static void expand_stack()
@@ -72,14 +79,14 @@ static void expand_stack()
   // New stack size = current stack size * growth factor.
 
   #ifdef EBUG
-    fprintf(stderr, "[DEBUG] %s:%d -> Expanding list/stack from length %lu to %lu\n", __FILE__, __LINE__, stack_size, (size_t)(stack_size * LIST_GROWTH_FACTOR)); 
+    fprintf(stderr, "[DEBUG] %s:%d -> Expanding list/stack from length %lu to %lu\n", __FILE__, __LINE__, stack.size, (size_t)(stack.size * LIST_GROWTH_FACTOR)); 
   #endif
  
-  int temp = stack_modified - stack.start;
-  stack.start = (cognate_object*) realloc (stack.start, stack_size * LIST_GROWTH_FACTOR * sizeof(cognate_object));
-  stack_modified = stack.start + temp;
-  stack.top = stack.start + stack_size;
-  stack_size *= LIST_GROWTH_FACTOR;
+  int temp = stack.modified - stack.items.start;
+  stack.items.start = (cognate_object*) realloc (stack.items.start, stack.size * LIST_GROWTH_FACTOR * sizeof(cognate_object));
+  stack.modified = stack.items.start + temp;
+  stack.items.top = stack.items.start + stack.size;
+  stack.size *= LIST_GROWTH_FACTOR;
 }
 
 #endif
