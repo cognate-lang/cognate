@@ -4,9 +4,10 @@
 #include <stdio.h>
 #include "error.c"
 #include "Block.h"
+#include <stddef.h>
 
 
-typedef enum {boolean=0, string=1, block=2, number=3, list=4} cognate_type;
+typedef enum {block=0, boolean=1, string=2, number=3, list=4} cognate_type;
 
 typedef void(^cognate_block)();
 
@@ -59,7 +60,7 @@ static const char* lookup_type(cognate_type type)
     case number : return "Number";
     case list   : return "List";
   }
-  static char type_number[80];
+  static char type_number[24]; // Max 32 bit type will take up 10 digits.
   sprintf(type_number, "Unknown Type %i", type);
   return type_number;
 }
@@ -68,7 +69,7 @@ static const _Bool compare_objects(cognate_object ob1, cognate_object ob2)
 {
   if (ob1.type != ob2.type)
     {
-      return 0;
+      return 0; // Not equal if differing types. None of this javascript rubbish.
     }
     switch (ob1.type)
     {
@@ -77,15 +78,20 @@ static const _Bool compare_objects(cognate_object ob1, cognate_object ob2)
       case block:   return ob1.block == ob2.block;              break;
       case string:  return strcmp(ob1.string, ob2.string) == 0; break;
       case list:
-        for (cognate_object *i = ob1.list->start, *j = ob2.list->start; i < ob1.list->top || j < ob2.list->top;)
+      {
+        ptrdiff_t len = ob1.list->top - ob1.list->start;
+        if (len != ob2.list->top - ob2.list->start) return 0; // Not equal if differing length.
+        cognate_list lst1 = *ob1.list;
+        cognate_list lst2 = *ob2.list;
+        for (; len > 0; --len)
         {
-          if (!compare_objects(*i, *j))
+          if (!compare_objects(lst1.start[len], lst2.start[len])) // Compare each list object.
           {
             return 0;
           }
-          ++i; ++j;
         }
         return 1;
+      }
     }
 }
 
