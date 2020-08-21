@@ -31,7 +31,7 @@ static void print_object (cognate_object object, _Bool quotes)
                  break;
     case boolean: printf("%s", object.boolean ? "True" : "False"); break;
     case block  : printf("<BLOCK>");
-    default : printf("<RECORD %i>", object.type);
+    default : printf("<%i>", object.type);
   }
 }
 

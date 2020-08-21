@@ -8,7 +8,8 @@
   if (this_type==0) this_type = next_type++; \
   immutable void(^ cognate_function_ ## name)(void) = \
   ^{ \
-    cognate_object *rec = (cognate_object*) malloc (sizeof(cognate_object) * size); \
+    cognate_object *rec = (cognate_object*) malloc (sizeof(cognate_object) * (size + 1)); \
+    rec[size] = (cognate_object){.type=terminator}; \
     for (int i = 0; i < size; ++i) \
     { \
       if (record_predicates[i] == NULL) rec[i] = pop_any(); \

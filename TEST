@@ -11,23 +11,24 @@ do
   echo "Testing $file..."
   # Compile
   ./cognac tests/$file > /dev/null
-  echo "Testing $file..." >> tests/log.txt
   # Check if file exists (successful compilation)
   if test -f "tests/$(echo $file | cut -f 1 -d '.')"; then
     # Run - outputting to logfile
-    ./tests/$(echo $file | cut -f 1 -d '.') >> tests/log.txt
+    echo "PASS: $file compiles successfully" >> tests/log.txt
+    ./tests/$(echo $file | cut -f 1 -d '.') 2>&1 >> tests/log.txt
   else
     # File not exists is error
-    echo "FAIL: File does not compile!" >> tests/log.txt
+    echo "FAIL: $file does not compile!" >> tests/log.txt
   fi
 done
 
 # Number of tests failed
-FAILS=$(cat tests/log.txt | egrep -h "FAIL|Cognate Error!" | wc -l)
+while IFS= read -r line;
+do
+  if [[ ! $line == PASS:* ]]; then
+    echo "Some tests failed! See log.txt."
+    exit
+  fi
+done < ./tests/log.txt
 
-if [ $FAILS -eq "0" ]; then
-  echo "All tests passed!"
-else
-  echo $"$FAILS test(s) failed! See log.txt"
-fi
-
+echo "All tests passed!"

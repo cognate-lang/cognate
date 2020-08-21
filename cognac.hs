@@ -207,7 +207,7 @@ flatten [] = []
 
 compile (Node body : Leaf name : Leaf "Record" : xs) =
   "record(" ++ lc name ++ ", " ++ show (recordSize body) ++ ");\n" ++
-  makeFields body ++ compile xs
+  makeFields body ++ "{" ++ compile xs ++ "}"
     where
       makeFields (Node p : Leaf s : xs) = "field(" ++ lc s ++ ", ^{" ++ compile p ++ "});" ++ makeFields xs
       makeFields (Leaf s : xs) = "field(" ++ lc s ++ ", NULL);" ++ makeFields xs
