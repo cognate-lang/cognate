@@ -24,14 +24,14 @@ struct __attribute__((packed)) cognate_object
 {
   union
   {
-    char* string;
-    _Bool boolean;
-    cognate_block block;
-    double number;
-    struct cognate_list *list;
-    struct cognate_object *record;
+    char* string;                  // 64bit pointer
+    _Bool boolean;                 // 1bit  bool
+    cognate_block block;           // 64bit pointer
+    double number;                 // 64bit float
+    struct cognate_list *list;     // 64bit pointer
+    struct cognate_object *record; // 64bit pointer
   };
-  cognate_type type : 32;
+  cognate_type type : 16;
 };
 
 typedef struct cognate_object cognate_object;

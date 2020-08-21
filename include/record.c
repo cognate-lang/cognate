@@ -4,7 +4,8 @@
 #define record(name, size) \
   void(^*record_predicates)(void) = (void(^[size])(void)){0}; \
   int current_record_pos = 0; \
-  const int this_type = next_type++; \
+  static int this_type = 0; \
+  if (this_type==0) this_type = next_type++; \
   immutable void(^ cognate_function_ ## name)(void) = \
   ^{ \
     cognate_object *rec = (cognate_object*) malloc (sizeof(cognate_object) * size); \
