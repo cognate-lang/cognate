@@ -106,11 +106,7 @@ static const _Bool compare_objects(cognate_object ob1, cognate_object ob2)
         // These are probably records, compare until terminator.
         for (int i = 0 ;; ++i)
         {
-          if (ob1.record[i].type == terminator || ob2.record[i].type == terminator)
-          {
-            if (ob1.record[i].type == terminator && ob2.record[i].type == terminator) return 1;
-            return 0;
-          } 
+          if (ob1.record[i].type == terminator) return 1;
           if (!compare_objects(ob1.record[i], ob2.record[i])) return 0;
         }
       }
