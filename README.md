@@ -6,7 +6,7 @@ Cognate is a stack oriented, dynamically typed, functional programming language 
 ### Cognate is readable
 As the above program shows, words starting with lower-case letters are ignored by the compiler (and are not highlighted). This allows comments and code to be easily bundled together, enhancing readability and allowing programmers to more easily express their intentions. While this means that Cognate can be very verbose, verbosity can be a good thing - this 'informal syntax' gives extra information to anyone reading the source.
 
-### Cognate is relatively fast
+### Cognate is (relatively) fast
 CognaC compiles Cognate directly to C. This produces very efficient binaries and allows Cognate to run much faster than many interpreted languages such as Python. However, it is easily outpaced by other compiled languages like Haskell and C++ that optimise more aggressively. However, Cognate has a huge potential for optimisation. In future, I will be able to implement many of these optimisations and make Cognate even faster. It is also worth noting that CognaC produces very small binaries. This could make Cognate a candidate for a scripting language in embedded environments.
 
 |                 | Python 3 | Ruby  | CognaC | Haskell (GHC) | Lisp (SBCL) | C++ (G++) | C (GCC) | Golang |
