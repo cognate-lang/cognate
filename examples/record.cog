@@ -16,5 +16,5 @@ Print 'Surname:',  Print Surname  of Bob;
 Print 'Age:',      Print Age      of Bob;
 Print 'Gender:',   Print Gender   of Bob;
 
-Print 'Is person:';
-Print PersonP Bob;
+Print 'Person?:';
+Print Person? Bob;
