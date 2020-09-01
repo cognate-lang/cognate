@@ -1,12 +1,13 @@
 Let the (Fib of N) be
 ~~ Calculate the Nth Fibonacci number.
 (
-  If (2, > N) (return 1)
-  else (
-    Sum
-      Fib of - 1 N with
-      Fib of - 2 N
-  );
+  If (2, > N) 
+    then (1)
+    else (
+      Sum
+        Fib of - 1 N with
+        Fib of - 2 N
+  )
 );
 
 Print 'The 35th fibonacci number is...';
