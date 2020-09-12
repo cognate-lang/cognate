@@ -1,4 +1,4 @@
-~~ TODO: mod parser dso we can use String?, Number?, Person?, etc without bothering c compiler.
+~~ TODO: mod parser so we can use String?, Number?, Person?, etc without bothering c compiler.
 ~~ Maybe add string hashes to the end of functions???
 
 Record Person
