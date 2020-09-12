@@ -2,12 +2,12 @@
 ~~ Maybe add string hashes to the end of functions???
 
 Record Person
-(
-  Forename (String?),
-  Surname  (String?),
-  Age      (Number?),
-  Gender   (String?)
-);
+{
+  Forename {String?},
+  Surname  {String?},
+  Age      {Number?},
+  Gender   {String?}
+};
 
 Let Bob be a Person called 'Bob' 'Smith' who is a 34 year old 'male';
 

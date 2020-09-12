@@ -79,8 +79,8 @@ replacesymbols =
 
 
 -- Constants!!!
-openbrackets  = [ '(' ]
-closebrackets = [ ')' ]
+openbrackets  = [ '{' ]
+closebrackets = [ '}' ]
 delims        = [ ';',','     ]
 numbers       =  '-':'.':['0'..'9']
 upperletters  = [ 'A'..'Z'    ]
@@ -102,7 +102,7 @@ parsestrings =
     where
       createStrings :: [String] -> String
       createStrings (x:y:xs) =
-        x ++ " StringLiteral (" ++ intercalate [head delims] (map (show . ord) y) ++ ") " ++ createStrings xs
+        x ++ " StringLiteral " ++ [head openbrackets] ++ intercalate [head delims] (map (show . ord) y) ++ [head closebrackets] ++ " " ++ createStrings xs
       createStrings [s] = s
       createStrings [] = ""
 
@@ -217,11 +217,7 @@ compile (Node body : Leaf name : Leaf "Record" : xs) =
       recordSize [] = 0
 
 
-compile (Node body : Node call : Leaf "Let" : xs) =
-  let name = case last call of
-               Leaf str -> str
-               _        -> error "Parse Error: Invalid function name!"
-      args = init call in
+compile (Node body : Leaf name : Leaf "Define" : xs) =
   -- Defines immutable and nonrecursive if function does not refer to itself in its body and 'Set' is not found in xs.
   -- TODO: Search for 'Set (Name...)' as opposed to just 'Set'.
   if xs `doesCall` name then
@@ -230,12 +226,13 @@ compile (Node body : Node call : Leaf "Let" : xs) =
       ++ (if xs `doesMutate` name || body `doesCall` name then "mutable," else "immutable,") 
       ++ (if any isNode body then "copy," else "nocopy,") 
       ++ "{" 
-        ++ compile (intersperse (Leaf "Let") (reverse args) ++ [Leaf "Let" | not (null args)] ++ body)
+        ++ compile body
         ++ "});{"
     ++ compile xs ++
     "}\n" 
   else compile xs
 
+{-
 compile (Node body : Node call : Leaf "Set" : xs) =
   let name = last call
       args = init call in
@@ -248,7 +245,7 @@ compile (Node body : Node call : Leaf "Set" : xs) =
     ++ "});\n{\n"
   ++ compile xs ++
   "}\n"
-
+-}
 
 
 -- Bind is more elegant, but cannot reccur. Maybe a compromise, where the function is defined at the start of the current block.
