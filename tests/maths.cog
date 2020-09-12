@@ -1,21 +1,21 @@
-If (Sum of 5 and 6, == 11)
-   (Print 'PASS: Addition')
-   (Print 'FAIL: Addition');
+If {Sum of 5 and 6, == 11}
+   {Print 'PASS: Addition'}
+   {Print 'FAIL: Addition'};
 
-If (Difference between 10 and 19, == 9)
-   (Print 'PASS: Subtraction')
-   (Print 'FAIL: Subtraction');
+If {Difference between 10 and 19, == 9}
+   {Print 'PASS: Subtraction'}
+   {Print 'FAIL: Subtraction'};
 
-If (Product of 9 and 8, == 72) 
-   (Print 'PASS: Multiplication')
-   (Print 'FAIL: Multiplication');
+If {Product of 9 and 8, == 72} 
+   {Print 'PASS: Multiplication'}
+   {Print 'FAIL: Multiplication'};
 
-If (Divisor by 7 of 42, == 6)
-   (Print 'PASS: Division')
-   (Print 'FAIL: Division');
+If {Divisor by 7 of 42, == 6}
+   {Print 'PASS: Division'}
+   {Print 'FAIL: Division'};
 
-If (Modulo by 3 of 10, == 1)
-   (Print 'PASS: Modulus')
-   (Print 'FAIL: Modulus');
+If {Modulo by 3 of 10, == 1}
+   {Print 'PASS: Modulus'}
+   {Print 'FAIL: Modulus'};
 
 

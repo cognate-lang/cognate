@@ -1,19 +1,19 @@
-If (Append ' world' to 'Hello', == 'Hello world') 
-   (Print 'PASS: Appending strings')
-   (Print 'FAIL: Appending strings');
+If {Append ' world' to 'Hello', == 'Hello world'} 
+   {Print 'PASS: Appending strings'}
+   {Print 'FAIL: Appending strings'};
 
-If (Discard 2 from 'Hello', == 'llo')
-   (Print 'PASS: Discarding from strings')
-   (Print 'FAIL: Discarding from strings');
+If {Discard 2 from 'Hello', == 'llo'}
+   {Print 'PASS: Discarding from strings'}
+   {Print 'FAIL: Discarding from strings'};
 
-If (Take 2 from 'Hello', == 'He')
-   (Print 'PASS: Taking from strings')
-   (Print 'FAIL: Taking from strings');
+If {Take 2 from 'Hello', == 'He'}
+   {Print 'PASS: Taking from strings'}
+   {Print 'FAIL: Taking from strings'};
 
-If (Length of 'Hello world', == 11)
-   (Print 'PASS: length of strings')
-   (Print 'FAIL: length of strings');
+If {Length of 'Hello world', == 11}
+   {Print 'PASS: length of strings'}
+   {Print 'FAIL: length of strings'};
 
-If (Index 4 of 'Hello world', == 'o')
-   (Print 'PASS: indexing strings')
-   (Print 'FAIL: indexing strings');
+If {Index 4 of 'Hello world', == 'o'}
+   {Print 'PASS: indexing strings'}
+   {Print 'FAIL: indexing strings'};
