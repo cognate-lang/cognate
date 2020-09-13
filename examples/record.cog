@@ -3,10 +3,10 @@
 
 Record Person
 {
-  Forename {String?},
-  Surname  {String?},
-  Age      {Number?},
-  Gender   {String?}
+   Forename is {String?},
+   Surname  is {String?},
+   Age      is {Number?},
+  Gender   is {String?}
 };
 
 Let Bob be a Person called 'Bob' 'Smith' who is a 34 year old 'male';

@@ -4,6 +4,6 @@ Print the List {1,2,3,4,5};
 
 Discard 1 from the List {1,2,3}, Print;
 
-Take 2 from the List {4,5,6} Print;
+Take 2 from the List {4,5,6}, Print;
 
 Print Index 2 of List {1,2,3,4,5};

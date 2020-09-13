@@ -193,6 +193,9 @@ compile :: [Tree] -> String
 doesCall :: [Tree] -> String -> Bool
 expr `doesCall` func = func `elem` flatten expr
 
+callCount :: [Tree] -> String -> Int
+expr `callCount` func = length $ func `elemIndices` flatten expr
+
 doesMutate :: [Tree] -> String -> Bool
 (Leaf var  : Leaf "Set" : xs) `doesMutate` var'  = var       == var'       || xs `doesMutate` var'
 (Node func : Leaf "Set" : xs) `doesMutate` func' = last func == Leaf func' || xs `doesMutate` func'
@@ -215,6 +218,7 @@ compile (Node body : Leaf name : Leaf "Record" : xs) =
       recordSize (Leaf _ : xs) = 1 + recordSize xs
       recordSize (Node _ : xs) =     recordSize xs
       recordSize [] = 0
+
 
 
 compile (Node body : Leaf name : Leaf "Define" : xs) =
@@ -247,11 +251,11 @@ compile (Node body : Node call : Leaf "Set" : xs) =
   "}\n"
 -}
 
-
 -- Bind is more elegant, but cannot reccur. Maybe a compromise, where the function is defined at the start of the current block.
 {- compile (Leaf name : Leaf "Bind" : xs) = "void(^cognate_" ++ lc name
   ++ ")(void)=pop(block);"
-  ++ compile xs -}
+  ++ compile xs 
+-}
 
 compile (Leaf name : Leaf "Let" : xs) =
   -- Var is marked as immutable if xs does not contain 'Set'. TODO: mark var as immutable if xs does not contain 'Set Var'
