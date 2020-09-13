@@ -1,6 +1,5 @@
 Define Factorial
-{
-  Let X;
+{ Let X;
   If {X, == 0}
     then {1}
     else {
@@ -11,4 +10,3 @@ Define Factorial
 };
 
 Print the Factorial of 10;
-

@@ -1,7 +1,7 @@
 Define When as {Let P, Let A, If P then A else {}};
 
 Define Range as
-~~ Similar to python's xrange{} function
+~~ Similar to python's xrange() function
 {
   Let A, Let B, Let S;
   List from
