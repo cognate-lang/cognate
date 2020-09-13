@@ -3,9 +3,9 @@
 
 Record Person
 {
-   Forename is {String?},
-   Surname  is {String?},
-   Age      is {Number?},
+  Forename is {String?},
+  Surname  is {String?},
+  Age      is {Number?},
   Gender   is {String?}
 };
 
