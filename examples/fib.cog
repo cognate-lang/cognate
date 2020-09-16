@@ -1,4 +1,4 @@
-Define Fib ~~ Calulate Nth fibonacci number.
+Define Fib ~~ Calulate the Nth fibonacci number.
 { Let N;
   If {2, > N}
     then {1}

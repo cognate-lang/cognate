@@ -6,6 +6,8 @@
 #include "io.c"
 #include <Block.h>
 
+#define INITIAL_INPUT_SIZE 64
+
 // Macro to define external cognate function.
 #define external_function(name, body) \
   static void cognate_function_ ## name () body
@@ -242,6 +244,25 @@ external_function(append,
       break;
     default: type_error("List or String", lookup_type(obj1.type)); 
   }
+})
+
+external_function(input, {
+  size_t str_size = INITIAL_INPUT_SIZE;
+  char* str = (char*)malloc(str_size * sizeof(char));
+  char* temp = str;
+  char c;
+  while((c = getchar()) != '\n' && c != EOF)
+  {
+    *str++ = c; 
+
+    if (temp + str_size == str)
+    {
+      temp = realloc(temp, (str_size << 1));
+      str = temp + str_size;
+    }
+  }
+  *str = '\0';
+  push(string, temp);
 })
 
 
