@@ -265,5 +265,11 @@ external_function(input, {
   push(string, temp);
 })
 
+external_function(number, {
+  // casts string to number. 
+  char* str = pop(string);
+  push(number, (double)strtof(str, NULL)); // strtof uses floats instead of doubles, prepare for rounding error.
+})
+
 
 #endif

@@ -1,0 +1,5 @@
+Print 'Enter a number:';
+Let Num1 be Number Input;
+Print 'Enter another number:';
+Let Num2 be Number Input;
+Print the Sum of Num1 and Num2;
