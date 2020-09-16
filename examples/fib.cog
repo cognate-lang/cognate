@@ -1,8 +1,6 @@
-Define Fib
-~~ Calculate the Nth Fibonacci number.
-{
-  Let N be a parameter;
-  If {2, > N} 
+Define Fib ~~ Calulate Nth fibonacci number.
+{ Let N;
+  If {2, > N}
     then {1}
     else {
       Sum
