@@ -265,6 +265,20 @@ external_function(input, {
   push(string, temp);
 })
 
+external_function(read, {
+  // read a file.
+  char* file_name  = pop(string);
+  FILE *fp = fopen(file_name, "r");
+  if (fp == NULL) throw_error("Cannot open file! It probably doesn't exist.");
+  fseek(fp, 0L, SEEK_END);
+  size_t file_size = ftell(fp);
+  fseek(fp, 0L, SEEK_SET);
+  char* file_data = (char*) malloc (file_size * sizeof(char));
+  fread(file_data, sizeof(char), file_size, fp);
+  fclose(fp);
+  push(string, file_data);
+})
+
 external_function(number, {
   // casts string to number. 
   char* str = pop(string);
