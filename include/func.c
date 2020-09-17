@@ -61,7 +61,7 @@ external_function(equalorpreceed, { push(boolean, pop(number) >= pop(number)); }
 external_function(equalorexceed,  { push(boolean, pop(number) <= pop(number)); })
 
 external_function(number_, {push(boolean, pop_any().type == number);}) // Question marks are converted to underscores.
-external_function(listp_, {push(boolean, pop_any().type == list);})    // However all other synbols are too.
+external_function(list_, {push(boolean, pop_any().type == list);})    // However all other synbols are too.
 external_function(string_, {push(boolean, pop_any().type == string);}) // So this is a temporary hack!
 external_function(block_, {push(boolean, pop_any().type == block);})
 
@@ -166,9 +166,9 @@ external_function(list,  {
   // Store the resultant list, realloc-ing to fit snugly in memory.
   cognate_list* lst = (cognate_list*)malloc(sizeof(cognate_list));
   *lst = stack.items;
-  //TODO: Shrink the list to fit here.
-  lst->start = realloc(lst->start, (lst->top - lst->start) * sizeof(cognate_object));
-  lst->top = lst->start - stack.items.start + stack.items.top;
+  //TODO: Shrink the list to fit here with realloc(). Previous attempts caused problems with -O0
+  //lst->start = realloc(lst->start, (lst->top - lst->start) * sizeof(cognate_object));
+  //lst->top = lst->start + (int)stack.items.top - stack.items.start;
   // Restore the original stack
   stack = temp_stack;
   // Push the created list to the stack

@@ -10,7 +10,7 @@ for file in $(ls tests | grep .cog)
 do
   echo "Testing $file..."
   # Compile
-  ./cognac tests/$file > /dev/null
+  ./cognac tests/$file -O0 > /dev/null
   # Check if file exists (successful compilation)
   cd tests
   if test -f "$(echo $file | cut -f 1 -d '.')"; then
