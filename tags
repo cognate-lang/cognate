@@ -7,6 +7,7 @@
 COGNATE_C	include/cognate.c	2;"	d	file:
 ERROR_C	include/error.c	2;"	d	file:
 FUNC_C	include/func.c	2;"	d	file:
+INITIAL_INPUT_SIZE	include/func.c	9;"	d	file:
 INITIAL_LIST_SIZE	include/stack.c	14;"	d	file:
 IO_C	include/io.c	2;"	d	file:
 LIST_GROWTH_FACTOR	include/stack.c	15;"	d	file:
@@ -17,8 +18,8 @@ block	include/type.c	/^    cognate_block block;           \/\/ 64bit pointer$/;"
 block	include/type.c	/^  block=0, $/;"	e	enum:__anon1	file:
 boolean	include/type.c	/^    _Bool boolean;                 \/\/ 1bit  bool$/;"	m	union:cognate_object::__anon2	file:
 boolean	include/type.c	/^  boolean, $/;"	e	enum:__anon1	file:
-call	include/func.c	19;"	d	file:
 call	include/func.c	21;"	d	file:
+call	include/func.c	23;"	d	file:
 check_block	include/cognate.c	/^cognate_object check_block(cognate_object obj)$/;"	f
 check_type	include/type.c	/^static cognate_object check_type(cognate_type expected_type, cognate_object object)$/;"	f	file:
 cognate_list	include/type.c	/^struct __attribute__((packed)) cognate_list$/;"	s	file:
@@ -32,8 +33,8 @@ compare_objects	include/type.c	/^static const _Bool compare_objects(cognate_obje
 copy	include/cognate.c	7;"	d	file:
 copy_blocks	include/cognate.c	/^void copy_blocks()$/;"	f
 expand_stack	include/stack.c	/^static void expand_stack()$/;"	f	file:
-external_function	include/func.c	10;"	d	file:
-external_variable	include/func.c	14;"	d	file:
+external_function	include/func.c	12;"	d	file:
+external_variable	include/func.c	16;"	d	file:
 field	include/record.c	36;"	d	file:
 function	include/cognate.c	10;"	d	file:
 immutable	include/cognate.c	5;"	d	file:
@@ -43,14 +44,19 @@ items	include/stack.c	/^  cognate_list    items;    \/\/ The list holding the st
 list	include/type.c	/^    struct cognate_list *list;     \/\/ 64bit pointer$/;"	m	union:cognate_object::__anon2	typeref:struct:cognate_object::__anon2::cognate_list	file:
 list	include/type.c	/^  list,$/;"	e	enum:__anon1	file:
 lookup_type	include/type.c	/^static const char* lookup_type(cognate_type type)$/;"	f	file:
+main	examples/fact.c	/^int main() {$/;"	f
 main	examples/fib.c	/^int main() {$/;"	f
+main	examples/file.c	/^int main() {$/;"	f
 main	examples/hello.c	/^int main() {$/;"	f
+main	examples/input.c	/^int main() {$/;"	f
+main	examples/list.c	/^int main() {$/;"	f
 main	examples/loop.c	/^int main() {$/;"	f
 main	examples/range.c	/^int main() {$/;"	f
 main	examples/record.c	/^int main() {$/;"	f
 main	tests/block.c	/^int main() {$/;"	f
 main	tests/booleans.c	/^int main() {$/;"	f
 main	tests/functions.c	/^int main() {$/;"	f
+main	tests/io.c	/^int main() {$/;"	f
 main	tests/lists.c	/^int main() {$/;"	f
 main	tests/maths.c	/^int main() {$/;"	f
 main	tests/parsing.c	/^int main() {$/;"	f
@@ -60,7 +66,7 @@ main	tests/strings.c	/^int main() {$/;"	f
 main	tests/variables.c	/^int main() {$/;"	f
 make_block	include/cognate.c	28;"	d	file:
 malloc	include/cognate.c	13;"	d	file:
-malloc	include/func.c	24;"	d	file:
+malloc	include/func.c	26;"	d	file:
 malloc	include/stack.c	9;"	d	file:
 malloc_atomic	include/stack.c	12;"	d	file:
 modified	include/stack.c	/^  cognate_object* modified; \/\/ Lowest stack element modified by current block.$/;"	m	struct:cognate_stack	file:
@@ -81,7 +87,7 @@ push	include/stack.c	18;"	d	file:
 push	include/stack.c	22;"	d	file:
 push_any	include/stack.c	/^static void push_any(cognate_object object)$/;"	f	file:
 realloc	include/cognate.c	14;"	d	file:
-realloc	include/func.c	25;"	d	file:
+realloc	include/func.c	27;"	d	file:
 realloc	include/stack.c	10;"	d	file:
 record	include/record.c	4;"	d	file:
 record	include/type.c	/^    struct cognate_object *record; \/\/ 64bit pointer$/;"	m	union:cognate_object::__anon2	typeref:struct:cognate_object::__anon2::cognate_object	file:
