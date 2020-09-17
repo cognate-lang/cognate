@@ -17,3 +17,7 @@ If {Length of 'Hello world', == 11}
 If {Index 4 of 'Hello world', == 'o'}
    {Print 'PASS: indexing strings'}
    {Print 'FAIL: indexing strings'};
+
+If {Characters in 'Hello', == List {'H','e','l','l','o'}}
+   {Print 'PASS: Extracting characters from strings'}
+   {Print 'FAIL: Extracting characters from strings'};
