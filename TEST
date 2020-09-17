@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 
+# Colour codes for printing
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
 
 # Clear log file
 > tests/log.txt
-
 
 # Iterate over files to test
 for file in $(ls tests | grep .cog)
@@ -28,9 +32,9 @@ done
 while IFS= read -r line;
 do
   if [[ ! $line == PASS:* ]]; then
-    echo "Some tests failed! See log.txt."
+    echo -e "${RED}Some tests failed! See log.txt.${NC}"
     exit
   fi
 done < ./tests/log.txt
 
-echo "All tests passed!"
+echo -e "${GREEN}All tests passed!${NC}"
