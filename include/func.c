@@ -278,6 +278,7 @@ external_function(read, {
   fclose(fp);
   file_data[file_size-1] = '\0'; // Remove trailing newline (for easier splitting, printing, etc).
   push(string, file_data);
+  //TODO: single line (or delimited) file reading for better IO performance?
 })
 
 external_function(number, {

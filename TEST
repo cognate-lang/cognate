@@ -12,14 +12,16 @@ do
   # Compile
   ./cognac tests/$file > /dev/null
   # Check if file exists (successful compilation)
-  if test -f "tests/$(echo $file | cut -f 1 -d '.')"; then
+  cd tests
+  if test -f "$(echo $file | cut -f 1 -d '.')"; then
     # Run - outputting to logfile
-    echo "PASS: $file compiles successfully" >> tests/log.txt
-    ./tests/$(echo $file | cut -f 1 -d '.') 2>&1 >> tests/log.txt
+    echo "PASS: $file compiles successfully" >> log.txt
+    ./$(echo $file | cut -f 1 -d '.') 2>&1 >> log.txt
   else
     # File not exists is error
-    echo "FAIL: $file does not compile!" >> tests/log.txt
+    echo "FAIL: $file does not compile!" >> log.txt
   fi
+  cd ..
 done
 
 # Number of tests failed
