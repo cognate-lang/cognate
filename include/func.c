@@ -276,6 +276,7 @@ external_function(read, {
   char* file_data = (char*) malloc (file_size * sizeof(char));
   fread(file_data, sizeof(char), file_size, fp);
   fclose(fp);
+  file_data[file_size-1] = '\0'; // Remove trailing newline (for easier splitting, printing, etc).
   push(string, file_data);
 })
 
