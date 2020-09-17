@@ -30,7 +30,6 @@ Currently, Cognate is not in a particularly usable state, and thus, you probably
 1) Install git, ghc, cabal-install, clang, libtool, autoconf, wget, and make through your distribution's package manager
 2) Run ```git clone https://github.com/stavromulabeta/cognate```.
 3) Run ```cd cognate```.
-4) Run ```chmod +x SETUP BUILD```
-5) Run ```./SETUP``` to setup the environment. It will prompt for a root password to install the necessary libraries.
-6) Run ```./BUILD``` to build the compiler.
-7) CognaC is installed. Compile the example Fibonacci program with ```./cognac examples/fib.cog``` and run with ```./examples/fib```.
+4) Run ```./SETUP``` to setup the environment. It will prompt for a root password to install the necessary libraries.
+5) Run ```./BUILD``` to build the compiler.
+6) CognaC is installed. Compile the example Fibonacci program with ```./cognac examples/fib.cog``` and run with ```./examples/fib```.
