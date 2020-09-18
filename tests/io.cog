@@ -3,3 +3,4 @@ Read 'io.txt';
 If {== 'foo\nbar'}
    {Print 'PASS: Reading multi-line file to string'}
    {Print 'FAIL: Reading multi-line file to string'};
+

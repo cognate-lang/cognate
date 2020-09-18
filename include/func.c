@@ -5,6 +5,8 @@
 #include "type.c"
 #include "io.c"
 #include <Block.h>
+#include <unistd.h>
+#include <limits.h>
 
 #define INITIAL_INPUT_SIZE 64
 
@@ -287,5 +289,21 @@ external_function(number, {
   push(number, (double)strtof(str, NULL)); // strtof uses floats instead of doubles, prepare for rounding error.
 })
 
+external_function(path, {
+  // Get working directory path.
+  char cwd[PATH_MAX]; // Much too big.
+  if (getcwd(cwd, sizeof(cwd)) == NULL)
+    throw_error("Cannot get current directory!");
+  char *small_cwd = (char*) malloc (sizeof(char) * strlen(cwd)); // Much better size.
+  strcpy(small_cwd, cwd);
+  push(string, small_cwd);
+})
+
+external_function(write, {
+  // Write string to end of file, without a newline.
+  FILE *file = fopen(pop(string), "a"); 
+  char *str = pop(string);
+  fprintf(file, "%s", str);
+})
 
 #endif
