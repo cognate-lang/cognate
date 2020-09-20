@@ -26,10 +26,7 @@ Cognate is optimised for functional programming - not complicated static-typed f
 The stack, around which cognate is designed, allows Cognate to do things which many other languages cannot. One example is multiple return values. While other languages - such as python - require the use of tuples or lists to return multiple values, Cognate uses the stack to achieve this without the use of any data structures. Cognate also uses the stack to allow expressions to be written in point-free notation.
 
 ### Building Cognate
-Currently, Cognate is not in a particularly usable state, and thus, you probably don't want to install it. Cognate currently does not have a build system, but is not too hard to build on Linux systems. These instructions explain how to build the CognaC compiler for Cognate from this repository.
-1) Install git, ghc, cabal-install, clang, libtool, autoconf, wget, and make through your distribution's package manager
-2) Run ```git clone https://github.com/stavromulabeta/cognate```.
-3) Run ```cd cognate```.
-4) Run ```./SETUP``` to setup the environment. It will prompt for a root password to install the necessary libraries.
-5) Run ```./BUILD``` to build the compiler.
-6) CognaC is installed. Compile the example Fibonacci program with ```./cognac examples/fib.cog``` and run with ```./examples/fib```.
+While Cognate is not currently in a very usable state, it can be easily built on Debian-based systems. To do so, just run the provided setup script:
+```./SETUP```
+This should automatically aquire dependencies and build the compiler. You can then test the compiler with the test script:
+```./TEST```
