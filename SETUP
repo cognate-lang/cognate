@@ -6,7 +6,7 @@ echo "Before continuing, make sure that you have the following programs installe
 echo "+ ghc"
 echo "+ cabal-install"
 echo "+ clang"
-echo "+ blocksruntime"
+echo "+ libblocksruntime"
 echo "+ libgc"
 read -p "Press any key to continue..."
 
