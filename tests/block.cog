@@ -1,0 +1,45 @@
+Define Foo as
+{
+  Let X;
+  {Print X}  
+};
+
+Foo 'PASS: Implicit block copying';
+Foo 'FAIL: Implicit block copying';
+Drop, Do;
+
+
+
+Let Y be {};
+
+Define Foo as
+{
+  Let X;
+  Set Y to {Print X};
+};
+
+
+Foo 'PASS: Implicit block copying with mutation', Let Z be Y;
+Foo 'FAIL: Implicit block copying with mutation', Let W be Y;
+Do Z;
+Drop W;
+
+
+Record UnsafeBlock
+{
+  Blk {Block?};
+};
+
+
+Define Foo as
+{
+  Let X;
+  UnsafeBlock {Print X};  
+};
+
+
+Blk Foo 'PASS: Implicit block copying with records';
+Blk Foo 'FAIL: Implicit block copying with records';
+Drop, Do;
+
+
