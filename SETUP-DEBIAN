@@ -2,4 +2,4 @@
 # This script will automatically install CognaC's dependencies on ubuntu, debian, mint, etc.
 # Non deb distro or BSD users will have to install these dependencies themselves, some from source.
 # Sorry.
-sudo apt install ghc libghc-split-dev libblocksruntime-dev libgc-dev clang -y
+sudo apt install ghc libghc-split-dev libblocksruntime-dev libgc-dev clang clang-format -y
