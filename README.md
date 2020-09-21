@@ -32,4 +32,4 @@ This should automatically aquire dependencies and build the compiler. You can th
 ```./TEST```
 If the tests all pass (they should!), you can then try running some of the included demo programs like this:
 ```./cognac examples/fib.cog
-   ./examples/fib```
+./examples/fib```
