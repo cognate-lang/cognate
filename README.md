@@ -27,9 +27,9 @@ The stack, around which cognate is designed, allows Cognate to do things which m
 
 ### Building Cognate
 While Cognate is not currently in a very usable state, it can be easily built on Debian-based systems. To do so, just run the provided setup script:
-```./SETUP```
+    ./SETUP
 This should automatically aquire dependencies and build the compiler. You can then test the compiler with the test script:
-```./TEST```
+    ./TEST
 If the tests all pass (they should!), you can then try running some of the included demo programs like this:
-```./cognac examples/fib.cog
-./examples/fib```
+    ./cognac examples/fib.cog
+    ./examples/fib
