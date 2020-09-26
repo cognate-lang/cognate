@@ -43,7 +43,8 @@
 #include "type.c"
 #include "record.c"
 
-static void init()
+
+static void init(int argc, char** argv)
 {
   // Seed the random number generator properly.
   struct timespec ts;
@@ -51,6 +52,13 @@ static void init()
   srand(ts.tv_nsec ^ ts.tv_sec);
   // Generate a stack.
   init_stack();
+  params.start = (cognate_object*) malloc (sizeof(cognate_object) * (argc-1));
+  params.top = params.start + argc - 1;
+  for (; argc >= 1; --argc)
+  {
+    char* str = argv[argc];
+    params.start[argc-1] = (cognate_object){.type=string, .string=str};
+  }
 }
 
 cognate_object check_block(cognate_object obj)
