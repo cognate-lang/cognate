@@ -7,6 +7,8 @@
 
 #define noreturn __attribute__ ((noreturn))
 
+char* function_name = NULL;
+
 noreturn static void type_error(const char* expected, const char* recieved);
 noreturn static void throw_error(const char* message);
 
@@ -29,6 +31,13 @@ noreturn static void throw_error(const char* message)
   puts("\342\224\202 Cognate has reached an unrecoverable state and cannot continue execution.    \342\224\202");
   puts("\342\224\202 The expected cause of error is printed below.                                \342\224\202");
   puts("\342\224\202                                                                              \342\224\202");
+  if (function_name != NULL)
+  {
+    // Print first character seperately so that we can capitalise it without modifying the read-only string.
+    printf("\342\224\202 \033[0;1mIn function '%c%s'...\033[0m", *function_name-32, function_name+1); // Will break if function name is really long. TODO
+    for (int i = 60-strlen(function_name); i>0; --i) printf(" ");
+    puts("\342\224\202");
+  }
   int len = strlen(message);
   while (len > 76)
   {

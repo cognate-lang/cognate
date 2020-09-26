@@ -7,14 +7,20 @@
 #define copy   1
 #define nocopy 0
 
+// Global-local variable swapping is causing performance losses.
 #define function(name, flags, docopy, body) \
-  flags cognate_block cognate_function_ ## name = make_block(docopy, body);
+  flags cognate_block cognate_function_ ## name = make_block(docopy, {char* temp_func_name = function_name; \
+                                                                      function_name = #name; \
+                                                                      body \
+                                                                      function_name = temp_func_name;});
 
 #define malloc  GC_MALLOC
 #define realloc GC_REALLOC
 
+/*
 #define mutate_function(name, docopy, body) \
   cognate_function_ ## name = make_block(docopy, body);
+*/
 
 #define variable(name, flags) \
   immutable cognate_object cognate_variable_ ## name = pop_any(); \
