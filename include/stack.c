@@ -44,7 +44,7 @@ struct cognate_stack
 
 typedef struct cognate_stack cognate_stack;
 
-cognate_stack stack;
+static cognate_stack stack;
 
 static void init_stack()
 {

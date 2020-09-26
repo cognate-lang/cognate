@@ -7,7 +7,7 @@
 #define copy   1
 #define nocopy 0
 
-// Global-local variable swapping is causing performance losses.
+// Global-local variable swapping is causing performance losses. :(
 #define function(name, flags, docopy, body) \
   flags cognate_block cognate_function_ ## name = make_block(docopy, {char* temp_func_name = function_name; \
                                                                       function_name = #name; \
