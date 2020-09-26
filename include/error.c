@@ -1,28 +1,34 @@
 #ifndef ERROR_C
 #define ERROR_C
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef unsafe
+#define noreturn
+#else
 #define noreturn __attribute__ ((noreturn))
+#endif
 
 char* function_name = NULL;
 
 noreturn static void throw_error(const char* message);
 
-#ifndef unsafe
 noreturn static void type_error(const char* expected, const char* recieved);
 noreturn static void type_error(const char* expected, const char* recieved)
 {
+#ifndef unsafe
   static char error_message[80];
   sprintf(error_message, "Type Error! Expected type '%s' but recieved type '%s'", expected, recieved);
   throw_error(error_message);
-}
 #endif
+}
 
 noreturn static void throw_error(const char* message)
 {
+#ifndef unsafe
   // Uses utf8 box-drawing characters and ansi colour codes to print a pretty error message.
   int i;
   printf("\342\224\214");
@@ -53,7 +59,7 @@ noreturn static void throw_error(const char* message)
   for (i = 0; i < 78; ++i) printf("\342\224\200");
   puts("\342\224\230");
   exit(-1);
+#endif
 }
-
 
 #endif
