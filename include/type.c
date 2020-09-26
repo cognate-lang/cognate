@@ -50,11 +50,15 @@ static const char* lookup_type(cognate_type);
 
 static cognate_object check_type(cognate_type expected_type, cognate_object object)
 {
+#ifdef unsafe 
+  return object;
+#else
   if (object.type == expected_type) 
   {
     return object;
   }
   type_error(lookup_type(expected_type), lookup_type(object.type));
+#endif
 }
 
 static const char* lookup_type(cognate_type type)

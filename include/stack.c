@@ -14,10 +14,10 @@
 #define INITIAL_LIST_SIZE 16 // Constant values for initialising stack sizes.
 #define LIST_GROWTH_FACTOR 1.5
 
-#ifdef EBUG // Push an object to the stack. Print if debugging.
+#ifdef debug // Push an object to the stack. Print if debugging.
   #define push(object_type, object) \
-    {fprintf(stderr, "[DEBUG] %s:%d -> Pushing %s\n", __FILE__, __LINE__, #object); \
-    push_any((cognate_object){.object_type=object, .type=object_type});}
+    fprintf(stderr, "[DEBUG] %s:%d -> Pushing %s\n", __FILE__, __LINE__, #object); \
+    push_any((cognate_object){.object_type=object, .type=object_type});
 #else
   #define push(object_type, object) \
     push_any((cognate_object){.object_type=object, .type=object_type})
@@ -55,6 +55,7 @@ static void init_stack()
 
 static void push_any(cognate_object object)
 {
+  // Profiles says that this function is The Problem.
   if (stack.items.start + stack.size == stack.items.top)
     expand_stack();
   *stack.items.top++ = object;
@@ -62,8 +63,10 @@ static void push_any(cognate_object object)
 
 static cognate_object pop_any()
 { 
+#ifndef unsafe
   if (stack.items.top == stack.items.start) 
     throw_error("Stack underflow!");
+#endif
   stack.modified -= (stack.modified == stack.items.top);
   return *--stack.items.top;
 }

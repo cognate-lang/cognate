@@ -9,15 +9,17 @@
 
 char* function_name = NULL;
 
-noreturn static void type_error(const char* expected, const char* recieved);
 noreturn static void throw_error(const char* message);
 
+#ifndef unsafe
+noreturn static void type_error(const char* expected, const char* recieved);
 noreturn static void type_error(const char* expected, const char* recieved)
 {
   static char error_message[80];
   sprintf(error_message, "Type Error! Expected type '%s' but recieved type '%s'", expected, recieved);
   throw_error(error_message);
 }
+#endif
 
 noreturn static void throw_error(const char* message)
 {

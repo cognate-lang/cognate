@@ -19,7 +19,7 @@
   static void cognate_function_ ## name () { \
     push(type, value); }
 
-#ifdef EBUG
+#ifdef debug
   #define call(name) {fprintf(stderr, "[DEBUG] %s:%d -> Calling %s\n", __FILE__, __LINE__, #name); cognate_function_ ## name();}
 #else 
   #define call(name) {cognate_function_ ## name();}
@@ -150,8 +150,10 @@ external_function(string, {
   char* str = (char*) malloc (sizeof(char) * (lst.top - lst.start));
   for (int i = 0; i < lst.top - lst.start; ++i)
   {
+    #ifndef unsafe
     if (lst.start[i].type != string)
       type_error("String", lookup_type(lst.start[i].type));
+    #endif
     str[i] = lst.start[i].string[0];
   }
   push(string, str);

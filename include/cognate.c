@@ -8,11 +8,16 @@
 #define nocopy 0
 
 // Global-local variable swapping is causing performance losses. :(
+#ifdef unsafe
+#define function(name, flags, docopy, body) \
+  flags cognate_block cognate_function_ ## name = make_block(docopy, body);
+#else
 #define function(name, flags, docopy, body) \
   flags cognate_block cognate_function_ ## name = make_block(docopy, {char* temp_func_name = function_name; \
                                                                       function_name = #name; \
                                                                       body \
                                                                       function_name = temp_func_name;});
+#endif
 
 #define malloc  GC_MALLOC
 #define realloc GC_REALLOC
