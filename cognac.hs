@@ -322,7 +322,7 @@ main =
   do
     args <- getArgs
     let compilerFlags = 
-          words "-fblocks -lBlocksRuntime -l:libgc.so -Wall -Wno-unused -O3 -s -I include"
+          words "-fblocks -lBlocksRuntime -l:libgc.so -Wall -Wno-unused -Ofast -s -I include"
     let in_file = head args
     let out_file = head (splitOn "." in_file) ++ ".c"
     let compiler_args = tail args
