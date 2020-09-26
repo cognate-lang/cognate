@@ -51,8 +51,8 @@ external_function(clear,          { init_stack();                               
 external_variable(true,  boolean, 1)
 external_variable(false, boolean, 0)
 
-external_function(either, { push(boolean, pop(boolean) || pop(boolean)); })
-external_function(both,   { push(boolean, pop(boolean) && pop(boolean)); })
+external_function(either, { _Bool a = pop(boolean); _Bool b = pop(boolean); push(boolean, a || b);}) // Beware short circuiting.
+external_function(both,   { _Bool a = pop(boolean); _Bool b = pop(boolean); push(boolean, a && b );})
 external_function(one_of, { _Bool a = pop(boolean); _Bool b = pop(boolean); push(boolean, (a && !b) || (!a && b)); })
 external_function(not,    { push(boolean, !pop(boolean)); })
 
