@@ -6,11 +6,6 @@
 #include <stdlib.h>
 #include "gc.h"
 
-#define malloc  GC_MALLOC // Use boehm to manage memory for us
-#define realloc GC_REALLOC
-// IF THERE ARE ANY STACK ERRORS, CHANGE malloc_atomic TO JUST malloc
-#define malloc_atomic GC_MALLOC_ATOMIC
-
 #define INITIAL_LIST_SIZE 16 // Constant values for initialising stack sizes.
 #define LIST_GROWTH_FACTOR 1.5
 
@@ -48,7 +43,6 @@ static cognate_stack stack;
 
 static void init_stack()
 {
-  //printf("ALLOCATING %i BYTES\n", INITIAL_LIST_SIZE * sizeof(cognate_object));
   // Allocate dynamic stack memory.
   stack.modified = stack.items.top = stack.items.start = (cognate_object*) GC_MALLOC_ATOMIC ((stack.size = INITIAL_LIST_SIZE) * sizeof(cognate_object));
 }
@@ -56,7 +50,8 @@ static void init_stack()
 static void push_any(cognate_object object)
 {
   // Profiles says that this function is The Problem.
-  if (stack.items.start + stack.size == stack.items.top)
+  // builtin_expect optimises because the stack hardly ever needs to expand.
+  if (__builtin_expect(stack.items.start + stack.size == stack.items.top, 0))
     expand_stack();
   *stack.items.top++ = object;
 }
@@ -64,7 +59,7 @@ static void push_any(cognate_object object)
 static cognate_object pop_any()
 { 
 #ifndef unsafe
-  if (stack.items.top == stack.items.start) 
+  if (__builtin_expect(stack.items.top == stack.items.start, 0)) 
     throw_error("Stack underflow!");
 #endif
   stack.modified -= (stack.modified == stack.items.top);
@@ -73,7 +68,8 @@ static cognate_object pop_any()
 
 static cognate_object peek_any()
 {
-  if (stack.items.top == stack.items.start) throw_error("Stack underflow!");
+  if (__builtin_expect(stack.items.top == stack.items.start, 0))
+    throw_error("Stack underflow!");
   return *(stack.items.top - 1);
 }
 
@@ -86,7 +82,7 @@ static void expand_stack()
   #endif
  
   int temp = stack.modified - stack.items.start;
-  stack.items.start = (cognate_object*) realloc (stack.items.start, stack.size * LIST_GROWTH_FACTOR * sizeof(cognate_object));
+  stack.items.start = (cognate_object*) GC_REALLOC (stack.items.start, stack.size * LIST_GROWTH_FACTOR * sizeof(cognate_object));
   stack.modified = stack.items.start + temp;
   stack.items.top = stack.items.start + stack.size;
   stack.size *= LIST_GROWTH_FACTOR;

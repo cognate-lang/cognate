@@ -19,9 +19,6 @@
                                                                       function_name = temp_func_name;});
 #endif
 
-#define malloc  GC_MALLOC
-#define realloc GC_REALLOC
-
 /*
 #define mutate_function(name, docopy, body) \
   cognate_function_ ## name = make_block(docopy, body);
@@ -63,7 +60,7 @@ static void init(int argc, char** argv)
   srand(ts.tv_nsec ^ ts.tv_sec);
   // Generate a stack.
   init_stack();
-  params.start = (cognate_object*) malloc (sizeof(cognate_object) * (argc-1));
+  params.start = (cognate_object*) GC_MALLOC (sizeof(cognate_object) * (argc-1));
   params.top = params.start + argc - 1;
   for (; argc >= 1; --argc)
   {

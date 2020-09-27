@@ -21,14 +21,14 @@ typedef void(^cognate_block)();
 
 static int next_type = list + 1;
 
-struct __attribute__((packed)) cognate_list
+struct cognate_list
 {
   struct cognate_object *start,
                         *top;
 };
 
-// Removing packing will give slight (almost none) performance gains at cost of more memory.
-struct __attribute__((packed)) cognate_object
+// __attribute__((packed)) could save memory here.
+struct cognate_object
 {
   union
   {
@@ -53,7 +53,7 @@ static cognate_object check_type(cognate_type expected_type, cognate_object obje
 #ifdef unsafe 
   return object;
 #else
-  if (object.type == expected_type) 
+  if (__builtin_expect(object.type == expected_type, 1)) 
   {
     return object;
   }
