@@ -30,10 +30,10 @@ cognate_list params;
 external_function(do,             { pop(block)();                          })
 external_function(print,          { print_object(pop_any(), 1); puts("");  })
 
-external_function(sum,            { double n = pop(number); peek(number); (stack.items.top-1)->number += n;})
-external_function(product,        { double n = pop(number); peek(number); (stack.items.top-1)->number *= n;})
-external_function(divisor,        { double n = pop(number); peek(number); (stack.items.top-1)->number /= n;})
-external_function(difference,     { double n = pop(number); peek(number); (stack.items.top-1)->number -= n;})
+external_function(sum,            { pop(number); peek(number); (stack.items.top-1)->number += stack.items.top->number;})
+external_function(product,        { pop(number); peek(number); (stack.items.top-1)->number *= stack.items.top->number;})
+external_function(divisor,        { pop(number); peek(number); (stack.items.top-1)->number /= stack.items.top->number;})
+external_function(difference,     { pop(number); peek(number); (stack.items.top-1)->number -= stack.items.top->number;})
 external_function(modulo,         { int n = pop(number); push(number, (double)((int)pop(number) % n)); }) // TODO: add checking if integer.
 
 external_function(random,         { double low = pop(number); double high = pop(number); double step = pop(number); 
