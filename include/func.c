@@ -30,6 +30,8 @@ cognate_list params;
 external_function(do,             { pop(block)();                          })
 external_function(print,          { print_object(pop_any(), 1); puts("");  })
 
+// All these functions do is pop 2 numbers off the stack, perform an operation on them, and push the result to the stack.
+// The reason they look weird is that i increased performance by modifying the top stack element in-place.
 external_function(sum,            { pop(number); peek(number); (stack.items.top-1)->number += stack.items.top->number;})
 external_function(product,        { pop(number); peek(number); (stack.items.top-1)->number *= stack.items.top->number;})
 external_function(divisor,        { pop(number); peek(number); (stack.items.top-1)->number /= stack.items.top->number;})
@@ -163,9 +165,15 @@ external_function(stack,
 
 external_function(if,
 {
+  /*
   cognate_block cond    = pop(block);
   cognate_block ifTrue  = pop(block);
   cognate_block ifFalse = pop(block);
+  */ // Fancy performant code for popping 3 items off the stack.
+  cognate_block cond    = check_type(block, *(stack.items.top-1)).block;
+  cognate_block ifTrue  = check_type(block, *(stack.items.top-2)).block;
+  cognate_block ifFalse = check_type(block, *(stack.items.top-3)).block;
+  stack.items.top -= 3;
   cond();
   if (pop(boolean)) 
   {
