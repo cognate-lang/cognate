@@ -53,7 +53,7 @@ static cognate_object check_type(cognate_type expected_type, cognate_object obje
 #ifdef unsafe 
   return object;
 #else
-  if (__builtin_expect(object.type == expected_type, 1)) 
+  if (likely(object.type == expected_type)) 
   {
     return object;
   }

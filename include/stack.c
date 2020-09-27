@@ -51,7 +51,7 @@ static void push_any(cognate_object object)
 {
   // Profiles says that this function is The Problem.
   // builtin_expect optimises because the stack hardly ever needs to expand.
-  if (__builtin_expect(stack.items.start + stack.size == stack.items.top, 0))
+  if (unlikely(stack.items.start + stack.size == stack.items.top))
     expand_stack();
   *stack.items.top++ = object;
 }
@@ -59,7 +59,7 @@ static void push_any(cognate_object object)
 static cognate_object pop_any()
 { 
 #ifndef unsafe
-  if (__builtin_expect(stack.items.top == stack.items.start, 0)) 
+  if (unlikely(stack.items.top == stack.items.start)) 
     throw_error("Stack underflow!");
 #endif
   stack.modified -= (stack.modified == stack.items.top);
@@ -68,7 +68,7 @@ static cognate_object pop_any()
 
 static cognate_object peek_any()
 {
-  if (__builtin_expect(stack.items.top == stack.items.start, 0))
+  if (unlikely(stack.items.top == stack.items.start))
     throw_error("Stack underflow!");
   return *(stack.items.top - 1);
 }

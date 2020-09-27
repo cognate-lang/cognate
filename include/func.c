@@ -31,7 +31,7 @@ external_function(do,             { pop(block)();                          })
 external_function(print,          { print_object(pop_any(), 1); puts("");  })
 
 external_function(sum,            { double n = pop(number); peek(number); (stack.items.top-1)->number += n;})
-external_function(product,        { double n = pop(number); peek(number); (stack.items.top-1)->number -= n;})
+external_function(product,        { double n = pop(number); peek(number); (stack.items.top-1)->number *= n;})
 external_function(divisor,        { double n = pop(number); peek(number); (stack.items.top-1)->number /= n;})
 external_function(difference,     { double n = pop(number); peek(number); (stack.items.top-1)->number -= n;})
 external_function(modulo,         { int n = pop(number); push(number, (double)((int)pop(number) % n)); }) // TODO: add checking if integer.
