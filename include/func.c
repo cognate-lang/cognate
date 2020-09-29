@@ -168,10 +168,9 @@ external_function(if,
   cognate_block ifTrue  = pop(block);
   cognate_block ifFalse = pop(block);
   */ // Fancy performant code for popping 3 items off the stack.
-  cognate_block cond    = check_type(block, *(stack.items.top-1)).block;
-  cognate_block ifTrue  = check_type(block, *(stack.items.top-2)).block;
-  cognate_block ifFalse = check_type(block, *(stack.items.top-3)).block;
-  stack.items.top -= 3;
+  cognate_block cond    = pop(block);
+  cognate_block ifTrue  = pop(block);
+  cognate_block ifFalse = pop(block);
   cond();
   if (pop(boolean)) 
   {

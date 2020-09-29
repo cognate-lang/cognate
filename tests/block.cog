@@ -41,5 +41,3 @@ Define Foo as
 Blk Foo 'PASS: Implicit block copying with records';
 Blk Foo 'FAIL: Implicit block copying with records';
 Drop, Do;
-
-
