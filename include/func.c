@@ -30,12 +30,10 @@ cognate_list params;
 external_function(do,             { pop(block)();                          })
 external_function(print,          { print_object(pop_any(), 1); puts("");  })
 
-// All these functions do is pop 2 numbers off the stack, perform an operation on them, and push the result to the stack.
-// The reason they look weird is that i increased performance by modifying the top stack element in-place.
-external_function(sum,            { pop(number); peek(number); (stack.items.top-1)->number += stack.items.top->number;})
-external_function(product,        { pop(number); peek(number); (stack.items.top-1)->number *= stack.items.top->number;})
-external_function(divisor,        { pop(number); peek(number); (stack.items.top-1)->number /= stack.items.top->number;})
-external_function(difference,     { pop(number); peek(number); (stack.items.top-1)->number -= stack.items.top->number;})
+external_function(sum,            { push(number, pop(number) + pop(number));})
+external_function(product,        { push(number, pop(number) * pop(number));})
+external_function(divisor,        { double n = pop(number); push(number, pop(number) / n);})
+external_function(difference,     { double n = pop(number); push(number, pop(number) - n);})
 external_function(modulo,         { int n = pop(number); push(number, (double)((int)pop(number) % n)); }) // TODO: add checking if integer.
 
 external_function(random,         { double low = pop(number); double high = pop(number); double step = pop(number); 
