@@ -44,7 +44,7 @@ static cognate_stack stack;
 static void init_stack()
 {
   // Allocate dynamic stack memory.
-  stack.modified = stack.items.top = stack.items.start = (cognate_object*) GC_MALLOC_ATOMIC ((stack.size = INITIAL_LIST_SIZE) * sizeof(cognate_object));
+  stack.modified = stack.items.top = stack.items.start = (cognate_object*) malloc ((stack.size = INITIAL_LIST_SIZE) * sizeof(cognate_object));
 }
 
 static void push_any(cognate_object object)
@@ -77,12 +77,12 @@ static void expand_stack()
 {
   // New stack size = current stack size * growth factor.
 
-  #ifdef EBUG
+  #ifdef debug
     fprintf(stderr, "[DEBUG] %s:%d -> Expanding list/stack from length %lu to %lu\n", __FILE__, __LINE__, stack.size, (size_t)(stack.size * LIST_GROWTH_FACTOR)); 
   #endif
  
   int temp = stack.modified - stack.items.start;
-  stack.items.start = (cognate_object*) GC_REALLOC (stack.items.start, stack.size * LIST_GROWTH_FACTOR * sizeof(cognate_object));
+  stack.items.start = (cognate_object*) realloc (stack.items.start, stack.size * LIST_GROWTH_FACTOR * sizeof(cognate_object));
   stack.modified = stack.items.start + temp;
   stack.items.top = stack.items.start + stack.size;
   stack.size *= LIST_GROWTH_FACTOR;

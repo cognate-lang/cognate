@@ -73,7 +73,7 @@ external_function(discard, {
   if (num != num_discarding) throw_error("Cannot Discard a non-integer number of elements!");
   if (num_discarding < 0) throw_error("Cannot Discard a negative number of elements!");
   cognate_list obj = *pop(list);
-  cognate_list *lst = (cognate_list*)GC_MALLOC(sizeof(cognate_list));
+  cognate_list *lst = (cognate_list*) malloc (sizeof(cognate_list));
   *lst = obj;
   if ((lst->start += num_discarding) > lst->top) throw_error("List is too small to Discard from!");
   push(list, lst);
@@ -86,7 +86,7 @@ external_function(take, {
   if (num != num_taking) throw_error("Cannot Take a non-integer number of elements!");
   if (num_taking < 0) throw_error("Cannot Take a negative number of elements!");
   cognate_list obj = *pop(list);
-  cognate_list *lst = (cognate_list*) GC_MALLOC (sizeof(cognate_list));
+  cognate_list *lst = (cognate_list*) malloc (sizeof(cognate_list));
   *lst = obj;
   if (lst->start + num_taking > lst->top) throw_error("List is too small to Take from!");
   lst->top = lst->start + num_taking;
@@ -117,7 +117,7 @@ external_function(list,  {
   // Eval expr
   expr();
   // Store the resultant list, GC_REALLOC-ing to fit snugly in memory.
-  cognate_list* lst = (cognate_list*)GC_MALLOC(sizeof(cognate_list));
+  cognate_list* lst = (cognate_list*) malloc (sizeof(cognate_list));
   *lst = stack.items;
   //TODO: Shrink the list to fit here with GC_REALLOC(). Previous attempts caused problems with -O0
   //lst->start = GC_REALLOC(lst->start, (lst->top - lst->start) * sizeof(cognate_object));
@@ -130,12 +130,12 @@ external_function(list,  {
 
 external_function(characters, {
   char* str = pop(string);  
-  cognate_list* lst = (cognate_list*)GC_MALLOC(sizeof(cognate_list));
-  lst->start = (cognate_object*)GC_MALLOC(sizeof(cognate_object) * (strlen(str) + 1));
+  cognate_list* lst = (cognate_list*) malloc (sizeof(cognate_list));
+  lst->start = (cognate_object*) malloc (sizeof(cognate_object) * (strlen(str) + 1));
   lst->top = lst->start + strlen(str);
   for (int i = strlen(str); i >= 0; --i)
   {
-    char *temp = (char*)GC_MALLOC(sizeof(char));
+    char *temp = (char*) malloc (sizeof(char));
     *temp = str[i];
     lst->start[i] = ((cognate_object){.type=string, .string=temp});
   }
@@ -144,7 +144,7 @@ external_function(characters, {
 
 external_function(string, {
   cognate_list lst = *pop(list);
-  char* str = (char*) GC_MALLOC (sizeof(char) * (lst.top - lst.start));
+  char* str = (char*) malloc (sizeof(char) * (lst.top - lst.start));
   for (int i = 0; i < lst.top - lst.start; ++i)
   {
     #ifndef unsafe
@@ -163,11 +163,6 @@ external_function(stack,
 
 external_function(if,
 {
-  /*
-  cognate_block cond    = pop(block);
-  cognate_block ifTrue  = pop(block);
-  cognate_block ifFalse = pop(block);
-  */ // Fancy performant code for popping 3 items off the stack.
   cognate_block cond    = pop(block);
   cognate_block ifTrue  = pop(block);
   cognate_block ifFalse = pop(block);
@@ -189,8 +184,8 @@ external_function(append,
   int list1_len = lst1.top - lst1.start;
   int list2_len = lst2.top - lst2.start;
   int new_list_len = list1_len + list2_len;
-  cognate_list *lst = (cognate_list*) GC_MALLOC (sizeof(cognate_list));
-  lst->start = (cognate_object*) GC_MALLOC (sizeof(cognate_object) * new_list_len);
+  cognate_list *lst = (cognate_list*) malloc (sizeof(cognate_list));
+  lst->start = (cognate_object*) malloc (sizeof(cognate_object) * new_list_len);
   lst->top = lst->start + new_list_len;
   memcpy(lst->start, lst2.start, list2_len * sizeof(cognate_object));
   memcpy(lst->start+list2_len, lst1.start, list1_len * sizeof(cognate_object));
@@ -199,7 +194,7 @@ external_function(append,
 
 external_function(input, {
   size_t str_size = INITIAL_INPUT_SIZE;
-  char* str = (char*)GC_MALLOC(str_size * sizeof(char));
+  char* str = (char*) malloc (str_size * sizeof(char));
   char* temp = str;
   char c;
   while((c = getchar()) != '\n' && c != EOF)
@@ -208,7 +203,7 @@ external_function(input, {
 
     if (temp + str_size == str)
     {
-      temp = GC_REALLOC(temp, (str_size << 1));
+      temp = realloc (temp, (str_size << 1));
       str = temp + str_size;
     }
   }
@@ -224,7 +219,7 @@ external_function(read, {
   fseek(fp, 0L, SEEK_END);
   size_t file_size = ftell(fp);
   fseek(fp, 0L, SEEK_SET);
-  char* file_data = (char*) GC_MALLOC (file_size * sizeof(char));
+  char* file_data = (char*) malloc (file_size * sizeof(char));
   fread(file_data, sizeof(char), file_size, fp);
   fclose(fp);
   file_data[file_size-1] = '\0'; // Remove trailing newline (for easier splitting, printing, etc).
@@ -243,7 +238,7 @@ external_function(path, {
   char cwd[PATH_MAX]; // Much too big.
   if (getcwd(cwd, sizeof(cwd)) == NULL)
     throw_error("Cannot get current directory!");
-  char *small_cwd = (char*) GC_MALLOC (sizeof(char) * strlen(cwd)); // Much better size.
+  char *small_cwd = (char*) malloc (sizeof(char) * strlen(cwd)); // Much better size.
   strcpy(small_cwd, cwd);
   push(string, small_cwd);
 })

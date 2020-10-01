@@ -7,6 +7,14 @@
 #define copy   1
 #define nocopy 0
 
+#ifndef noGC
+  #define malloc  GC_MALLOC
+  #define realloc GC_REALLOC
+  #define malloc_atomic GC_MALLOC_ATOMIC
+#else
+  #define malloc_atomic malloc
+#endif
+
 // Global-local variable swapping is causing performance losses. :(
 #ifdef unsafe
 #define function(name, flags, docopy, body) \
@@ -24,13 +32,21 @@
   cognate_function_ ## name = make_block(docopy, body);
 */
 
+#define program(body) \
+  int main(int argc, char **argv) \
+  { \
+    init(argc, argv); \
+    body \
+    return 0; \
+  }
+
 #define variable(name, flags) \
   immutable cognate_object cognate_variable_ ## name = pop_any(); \
   flags cognate_block cognate_function_ ## name = ^{push_any(cognate_variable_ ## name);};
 
 #define mutate_variable(name) \
-  immutable cognate_object cognate_variable_ ## name = check_block(pop_any()); \
-  cognate_function_ ## name = ^{push_any(cognate_variable_ ## name);};
+  immutable cognate_object cognate_variable_ ## name = check_block(pop_any()); /* Can't remember what check_block does here */\
+  cognate_function_##name = Block_copy(^{push_any(cognate_variable_ ## name);});
 
   
 #define make_block(docopy, body) \
@@ -64,7 +80,7 @@ static void init(int argc, char** argv)
   srand(ts.tv_nsec ^ ts.tv_sec);
   // Generate a stack.
   init_stack();
-  params.start = (cognate_object*) GC_MALLOC (sizeof(cognate_object) * (argc-1));
+  params.start = (cognate_object*) malloc (sizeof(cognate_object) * (argc-1));
   params.top = params.start + argc - 1;
   for (; argc >= 1; --argc)
   {

@@ -8,7 +8,7 @@
 -- TODO: Rewrite all of this in Cognate.
 
 -- Known Parsing Bugs:
---  Tilde inside string is still parsed as comment. 
+--  Strings inside comments are parsed improperly.
 --  Only ASCII is supported - not extended ASCII
 
 
@@ -43,9 +43,9 @@ parsefile = -- Parsefile takes a string (the file text) as an argument and retur
   replacesymbols .
   padtokens . -- Space out special characters.
   -- unwords $ parsecharacters $ splitOn "\'" $ -- Convert characters to ASCII value integers
-  parsestrings . -- Convert strings to lists of characters
   parseblockcomments . 
   parselinecomments .
+  parsestrings . -- Convert strings to lists of characters
   filterAscii
 
 filterAscii :: String -> String
@@ -208,6 +208,20 @@ flatten (Node x : xs) = flatten x ++ flatten xs
 flatten (Leaf x : xs) = x : flatten xs
 flatten [] = []
 
+constructStr :: [Tree] -> String
+constructStr str =
+  sanitise (map (chr . readNumber) str)
+    where 
+      readNumber :: Tree -> Int
+      readNumber (Leaf num) = read num
+      readNumber (Node _) = error "Parse Error: Cannot parse malformed string literal!"
+      sanitise = 
+        replace "\"" "\\\"" .
+        replace "\\'" "'" .
+        replace "¸" "'"
+
+
+
 compile (Node body : Leaf name : Leaf "Record" : xs) =
   "record(" ++ lc name ++ ", " ++ show (recordSize body) ++ ");\n" ++
   makeFields body ++ "{" ++ compile xs ++ "}"
@@ -218,6 +232,7 @@ compile (Node body : Leaf name : Leaf "Record" : xs) =
       recordSize (Leaf _ : xs) = 1 + recordSize xs
       recordSize (Node _ : xs) =     recordSize xs
       recordSize [] = 0
+
 
 
 
@@ -268,6 +283,7 @@ compile (Leaf name : Leaf "Set" : xs) =
   ++ compile xs ++ "}"
 
 
+
 -- Primitive Do inlining.
 compile (Node expr : Leaf "Do" : xs) =
   "{\n" ++
@@ -276,16 +292,8 @@ compile (Node expr : Leaf "Do" : xs) =
   compile xs
 
 compile (Node str : Leaf "StringLiteral" : xs) =
-  "push(string,\"" ++ sanitise (map (chr . readNumber) str) ++ "\");" ++ compile xs
-    where 
-      readNumber :: Tree -> Int
-      readNumber (Leaf num) = read num
-      readNumber (Node _) = error "Parse Error: Cannot parse malformed string literal!"
-      sanitise = 
-        replace "\"" "\\\"" .
-        replace "\\'" "'" .
-        replace "¸" "'"
-
+  "push(string,\"" ++ constructStr str ++ "\");" ++ compile xs
+    
 compile (Node expr : xs) =
   "push(block,\nmake_block(" ++ (if any isNode expr then "copy," else "nocopy,") ++ "{\n"
   ++ compile expr
@@ -332,7 +340,7 @@ main =
       putStrLn $ "Cognate Compiler - Version " ++ version
       putStrLn $ "Compiling " ++ in_file ++ " to " ++ out_file ++ "... "
       source <- readFile in_file
-      writeFile out_file $ header in_file ++ "#include\"cognate.c\"\nint main(int argc, char** argv)\n{\ninit(argc, argv);\n" ++ compile (parsefile source) ++ "return 0;\n}\n"
+      writeFile out_file $ header in_file ++ "#include\"cognate.c\"\nprogram({" ++ compile (parsefile source) ++ "})"
       rawSystem formatter (formatFlags ++ [out_file])
       putStrLn $ "Compiling " ++ out_file ++ " to " ++ stripExtension in_file ++ "... "
       rawSystem compiler ([out_file, "-o", stripExtension in_file] ++ compilerFlags ++ compiler_args)
