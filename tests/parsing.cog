@@ -9,7 +9,7 @@ If {A, == 5}
 
 ' \' Let B be 4; \' ' ' " Let B be 4; " '
 Let B be 5; '' 'Let B be 4;'
-' Let B be 4; \'  Let B be 4 '
+' Let B be 4; \'  Let B be 4 ';
 Clear;
 
 If {B, == 5}

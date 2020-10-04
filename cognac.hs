@@ -274,9 +274,9 @@ compile (Node body : Node call : Leaf "Set" : xs) =
 
 compile (Leaf name : Leaf "Let" : xs) =
   -- Var is marked as immutable if xs does not contain 'Set'. TODO: mark var as immutable if xs does not contain 'Set Var'
-  if xs `doesCall` name then "variable(" ++ lc name ++ ","
+  "variable(" ++ lc name ++ ","
   ++ (if xs `doesMutate` name then "mutable" else "immutable")++ ");{"
-  ++ compile xs ++ "}" else compile xs
+  ++ compile xs ++ "}"
 
 compile (Leaf name : Leaf "Set" : xs) =
   "mutate_variable(" ++ lc name ++ ");{" 

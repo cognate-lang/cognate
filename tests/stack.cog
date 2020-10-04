@@ -17,3 +17,7 @@ If {7, Triplet, Drop, Drop, == 7}
 If {1,2,3, Stack, == List {1,2,3}}
    {Print 'PASS: Stack as list'}
    {Print 'FAIL: Stack as list'};
+
+If {Clear, Stack, == List{}}
+   {Print 'PASS: Clearing the stack'}
+   {Print 'FAIL: Clearing the stack'};
