@@ -25,6 +25,10 @@
   #define call(name) {cognate_function_ ## name();}
 #endif
 
+// If c++ has new(), why can't we?
+#define new(object) \
+  (object*) malloc (sizeof(object));
+
 cognate_list params;
 
 external_function(do,             { pop(block)();                          })
@@ -73,7 +77,7 @@ external_function(discard, {
   if (num != num_discarding) throw_error("Cannot Discard a non-integer number of elements!");
   if (num_discarding < 0) throw_error("Cannot Discard a negative number of elements!");
   cognate_list obj = *pop(list);
-  cognate_list *lst = (cognate_list*) malloc (sizeof(cognate_list));
+  cognate_list *lst = new(cognate_list);
   *lst = obj;
   if ((lst->start += num_discarding) > lst->top) throw_error("List is too small to Discard from!");
   push(list, lst);
@@ -86,7 +90,7 @@ external_function(take, {
   if (num != num_taking) throw_error("Cannot Take a non-integer number of elements!");
   if (num_taking < 0) throw_error("Cannot Take a negative number of elements!");
   cognate_list obj = *pop(list);
-  cognate_list *lst = (cognate_list*) malloc (sizeof(cognate_list));
+  cognate_list *lst = new(cognate_list);
   *lst = obj;
   if (lst->start + num_taking > lst->top) throw_error("List is too small to Take from!");
   lst->top = lst->start + num_taking;
@@ -117,7 +121,7 @@ external_function(list,  {
   // Eval expr
   expr();
   // Store the resultant list, GC_REALLOC-ing to fit snugly in memory.
-  cognate_list* lst = (cognate_list*) malloc (sizeof(cognate_list));
+  cognate_list* lst = new(cognate_list);
   *lst = stack.items;
   //TODO: Shrink the list to fit here with GC_REALLOC(). Previous attempts caused problems with -O0
   //lst->start = GC_REALLOC(lst->start, (lst->top - lst->start) * sizeof(cognate_object));
@@ -130,12 +134,12 @@ external_function(list,  {
 
 external_function(characters, {
   char* str = pop(string);  
-  cognate_list* lst = (cognate_list*) malloc (sizeof(cognate_list));
+  cognate_list* lst = new(cognate_list);
   lst->start = (cognate_object*) malloc (sizeof(cognate_object) * (strlen(str) + 1));
   lst->top = lst->start + strlen(str);
   for (int i = strlen(str); i >= 0; --i)
   {
-    char *temp = (char*) malloc (sizeof(char));
+    char *temp = new(char);
     *temp = str[i];
     lst->start[i] = ((cognate_object){.type=string, .string=temp});
   }
@@ -184,7 +188,7 @@ external_function(append,
   int list1_len = lst1.top - lst1.start;
   int list2_len = lst2.top - lst2.start;
   int new_list_len = list1_len + list2_len;
-  cognate_list *lst = (cognate_list*) malloc (sizeof(cognate_list));
+  cognate_list *lst = new(cognate_list);
   lst->start = (cognate_object*) malloc (sizeof(cognate_object) * new_list_len);
   lst->top = lst->start + new_list_len;
   memcpy(lst->start, lst2.start, list2_len * sizeof(cognate_object));

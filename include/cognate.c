@@ -27,6 +27,7 @@
                                                                       function_name = temp_func_name;});
 #endif
 
+
 /*
 #define mutate_function(name, docopy, body) \
   cognate_function_ ## name = make_block(docopy, body);
@@ -37,6 +38,7 @@
   { \
     init(argc, argv); \
     body \
+    cleanup(); \
     return 0; \
   }
 
@@ -75,6 +77,9 @@
 static void init(int argc, char** argv)
 {
   // Seed the random number generator properly.
+#ifndef noGC
+  GC_INIT(); // Portability.
+#endif
   struct timespec ts;
   timespec_get(&ts, TIME_UTC);
   srand(ts.tv_nsec ^ ts.tv_sec);
@@ -86,6 +91,16 @@ static void init(int argc, char** argv)
   {
     char* str = argv[argc];
     params.start[argc-1] = (cognate_object){.type=string, .string=str};
+  }
+}
+
+static void cleanup()
+{
+  if (unlikely(stack.items.top != stack.items.start))
+  {
+    char err[58];
+    sprintf(err, "Program exiting with non-empty stack of length %lu", stack.items.top - stack.items.start);
+    throw_error(err);
   }
 }
 
