@@ -8,7 +8,6 @@ static void print_object (cognate_object object, _Bool quotes);
 
 static void print_object (cognate_object object, _Bool quotes)
 {
-  // This really needs refactoring. I need to work out why this fixed the previous error. 
   switch (object.type)
   {
     // Double precision float has 15sf precision.

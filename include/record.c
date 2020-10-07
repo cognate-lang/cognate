@@ -6,7 +6,7 @@
   int current_record_pos = 0; \
   static int this_type = 0; \
   if (this_type==0) this_type = next_type++; \
-  immutable void(^ cognate_function_ ## name)(void) = \
+  void(^ cognate_function_ ## name)(void) = \
   ^{ \
     cognate_object *rec = (cognate_object*) malloc (sizeof(cognate_object) * (size + 1)); \
     rec[size] = (cognate_object){.type=terminator}; \
@@ -25,7 +25,7 @@
     } \
     push_any((cognate_object){.type=this_type, .record=rec}); \
   }; \
-  immutable void(^ cognate_function_ ## name ## _)(void) = \
+  void(^ cognate_function_ ## name ## _)(void) = \
   ^{ \
     push(boolean, pop_any().type == this_type); \
   }
@@ -36,7 +36,7 @@
 #define field(name, predicate) \
   record_predicates[current_record_pos] = predicate; \
   const int record_ ## name ## _pos = current_record_pos++; \
-  immutable void(^ cognate_function_ ## name)(void) = \
+  void(^ cognate_function_ ## name)(void) = \
   ^{ \
     cognate_object rec = pop_any(); \
     if (rec.type == this_type) { push_any(rec.record[record_ ## name ## _pos]); } \

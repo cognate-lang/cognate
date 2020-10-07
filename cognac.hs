@@ -330,7 +330,7 @@ main =
   do
     args <- getArgs
     let compilerFlags = 
-          words "-fblocks -lBlocksRuntime -l:libgc.so -Wall -Wno-unused -Ofast -s -I include"
+          words "-fblocks -lBlocksRuntime -l:libgc.so -Ofast -s -I include -Wall -Wextra -Werror -Wpedantic -Wno-unused -std=c11"
     let in_file = head args
     let out_file = head (splitOn "." in_file) ++ ".c"
     let compiler_args = tail args
@@ -340,7 +340,7 @@ main =
       putStrLn $ "Cognate Compiler - Version " ++ version
       putStrLn $ "Compiling " ++ in_file ++ " to " ++ out_file ++ "... "
       source <- readFile in_file
-      writeFile out_file $ header in_file ++ "#include\"cognate.c\"\nprogram({" ++ compile (parsefile source) ++ "})"
+      writeFile out_file $ header in_file ++ "#include\"cognate.c\"\nprogram({" ++ compile (parsefile source) ++ "})\n"
       rawSystem formatter (formatFlags ++ [out_file])
       putStrLn $ "Compiling " ++ out_file ++ " to " ++ stripExtension in_file ++ "... "
       rawSystem compiler ([out_file, "-o", stripExtension in_file] ++ compilerFlags ++ compiler_args)

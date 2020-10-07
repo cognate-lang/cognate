@@ -9,6 +9,7 @@
 #include <limits.h>
 
 #define INITIAL_INPUT_SIZE 64
+#define PATH_MAX 4096
 
 // Macro to define external cognate function.
 #define external_function(name, body) \
@@ -52,8 +53,8 @@ external_function(clear,          { init_stack();                               
 external_variable(true,  boolean, 1)
 external_variable(false, boolean, 0)
 
-external_function(either, { _Bool a = pop(boolean); _Bool b = pop(boolean); push(boolean, a || b);}) // Beware short circuiting.
-external_function(both,   { _Bool a = pop(boolean); _Bool b = pop(boolean); push(boolean, a && b );})
+external_function(either, { _Bool a = pop(boolean); push(boolean, pop(boolean) || a);}) // Beware short circuiting.
+external_function(both,   { _Bool a = pop(boolean); push(boolean, pop(boolean) && a );})
 external_function(one_of, { _Bool a = pop(boolean); _Bool b = pop(boolean); push(boolean, (a && !b) || (!a && b)); })
 external_function(not,    { push(boolean, !pop(boolean)); })
 
@@ -65,10 +66,11 @@ external_function(exceed,         { push(boolean, pop(number) <  pop(number)); }
 external_function(equalorpreceed, { push(boolean, pop(number) >= pop(number)); })
 external_function(equalorexceed,  { push(boolean, pop(number) <= pop(number)); })
 
-external_function(number_, {push(boolean, pop_any().type == number);}) // Question marks are converted to underscores.
-external_function(list_, {push(boolean, pop_any().type == list);})    // However all other synbols are too.
-external_function(string_, {push(boolean, pop_any().type == string);}) // So this is a temporary hack!
-external_function(block_, {push(boolean, pop_any().type == block);})
+external_function(number_,  {push(boolean, pop_any().type == number);}) // Question marks are converted to underscores.
+external_function(list_,    {push(boolean, pop_any().type == list);})   // However all other synbols are too.
+external_function(string_,  {push(boolean, pop_any().type == string);}) // So this is a temporary hack!
+external_function(block_,   {push(boolean, pop_any().type == block);})
+external_function(boolean_, {push(boolean, pop_any().type == boolean);})
 
 external_function(discard, { 
   // O(n) where n is the number of element being Discarded.
@@ -146,16 +148,12 @@ external_function(characters, {
   push(list, lst);
 })
 
-external_function(string, {
+external_function(join, {
   cognate_list lst = *pop(list);
   char* str = (char*) malloc (sizeof(char) * (lst.top - lst.start));
   for (int i = 0; i < lst.top - lst.start; ++i)
   {
-    #ifndef unsafe
-    if (lst.start[i].type != string)
-      type_error("String", lookup_type(lst.start[i].type));
-    #endif
-    str[i] = lst.start[i].string[0];
+    str[i] = check_type(string, lst.start[i]).string[0];
   }
   push(string, str);
 })
@@ -171,14 +169,7 @@ external_function(if,
   cognate_block ifTrue  = pop(block);
   cognate_block ifFalse = pop(block);
   cond();
-  if (pop(boolean)) 
-  {
-    ifTrue();
-  } 
-  else 
-  {
-    ifFalse();
-  }
+  pop(boolean) ? ifTrue() : ifFalse();
 })
 
 external_function(append,

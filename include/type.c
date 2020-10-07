@@ -77,7 +77,7 @@ static const char* lookup_type(cognate_type type)
   return type_number;
 }
 
-static const _Bool compare_objects(cognate_object ob1, cognate_object ob2)
+static _Bool compare_objects(cognate_object ob1, cognate_object ob2)
 {
   if (ob1.type != ob2.type)
     {
@@ -85,9 +85,9 @@ static const _Bool compare_objects(cognate_object ob1, cognate_object ob2)
     }
     switch (ob1.type)
     {
-      case number:  return ob1.number == ob2.number;            break;
+      case number:  return ob1.number  == ob2.number;           break;
       case boolean: return ob1.boolean == ob2.boolean;          break;
-      case block:   return ob1.block == ob2.block;              break;
+      case block:   return ob1.block   == ob2.block;            break;
       case string:  return strcmp(ob1.string, ob2.string) == 0; break;
       case list:
       {
