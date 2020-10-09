@@ -42,7 +42,9 @@ external_function(difference,     { double n = pop(number); push(number, pop(num
 external_function(modulo,         { int n = pop(number); push(number, (double)((int)pop(number) % n)); }) // TODO: add checking if integer.
 
 external_function(random,         { double low = pop(number); double high = pop(number); double step = pop(number); 
-                               push(number, low + (double)(rand() % (int)((high - low) / step)) * step); })
+                                    if (high < low) throw_error("Cannot generate random number in range!");
+                                    else if (high - low < step) push(number, low);
+                                    else push(number, low + (double)(rand() % (int)((high - low) / step)) * step); })
 
 external_function(drop,           { pop_any();                                                                                     })
 external_function(twin,           { push_any(peek_any());                                                                       })
@@ -102,7 +104,7 @@ external_function(take, {
 external_function(index, { 
   int index = pop(number);
   cognate_list lst = *pop(list);
-  if (lst.start + index > lst.top)
+  if (lst.start + index >= lst.top)
     throw_error("List index out of bounds!");
   push_any(lst.start [index]);
 })

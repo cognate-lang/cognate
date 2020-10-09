@@ -61,8 +61,8 @@
     stack.modified = temp_modified + stack.items.start; \
   }
 
-#define unlikely(expr) __builtin_expect(!!(expr), 0)
-#define likely(expr) __builtin_expect(!!(expr), 1)
+#define unlikely(expr) __builtin_expect((_Bool)(expr), 0)
+#define likely(expr)   __builtin_expect((_Bool)(expr), 1)
 
 
 #include <time.h>
@@ -72,6 +72,18 @@
 #include "error.c"
 #include "type.c"
 #include "record.c"
+
+static void get_params(int argc, char** argv)
+{
+  params.start = (cognate_object*) malloc (sizeof(cognate_object) * (argc-1));
+  params.top = params.start + argc - 1;
+  while (argc-- >= 1)
+  {
+    char* str = argv[argc];
+    params.start[argc-1] = (cognate_object){.type=string, .string=str};
+  }
+
+}
 
 
 static void init(int argc, char** argv)
@@ -85,13 +97,7 @@ static void init(int argc, char** argv)
   srand(ts.tv_nsec ^ ts.tv_sec);
   // Generate a stack.
   init_stack();
-  params.start = (cognate_object*) malloc (sizeof(cognate_object) * (argc-1));
-  params.top = params.start + argc - 1;
-  for (; argc >= 1; --argc)
-  {
-    char* str = argv[argc];
-    params.start[argc-1] = (cognate_object){.type=string, .string=str};
-  }
+  get_params(argc, argv);
 }
 
 static void cleanup()
