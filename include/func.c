@@ -32,13 +32,13 @@
 
 cognate_list params;
 
-external_function(do,             { pop(block)();                          })
-external_function(print,          { print_object(pop_any(), 1); puts("");  })
+external_function(do,             { pop(block)();                         })
+external_function(print,          { print_object(pop_any(), 1); puts(""); })
 
-external_function(sum,            { push(number, pop(number) + pop(number));})
-external_function(product,        { push(number, pop(number) * pop(number));})
-external_function(divisor,        { double n = pop(number); push(number, pop(number) / n);})
-external_function(difference,     { double n = pop(number); push(number, pop(number) - n);})
+external_function(sum,            { push(number, pop(number) + pop(number));                           })
+external_function(product,        { push(number, pop(number) * pop(number));                           })
+external_function(divisor,        { push(number, (1 / pop(number) * pop(number)));                     })
+external_function(difference,     { push(number, (-pop(number) + pop(number)));                        })
 external_function(modulo,         { int n = pop(number); push(number, (double)((int)pop(number) % n)); }) // TODO: add checking if integer.
 
 external_function(random,         { double low = pop(number); double high = pop(number); double step = pop(number); 
@@ -46,11 +46,11 @@ external_function(random,         { double low = pop(number); double high = pop(
                                     else if (high - low < step) push(number, low);
                                     else push(number, low + (double)(rand() % (int)((high - low) / step)) * step); })
 
-external_function(drop,           { pop_any();                                                                                     })
-external_function(twin,           { push_any(peek_any());                                                                       })
-external_function(triplet,        { cognate_object a = peek_any(); push_any(a); push_any(a);                                    })
-external_function(swap,           { cognate_object a = pop_any(); cognate_object b = pop_any(); push_any(a); push_any(b);          })
-external_function(clear,          { init_stack();                                                                                  })
+external_function(drop,           { pop_any();                                                                            })
+external_function(twin,           { push_any(peek_any());                                                                 })
+external_function(triplet,        { cognate_object a = peek_any(); push_any(a); push_any(a);                              })
+external_function(swap,           { cognate_object a = pop_any(); cognate_object b = pop_any(); push_any(a); push_any(b); })
+external_function(clear,          { init_stack();                                                                         })
 
 external_variable(true,  boolean, 1)
 external_variable(false, boolean, 0)
