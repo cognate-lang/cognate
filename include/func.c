@@ -133,14 +133,15 @@ external_function(list,  {
 })
 
 external_function(characters, {
-  char* str = pop(string);  
+  char* str = pop(string);
   cognate_list* lst = (cognate_list*)malloc(sizeof(cognate_list));
   lst->start = (cognate_object*) malloc (sizeof(cognate_object) * strlen(str));
   lst->top = lst->start + strlen(str);
   for (int i = strlen(str); i >= 0; --i)
   {
-    // This line (the malloc call!) segfaults sometimes when GC is on.
-    char *temp = (char*) malloc (sizeof(char) * 2);
+    // This segfaults with GC_MALLOC, but GC_MALLOC_ATOMIC seems to work.
+    // TODO: find out why this even works.
+    char *temp = (char*) malloc_atomic (sizeof(char) * 2);
     temp[0] = str[i];
     temp[1] = '\0';
     lst->start[i] = ((cognate_object){.type=string, .string=temp});
