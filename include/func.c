@@ -26,10 +26,6 @@
   #define call(name) {cognate_function_ ## name();}
 #endif
 
-// If c++ has new(), why can't we?
-#define new(object) \
-  (object*) malloc (sizeof(object));
-
 cognate_list params;
 
 external_function(do,             { pop(block)();                         })
@@ -40,12 +36,12 @@ external_function(product,        { push(number, pop(number) * pop(number));    
 external_function(divisor,        { push(number, (1 / pop(number) * pop(number)));                     })
 external_function(difference,     { push(number, (-pop(number) + pop(number)));                        })
 external_function(modulo,         { int n = pop(number); push(number, (double)((int)pop(number) % n)); }) // TODO: add checking if integer.
-
+/*
 external_function(random,         { double low = pop(number); double high = pop(number); double step = pop(number); 
                                     if (high < low) throw_error("Cannot generate random number in range!");
                                     else if (high - low < step) push(number, low);
                                     else push(number, low + (double)(rand() % (int)((high - low) / step)) * step); })
-
+*/
 external_function(drop,           { pop_any();                                                                            })
 external_function(twin,           { push_any(peek_any());                                                                 })
 external_function(triplet,        { cognate_object a = peek_any(); push_any(a); push_any(a);                              })
@@ -81,7 +77,7 @@ external_function(discard, {
   if (num != num_discarding) throw_error("Cannot Discard a non-integer number of elements!");
   if (num_discarding < 0) throw_error("Cannot Discard a negative number of elements!");
   cognate_list obj = *pop(list);
-  cognate_list *lst = new(cognate_list);
+  cognate_list *lst = (cognate_list*)malloc(sizeof(cognate_list));
   *lst = obj;
   if ((lst->start += num_discarding) > lst->top) throw_error("List is too small to Discard from!");
   push(list, lst);
@@ -94,7 +90,7 @@ external_function(take, {
   if (num != num_taking) throw_error("Cannot Take a non-integer number of elements!");
   if (num_taking < 0) throw_error("Cannot Take a negative number of elements!");
   cognate_list obj = *pop(list);
-  cognate_list *lst = new(cognate_list);
+  cognate_list *lst = (cognate_list*)malloc(sizeof(cognate_list));
   *lst = obj;
   if (lst->start + num_taking > lst->top) throw_error("List is too small to Take from!");
   lst->top = lst->start + num_taking;
@@ -125,7 +121,7 @@ external_function(list,  {
   // Eval expr
   expr();
   // Store the resultant list, GC_REALLOC-ing to fit snugly in memory.
-  cognate_list* lst = new(cognate_list);
+  cognate_list* lst = (cognate_list*)malloc(sizeof(cognate_list));
   *lst = stack.items;
   //TODO: Shrink the list to fit here with GC_REALLOC(). Previous attempts caused problems with -O0
   //lst->start = GC_REALLOC(lst->start, (lst->top - lst->start) * sizeof(cognate_object));
@@ -138,21 +134,27 @@ external_function(list,  {
 
 external_function(characters, {
   char* str = pop(string);  
-  cognate_list* lst = new(cognate_list);
-  lst->start = (cognate_object*) malloc (sizeof(cognate_object) * (strlen(str) + 1));
+  cognate_list* lst = (cognate_list*)malloc(sizeof(cognate_list));
+  lst->start = (cognate_object*) malloc (sizeof(cognate_object) * strlen(str));
   lst->top = lst->start + strlen(str);
   for (int i = strlen(str); i >= 0; --i)
   {
-    char *temp = new(char);
-    *temp = str[i];
+    // This line (the malloc call!) segfaults sometimes when GC is on.
+    char *temp = (char*) malloc (sizeof(char) * 2);
+    temp[0] = str[i];
+    temp[1] = '\0';
     lst->start[i] = ((cognate_object){.type=string, .string=temp});
   }
   push(list, lst);
 })
 
 external_function(join, {
+  // Joins list of single characters.
+  // TODO: join list of full strings.
   cognate_list lst = *pop(list);
-  char* str = (char*) malloc (sizeof(char) * (lst.top - lst.start));
+  const size_t str_size = lst.top - lst.start + 1;
+  char* str = (char*) malloc (sizeof(char) * (str_size));
+  str[str_size - 1] = '\0';
   for (int i = 0; i < lst.top - lst.start; ++i)
   {
     str[i] = check_type(string, lst.start[i]).string[0];
@@ -181,7 +183,7 @@ external_function(append,
   int list1_len = lst1.top - lst1.start;
   int list2_len = lst2.top - lst2.start;
   int new_list_len = list1_len + list2_len;
-  cognate_list *lst = new(cognate_list);
+  cognate_list *lst = (cognate_list*) malloc (sizeof(cognate_list));
   lst->start = (cognate_object*) malloc (sizeof(cognate_object) * new_list_len);
   lst->top = lst->start + new_list_len;
   memcpy(lst->start, lst2.start, list2_len * sizeof(cognate_object));
@@ -250,6 +252,10 @@ external_function(write, {
 
 external_function(parameters, {
   push(list, &params);
+})
+
+external_function(stop, {
+  exit(0);
 })
 
 #endif
