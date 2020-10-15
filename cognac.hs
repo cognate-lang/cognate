@@ -79,16 +79,16 @@ replacesymbols =
 
 
 -- Constants!!!
-openbrackets  = [ '{' ]
-closebrackets = [ '}' ]
-delims        = [ ';',','     ]
-numbers       =  '-':'.':['0'..'9']
-upperletters  = [ 'A'..'Z'    ]
-lowerletters  = [ 'a'..'z'    ]
-whitespace    = [ ' ', '\t', '\n' ]
+openbrackets  = [ '{'                 ]
+closebrackets = [ '}'                 ]
+delims        = [ ';',','             ]
+upperletters  = [ 'A'..'Z'            ]
+lowerletters  = [ 'a'..'z'            ]
+whitespace    = [ ' ', '\t', '\n'     ]
+numbers       =  '-' : '.' : ['0'..'9']
 brackets      = openbrackets ++ closebrackets
-permittedsymbols = delims    ++ brackets      ++ numbers ++ lowerletters ++ upperletters
-formalsymbols = delims       ++ brackets      ++ numbers ++ upperletters
+permittedsymbols = delims ++ brackets ++ numbers ++ lowerletters ++ upperletters
+formalsymbols =    delims ++ brackets ++ numbers ++ upperletters
 
 {- parsestrings :: [String] -> [String]
 parsestrings (x:y:xs) =
@@ -192,11 +192,12 @@ parseImports :: String -> [Tree] -> IO [Tree]
 
 parseImports path (Leaf filename : Leaf "Import" : xs) =
   do
+    -- TODO: prevent recursive imports and redundant repeated imports.
     putStrLn $ "Importing " ++ filename ++ ".cog"
-    importedFile <- readFile ((join "/" $ init $ splitOn "/" path) ++ "/" ++ filename ++ ".cog")
+    importedFile <- readFile ((join "/" $ init $ splitOn "/" path) ++ (if (length (splitOn "/" path) > 1) then "/" else "") ++ filename ++ ".cog")
     xs' <- parseImports path xs
     x   <- parseImports path $ parsefile importedFile
-    return $ x ++ xs'
+    return $ x ++ [Node xs',Leaf "Do"]
       where
         join :: String -> [String] -> String
         join delim (x:xs) = x ++ delim ++ join delim xs
