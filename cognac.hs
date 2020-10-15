@@ -188,6 +188,33 @@ parseinformalsyntax =
         head word `elem` formalsymbols
 
 
+parseImports :: String -> [Tree] -> IO [Tree]
+
+parseImports path (Leaf filename : Leaf "Import" : xs) =
+  do
+    putStrLn $ "Importing " ++ filename ++ ".cog"
+    importedFile <- readFile ((join "/" $ init $ splitOn "/" path) ++ "/" ++ filename ++ ".cog")
+    xs' <- parseImports path xs
+    x   <- parseImports path $ parsefile importedFile
+    return $ x ++ xs'
+      where
+        join :: String -> [String] -> String
+        join delim (x:xs) = x ++ delim ++ join delim xs
+        join _ [] = []
+
+parseImports path (Node x : xs) =
+  do
+    x'  <- parseImports path x
+    xs' <- parseImports path xs
+    return $ Node x' : xs'
+
+parseImports path (x:xs) = 
+  do
+    xs' <- parseImports path xs
+    return $ x : xs'
+
+parseImports _ [] = return []
+
 compile :: [Tree] -> String
 
 doesCall :: [Tree] -> String -> Bool
@@ -340,7 +367,8 @@ main =
       putStrLn $ "Cognate Compiler - Version " ++ version
       putStrLn $ "Compiling " ++ in_file ++ " to " ++ out_file ++ "... "
       source <- readFile in_file
-      writeFile out_file $ header in_file ++ "#include\"cognate.c\"\nprogram({" ++ compile (parsefile source) ++ "})\n"
+      thing <- parseImports in_file $ parsefile source
+      writeFile out_file $ header in_file ++ "#include\"cognate.c\"\nprogram({" ++ compile thing ++ "})\n"
       rawSystem formatter (formatFlags ++ [out_file])
       putStrLn $ "Compiling " ++ out_file ++ " to " ++ stripExtension in_file ++ "... "
       rawSystem compiler ([out_file, "-o", stripExtension in_file] ++ compilerFlags ++ compiler_args)
