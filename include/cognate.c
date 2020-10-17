@@ -64,7 +64,7 @@
 #define unlikely(expr) __builtin_expect((_Bool)(expr), 0)
 #define likely(expr)   __builtin_expect((_Bool)(expr), 1)
 
-
+#include <gc.h>
 #include <time.h>
 #include "stack.c"
 #include "func.c"

@@ -13,7 +13,8 @@ typedef enum
   boolean, 
   string, 
   number, 
-  list
+  list,
+  table
 } cognate_type;
 
 typedef void(^cognate_block)();
@@ -26,6 +27,16 @@ struct cognate_list
                         *top;
 };
 
+
+struct cognate_table
+{
+  struct cognate_list items;
+};
+
+typedef struct cognate_table cognate_table;
+
+
+
 // __attribute__((packed)) could save memory here.
 struct cognate_object
 {
@@ -35,8 +46,8 @@ struct cognate_object
     _Bool boolean;                 // 1bit  bool
     cognate_block block;           // 64bit pointer
     double number;                 // 64bit float
-    struct cognate_list *list;     // 64bit pointer
-    struct cognate_object *record; // 64bit pointer
+    struct cognate_list  *list;    // 64bit pointer
+    struct cognate_table *table;   // 64bit pointer
   };
   cognate_type type : 16;
 };
@@ -46,6 +57,8 @@ typedef struct cognate_list   cognate_list;
 
 static cognate_object check_type(cognate_type, cognate_object);
 static const char* lookup_type(cognate_type);
+static _Bool compare_objects(cognate_object, cognate_object);
+static _Bool compare_lists(cognate_list, cognate_list);
 
 static cognate_object check_type(cognate_type expected_type, cognate_object object)
 {
@@ -69,6 +82,7 @@ static const char* lookup_type(cognate_type type)
     case block  : return "Block";
     case number : return "Number";
     case list   : return "List";
+    case table  : return "Table";
     default:;
   }
   static char type_number[24]; // Max 32 bit type will take up 10 digits.
@@ -76,36 +90,39 @@ static const char* lookup_type(cognate_type type)
   return type_number;
 }
 
+static _Bool compare_lists(cognate_list lst1, cognate_list lst2)
+{
+  ptrdiff_t len = lst1.top - lst1.start;
+  if (len != lst2.top - lst2.start) return 0; // Not equal if differing length.
+  while (len > 0)
+  {
+    --len;
+    if (!compare_objects(lst1.start[len], lst2.start[len])) // Compare each list object.
+    {
+      return 0;
+    }
+  }
+  return 1;
+}
+
 static _Bool compare_objects(cognate_object ob1, cognate_object ob2)
 {
   if (ob1.type != ob2.type)
-    {
-      return 0; // Not equal if differing types. None of this javascript rubbish.
-    }
-    switch (ob1.type)
-    {
-      case number:  return ob1.number  == ob2.number;           break;
-      case boolean: return ob1.boolean == ob2.boolean;          break;
-      case block:   return ob1.block   == ob2.block;            break;
-      case string:  return strcmp(ob1.string, ob2.string) == 0; break;
-      case list:
-      {
-        ptrdiff_t len = ob1.list->top - ob1.list->start;
-        if (len != ob2.list->top - ob2.list->start) return 0; // Not equal if differing length.
-        cognate_list lst1 = *ob1.list;
-        cognate_list lst2 = *ob2.list;
-        while (len > 0)
-        {
-          --len;
-          if (!compare_objects(lst1.start[len], lst2.start[len])) // Compare each list object.
-          {
-            return 0;
-          }
-        }
-        return 1;
-      }
-      // Records are a lie.
-    }
+  {
+    return 0; // Not equal if differing types. None of this javascript rubbish.
+  }
+  switch (ob1.type)
+  {
+    case number:  return ob1.number  == ob2.number;           break;
+    case boolean: return ob1.boolean == ob2.boolean;          break;
+    case block:   return ob1.block   == ob2.block;            break;
+    case string:  return strcmp(ob1.string, ob2.string) == 0; break;
+    case list:    return compare_lists(*ob1.list, *ob2.list); break;
+    case table:   return compare_lists(ob1.table->items, ob2.table->items); break;
+    // Records are a lie.
+  }
+
+  return 0;
 }
 
 #endif

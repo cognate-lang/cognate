@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include "type.c"
 #include <stdlib.h>
-#include "gc.h"
 
 #define INITIAL_LIST_SIZE 16 // Constant values for initialising stack sizes.
 #define LIST_GROWTH_FACTOR 1.5
@@ -78,7 +77,7 @@ static void expand_stack()
   // New stack size = current stack size * growth factor.
 
   #ifdef debug
-    fprintf(stderr, "[DEBUG] %s:%d -> Expanding list/stack from length %lu to %lu\n", __FILE__, __LINE__, stack.size, (size_t)(stack.size * LIST_GROWTH_FACTOR)); 
+    fprintf(stderr, "[DEBUG] %s:%d -> Expanding stack from length %lu to %lu\n", __FILE__, __LINE__, stack.size, (size_t)(stack.size * LIST_GROWTH_FACTOR)); 
   #endif
  
   int temp = stack.modified - stack.items.start;

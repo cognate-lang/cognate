@@ -259,4 +259,20 @@ external_function(stop, {
   exit(0);
 })
 
+external_function(table, {
+  //call(list); // Leaving this line in causes a noticable performance decrease in programs not even using these functions :(
+  cognate_list init = *pop(list);
+  cognate_table *tab = (cognate_table*) malloc (sizeof(cognate_table)); // Need to allocate list here.
+  char *key;
+  cognate_object value;
+  for (cognate_object *i = init.start; i < init.top - 1; i+=2)
+  {
+    key = check_type(string, *i).string;
+    value = *(i+1);
+    //table_add(key, value, tab);
+  }
+  push(table, tab);
+})
+
+
 #endif
