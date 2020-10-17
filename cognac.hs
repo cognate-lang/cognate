@@ -193,7 +193,7 @@ parseImports :: String -> [Tree] -> IO [Tree]
 parseImports path (Leaf filename : Leaf "Import" : xs) =
   do
     -- TODO: prevent recursive imports and redundant repeated imports.
-    putStrLn $ "Importing " ++ filename ++ ".cog"
+    putStrLn $ "Importing " ++ filename ++ " from " ++ filename ++ ".cog"
     importedFile <- readFile ((join "/" $ init $ splitOn "/" path) ++ (if (length (splitOn "/" path) > 1) then "/" else "") ++ filename ++ ".cog")
     xs' <- parseImports path xs
     x   <- parseImports path $ parsefile importedFile

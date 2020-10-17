@@ -13,8 +13,7 @@ typedef enum
   boolean, 
   string, 
   number, 
-  list,
-  terminator
+  list
 } cognate_type;
 
 typedef void(^cognate_block)();
@@ -105,15 +104,7 @@ static _Bool compare_objects(cognate_object ob1, cognate_object ob2)
         }
         return 1;
       }
-      default:
-      {
-        // These are probably records, compare until terminator.
-        for (int i = 0 ;; ++i)
-        {
-          if (ob1.record[i].type == terminator) return 1;
-          if (!compare_objects(ob1.record[i], ob2.record[i])) return 0;
-        }
-      }
+      // Records are a lie.
     }
 }
 

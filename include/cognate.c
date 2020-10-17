@@ -71,7 +71,6 @@
 #include "io.c"
 #include "error.c"
 #include "type.c"
-#include "record.c"
 
 static void get_params(int argc, char** argv)
 {
