@@ -13,13 +13,13 @@ for file in $(ls tests | grep .cog)
 do
   echo "Testing $file..."
   # Compile
-  ./cognac tests/$file -O0 > /dev/null
+  ./cognac tests/$file -O0 > /dev/null 2>&1
   # Check if file exists (successful compilation)
   cd tests
   if test -f "$(echo $file | cut -f 1 -d '.')"; then
     # Run - outputting to logfile
     echo "PASS: $file compiles successfully" >> log.txt
-    ./$(echo $file | cut -f 1 -d '.') 2>&1 >> log.txt
+    ./$(echo $file | cut -f 1 -d '.') >> log.txt 2>&1 
   else
     # File not exists is error
     echo "FAIL: $file does not compile!" >> log.txt
