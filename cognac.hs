@@ -79,8 +79,8 @@ replacesymbols =
 
 
 -- Constants!!!
-openbrackets  = [ '{'                 ]
-closebrackets = [ '}'                 ]
+openbrackets  = [ '['                 ]
+closebrackets = [ ']'                 ]
 delims        = [ ';',','             ]
 upperletters  = [ 'A'..'Z'            ]
 lowerletters  = [ 'a'..'z'            ]
@@ -254,7 +254,7 @@ constructStr str =
         replace "¸" "'"
 
 
-
+{-
 compile (Node body : Leaf name : Leaf "Record" : xs) =
   "record(" ++ lc name ++ ", " ++ show (recordSize body) ++ ");\n" ++
   makeFields body ++ "{" ++ compile xs ++ "}"
@@ -265,7 +265,7 @@ compile (Node body : Leaf name : Leaf "Record" : xs) =
       recordSize (Leaf _ : xs) = 1 + recordSize xs
       recordSize (Node _ : xs) =     recordSize xs
       recordSize [] = 0
-
+-}
 
 
 

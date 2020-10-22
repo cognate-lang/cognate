@@ -1,17 +1,17 @@
-Define Head as {Index 0};
-Define Tail as {Discard 1};
-Define When be {Let P, Let A, If P then A else {}};
+Define Head as [Index 0];
+Define Tail as [Discard 1];
+Define When be [Let P, Let A, If P then A else []];
 
 Define For be
-{
+[
   Let Lst, Let Body;
-  When {Length of Lst, != 0}
-  {
+  When [Length of Lst, != 0]
+  [
     push Head of Lst;
     Do evaluate Body;
     For each in Tail of Lst
       Body;
-  };
-};
+  ];
+];
 
-{Print}, For each in List {1,2,3,4,5,6,7,8,9};
+[Print], For each in List [1,2,3,4,5,6,7,8,9];

@@ -1,12 +1,12 @@
 Define Factorial
-{ Let X;
-  If {X, == 0}
-    then {1}
-    else {
+[ Let X;
+  If [X, == 0]
+    then [1]
+    else [
       Product of X with ~~ Wow much verbose.
         Factorial of
            Difference between 1 and X;
-  }
-};
+  ]
+];
 
 Print the Factorial of 10;
