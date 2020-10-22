@@ -188,33 +188,38 @@ parseinformalsyntax =
         head word `elem` formalsymbols
 
 
-parseImports :: String -> [Tree] -> IO [Tree]
+parseImports :: String -> [Tree] -> [String] -> IO [Tree]
 
-parseImports path (Leaf filename : Leaf "Import" : xs) =
-  do
+parseImports path (Leaf filename : Leaf "Import" : xs) imported =
     -- TODO: prevent recursive imports and redundant repeated imports.
-    putStrLn $ "Importing " ++ filename ++ " from " ++ filename ++ ".cog"
-    importedFile <- readFile ((join "/" $ init $ splitOn "/" path) ++ (if (length (splitOn "/" path) > 1) then "/" else "") ++ filename ++ ".cog")
-    xs' <- parseImports path xs
-    x   <- parseImports path $ parsefile importedFile
-    return $ x ++ [Node xs',Leaf "Do"]
-      where
-        join :: String -> [String] -> String
-        join delim (x:xs) = x ++ delim ++ join delim xs
-        join _ [] = []
+    if (case findIndex (== filename) imported of
+          Just x -> True
+          Nothing -> False) 
+    then
+      parseImports path xs imported 
+    else do
+      putStrLn $ "Importing " ++ filename ++ " from " ++ filename ++ ".cog"
+      importedFile <- readFile ((join "/" $ init $ splitOn "/" path) ++ (if (length (splitOn "/" path) > 1) then "/" else "") ++ filename ++ ".cog")
+      xs' <- parseImports path xs (imported ++ [filename])
+      x   <- parseImports path (parsefile importedFile) (imported ++ [filename])
+      return $ x ++ [Node xs',Leaf "Do"]
+        where
+          join :: String -> [String] -> String
+          join delim (x:xs) = x ++ delim ++ join delim xs
+          join _ [] = []
 
-parseImports path (Node x : xs) =
+parseImports path (Node x : xs) imported =
   do
-    x'  <- parseImports path x
-    xs' <- parseImports path xs
+    x'  <- parseImports path x imported
+    xs' <- parseImports path xs imported
     return $ Node x' : xs'
 
-parseImports path (x:xs) = 
+parseImports path (x:xs) imported = 
   do
-    xs' <- parseImports path xs
+    xs' <- parseImports path xs imported
     return $ x : xs'
 
-parseImports _ [] = return []
+parseImports _ [] _ = return []
 
 compile :: [Tree] -> String
 
@@ -368,7 +373,7 @@ main =
       putStrLn $ "Cognate Compiler - Version " ++ version
       putStrLn $ "Compiling " ++ in_file ++ " to " ++ out_file ++ "... "
       source <- readFile in_file
-      thing <- parseImports in_file $ parsefile source
+      thing <- parseImports in_file (parsefile source) [head $ splitOn "." (last (splitOn "/" in_file))]
       writeFile out_file $ header in_file ++ "#include\"cognate.c\"\nprogram({" ++ compile thing ++ "})\n"
       rawSystem formatter (formatFlags ++ [out_file])
       putStrLn $ "Compiling " ++ out_file ++ " to " ++ stripExtension in_file ++ "... "
