@@ -191,7 +191,7 @@ parseinformalsyntax =
 parseImports :: String -> [Tree] -> [String] -> IO [Tree]
 
 parseImports path (Leaf filename : Leaf "Import" : xs) imported =
-    -- TODO: prevent recursive imports and redundant repeated imports.
+    -- Don't import if its already been imported.
     if (case findIndex (== filename) imported of
           Just x -> True
           Nothing -> False) 
