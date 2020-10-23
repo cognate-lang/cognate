@@ -213,6 +213,7 @@ external_function(input, {
 
 external_function(read, {
   // read a file.
+  // TODO: use path of executable instead of user's path
   char* file_name  = pop(string);
   FILE *fp = fopen(file_name, "r");
   if (fp == NULL) throw_error("Cannot open file! It probably doesn't exist.");
@@ -245,6 +246,7 @@ external_function(path, {
 
 external_function(write, {
   // Write string to end of file, without a newline.
+  // TODO: use path of program instead of user's path.
   FILE *file = fopen(pop(string), "a"); 
   char *str = pop(string);
   fprintf(file, "%s", str);
