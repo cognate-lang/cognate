@@ -3,7 +3,7 @@ Define Fib ~~ Calculate the Nth fibonacci number.
   If [2, > N]
     then [1]
     else [
-      Sum
+     Sum
         Fib of - 1 N with
         Fib of - 2 N
   ]

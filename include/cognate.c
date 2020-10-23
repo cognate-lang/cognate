@@ -21,10 +21,12 @@
   flags cognate_block cognate_function_ ## name = make_block(docopy, body);
 #else
 #define function(name, flags, docopy, body) \
-  flags cognate_block cognate_function_ ## name = make_block(docopy, {char* temp_func_name = function_name; \
-                                                                      function_name = #name; \
-                                                                      body \
-                                                                      function_name = temp_func_name;});
+  flags cognate_block cognate_function_ ## name = make_block(docopy, \
+  {char* temp_func_name = function_name; \
+    function_name = #name; \
+    body \
+    function_name = temp_func_name; \
+  });
 #endif
 
 
@@ -109,19 +111,18 @@ static void cleanup()
   }
 }
 
-cognate_object check_block(cognate_object obj)
+static cognate_object check_block(cognate_object obj)
 {
   (obj.type==block) && (obj.block = Block_copy(obj.block));
   return obj;
 }
 
 
-void copy_blocks()
+static void copy_blocks()
 {
-  while (stack.modified != stack.items.top)
+  for (; stack.modified != stack.items.top; stack.modified++)
   {
     (stack.modified->type==block) && (stack.modified->block = Block_copy(stack.modified->block)); // Copy block to heap.
-    stack.modified++;
   }
 }
 
