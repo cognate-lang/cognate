@@ -266,10 +266,11 @@ external_function(table, {
   // TODO
   call(list);
   cognate_list init = *pop(list);
+  unsigned long table_size = init.top - init.start;
   cognate_table *tab = (cognate_table*) malloc (sizeof(cognate_table)); // Need to allocate list here.
-  tab->items.start = (cognate_object*) calloc (INITIAL_LIST_SIZE, sizeof(cognate_object) * INITIAL_LIST_SIZE);
-  tab->items.top = tab->items.start + INITIAL_LIST_SIZE;
-  tab->confirmation_hash = (long unsigned int*) malloc (sizeof(long unsigned int) * INITIAL_LIST_SIZE);
+  tab->items.start = (cognate_object*) calloc (table_size, sizeof(cognate_object) * table_size);
+  tab->items.top = tab->items.start + table_size;
+  tab->confirmation_hash = (long unsigned int*) malloc (sizeof(long unsigned int) * table_size);
   char *key;
   cognate_object value;
   for (cognate_object *i = init.start; i < init.top - 1; i += 2)
