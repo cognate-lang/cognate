@@ -5,16 +5,19 @@
 #include "error.c"
 #include "Block.h"
 #include <stddef.h>
+#include <ctype.h>
 
 
 typedef enum 
 {
-  block=0, 
+  // NOTHING is currently only used for unused hashtable bucksts.
+  NOTHING=0, // Must be zero because of calloc()
+  block, 
   boolean, 
   string, 
   number, 
   list,
-  table
+  table,
 } cognate_type;
 
 typedef void(^cognate_block)();
@@ -31,6 +34,7 @@ struct cognate_list
 struct cognate_table
 {
   struct cognate_list items;
+  long unsigned int *confirmation_hash;
 };
 
 typedef struct cognate_table cognate_table;
@@ -119,10 +123,79 @@ static _Bool compare_objects(cognate_object ob1, cognate_object ob2)
     case string:  return strcmp(ob1.string, ob2.string) == 0; break;
     case list:    return compare_lists(*ob1.list, *ob2.list); break;
     case table:   return compare_lists(ob1.table->items, ob2.table->items); break;
+    default:      return 0;
     // Records are a lie.
   }
 
   return 0;
+}
+
+unsigned int hash(const char *str, unsigned long table_size)
+{
+  // This simple hashing algorithm works quite well,
+  unsigned int hash_val = 0;
+  for (int i = strlen(str) - 1; i >= 0; i--)
+  {
+    hash_val = hash_val * 31 + tolower(str[i]);
+  }
+  return hash_val % table_size;
+}
+
+unsigned int confirm_hash(const char *str)
+{
+  // Confirmation hash should prevent collisions.
+  // There is surely a better way of doing this.
+  unsigned int hash_val = 0;
+  for (int i = strlen(str) - 1; i >= 0; i--)
+  {
+    hash_val = hash_val * 47 + tolower(str[i]);
+  }
+  return hash_val;
+}
+
+
+static void table_add(char *key, cognate_object value, cognate_table *tab)
+{
+  // TODO: find out if this actually works.
+  unsigned long table_size = tab->items.top - tab->items.start;
+  // WARNING: resizing the table will mess up hashes!!!
+  unsigned long key_hash  = hash(key, table_size);
+  unsigned long key_hash2 = confirm_hash(key);
+  printf("Adding %s key to table at hash %lu\n", key, key_hash);
+  for (;;key_hash++)
+  {
+    if (key_hash == table_size) key_hash = 0; // WILL LOOP INDEFINITELY
+    // Add to table is bucket is either empty or has the same confirmation hash (IE same key).
+    if (tab->items.start[key_hash].type == NOTHING || key_hash2 == tab->confirmation_hash[key_hash])
+    {
+      printf("Added key at hash %lu\n", key_hash);
+      *tab->items.start = value;
+      // Confirmation hash should prevent collisions.
+      tab->confirmation_hash[key_hash] = confirm_hash(key);
+      break;
+    }
+  }
+}
+
+cognate_object table_get(char* key, cognate_table tab)
+{
+  // TODO: find out if this actually works.
+  unsigned long table_size = tab.items.top - tab.items.start;
+  // WARNING: resizing the table will mess up hashes!!!
+  unsigned long key_hash  = hash(key, table_size);
+  unsigned long key_hash2 = confirm_hash(key);
+  printf("Getting %s key from table at hash %lu\n", key, key_hash);
+  for (;;key_hash++)
+  {
+    if (key_hash == table_size) key_hash = 0; // WILL LOOP INDEFINITELY
+    if (key_hash2 == tab.confirmation_hash[key_hash])
+    {
+      printf("Found key at hash %lu\n", key_hash);
+      printf("Type is %s\n", lookup_type(tab.items.start[key_hash].type));
+      return tab.items.start[key_hash];
+    }
+  }
+  throw_error("Cannot find key in table!");
 }
 
 #endif

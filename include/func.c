@@ -258,23 +258,40 @@ external_function(parameters, {
 })
 
 external_function(stop, {
+  // Don't check stack length, because it probably wont be empty.
   exit(0);
 })
 
 external_function(table, {
-  call(list); // Leaving this line in causes a noticable performance decrease in programs not even using these functions :(
+  // TODO
+  call(list);
   cognate_list init = *pop(list);
   cognate_table *tab = (cognate_table*) malloc (sizeof(cognate_table)); // Need to allocate list here.
+  tab->items.start = (cognate_object*) calloc (INITIAL_LIST_SIZE, sizeof(cognate_object) * INITIAL_LIST_SIZE);
+  tab->items.top = tab->items.start + INITIAL_LIST_SIZE;
+  tab->confirmation_hash = (long unsigned int*) malloc (sizeof(long unsigned int) * INITIAL_LIST_SIZE);
   char *key;
   cognate_object value;
   for (cognate_object *i = init.start; i < init.top - 1; i += 2)
   {
-    key = check_type(string, *i).string;
-    value = *(i+1);
-    //table_add(key, value, tab);
+    key = check_type(string, *(i+1)).string;
+    value = *i;
+    table_add(key, value, tab);
   }
   push(table, tab);
 })
 
+external_function(insert, {
+  char *key = pop(string);
+  cognate_object value = pop_any();
+  cognate_table *tab = pop(table);
+  table_add(key, value, tab);
+})
+
+external_function(get, {
+  char *key = pop(string);
+  cognate_table tab = *pop(table);
+  push_any(table_get(key, tab));
+})
 
 #endif
