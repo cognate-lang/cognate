@@ -12,6 +12,8 @@ NC='\033[0m'
 for file in $(ls tests | grep .cog)
 do
   echo "Testing $file..."
+  # Delete executable
+  rm tests/$(echo $file | cut -f 1 -d '.')
   # Compile
   #TODO: use -fsanitize=address when memory leaks are fixed
   ./cognac tests/$file -O0 > /dev/null 2>&1

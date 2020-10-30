@@ -1,11 +1,12 @@
 ~~ Experimental syntax.
+
 Let X be Table [
-  'foo'   is 'bar';
-  'hello' is 'world';
+  'foo'   -> 'bar';
+  'hello' -> 'world';
 ];
 
 Get 'foo' from X, Print; ~~ Should print 'bar'
 
-Insert 'bar' is 'baz' into X; ~~ Destructively modifies X
+Insert 'bar' -> 'baz' into X; ~~ Destructively modifies X
 
 Get 'bar' from X, Print;

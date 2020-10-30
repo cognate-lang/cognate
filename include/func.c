@@ -295,4 +295,12 @@ external_function(get, {
   push_any(table_get(key, tab));
 })
 
+external_function(values, {
+  cognate_list *lst = (cognate_list*) malloc (sizeof(cognate_list));
+  cognate_table tab = *pop(table);
+  lst->start = tab.items.start;
+  lst->top = tab.items.top;
+  push(list, lst);
+})
+
 #endif

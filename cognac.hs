@@ -85,16 +85,43 @@ delims        = [ ';',','             ]
 upperletters  = [ 'A'..'Z'            ]
 lowerletters  = [ 'a'..'z'            ]
 whitespace    = [ ' ', '\t', '\n'     ]
-numbers       =  '-' : '.' : ['0'..'9']
+numbers       =  '.' : '-' : ['0'..'9']
 brackets      = openbrackets ++ closebrackets
 permittedsymbols = delims ++ brackets ++ numbers ++ lowerletters ++ upperletters
 formalsymbols =    delims ++ brackets ++ numbers ++ upperletters
 
-{- parsestrings :: [String] -> [String]
-parsestrings (x:y:xs) =
-  x : "Tuple" : intercalate " Tuple " (init str) : last str : parsestrings xs
-    where str = map (\s -> " \'" ++ [s] ++ "\'") y
-parsestrings x = x  -}
+parsenumbers :: String -> String
+
+parsenumbers ('-':xs)
+  | parseAfterMinus xs /= "" = '-' : parseAfterMinus xs
+  | otherwise = ""
+
+parsenumbers ('.':xs)
+  | parseAfterDecimal xs /= "" = '.' : parseAfterDecimal xs
+  | otherwise = ""
+
+parsenumbers (x:xs)
+  | x `elem` ['0'..'9'] = x : parsenumbers xs
+  | otherwise = x : xs
+
+parsenumbers _ = ""
+
+parseAfterMinus ('.':xs) 
+  | parseAfterDecimal xs /= "" = '.' : parseAfterDecimal xs
+  | otherwise = ""
+
+parseAfterMinus (x:xs)
+  | x `elem` ['0'..'9'] = x : parseAfterMinus xs
+  | otherwise = ""
+
+parseAfterMinus _ = ""
+
+parseAfterDecimal (x:xs)
+  | x `elem` ['0'..'9'] = x : parseAfterDecimal xs
+  | otherwise = "" 
+
+parseAfterDecimal _ = ""
+
 
 parsestrings :: String -> String
 parsestrings =
@@ -126,11 +153,6 @@ parsesymbols str -- Remove all those pesky symbols.
   | str `elem` whitespace = ' '
   | str `elem` permittedsymbols = str
   | otherwise = '_' -- Convert unusable symbols to underscores.
-
-parsenumbers :: String -> String
-parsenumbers (x:xs)
-  | x `elem` ('-':'.':numbers) = x : filter (`elem` ('.':numbers)) xs
-  | otherwise = x : xs
 
 -- <Bodge>
 parsebrackets :: [Tree] -> [Tree]
@@ -254,19 +276,7 @@ constructStr str =
         replace "¸" "'"
 
 
-{-
-compile (Node body : Leaf name : Leaf "Record" : xs) =
-  "record(" ++ lc name ++ ", " ++ show (recordSize body) ++ ");\n" ++
-  makeFields body ++ "{" ++ compile xs ++ "}"
-    where
-      makeFields (Node p : Leaf s : xs) = "field(" ++ lc s ++ ", ^{" ++ compile p ++ "});" ++ makeFields xs
-      makeFields (Leaf s : xs) = "field(" ++ lc s ++ ", NULL);" ++ makeFields xs
-      makeFields [] = ""
-      recordSize (Leaf _ : xs) = 1 + recordSize xs
-      recordSize (Node _ : xs) =     recordSize xs
-      recordSize [] = 0
--}
-
+compile (Leaf "" : xs) = "" ++ compile xs
 
 
 compile (Node body : Leaf name : Leaf "Define" : xs) =
