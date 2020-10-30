@@ -9,23 +9,23 @@ NC='\033[0m'
 > tests/log.txt
 
 # Iterate over files to test
-for file in $(ls tests | grep .cog)
+for source_file in $(ls tests | grep .cog)
 do
-  echo "Testing $file..."
-  # Delete executable
-  rm tests/$(echo $file | cut -f 1 -d '.')
+  binary_file=$(echo $source_file | cut -f 1 -d '.')
+  echo "Testing $source_file..."
   # Compile
   #TODO: use -fsanitize=address when memory leaks are fixed
-  ./cognac tests/$file -O0 > /dev/null 2>&1
+  ./cognac tests/$source_file -O0 > /dev/null 2>&1
   # Check if file exists (successful compilation)
   cd tests
-  if test -f "$(echo $file | cut -f 1 -d '.')"; then
+  if test -f "$(echo $source_file | cut -f 1 -d '.')"; then
     # Run - outputting to logfile
-    echo "PASS: $file compiles successfully" >> log.txt
-    ./$(echo $file | cut -f 1 -d '.') >> log.txt 2>&1 
+    echo "PASS: $source_file compiles successfully" >> log.txt
+    ./$binary_file >> log.txt 2>&1 
+    rm $binary_file
   else
     # File not exists is error
-    echo "FAIL: $file does not compile!" >> log.txt
+    echo "FAIL: $source_file does not compile!" >> log.txt
   fi
   cd ..
 done
