@@ -18,7 +18,7 @@ do
   ./cognac tests/$source_file -O0 > /dev/null 2>&1
   # Check if file exists (successful compilation)
   cd tests
-  if test -f "$(echo $source_file | cut -f 1 -d '.')"; then
+  if test -f $binary_file; then
     # Run - outputting to logfile
     echo "PASS: $source_file compiles successfully" >> log.txt
     ./$binary_file >> log.txt 2>&1 
