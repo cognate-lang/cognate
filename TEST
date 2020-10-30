@@ -21,7 +21,7 @@ do
   if test -f $binary_file; then
     # Run - outputting to logfile
     echo "PASS: $source_file compiles successfully" >> log.txt
-    ./$binary_file >> log.txt 2>&1 
+    { ./$binary_file; } 2>>log.txt 1>&2 # Segfaults will also be redirected to logfile
     rm $binary_file
   else
     # File not exists is error
