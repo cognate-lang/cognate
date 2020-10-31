@@ -1,0 +1,11 @@
+~~ This is a simple email validator.
+
+Print 'Enter an email:';
+Let Email be Input;
+
+If [Email, does Match '^[[:graph:]]+@[[:graph:]]+\\.[[:graph:]]+$']
+[
+  Print 'This is a valid email!';
+] else [
+  Print 'This is an invalid email!';
+];
