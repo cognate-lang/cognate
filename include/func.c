@@ -7,6 +7,7 @@
 #include <Block.h>
 #include <unistd.h>
 #include <limits.h>
+#include <regex.h>
 
 #define INITIAL_INPUT_SIZE 64
 #define PATH_MAX 4096
@@ -301,6 +302,35 @@ external_function(values, {
   lst->start = tab.items.start;
   lst->top = tab.items.top;
   push(list, lst);
+})
+
+external_function(match, {
+  // Returns true if string matches regex.
+  static long str_hash = -1; // Can confirm_hash() return -1, if so this could be problematic.
+  char *reg_str = pop(string);
+  static regex_t reg;
+  if (confirm_hash(reg_str) != str_hash)
+  {
+    if (regcomp(&reg, reg_str, REG_EXTENDED))
+    {
+      throw_error("Cannot compile invalid regular expression!"); 
+    }
+    str_hash = confirm_hash(reg_str);
+  }
+  int found = regexec(&reg, pop(string), 0, NULL, 0);
+  if (found == 0)
+  {
+    push(boolean, 1);
+  }
+  else if (found == REG_NOMATCH)
+  {
+    push(boolean, 0);
+  }
+  else
+  {
+    throw_error("Regex match error!");
+    // If this error ever actually appears, use regerror to get the full text.
+  }
 })
 
 #endif
