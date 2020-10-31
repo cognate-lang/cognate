@@ -306,31 +306,25 @@ external_function(values, {
 
 external_function(match, {
   // Returns true if string matches regex.
-  static long str_hash = -1; // Can confirm_hash() return -1, if so this could be problematic.
-  char *reg_str = pop(string);
-  static regex_t reg;
-  if (confirm_hash(reg_str) != str_hash)
+  static char *old_str = NULL; // Can confirm_hash() return -1, if so this could be problematic.
+  char        *reg_str = pop(string);
+  static      regex_t reg;
+  if (old_str == NULL || strcmp(reg_str, old_str) != 0)
   {
     if (regcomp(&reg, reg_str, REG_EXTENDED))
     {
       throw_error("Cannot compile invalid regular expression!"); 
     }
-    str_hash = confirm_hash(reg_str);
+    old_str = reg_str; /* This should probably be strcpy, but I trust that reg_str is either
+                          allocated with the garbage collector, or read only in the data segment. */
   }
   int found = regexec(&reg, pop(string), 0, NULL, 0);
-  if (found == 0)
-  {
-    push(boolean, 1);
-  }
-  else if (found == REG_NOMATCH)
-  {
-    push(boolean, 0);
-  }
-  else
+  if (unlikely(found != 0 && found != REG_NOMATCH))
   {
     throw_error("Regex match error!");
     // If this error ever actually appears, use regerror to get the full text.
   }
+  push(boolean, !found);
 })
 
 #endif
