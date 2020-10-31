@@ -16,18 +16,15 @@
 #endif
 
 // Global-local variable swapping is causing performance losses. :(
-#ifdef unsafe
-#define function(name, flags, docopy, body) \
-  flags cognate_block cognate_function_ ## name = make_block(docopy, body);
-#else
 #define function(name, flags, docopy, body) \
   flags cognate_block cognate_function_ ## name = make_block(docopy, \
-  {char* temp_func_name = function_name; \
+  { \
+    char* temp_func_name = function_name; \
     function_name = #name; \
+    check_call_stack(); \
     body \
     function_name = temp_func_name; \
   });
-#endif
 
 
 /*
@@ -73,6 +70,9 @@
 #include "io.c"
 #include "error.c"
 #include "type.c"
+#include <sys/resource.h>
+
+char *stack_start;
 
 static void get_params(int argc, char** argv)
 {
@@ -89,6 +89,8 @@ static void get_params(int argc, char** argv)
 
 static void init(int argc, char** argv)
 {
+  char a;
+  stack_start = &a;
   // Seed the random number generator properly.
 #ifndef noGC
   GC_INIT(); // Portability.
@@ -123,6 +125,24 @@ static void copy_blocks()
   for (; stack.modified != stack.items.top; stack.modified++)
   {
     (stack.modified->type==block) && (stack.modified->block = Block_copy(stack.modified->block)); // Copy block to heap.
+  }
+}
+
+static void check_call_stack()
+{
+  static unsigned int calls = 0;
+  ++calls;
+  if (unlikely(calls > 1024))
+  {
+    calls = 0;
+    char b;
+    struct rlimit stack_max;
+    getrlimit(RLIMIT_STACK, &stack_max);
+    //printf("Stack limit is %ld, and usage is %ld\n", stack_max.rlim_cur, (stack_start - &b));
+    if (stack_max.rlim_cur - (unsigned long)(stack_start - &b) < 65536)
+    {
+      throw_error("Call stack overflow! Too much recursion!");
+    }
   }
 }
 

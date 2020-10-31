@@ -15,21 +15,16 @@ noreturn static void throw_error(const char* message);
 noreturn static void type_error(const char* expected, const char* recieved);
 noreturn static void type_error(const char* expected, const char* recieved)
 {
-#ifndef unsafe
   static char error_message[80];
   // In future, type errors should instead be 'expectation  errors'.
   // These print an expected predicate, and the value that didn't satisfy it.
   // This allows the language to move away from types in future.
   sprintf(error_message, "Type Error! Expected type '%s' but recieved type '%s'", expected, recieved);
   throw_error(error_message);
-#else
-  exit(0);
-#endif
 }
 
 noreturn static void throw_error(const char* message)
 {
-#ifndef unsafe
   // Uses utf8 box-drawing characters and ansi colour codes to print a pretty error message.
   int i;
   printf("\342\224\214");
@@ -59,7 +54,6 @@ noreturn static void throw_error(const char* message)
   printf("\342\224\202\n\342\224\224");
   for (i = 0; i < 78; ++i) printf("\342\224\200");
   puts("\342\224\230");
-#endif
   exit(-1);
 }
 

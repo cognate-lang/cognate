@@ -57,10 +57,8 @@ static void push_any(cognate_object object)
 
 static cognate_object pop_any()
 { 
-#ifndef unsafe
   if (unlikely(stack.items.top == stack.items.start)) 
     throw_error("Stack underflow!");
-#endif
   stack.modified -= (stack.modified == stack.items.top);
   return *--stack.items.top;
 }
