@@ -11,6 +11,7 @@
 
 #define INITIAL_INPUT_SIZE 64
 #define PATH_MAX 4096
+#define MIN_TABLE_SIZE 2
 
 // Macro to define external cognate function.
 #define external_function(name, body) \
@@ -264,10 +265,9 @@ external_function(stop, {
 })
 
 external_function(table, {
-  // TODO
   call(list);
   cognate_list init = *pop(list);
-  unsigned long table_size = init.top - init.start;
+  unsigned long table_size = ((init.top - init.start) * 2) + MIN_TABLE_SIZE;
   cognate_table *tab = (cognate_table*) malloc (sizeof(cognate_table)); // Need to allocate list here.
   tab->items.start = (cognate_object*) calloc (table_size, sizeof(cognate_object) * table_size);
   tab->items.top = tab->items.start + table_size;
@@ -278,7 +278,7 @@ external_function(table, {
   {
     key = check_type(string, *(i+1)).string;
     value = *i;
-    table_add(key, value, tab);
+    *tab = table_add(hash(key), value, *tab);
   }
   push(table, tab);
 })
@@ -286,8 +286,9 @@ external_function(table, {
 external_function(insert, {
   char *key = pop(string);
   cognate_object value = pop_any();
-  cognate_table *tab = pop(table);
-  table_add(key, value, tab);
+  cognate_table *tab = (cognate_table*) malloc (sizeof(cognate_table));
+  *tab = table_add(hash(key), value,table_copy(*pop(table)));
+  push(table, tab);
 })
 
 external_function(get, {
@@ -297,10 +298,19 @@ external_function(get, {
 })
 
 external_function(values, {
-  cognate_list *lst = (cognate_list*) malloc (sizeof(cognate_list));
   cognate_table tab = *pop(table);
-  lst->start = tab.items.start;
-  lst->top = tab.items.top;
+  cognate_list *lst = (cognate_list*) malloc (sizeof(cognate_list));
+  const long table_size = tab.items.top - tab.items.start;
+  lst->start = (cognate_object*) malloc (sizeof(cognate_object) * table_size);
+  int j = 0;
+  for (int i = 0; i < table_size; ++i)
+  {
+    if (tab.items.start[i].type != NOTHING) 
+    {
+      lst->start[j++] = tab.items.start[i];
+    }
+  }
+  lst->top = lst->start + j;
   push(list, lst);
 })
 
