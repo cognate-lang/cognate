@@ -130,6 +130,7 @@ static void copy_blocks()
 
 static void check_call_stack()
 {
+  // Performance here is not great.
   static unsigned int calls = 0;
   ++calls;
   if (unlikely(calls > 1024))

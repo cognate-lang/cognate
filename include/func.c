@@ -3,6 +3,7 @@
 
 #include "stack.c"
 #include "type.c"
+#include "table.c"
 #include "io.c"
 #include <Block.h>
 #include <unistd.h>
@@ -287,7 +288,7 @@ external_function(insert, {
   char *key = pop(string);
   cognate_object value = pop_any();
   cognate_table *tab = (cognate_table*) malloc (sizeof(cognate_table));
-  *tab = table_add(hash(key), value,table_copy(*pop(table)));
+  *tab = table_add(hash(key), value, table_copy(*pop(table)));
   push(table, tab);
 })
 
