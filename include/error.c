@@ -16,7 +16,7 @@ noreturn static void type_error(const char* expected, const char* recieved);
 noreturn static void type_error(const char* expected, const char* recieved)
 {
   static char error_message[80];
-  // In future, type errors should instead be 'expectation  errors'.
+  // In future, type errors should instead be 'expectation errors'.
   // These print an expected predicate, and the value that didn't satisfy it.
   // This allows the language to move away from types in future.
   sprintf(error_message, "Type Error! Expected type '%s' but recieved type '%s'", expected, recieved);
