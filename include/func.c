@@ -39,13 +39,14 @@ external_function(product,        { push(number, pop(number) * pop(number));    
 external_function(divisor,        { push(number, (1 / pop(number) * pop(number)));                     })
 external_function(difference,     { push(number, (-pop(number) + pop(number)));                        })
 external_function(modulo,         { int n = pop(number); push(number, (double)((int)pop(number) % n)); }) // TODO: add checking if integer.
-/*
-external_function(random,         { double low = pop(number); double high = pop(number); double step = pop(number); 
+
+external_function(random,         { // This function is pretty broken.
+                                    double low = pop(number); double high = pop(number); double step = pop(number); 
                                     if (high < low) throw_error("Cannot generate random number in range!");
                                     else if (high - low < step) push(number, low);
                                     else push(number, low + (double)(rand() % (int)((high - low) / step)) * step); })
-*/
-external_function(drop,           { pop_any();                                                                            })
+
+external_function(drop,           { pop_any();                                                                            }) // These can be defined within cognate.
 external_function(twin,           { push_any(peek_any());                                                                 })
 external_function(triplet,        { cognate_object a = peek_any(); push_any(a); push_any(a);                              })
 external_function(swap,           { cognate_object a = pop_any(); cognate_object b = pop_any(); push_any(a); push_any(b); })
@@ -153,15 +154,18 @@ external_function(characters, {
 })
 
 external_function(join, {
-  // Joins list of single characters.
-  // TODO: join list of full strings.
+  // Joins a list of strings into a single string.
   cognate_list lst = *pop(list);
-  const size_t str_size = lst.top - lst.start + 1;
-  char* str = (char*) malloc (sizeof(char) * (str_size));
-  str[str_size - 1] = '\0';
-  for (int i = 0; i < lst.top - lst.start; ++i)
+  long str_size = 0;
+  cognate_object *i;
+  for (i = lst.start; i < lst.top; ++i)
   {
-    str[i] = check_type(string, lst.start[i]).string[0];
+    str_size += strlen(check_type(string, *i).string);
+  }
+  char* str = (char*) malloc (sizeof(char) * (str_size));
+  for (i = lst.start; i < lst.top; ++i)
+  {
+    strcat(str, i->string);
   }
   push(string, str);
 })
@@ -285,6 +289,7 @@ external_function(table, {
 })
 
 external_function(insert, {
+  // O(n) :(
   char *key = pop(string);
   cognate_object value = pop_any();
   cognate_table *tab = (cognate_table*) malloc (sizeof(cognate_table));
@@ -293,12 +298,14 @@ external_function(insert, {
 })
 
 external_function(get, {
+  // O(1) mostly;
   char *key = pop(string);
   cognate_table tab = *pop(table);
   push_any(table_get(key, tab));
 })
 
 external_function(values, {
+  // O(n)
   cognate_table tab = *pop(table);
   cognate_list *lst = (cognate_list*) malloc (sizeof(cognate_list));
   const long table_size = tab.items.top - tab.items.start;

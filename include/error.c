@@ -38,7 +38,11 @@ noreturn static void throw_error(const char* message)
   if (function_name != NULL)
   {
     // Print first character seperately so that we can capitalise it without modifying the read-only string.
-    printf("\342\224\202 \033[0;1mIn function '%c%s'...\033[0m", *function_name-32, function_name+1); // Will break if function name is really long. TODO
+    if (strlen(function_name) > 60)
+    {
+      function_name = "[FUNCTION NAME TOO LONG]";
+    }
+    printf("\342\224\202 \033[0;1mIn function '%c%s'...\033[0m", *function_name-32, function_name+1);
     for (int i = 60-strlen(function_name); i>0; --i) printf(" ");
     puts("\342\224\202");
   }
