@@ -9,7 +9,6 @@
 #include <unistd.h>
 #include <limits.h>
 #include <regex.h>
-#include <stdint.h>
 
 #define INITIAL_INPUT_SIZE 64
 #define PATH_MAX 4096
