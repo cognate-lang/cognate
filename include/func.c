@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <regex.h>
+#include <stdint.h>
 
 #define INITIAL_INPUT_SIZE 64
 #define PATH_MAX 4096
@@ -127,11 +128,12 @@ external_function(list,  {
   // Store the resultant list, GC_REALLOC-ing to fit snugly in memory.
   cognate_list* lst = (cognate_list*)malloc(sizeof(cognate_list));
   *lst = stack.items;
-  //TODO: Shrink the list to fit here with GC_REALLOC(). Previous attempts caused problems with -O0
-  //lst->start = GC_REALLOC(lst->start, (lst->top - lst->start) * sizeof(cognate_object));
-  //lst->top = lst->start + (int)stack.items.top - stack.items.start;
   // Restore the original stack
   stack = temp_stack;
+  //TODO: Shrink the list to fit here with GC_REALLOC(). Previous attempts caused problems with -O0
+  long lst_len = lst->top - lst->start;
+  lst->start = realloc(lst->start, lst_len * sizeof(cognate_object));
+  lst->top = lst->start + lst_len;
   // Push the created list to the stack
   push(list, lst);
 })
