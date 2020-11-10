@@ -2,9 +2,9 @@ If [Characters in 'Hello', == List ['H','e','l','l','o']]
    [Print 'PASS: Extracting characters from strings']
    [Print 'FAIL: Extracting characters from strings'];
 
-If [Join List ['H','e','l','l','o'], == 'Hello']
-   [Print 'PASS: Converting list of characters to string']
-   [Print 'FAIL: Converting list of characters to string']
+If [Join List ['H','e','llo'], == 'Hello']
+   [Print 'PASS: Converting list of strings to combined string']
+   [Print 'FAIL: Converting list of characters to combined string']
 
 If [Ordinal of 'a', == 97]
    [Print 'PASS: Converting string to ASCII value with Ordinal']
