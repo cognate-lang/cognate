@@ -346,4 +346,13 @@ external_function(match, {
   push(boolean, !found);
 })
 
+external_function(ordinal, {
+  char *str = pop(string);
+  if (unlikely(strlen(str) != 1))
+  {
+    throw_error("Ordinal requires string of length 1!");
+  }
+  push(number, str[0]);
+})
+
 #endif
