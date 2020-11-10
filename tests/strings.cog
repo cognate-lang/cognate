@@ -5,3 +5,7 @@ If [Characters in 'Hello', == List ['H','e','l','l','o']]
 If [Join List ['H','e','l','l','o'], == 'Hello']
    [Print 'PASS: Converting list of characters to string']
    [Print 'FAIL: Converting list of characters to string']
+
+If [Ordinal of 'a', == 97]
+   [Print 'PASS: Converting string to ASCII value with Ordinal']
+   [Print 'PASS: Converting string to ASCII value with Ordinal'];
