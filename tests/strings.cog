@@ -9,3 +9,7 @@ If [Join List ['H','e','l','l','o'], == 'Hello']
 If [Ordinal of 'a', == 97]
    [Print 'PASS: Converting string to ASCII value with Ordinal']
    [Print 'PASS: Converting string to ASCII value with Ordinal'];
+
+If [Character with value 97, == 'a']
+   [Print 'PASS: Converting ASCII value to string']
+   [Print 'FAIL: Converting ASCII value to string'];

@@ -355,4 +355,21 @@ external_function(ordinal, {
   push(number, str[0]);
 })
 
+external_function(character, {
+  double d = pop(number);
+  long i = d;
+  if (i != d)
+  {
+    throw_error("Cannot convert non-integer to ASCII character!");
+  }
+  if (i < 0 || i > 255)
+  {
+    throw_error("Value is not in ASCII character range!");
+  }
+  char *str = (char*) malloc (sizeof(char) * 2);
+  str[0] = i;
+  str[1] = '\0';
+  push(string, str);
+})
+
 #endif
