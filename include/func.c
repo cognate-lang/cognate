@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <regex.h>
+#include <math.h>
 
 #define INITIAL_INPUT_SIZE 64
 #define PATH_MAX 4096
@@ -370,6 +371,35 @@ external_function(character, {
   str[0] = i;
   str[1] = '\0';
   push(string, str);
+})
+
+external_function(parsenumber,
+{
+  char *str = pop(string);
+  double num;
+  push(number, atof(str));
+})
+
+external_function(truncate,
+{
+  push(number, (int)pop(number));
+})
+
+external_function(round,
+{
+  push(number, round(pop(number)));
+})
+
+external_function(assert,
+{
+  char *name = pop(string);
+  _Bool cond = pop(boolean);
+  if (!cond)
+  {
+    char *err = (char*)malloc(strlen(name) * sizeof(char));
+    sprintf(err, "Assertion '%s' has failed!", name);
+    throw_error(err);
+  }
 })
 
 #endif

@@ -1,3 +1,9 @@
+Define Integer?
+[ Let X;
+  X, == Truncate X;
+];
+
+
 Define Factorial
 [ Let X;
   If [X, == 0]
@@ -9,4 +15,7 @@ Define Factorial
   ]
 ];
 
-Print the Factorial of 10;
+Print 'Enter an integer:';
+Input, ParseNumber, Twin;
+Assert 'Input is an integer' Integer?;
+Print the Factorial;
