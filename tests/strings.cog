@@ -13,3 +13,7 @@ If [Ordinal of 'a', == 97]
 If [Character with value 97, == 'a']
    [Print 'PASS: Converting ASCII value to string']
    [Print 'FAIL: Converting ASCII value to string'];
+
+If [ParseNumber '123.4', == 123.4]
+   [Print 'PASS: Casting strings to numbers']
+   [Print 'PASS: Casting strings to numbers'];

@@ -380,14 +380,19 @@ external_function(parsenumber,
   push(number, atof(str));
 })
 
-external_function(truncate,
+external_function(floor,
 {
-  push(number, (int)pop(number));
+  push(number, floor(pop(number)));
 })
 
 external_function(round,
 {
   push(number, round(pop(number)));
+})
+
+external_function(ceiling,
+{
+  push(number, ceil(pop(number)));
 })
 
 external_function(assert,

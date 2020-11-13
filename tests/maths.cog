@@ -18,4 +18,14 @@ If [Modulo by 3 of 10, == 1]
    [Print 'PASS: Modulus']
    [Print 'FAIL: Modulus'];
 
+If [Floor 4.7, == 4]
+   [Print 'PASS: Floor']
+   [Print 'FAIL: Floor'];
 
+If [Ceiling 4.3, == 5]
+   [Print 'PASS: Ceiling']
+   [Print 'FAIL: Ceiling'];
+
+If [Round 4.7, == 5]
+   [Print 'PASS: Round']
+   [Print 'FAIL: Round'];

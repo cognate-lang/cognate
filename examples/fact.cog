@@ -1,6 +1,6 @@
 Define Integer?
 [ Let X;
-  X, == Truncate X;
+  X, == Floor X;
 ];
 
 
