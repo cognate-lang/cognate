@@ -6,13 +6,13 @@
 #define TABLE_GROWTH_FACTOR 1.5
 #define MAX_TABLE_TRIES 3
 
-static unsigned int hash(const char*);
+static unsigned long hash(const char*);
 static cognate_table table_add(unsigned long, cognate_object, cognate_table);
 static cognate_object table_get(char*, cognate_table);
 static cognate_table table_grow(cognate_table);
 static cognate_table table_copy(cognate_table tab);
 
-static unsigned int hash(const char *str)
+static unsigned long hash(const char *str)
 {
   // http://www.cse.yorku.ca/~oz/hash.html
   unsigned long hash = 0;
