@@ -7,14 +7,14 @@
 COGNATE_C	include/cognate.c	2;"	d	file:
 ERROR_C	include/error.c	2;"	d	file:
 FUNC_C	include/func.c	2;"	d	file:
-INITIAL_INPUT_SIZE	include/func.c	13;"	d	file:
+INITIAL_INPUT_SIZE	include/func.c	14;"	d	file:
 INITIAL_LIST_SIZE	include/stack.c	8;"	d	file:
 IO_C	include/io.c	2;"	d	file:
 LIST_GROWTH_FACTOR	include/stack.c	9;"	d	file:
 MAX_TABLE_TRIES	include/table.c	7;"	d	file:
-MIN_TABLE_SIZE	include/func.c	15;"	d	file:
+MIN_TABLE_SIZE	include/func.c	16;"	d	file:
 NOTHING	include/type.c	/^  NOTHING=0, \/\/ Must be zero because of calloc()$/;"	e	enum:__anon1	file:
-PATH_MAX	include/func.c	14;"	d	file:
+PATH_MAX	include/func.c	15;"	d	file:
 STACK_C	include/stack.c	2;"	d	file:
 TABLE_GROWTH_FACTOR	include/table.c	6;"	d	file:
 TYPE_C	include/type.c	2;"	d	file:
@@ -22,8 +22,8 @@ block	include/type.c	/^    cognate_block block;           \/\/ 64bit pointer$/;"
 block	include/type.c	/^  block, $/;"	e	enum:__anon1	file:
 boolean	include/type.c	/^    _Bool boolean;                 \/\/ 1bit  bool$/;"	m	union:cognate_object::__anon2	file:
 boolean	include/type.c	/^  boolean, $/;"	e	enum:__anon1	file:
-call	include/func.c	27;"	d	file:
-call	include/func.c	29;"	d	file:
+call	include/func.c	28;"	d	file:
+call	include/func.c	30;"	d	file:
 check_block	include/cognate.c	/^static cognate_object check_block(cognate_object obj)$/;"	f	file:
 check_call_stack	include/cognate.c	/^static void check_call_stack()$/;"	f	file:
 check_type	include/type.c	/^static cognate_object check_type(cognate_type expected_type, cognate_object object)$/;"	f	file:
@@ -43,8 +43,8 @@ confirmation_hash	include/type.c	/^  long unsigned int *confirmation_hash;$/;"	m
 copy	include/cognate.c	7;"	d	file:
 copy_blocks	include/cognate.c	/^static void copy_blocks()$/;"	f	file:
 expand_stack	include/stack.c	/^static void expand_stack()$/;"	f	file:
-external_function	include/func.c	18;"	d	file:
-external_variable	include/func.c	22;"	d	file:
+external_function	include/func.c	19;"	d	file:
+external_variable	include/func.c	23;"	d	file:
 function	include/cognate.c	19;"	d	file:
 function_name	include/error.c	/^char* function_name = NULL;$/;"	v
 get_params	include/cognate.c	/^static void get_params(int argc, char** argv)$/;"	f	file:
