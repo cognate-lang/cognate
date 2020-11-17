@@ -82,6 +82,7 @@ static char *exe_name;
 ssize_t readlink(const char *pathname, char *buf, size_t bufsiz);
 
 static char *stack_start;
+static struct rlimit stack_max;
 
 static void get_params(int argc, char** argv)
 {
@@ -98,8 +99,11 @@ static void get_params(int argc, char** argv)
 
 static void init(int argc, char** argv)
 {
+  // Get return stack limit
   char a;
   stack_start = &a;
+  getrlimit(RLIMIT_STACK, &stack_max);
+  // Get executable path stuff.
   readlink("/proc/self/exe", exe_path, PATH_MAX);
   exe_name = basename(exe_path);
   exe_dir  = dirname(exe_path);
@@ -148,14 +152,14 @@ static void check_call_stack()
   if (unlikely(calls > 1024))
   {
     calls = 0;
+    static unsigned long old_stack_size;
     char b;
-    struct rlimit stack_max;
-    getrlimit(RLIMIT_STACK, &stack_max);
-    //printf("Stack limit is %ld, and usage is %ld\n", stack_max.rlim_cur, (stack_start - &b));
-    if (stack_max.rlim_cur - (unsigned long)(stack_start - &b) < 65536)
+    // if (how much stack left < stack change between checks)
+    if (stack_max.rlim_cur - (unsigned long)(stack_start - &b) < stack_start - &b - old_stack_size)
     {
       throw_error("Call stack overflow! Too much recursion!");
     }
+    old_stack_size = stack_start - &b;
   }
 }
 
