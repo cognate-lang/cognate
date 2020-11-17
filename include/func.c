@@ -10,6 +10,7 @@
 #include <limits.h>
 #include <regex.h>
 #include <math.h>
+#include <libgen.h>
 
 #define INITIAL_INPUT_SIZE 64
 #define PATH_MAX 4096
@@ -29,6 +30,8 @@
 #else 
   #define call(name) {cognate_function_ ## name();}
 #endif
+
+static char file_name_buf[PATH_MAX+1];
 
 cognate_list params;
 
@@ -130,7 +133,6 @@ external_function(list,  {
   *lst = stack.items;
   // Restore the original stack
   stack = temp_stack;
-  //TODO: Shrink the list to fit here with GC_REALLOC(). Previous attempts caused problems with -O0
   long lst_len = lst->top - lst->start;
   lst->start = realloc(lst->start, lst_len * sizeof(cognate_object));
   lst->top = lst->start + lst_len;
@@ -209,7 +211,6 @@ external_function(input, {
   while((c = getchar()) != '\n' && c != EOF)
   {
     *str++ = c; 
-
     if (temp + str_size == str)
     {
       temp = realloc (temp, (str_size << 1));
@@ -222,9 +223,11 @@ external_function(input, {
 
 external_function(read, {
   // read a file.
-  // TODO: use path of executable instead of user's path
-  char* file_name  = pop(string);
-  FILE *fp = fopen(file_name, "r");
+  // TODO dont be this slow.
+  strcpy(file_name_buf, exe_dir);
+  strcat(file_name_buf, "/");
+  strcat(file_name_buf, pop(string));
+  FILE *fp = fopen(file_name_buf, "r");
   if (fp == NULL) throw_error("Cannot open file! It probably doesn't exist.");
   fseek(fp, 0L, SEEK_END);
   size_t file_size = ftell(fp);
@@ -234,7 +237,7 @@ external_function(read, {
   fclose(fp);
   file_data[file_size-1] = '\0'; // Remove trailing newline (for easier splitting, printing, etc).
   push(string, file_data);
-  //TODO: single line (or delimited) file reading for better IO performance?
+  // TODO: single line (or delimited) file reading for better IO performance?
 })
 
 external_function(number, {
@@ -244,8 +247,8 @@ external_function(number, {
 })
 
 external_function(path, {
-  // Get working directory path.
-  char cwd[PATH_MAX]; // Much too big.
+  // Get working directory path, TODO how to get exe path.
+  char cwd[PATH_MAX+1]; // Much too big.
   if (getcwd(cwd, sizeof(cwd)) == NULL)
     throw_error("Cannot get current directory!");
   char *small_cwd = (char*) malloc (sizeof(char) * strlen(cwd)); // Much better size.
@@ -255,7 +258,9 @@ external_function(path, {
 
 external_function(write, {
   // Write string to end of file, without a newline.
-  // TODO: use path of program instead of user's path.
+  strcat(file_name_buf, exe_dir);
+  strcat(file_name_buf, "/");
+  strcat(file_name_buf, pop(string));
   FILE *file = fopen(pop(string), "a"); 
   char *str = pop(string);
   fprintf(file, "%s", str);

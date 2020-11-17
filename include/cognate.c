@@ -63,16 +63,25 @@
 #define unlikely(expr) __builtin_expect((_Bool)(expr), 0)
 #define likely(expr)   __builtin_expect((_Bool)(expr), 1)
 
+#define PATH_MAX 4096
+static char exe_path[PATH_MAX+1];
+static char *exe_dir;
+static char *exe_name;
+
 #include <gc.h>
 #include <time.h>
 #include "stack.c"
-#include "func.c"
 #include "io.c"
 #include "error.c"
 #include "type.c"
 #include <sys/resource.h>
+#include <unistd.h>
+#include "func.c"
+#include <libgen.h>
 
-char *stack_start;
+ssize_t readlink(const char *pathname, char *buf, size_t bufsiz);
+
+static char *stack_start;
 
 static void get_params(int argc, char** argv)
 {
@@ -91,6 +100,9 @@ static void init(int argc, char** argv)
 {
   char a;
   stack_start = &a;
+  readlink("/proc/self/exe", exe_path, PATH_MAX);
+  exe_name = basename(exe_path);
+  exe_dir  = dirname(exe_path);
   // Seed the random number generator properly.
 #ifndef noGC
   GC_INIT(); // Portability.
