@@ -7,14 +7,15 @@
 COGNATE_C	include/cognate.c	2;"	d	file:
 ERROR_C	include/error.c	2;"	d	file:
 FUNC_C	include/func.c	2;"	d	file:
-INITIAL_INPUT_SIZE	include/func.c	14;"	d	file:
+INITIAL_INPUT_SIZE	include/func.c	15;"	d	file:
 INITIAL_LIST_SIZE	include/stack.c	8;"	d	file:
 IO_C	include/io.c	2;"	d	file:
 LIST_GROWTH_FACTOR	include/stack.c	9;"	d	file:
 MAX_TABLE_TRIES	include/table.c	7;"	d	file:
-MIN_TABLE_SIZE	include/func.c	16;"	d	file:
+MIN_TABLE_SIZE	include/func.c	17;"	d	file:
 NOTHING	include/type.c	/^  NOTHING=0, \/\/ Must be zero because of calloc()$/;"	e	enum:__anon1	file:
-PATH_MAX	include/func.c	15;"	d	file:
+PATH_MAX	include/cognate.c	66;"	d	file:
+PATH_MAX	include/func.c	16;"	d	file:
 STACK_C	include/stack.c	2;"	d	file:
 TABLE_GROWTH_FACTOR	include/table.c	6;"	d	file:
 TYPE_C	include/type.c	2;"	d	file:
@@ -22,8 +23,8 @@ block	include/type.c	/^    cognate_block block;           \/\/ 64bit pointer$/;"
 block	include/type.c	/^  block, $/;"	e	enum:__anon1	file:
 boolean	include/type.c	/^    _Bool boolean;                 \/\/ 1bit  bool$/;"	m	union:cognate_object::__anon2	file:
 boolean	include/type.c	/^  boolean, $/;"	e	enum:__anon1	file:
-call	include/func.c	28;"	d	file:
-call	include/func.c	30;"	d	file:
+call	include/func.c	29;"	d	file:
+call	include/func.c	31;"	d	file:
 check_block	include/cognate.c	/^static cognate_object check_block(cognate_object obj)$/;"	f	file:
 check_call_stack	include/cognate.c	/^static void check_call_stack()$/;"	f	file:
 check_type	include/type.c	/^static cognate_object check_type(cognate_type expected_type, cognate_object object)$/;"	f	file:
@@ -42,13 +43,17 @@ compare_objects	include/type.c	/^static _Bool compare_objects(cognate_object ob1
 confirmation_hash	include/type.c	/^  long unsigned int *confirmation_hash;$/;"	m	struct:cognate_table	file:
 copy	include/cognate.c	7;"	d	file:
 copy_blocks	include/cognate.c	/^static void copy_blocks()$/;"	f	file:
+exe_dir	include/cognate.c	/^static char *exe_dir;$/;"	v	file:
+exe_name	include/cognate.c	/^static char *exe_name;$/;"	v	file:
+exe_path	include/cognate.c	/^static char exe_path[PATH_MAX+1];$/;"	v	file:
 expand_stack	include/stack.c	/^static void expand_stack()$/;"	f	file:
-external_function	include/func.c	19;"	d	file:
-external_variable	include/func.c	23;"	d	file:
+external_function	include/func.c	20;"	d	file:
+external_variable	include/func.c	24;"	d	file:
+file_name_buf	include/func.c	/^static char file_name_buf[PATH_MAX+1];$/;"	v	file:
 function	include/cognate.c	19;"	d	file:
 function_name	include/error.c	/^char* function_name = NULL;$/;"	v
 get_params	include/cognate.c	/^static void get_params(int argc, char** argv)$/;"	f	file:
-hash	include/table.c	/^static unsigned int hash(const char *str)$/;"	f	file:
+hash	include/table.c	/^static unsigned long hash(const char *str)$/;"	f	file:
 immutable	include/cognate.c	5;"	d	file:
 init	include/cognate.c	/^static void init(int argc, char** argv)$/;"	f	file:
 init_stack	include/stack.c	/^static void init_stack()$/;"	f	file:
@@ -83,7 +88,8 @@ push_any	include/stack.c	/^static void push_any(cognate_object object)$/;"	f	fil
 realloc	include/cognate.c	12;"	d	file:
 size	include/stack.c	/^  ptrdiff_t       size;     \/\/ Allocated size of the stack.$/;"	m	struct:cognate_stack	file:
 stack	include/stack.c	/^static cognate_stack stack;$/;"	v	file:
-stack_start	include/cognate.c	/^char *stack_start;$/;"	v
+stack_max	include/cognate.c	/^static struct rlimit stack_max;$/;"	v	typeref:struct:rlimit	file:
+stack_start	include/cognate.c	/^static char *stack_start;$/;"	v	file:
 start	include/type.c	/^  struct cognate_object *start,$/;"	m	struct:cognate_list	typeref:struct:cognate_list::cognate_object	file:
 string	include/type.c	/^    char* string;                  \/\/ 64bit pointer$/;"	m	union:cognate_object::__anon2	file:
 string	include/type.c	/^  string, $/;"	e	enum:__anon1	file:
