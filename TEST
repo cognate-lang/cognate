@@ -12,7 +12,7 @@ NC='\033[0m'
 for source_file in $(ls tests | grep .cog)
 do
   binary_file=$(echo $source_file | cut -f 1 -d '.')
-  echo "Testing $source_file..."
+  echo "Testing $binary_file..."
   # Compile
   #TODO: use -fsanitize=address when memory leaks are fixed
   ./cognac tests/$source_file -O0 > /dev/null 2>&1
