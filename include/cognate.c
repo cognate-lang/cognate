@@ -148,8 +148,7 @@ static void check_call_stack()
 {
   // Performance here is not great.
   static unsigned short calls = 0;
-  ++calls;
-  if (unlikely(calls > 1024))
+  if (unlikely(++calls > 1024))
   {
     calls = 0;
     static long old_stack_size;
