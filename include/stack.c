@@ -57,7 +57,7 @@ static void push_any(cognate_object object)
 
 static cognate_object pop_any()
 { 
-  if (unlikely(stack.items.top == stack.items.start)) 
+  if (unlikely(stack.items.top == stack.items.start))
     throw_error("Stack underflow!");
   stack.modified -= (stack.modified == stack.items.top);
   return *--stack.items.top;
@@ -78,8 +78,8 @@ static void expand_stack()
     fprintf(stderr, "[DEBUG] %s:%d -> Expanding stack from length %lu to %lu\n", __FILE__, __LINE__, stack.size, (size_t)(stack.size * LIST_GROWTH_FACTOR)); 
   #endif
  
-  int temp = stack.modified - stack.items.start;
-  stack.items.start = (cognate_object*) realloc (stack.items.start, stack.size * LIST_GROWTH_FACTOR * sizeof(cognate_object));
+  ptrdiff_t temp = stack.modified - stack.items.start;
+  stack.items.start = (cognate_object*) realloc (stack.items.start, (size_t)(stack.size * LIST_GROWTH_FACTOR * sizeof(cognate_object)));
   stack.modified = stack.items.start + temp;
   stack.items.top = stack.items.start + stack.size;
   stack.size *= LIST_GROWTH_FACTOR;

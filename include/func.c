@@ -46,9 +46,9 @@ external_function(modulo,         { int n = pop(number); push(number, (double)((
 
 external_function(random,         { // This function is pretty broken.
                                     double low = pop(number); double high = pop(number); double step = pop(number); 
-                                    if (high < low) throw_error("Cannot generate random number in range!");
-                                    else if (high - low < step) push(number, low);
-                                    else push(number, low + (double)(rand() % (int)((high - low) / step)) * step); })
+                                    if (high < low) { throw_error("Cannot generate random number in range!"); }
+                                    else if (high - low < step) { push(number, low); }
+                                    else { push(number, low + (double)(rand() % (int)((high - low) / step)) * step); } })
 
 external_function(drop,           { pop_any();                                                                            }) // These can be defined within cognate.
 external_function(twin,           { push_any(peek_any());                                                                 })

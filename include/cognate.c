@@ -88,7 +88,7 @@ static void get_params(int argc, char** argv)
 {
   params.start = (cognate_object*) malloc (sizeof(cognate_object) * (argc-1));
   params.top = params.start + argc - 1;
-  while (argc-- >= 1)
+  while (--argc >= 1)
   {
     char* str = argv[argc];
     params.start[argc-1] = (cognate_object){.type=string, .string=str};
