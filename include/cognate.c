@@ -147,15 +147,14 @@ static void copy_blocks()
 static void check_call_stack()
 {
   // Performance here is not great.
-  static unsigned int calls = 0;
-  ++calls;
-  if (unlikely(calls > 1024))
+  static unsigned short calls = 0;
+  if (unlikely(++calls > 1024))
   {
     calls = 0;
-    static long old_stack_size;
+    static size_t old_stack_size;
     char b;
     // if (how much stack left < stack change between checks)
-    if ((long)stack_max.rlim_cur - (stack_start - &b) < stack_start - &b - old_stack_size)
+    if ((size_t)stack_max.rlim_cur - (stack_start - &b) < stack_start - &b - old_stack_size)
     {
       throw_error("Call stack overflow! Too much recursion!");
     }
