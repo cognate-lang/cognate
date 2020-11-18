@@ -155,7 +155,7 @@ static void check_call_stack()
     static long old_stack_size;
     char b;
     // if (how much stack left < stack change between checks)
-    if ((long)stack_max.rlim_cur - (long)(stack_start - &b) < (long)stack_start - (long)&b - old_stack_size)
+    if ((long)stack_max.rlim_cur - (stack_start - &b) < stack_start - &b - old_stack_size)
     {
       throw_error("Call stack overflow! Too much recursion!");
     }
