@@ -85,7 +85,7 @@ static void check_call_stack()
     // if (how much stack left < stack change between checks)
     if ((long)stack_max.rlim_cur + (&b - stack_start) < stack_start - &b - old_stack_size)
     {
-      throw_error("Call stack overflow! Too much recursion!");
+      throw_error_fmt("Call stack overflow! Too much recursion! (call stack is %lu bytes)", stack_start - &b);
     }
     old_stack_size = stack_start - &b;
   }

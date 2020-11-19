@@ -25,9 +25,9 @@ external_function(modulo,         { int n = pop(number); push(number, (double)((
 
 external_function(random, { // This function is pretty broken.
   double low = pop(number); double high = pop(number); double step = pop(number); 
-  if (high < low) { throw_error_fmt("Cannot generate random number in range! (%.15g - %.15g)", low, high); }
-  else if (high - low < step) { push(number, low); }
-  else { push(number, low + (double)(rand() % (int)((high - low) / step)) * step); } 
+  if (unlikely(high < low)) { throw_error_fmt("Cannot generate random number in range! (%.15g - %.15g)", low, high); }
+  else if (high - low < step) push(number, low);
+  else push(number, low + (double)(rand() % (int)((high - low) / step)) * step);
 })
 
 external_function(drop,           { pop_any();                                                                            }) // These can be defined within cognate.
@@ -345,14 +345,8 @@ external_function(ordinal, {
 external_function(character, {
   double d = pop(number);
   long i = d;
-  if (i != d)
-  {
-    throw_error_fmt("Cannot convert non-integer (%.15g) to ASCII character!", d);
-  }
-  if (i < 0 || i > 255)
-  {
-    throw_error_fmt("Value (%li) is not in ASCII character range!", i);
-  }
+  if (unlikely(i != d))           throw_error_fmt("Cannot convert non-integer (%.15g) to ASCII character!", d);
+  if (unlikely(i < 0 || i > 255)) throw_error_fmt("Value (%li) is not in ASCII character range!", i);
   char *str = (char*) cognate_malloc (sizeof(char) * 2);
   str[0] = i;
   str[1] = '\0';
@@ -385,7 +379,7 @@ external_function(assert,
 {
   char *name = pop(string);
   _Bool cond = pop(boolean);
-  if (!cond)
+  if (unlikely(!cond))
   {
     char *err = (char*)cognate_malloc(strlen(name) * sizeof(char));
     throw_error_fmt("Assertion '%s' has failed!", name);
