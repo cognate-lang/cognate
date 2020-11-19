@@ -3,26 +3,8 @@
 
 #include "cognate.h"
 #include "type.c"
-#include <stdio.h>
-#include <stdlib.h>
+#include <gc.h>
 
-#define INITIAL_LIST_SIZE 16 // Constant values for initialising stack sizes.
-#define LIST_GROWTH_FACTOR 1.5
-
-#ifdef debug // Push an object to the stack. Print if debugging.
-  #define push(object_type, object) \
-    debug_printf("Pushing %s", #object); \
-    push_any((cognate_object){.object_type=object, .type=object_type});
-#else
-  #define push(object_type, object) \
-    push_any((cognate_object){.object_type=object, .type=object_type})
-#endif
-
-#define pop(object_type) \
-  check_type(object_type, pop_any()) . object_type
-
-#define peek(object_type) \
-  check_type(object_type, peek_any()) . object_type
 
 static void init_stack();
 static void push_any(cognate_object);

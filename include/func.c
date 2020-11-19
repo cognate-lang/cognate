@@ -3,15 +3,11 @@
 
 #include "cognate.h"
 #include "stack.c"
-#include "type.c"
 #include "table.c"
 #include "io.c"
-#include <Block.h>
 #include <unistd.h>
-#include <limits.h>
 #include <regex.h>
 #include <math.h>
-#include <libgen.h>
 
 
 static char file_name_buf[PATH_MAX+1];
@@ -29,7 +25,7 @@ external_function(modulo,         { int n = pop(number); push(number, (double)((
 
 external_function(random, { // This function is pretty broken.
   double low = pop(number); double high = pop(number); double step = pop(number); 
-  if (high < low) { throw_error("Cannot generate random number in range!"); }
+  if (high < low) { throw_error_fmt("Cannot generate random number in range! (%.15g - %.15g)", low, high); }
   else if (high - low < step) { push(number, low); }
   else { push(number, low + (double)(rand() % (int)((high - low) / step)) * step); } 
 })

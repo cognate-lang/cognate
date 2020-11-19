@@ -1,7 +1,6 @@
 #ifndef COGNATE_C
 #define COGNATE_C
 
-#include <gc.h>
 #include "cognate.h"
 #include "stack.c"
 #include "io.c"
@@ -10,8 +9,8 @@
 #include "func.c"
 #include <time.h>
 #include <sys/resource.h>
-#include <unistd.h>
 #include <libgen.h>
+#include <Block.h>
 
 ssize_t readlink(const char *pathname, char *buf, size_t bufsiz);
 

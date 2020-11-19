@@ -7,6 +7,8 @@
 #define INITIAL_INPUT_SIZE 64
 #define PATH_MAX 4096
 #define MIN_TABLE_SIZE 2
+#define INITIAL_LIST_SIZE 16 // Constant values for initialising stack sizes.
+#define LIST_GROWTH_FACTOR 1.5
 
 static char exe_path[PATH_MAX+1];
 static char *exe_dir;
@@ -104,5 +106,21 @@ static char *exe_name;
 
 #define unlikely(expr) __builtin_expect((_Bool)(expr), 0)
 #define likely(expr)   __builtin_expect((_Bool)(expr), 1)
+
+
+#ifdef debug // Push an object to the stack. Print if debugging.
+  #define push(object_type, object) \
+    debug_printf("Pushing %s", #object); \
+    push_any((cognate_object){.object_type=object, .type=object_type});
+#else
+  #define push(object_type, object) \
+    push_any((cognate_object){.object_type=object, .type=object_type})
+#endif
+
+#define pop(object_type) \
+  check_type(object_type, pop_any()) . object_type
+
+#define peek(object_type) \
+  check_type(object_type, peek_any()) . object_type
 
 #endif

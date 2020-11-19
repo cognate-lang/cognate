@@ -3,10 +3,7 @@
 
 #include "cognate.h"
 #include "error.c"
-#include <stdio.h>
-#include "Block.h"
 #include <stddef.h>
-#include <ctype.h>
 
 
 typedef enum 
