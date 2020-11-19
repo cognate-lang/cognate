@@ -76,10 +76,10 @@ static void copy_blocks()
 static void check_call_stack()
 {
   // Performance here is not great.
-  static unsigned short calls = 0;
-  if (unlikely(++calls == 1024))
+  static unsigned short calls = 1024;
+  if (unlikely(!--calls))
   {
-    calls = 0;
+    calls = 1024;
     static long old_stack_size;
     char b;
     // if (how much stack left < stack change between checks)
