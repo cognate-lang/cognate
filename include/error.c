@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 #define noreturn __attribute__ ((noreturn))
 
 char* function_name = NULL;

@@ -81,9 +81,9 @@ external_function(boolean_, {push(boolean, pop_any().type == boolean);})
 external_function(discard, { 
   // O(n) where n is the number of element being Discarded.
   double num = (int)pop(number);
-  int num_discarding = num;
-  if (num != num_discarding) throw_error("Cannot Discard a non-integer number of elements!");
-  if (num_discarding < 0) throw_error("Cannot Discard a negative number of elements!");
+  long num_discarding = num;
+  if (num != num_discarding) throw_error_fmt("Cannot Discard a non-integer number of elements! (%.15g)", num);
+  if (num_discarding < 0) throw_error_fmt("Cannot Discard a negative number of elements! (%li)", num_discarding);
   cognate_list obj = *pop(list);
   cognate_list *lst = (cognate_list*)malloc(sizeof(cognate_list));
   *lst = obj;
@@ -94,13 +94,13 @@ external_function(discard, {
 external_function(take, {
   // O(n) where n is the number of element being Taken.
   double num = pop(number);
-  int num_taking = num;
-  if (num != num_taking) throw_error("Cannot Take a non-integer number of elements!");
-  if (num_taking < 0) throw_error("Cannot Take a negative number of elements!");
+  long num_taking = num;
+  if (num != num_taking) throw_error_fmt("Cannot Take a non-integer number of elements! (%.15g)", num);
+  if (num_taking < 0) throw_error_fmt("Cannot Take a negative number of elements! (%li)", num_taking);
   cognate_list obj = *pop(list);
   cognate_list *lst = (cognate_list*)malloc(sizeof(cognate_list));
   *lst = obj;
-  if (lst->start + num_taking > lst->top) throw_error("List is too small to Take from!");
+  if (lst->start + num_taking > lst->top) throw_error_fmt ("List is too small to Take from! (length %lu)", lst->top - lst->start);
   lst->top = lst->start + num_taking;
   push(list, lst);
 })
@@ -228,7 +228,7 @@ external_function(read, {
   strcat(file_name_buf, "/");
   strcat(file_name_buf, pop(string));
   FILE *fp = fopen(file_name_buf, "r");
-  if (fp == NULL) throw_error("Cannot open file! It probably doesn't exist.");
+  if (fp == NULL) throw_error_fmt("Cannot open file '%s'. It probably doesn't exist.", file_name_buf);
   fseek(fp, 0L, SEEK_END);
   size_t file_size = ftell(fp);
   fseek(fp, 0L, SEEK_SET);
@@ -339,7 +339,7 @@ external_function(match, {
     regfree(&reg); // Apparently freeing an unallocated regex is fine.
     if (regcomp(&reg, reg_str, REG_EXTENDED|REG_NEWLINE))
     {
-      throw_error("Cannot compile invalid regular expression!"); 
+      throw_error_fmt("Cannot compile invalid regular expression! (%s)", reg_str); 
     }
     old_str = reg_str; /* This should probably be strcpy, but I trust that reg_str is either
                           allocated with the garbage collector, or read only in the data segment. */
@@ -347,7 +347,7 @@ external_function(match, {
   int found = regexec(&reg, pop(string), 0, NULL, 0);
   if (unlikely(found != 0 && found != REG_NOMATCH))
   {
-    throw_error("Regex match error!");
+    throw_error_fmt("Regex match error! (%s)", reg_str);
     // If this error ever actually appears, use regerror to get the full text.
   }
   push(boolean, !found);
@@ -357,7 +357,7 @@ external_function(ordinal, {
   char *str = pop(string);
   if (unlikely(strlen(str) != 1))
   {
-    throw_error("Ordinal requires string of length 1!");
+    throw_error_fmt("Ordinal requires string of length 1. String '%s' is not of length 1!", str);
   }
   push(number, str[0]);
 })
@@ -367,11 +367,11 @@ external_function(character, {
   long i = d;
   if (i != d)
   {
-    throw_error("Cannot convert non-integer to ASCII character!");
+    throw_error_fmt("Cannot convert non-integer (%.15g) to ASCII character!", d);
   }
   if (i < 0 || i > 255)
   {
-    throw_error("Value is not in ASCII character range!");
+    throw_error_fmt("Value (%li) is not in ASCII character range!", i);
   }
   char *str = (char*) malloc (sizeof(char) * 2);
   str[0] = i;
@@ -408,8 +408,7 @@ external_function(assert,
   if (!cond)
   {
     char *err = (char*)malloc(strlen(name) * sizeof(char));
-    sprintf(err, "Assertion '%s' has failed!", name);
-    throw_error(err);
+    throw_error_fmt("Assertion '%s' has failed!", name);
   }
 })
 

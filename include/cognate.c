@@ -67,6 +67,13 @@
 #define debug_printf(str, ...)
 #endif
 
+#define throw_error_fmt(fmtstr, ...) \
+{ \
+  char str[strlen(fmtstr) + sizeof(__VA_ARGS__)]; \
+  sprintf(str, fmtstr, __VA_ARGS__); \
+  throw_error(str); \
+}
+
 #define unlikely(expr) __builtin_expect((_Bool)(expr), 0)
 #define likely(expr)   __builtin_expect((_Bool)(expr), 1)
 
@@ -130,8 +137,7 @@ static void cleanup()
   if (unlikely(stack.items.top != stack.items.start))
   {
     char err[58];
-    sprintf(err, "Program exiting with non-empty stack of length %lu", stack.items.top - stack.items.start);
-    throw_error(err);
+    throw_error_fmt("Program exiting with non-empty stack of length %lu", stack.items.top - stack.items.start);
   }
 }
 
