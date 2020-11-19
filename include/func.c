@@ -68,7 +68,7 @@ external_function(discard, {
   if (num != num_discarding) throw_error_fmt("Cannot Discard a non-integer number of elements! (%.15g)", num);
   if (num_discarding < 0) throw_error_fmt("Cannot Discard a negative number of elements! (%li)", num_discarding);
   cognate_list obj = *pop(list);
-  cognate_list *lst = (cognate_list*)malloc(sizeof(cognate_list));
+  cognate_list *lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
   *lst = obj;
   if ((lst->start += num_discarding) > lst->top) throw_error("List is too small to Discard from!");
   push(list, lst);
@@ -81,7 +81,7 @@ external_function(take, {
   if (num != num_taking) throw_error_fmt("Cannot Take a non-integer number of elements! (%.15g)", num);
   if (num_taking < 0) throw_error_fmt("Cannot Take a negative number of elements! (%li)", num_taking);
   cognate_list obj = *pop(list);
-  cognate_list *lst = (cognate_list*)malloc(sizeof(cognate_list));
+  cognate_list *lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
   *lst = obj;
   if (lst->start + num_taking > lst->top) throw_error_fmt ("List is too small to Take from! (length %lu)", lst->top - lst->start);
   lst->top = lst->start + num_taking;
@@ -111,13 +111,13 @@ external_function(list,  {
   init_stack();
   // Eval expr
   expr();
-  // Store the resultant list, GC_REALLOC-ing to fit snugly in memory.
-  cognate_list* lst = (cognate_list*)malloc(sizeof(cognate_list));
+  // Store the resultant list, GC_cognate_realloc-ing to fit snugly in memory.
+  cognate_list* lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
   *lst = stack.items;
   // Restore the original stack
   stack = temp_stack;
   long lst_len = lst->top - lst->start;
-  lst->start = realloc(lst->start, lst_len * sizeof(cognate_object));
+  lst->start = cognate_realloc(lst->start, lst_len * sizeof(cognate_object));
   lst->top = lst->start + lst_len;
   // Push the created list to the stack
   push(list, lst);
@@ -125,14 +125,14 @@ external_function(list,  {
 
 external_function(characters, {
   char* str = pop(string);
-  cognate_list* lst = (cognate_list*)malloc(sizeof(cognate_list));
-  lst->start = (cognate_object*) malloc (sizeof(cognate_object) * strlen(str));
+  cognate_list* lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
+  lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * strlen(str));
   lst->top = lst->start + strlen(str);
   for (int i = strlen(str); i >= 0; --i)
   {
-    // This segfaults with GC_MALLOC, but GC_MALLOC_ATOMIC seems to work.
+    // This segfaults with GC_cognate_malloc, but GC_cognate_malloc_ATOMIC seems to work.
     // TODO: find out why this even works.
-    char *temp = (char*) malloc_atomic (sizeof(char) * 2);
+    char *temp = (char*) cognate_malloc_atomic (sizeof(char) * 2);
     temp[0] = str[i];
     temp[1] = '\0';
     lst->start[i] = ((cognate_object){.type=string, .string=temp});
@@ -149,7 +149,7 @@ external_function(join, {
   {
     str_size += strlen(check_type(string, *i).string);
   }
-  char* str = (char*) malloc (sizeof(char) * (str_size));
+  char* str = (char*) cognate_malloc (sizeof(char) * (str_size));
   for (i = lst.start; i < lst.top; ++i)
   {
     strcat(str, i->string);
@@ -178,8 +178,8 @@ external_function(append,
   int list1_len = lst1.top - lst1.start;
   int list2_len = lst2.top - lst2.start;
   int new_list_len = list1_len + list2_len;
-  cognate_list *lst = (cognate_list*) malloc (sizeof(cognate_list));
-  lst->start = (cognate_object*) malloc (sizeof(cognate_object) * new_list_len);
+  cognate_list *lst = (cognate_list*) cognate_malloc (sizeof(cognate_list));
+  lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * new_list_len);
   lst->top = lst->start + new_list_len;
   memcpy(lst->start, lst2.start, list2_len * sizeof(cognate_object));
   memcpy(lst->start+list2_len, lst1.start, list1_len * sizeof(cognate_object));
@@ -188,7 +188,7 @@ external_function(append,
 
 external_function(input, {
   size_t str_size = INITIAL_INPUT_SIZE;
-  char* str = (char*) malloc (str_size * sizeof(char));
+  char* str = (char*) cognate_malloc (str_size * sizeof(char));
   char* temp = str;
   char c;
   while((c = getchar()) != '\n' && c != EOF)
@@ -196,7 +196,7 @@ external_function(input, {
     *str++ = c; 
     if (temp + str_size == str)
     {
-      temp = realloc (temp, (str_size << 1));
+      temp = cognate_realloc (temp, (str_size << 1));
       str = temp + str_size;
     }
   }
@@ -215,7 +215,7 @@ external_function(read, {
   fseek(fp, 0L, SEEK_END);
   size_t file_size = ftell(fp);
   fseek(fp, 0L, SEEK_SET);
-  char* file_data = (char*) malloc (file_size * sizeof(char));
+  char* file_data = (char*) cognate_malloc (file_size * sizeof(char));
   fread(file_data, sizeof(char), file_size, fp);
   fclose(fp);
   file_data[file_size-1] = '\0'; // Remove trailing newline (for easier splitting, printing, etc).
@@ -234,7 +234,7 @@ external_function(path, {
   char cwd[PATH_MAX+1]; // Much too big.
   if (getcwd(cwd, sizeof(cwd)) == NULL)
     throw_error("Cannot get current directory!");
-  char *small_cwd = (char*) malloc (sizeof(char) * strlen(cwd)); // Much better size.
+  char *small_cwd = (char*) cognate_malloc (sizeof(char) * strlen(cwd)); // Much better size.
   strcpy(small_cwd, cwd);
   push(string, small_cwd);
 })
@@ -263,10 +263,10 @@ external_function(table, {
   call(list);
   cognate_list init = *pop(list);
   unsigned long table_size = ((init.top - init.start) * 2) + MIN_TABLE_SIZE;
-  cognate_table *tab = (cognate_table*) malloc (sizeof(cognate_table)); // Need to allocate list here.
+  cognate_table *tab = (cognate_table*) cognate_malloc (sizeof(cognate_table)); // Need to allocate list here.
   tab->items.start = (cognate_object*) calloc (table_size, sizeof(cognate_object) * table_size);
   tab->items.top = tab->items.start + table_size;
-  tab->confirmation_hash = (long unsigned int*) malloc (sizeof(long unsigned int) * table_size);
+  tab->confirmation_hash = (long unsigned int*) cognate_malloc (sizeof(long unsigned int) * table_size);
   char *key;
   cognate_object value;
   for (cognate_object *i = init.start; i < init.top - 1; i += 2)
@@ -282,7 +282,7 @@ external_function(insert, {
   // O(n) :(
   char *key = pop(string);
   cognate_object value = pop_any();
-  cognate_table *tab = (cognate_table*) malloc (sizeof(cognate_table));
+  cognate_table *tab = (cognate_table*) cognate_malloc (sizeof(cognate_table));
   *tab = table_add(hash(key), value, table_copy(*pop(table)));
   push(table, tab);
 })
@@ -297,9 +297,9 @@ external_function(get, {
 external_function(values, {
   // O(n)
   cognate_table tab = *pop(table);
-  cognate_list *lst = (cognate_list*) malloc (sizeof(cognate_list));
+  cognate_list *lst = (cognate_list*) cognate_malloc (sizeof(cognate_list));
   const long table_size = tab.items.top - tab.items.start;
-  lst->start = (cognate_object*) malloc (sizeof(cognate_object) * table_size);
+  lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * table_size);
   int j = 0;
   for (int i = 0; i < table_size; ++i)
   {
@@ -356,7 +356,7 @@ external_function(character, {
   {
     throw_error_fmt("Value (%li) is not in ASCII character range!", i);
   }
-  char *str = (char*) malloc (sizeof(char) * 2);
+  char *str = (char*) cognate_malloc (sizeof(char) * 2);
   str[0] = i;
   str[1] = '\0';
   push(string, str);
@@ -390,7 +390,7 @@ external_function(assert,
   _Bool cond = pop(boolean);
   if (!cond)
   {
-    char *err = (char*)malloc(strlen(name) * sizeof(char));
+    char *err = (char*)cognate_malloc(strlen(name) * sizeof(char));
     throw_error_fmt("Assertion '%s' has failed!", name);
   }
 })

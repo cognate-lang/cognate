@@ -21,7 +21,7 @@ static struct rlimit stack_max;
 
 static void get_params(int argc, char** argv)
 {
-  params.start = (cognate_object*) malloc (sizeof(cognate_object) * (argc-1));
+  params.start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * (argc-1));
   params.top = params.start + argc - 1;
   while (--argc >= 1)
   {

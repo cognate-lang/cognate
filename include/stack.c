@@ -44,7 +44,7 @@ static cognate_stack stack;
 static void init_stack()
 {
   // Allocate dynamic stack memory.
-  stack.modified = stack.items.top = stack.items.start = (cognate_object*) malloc ((stack.size = INITIAL_LIST_SIZE) * sizeof(cognate_object));
+  stack.modified = stack.items.top = stack.items.start = (cognate_object*) cognate_malloc ((stack.size = INITIAL_LIST_SIZE) * sizeof(cognate_object));
 }
 
 static void push_any(cognate_object object)
@@ -78,7 +78,7 @@ static void expand_stack()
   debug_printf("Expanding stack from length %lu to %lu\n", stack.size, (size_t)(stack.size * LIST_GROWTH_FACTOR)); 
  
   ptrdiff_t temp = stack.modified - stack.items.start;
-  stack.items.start = (cognate_object*) realloc (stack.items.start, (size_t)(stack.size * LIST_GROWTH_FACTOR * sizeof(cognate_object)));
+  stack.items.start = (cognate_object*) cognate_realloc (stack.items.start, (size_t)(stack.size * LIST_GROWTH_FACTOR * sizeof(cognate_object)));
   stack.modified = stack.items.start + temp;
   stack.items.top = stack.items.start + stack.size;
   stack.size *= LIST_GROWTH_FACTOR;

@@ -79,11 +79,13 @@ static char *exe_name;
   }
 
 #ifndef noGC
-  #define malloc  GC_MALLOC
-  #define realloc GC_REALLOC
-  #define malloc_atomic GC_MALLOC_ATOMIC
+  #define cognate_malloc  GC_MALLOC
+  #define cognate_realloc GC_REALLOC
+  #define cognate_malloc_atomic GC_MALLOC_ATOMIC
 #else
-  #define malloc_atomic malloc
+  #define cognate_malloc malloc
+  #define cognate_realloc realloc
+  #define cognate_malloc_atomic malloc
 #endif
 
 #ifdef debug
