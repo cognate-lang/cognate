@@ -1,8 +1,9 @@
 #ifndef IO_C
 #define IO_C
 
-#include <stdio.h>
+#include "cognate.h"
 #include "type.c"
+#include <stdio.h>
 
 static void print_object (cognate_object object, _Bool quotes);
 

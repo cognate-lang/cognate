@@ -1,6 +1,7 @@
 #ifndef FUNC_C
 #define FUNC_C
 
+#include "cognate.h"
 #include "stack.c"
 #include "type.c"
 #include "table.c"
@@ -12,24 +13,6 @@
 #include <math.h>
 #include <libgen.h>
 
-#define INITIAL_INPUT_SIZE 64
-#define PATH_MAX 4096
-#define MIN_TABLE_SIZE 2
-
-// Macro to define external cognate function.
-#define external_function(name, body) \
-  static void cognate_function_ ## name () body
-
-// Macro for defining external cognate variables with specified type.
-#define external_variable(name, type, value) \
-  static void cognate_function_ ## name () { \
-    push(type, value); }
-
-#ifdef debug
-  #define call(name) {debug_printf("Calling %s\n", #name); cognate_function_ ## name();}
-#else 
-  #define call(name) {cognate_function_ ## name();}
-#endif
 
 static char file_name_buf[PATH_MAX+1];
 

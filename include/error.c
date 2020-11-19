@@ -1,7 +1,7 @@
 #ifndef ERROR_C
 #define ERROR_C
 
-
+#include "cognate.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

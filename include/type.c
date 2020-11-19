@@ -1,8 +1,9 @@
 #ifndef TYPE_C
 #define TYPE_C
 
-#include <stdio.h>
+#include "cognate.h"
 #include "error.c"
+#include <stdio.h>
 #include "Block.h"
 #include <stddef.h>
 #include <ctype.h>

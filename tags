@@ -5,26 +5,27 @@
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
 COGNATE_C	include/cognate.c	2;"	d	file:
+COGNATE_H	include/cognate.h	2;"	d
 ERROR_C	include/error.c	2;"	d	file:
 FUNC_C	include/func.c	2;"	d	file:
-INITIAL_INPUT_SIZE	include/func.c	15;"	d	file:
-INITIAL_LIST_SIZE	include/stack.c	8;"	d	file:
+INITIAL_INPUT_SIZE	include/cognate.h	7;"	d
+INITIAL_LIST_SIZE	include/stack.c	9;"	d	file:
 IO_C	include/io.c	2;"	d	file:
-LIST_GROWTH_FACTOR	include/stack.c	9;"	d	file:
-MAX_TABLE_TRIES	include/table.c	7;"	d	file:
-MIN_TABLE_SIZE	include/func.c	17;"	d	file:
+LIST_GROWTH_FACTOR	include/stack.c	10;"	d	file:
+MAX_TABLE_TRIES	include/cognate.h	5;"	d
+MIN_TABLE_SIZE	include/cognate.h	9;"	d
 NOTHING	include/type.c	/^  NOTHING=0, \/\/ Must be zero because of calloc()$/;"	e	enum:__anon1	file:
-PATH_MAX	include/cognate.c	66;"	d	file:
-PATH_MAX	include/func.c	16;"	d	file:
+PATH_MAX	include/cognate.h	6;"	d
+PATH_MAX	include/cognate.h	8;"	d
 STACK_C	include/stack.c	2;"	d	file:
-TABLE_GROWTH_FACTOR	include/table.c	6;"	d	file:
+TABLE_GROWTH_FACTOR	include/cognate.h	4;"	d
 TYPE_C	include/type.c	2;"	d	file:
 block	include/type.c	/^    cognate_block block;           \/\/ 64bit pointer$/;"	m	union:cognate_object::__anon2	file:
 block	include/type.c	/^  block, $/;"	e	enum:__anon1	file:
 boolean	include/type.c	/^    _Bool boolean;                 \/\/ 1bit  bool$/;"	m	union:cognate_object::__anon2	file:
 boolean	include/type.c	/^  boolean, $/;"	e	enum:__anon1	file:
-call	include/func.c	29;"	d	file:
-call	include/func.c	31;"	d	file:
+call	include/cognate.h	42;"	d
+call	include/cognate.h	44;"	d
 check_block	include/cognate.c	/^static cognate_object check_block(cognate_object obj)$/;"	f	file:
 check_call_stack	include/cognate.c	/^static void check_call_stack()$/;"	f	file:
 check_type	include/type.c	/^static cognate_object check_type(cognate_type expected_type, cognate_object object)$/;"	f	file:
@@ -41,51 +42,53 @@ cognate_type	include/type.c	/^} cognate_type;$/;"	t	typeref:enum:__anon1	file:
 compare_lists	include/type.c	/^static _Bool compare_lists(cognate_list lst1, cognate_list lst2)$/;"	f	file:
 compare_objects	include/type.c	/^static _Bool compare_objects(cognate_object ob1, cognate_object ob2)$/;"	f	file:
 confirmation_hash	include/type.c	/^  long unsigned int *confirmation_hash;$/;"	m	struct:cognate_table	file:
-copy	include/cognate.c	7;"	d	file:
+copy	include/cognate.h	27;"	d
 copy_blocks	include/cognate.c	/^static void copy_blocks()$/;"	f	file:
-exe_dir	include/cognate.c	/^static char *exe_dir;$/;"	v	file:
-exe_name	include/cognate.c	/^static char *exe_name;$/;"	v	file:
-exe_path	include/cognate.c	/^static char exe_path[PATH_MAX+1];$/;"	v	file:
+debug_printf	include/cognate.h	90;"	d
+debug_printf	include/cognate.h	93;"	d
+exe_dir	include/cognate.h	/^static char *exe_dir;$/;"	v
+exe_name	include/cognate.h	/^static char *exe_name;$/;"	v
+exe_path	include/cognate.h	/^static char exe_path[PATH_MAX+1];$/;"	v
 expand_stack	include/stack.c	/^static void expand_stack()$/;"	f	file:
-external_function	include/func.c	20;"	d	file:
-external_variable	include/func.c	24;"	d	file:
+external_function	include/cognate.h	48;"	d
+external_variable	include/cognate.h	52;"	d
 file_name_buf	include/func.c	/^static char file_name_buf[PATH_MAX+1];$/;"	v	file:
-function	include/cognate.c	19;"	d	file:
+function	include/cognate.h	31;"	d
 function_name	include/error.c	/^char* function_name = NULL;$/;"	v
 get_params	include/cognate.c	/^static void get_params(int argc, char** argv)$/;"	f	file:
 hash	include/table.c	/^static unsigned long hash(const char *str)$/;"	f	file:
-immutable	include/cognate.c	5;"	d	file:
+immutable	include/cognate.h	25;"	d
 init	include/cognate.c	/^static void init(int argc, char** argv)$/;"	f	file:
 init_stack	include/stack.c	/^static void init_stack()$/;"	f	file:
 items	include/stack.c	/^  cognate_list    items;    \/\/ The list holding the stack itself.$/;"	m	struct:cognate_stack	file:
 items	include/type.c	/^  struct cognate_list items;$/;"	m	struct:cognate_table	typeref:struct:cognate_table::cognate_list	file:
-likely	include/cognate.c	64;"	d	file:
+likely	include/cognate.h	104;"	d
 list	include/type.c	/^    struct cognate_list  *list;    \/\/ 64bit pointer$/;"	m	union:cognate_object::__anon2	typeref:struct:cognate_object::__anon2::cognate_list	file:
 list	include/type.c	/^  list,$/;"	e	enum:__anon1	file:
 lookup_type	include/type.c	/^static const char* lookup_type(cognate_type type)$/;"	f	file:
-make_block	include/cognate.c	53;"	d	file:
-malloc	include/cognate.c	11;"	d	file:
-malloc_atomic	include/cognate.c	13;"	d	file:
-malloc_atomic	include/cognate.c	15;"	d	file:
+make_block	include/cognate.h	71;"	d
+malloc	include/cognate.h	82;"	d
+malloc_atomic	include/cognate.h	84;"	d
+malloc_atomic	include/cognate.h	86;"	d
 modified	include/stack.c	/^  cognate_object* modified; \/\/ Lowest stack element modified by current block.$/;"	m	struct:cognate_stack	file:
-mutable	include/cognate.c	4;"	d	file:
-mutate_variable	include/cognate.c	48;"	d	file:
+mutable	include/cognate.h	24;"	d
+mutate_variable	include/cognate.h	67;"	d
 next_type	include/type.c	/^static int next_type = list + 1;$/;"	v	file:
-nocopy	include/cognate.c	8;"	d	file:
-noreturn	include/error.c	9;"	d	file:
+nocopy	include/cognate.h	28;"	d
+noreturn	include/error.c	10;"	d	file:
 number	include/type.c	/^    double number;                 \/\/ 64bit float$/;"	m	union:cognate_object::__anon2	file:
 number	include/type.c	/^  number, $/;"	e	enum:__anon1	file:
 params	include/func.c	/^cognate_list params;$/;"	v
-peek	include/stack.c	23;"	d	file:
+peek	include/stack.c	24;"	d	file:
 peek_any	include/stack.c	/^static cognate_object peek_any()$/;"	f	file:
-pop	include/stack.c	20;"	d	file:
+pop	include/stack.c	21;"	d	file:
 pop_any	include/stack.c	/^static cognate_object pop_any()$/;"	f	file:
 print_object	include/io.c	/^static void print_object (cognate_object object, _Bool quotes)$/;"	f	file:
-program	include/cognate.c	35;"	d	file:
-push	include/stack.c	12;"	d	file:
-push	include/stack.c	16;"	d	file:
+program	include/cognate.h	15;"	d
+push	include/stack.c	13;"	d	file:
+push	include/stack.c	17;"	d	file:
 push_any	include/stack.c	/^static void push_any(cognate_object object)$/;"	f	file:
-realloc	include/cognate.c	12;"	d	file:
+realloc	include/cognate.h	83;"	d
 size	include/stack.c	/^  ptrdiff_t       size;     \/\/ Allocated size of the stack.$/;"	m	struct:cognate_stack	file:
 stack	include/stack.c	/^static cognate_stack stack;$/;"	v	file:
 stack_max	include/cognate.c	/^static struct rlimit stack_max;$/;"	v	typeref:struct:rlimit	file:
@@ -101,8 +104,9 @@ table_copy	include/table.c	/^static cognate_table table_copy(cognate_table tab)$
 table_get	include/table.c	/^static cognate_object table_get(char* key, cognate_table tab)$/;"	f	file:
 table_grow	include/table.c	/^static cognate_table table_grow(cognate_table tab)$/;"	f	file:
 throw_error	include/error.c	/^noreturn static void throw_error(const char* message)$/;"	f	file:
+throw_error_fmt	include/cognate.h	96;"	d
 top	include/type.c	/^                        *top;$/;"	m	struct:cognate_list	typeref:struct:cognate_list::	file:
 type	include/type.c	/^  cognate_type type : 16;$/;"	m	struct:cognate_object	file:
 type_error	include/error.c	/^noreturn static void type_error(const char* expected, const char* recieved)$/;"	f	file:
-unlikely	include/cognate.c	63;"	d	file:
-variable	include/cognate.c	44;"	d	file:
+unlikely	include/cognate.h	103;"	d
+variable	include/cognate.h	62;"	d

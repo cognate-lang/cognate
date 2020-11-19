@@ -1,97 +1,18 @@
 #ifndef COGNATE_C
 #define COGNATE_C
 
-#define mutable   __block
-#define immutable const
-
-#define copy   1
-#define nocopy 0
-
-#ifndef noGC
-  #define malloc  GC_MALLOC
-  #define realloc GC_REALLOC
-  #define malloc_atomic GC_MALLOC_ATOMIC
-#else
-  #define malloc_atomic malloc
-#endif
-
-// Global-local variable swapping is causing performance losses. :(
-#define function(name, flags, docopy, body) \
-  flags cognate_block cognate_function_ ## name = make_block(docopy, \
-  { \
-    char* temp_func_name = function_name; \
-    function_name = #name; \
-    check_call_stack(); \
-    body \
-    function_name = temp_func_name; \
-  });
-
-
-/*
-#define mutate_function(name, docopy, body) \
-  cognate_function_ ## name = make_block(docopy, body);
-*/
-
-#define program(body) \
-  int main(int argc, char **argv) \
-  { \
-    init(argc, argv); \
-    body \
-    cleanup(); \
-    return 0; \
-  }
-
-#define variable(name, flags) \
-  immutable cognate_object cognate_variable_ ## name = pop_any(); \
-  flags cognate_block cognate_function_ ## name = ^{push_any(cognate_variable_ ## name);};
-
-#define mutate_variable(name) \
-  immutable cognate_object cognate_variable_ ## name = check_block(pop_any()); /* Can't remember what check_block does here */\
-  cognate_function_##name = Block_copy(^{push_any(cognate_variable_ ## name);});
-
-  
-#define make_block(docopy, body) \
-  ^{ \
-    /* Temp variable causes ~10% performance loss :( */\
-    const ptrdiff_t temp_modified = stack.modified - stack.items.start; \
-    stack.modified = stack.items.top; \
-    body \
-    if (docopy) copy_blocks(); \
-    stack.modified = temp_modified + stack.items.start; \
-  }
-
-#ifdef debug
-#define debug_printf(str, ...) \
-  fprintf(stderr, "[DEBUG] %s:%d -> "#str"\n", __FILE__, __LINE__, __VA_ARGS__);
-#else
-#define debug_printf(str, ...)
-#endif
-
-#define throw_error_fmt(fmtstr, ...) \
-{ \
-  char str[strlen(fmtstr) + sizeof(__VA_ARGS__)]; \
-  sprintf(str, fmtstr, __VA_ARGS__); \
-  throw_error(str); \
-}
-
-#define unlikely(expr) __builtin_expect((_Bool)(expr), 0)
-#define likely(expr)   __builtin_expect((_Bool)(expr), 1)
-
-#define PATH_MAX 4096
-static char exe_path[PATH_MAX+1];
-static char *exe_dir;
-static char *exe_name;
-
 #include <gc.h>
-#include <time.h>
+#include "cognate.h"
 #include "stack.c"
 #include "io.c"
 #include "error.c"
 #include "type.c"
+#include "func.c"
+#include <time.h>
 #include <sys/resource.h>
 #include <unistd.h>
-#include "func.c"
 #include <libgen.h>
+
 
 ssize_t readlink(const char *pathname, char *buf, size_t bufsiz);
 

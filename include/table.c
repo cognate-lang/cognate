@@ -1,10 +1,11 @@
 #ifndef table_c
 #define table_c
 
+#include "cognate.h"
 #include "type.c"
+#include <stdlib.h>
+#include <gc.h>
 
-#define TABLE_GROWTH_FACTOR 1.5
-#define MAX_TABLE_TRIES 3
 
 static unsigned long hash(const char*);
 static cognate_table table_add(unsigned long, cognate_object, cognate_table);

@@ -1,8 +1,9 @@
 #ifndef STACK_C
 #define STACK_C
 
-#include <stdio.h>
+#include "cognate.h"
 #include "type.c"
+#include <stdio.h>
 #include <stdlib.h>
 
 #define INITIAL_LIST_SIZE 16 // Constant values for initialising stack sizes.
