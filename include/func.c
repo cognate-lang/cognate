@@ -27,11 +27,12 @@ external_function(divisor,        { push(number, (1 / pop(number) * pop(number))
 external_function(difference,     { push(number, (-pop(number) + pop(number)));                        })
 external_function(modulo,         { int n = pop(number); push(number, (double)((int)pop(number) % n)); }) // TODO: add checking if integer.
 
-external_function(random,         { // This function is pretty broken.
-                                    double low = pop(number); double high = pop(number); double step = pop(number); 
-                                    if (high < low) { throw_error("Cannot generate random number in range!"); }
-                                    else if (high - low < step) { push(number, low); }
-                                    else { push(number, low + (double)(rand() % (int)((high - low) / step)) * step); } })
+external_function(random, { // This function is pretty broken.
+  double low = pop(number); double high = pop(number); double step = pop(number); 
+  if (high < low) { throw_error("Cannot generate random number in range!"); }
+  else if (high - low < step) { push(number, low); }
+  else { push(number, low + (double)(rand() % (int)((high - low) / step)) * step); } 
+})
 
 external_function(drop,           { pop_any();                                                                            }) // These can be defined within cognate.
 external_function(twin,           { push_any(peek_any());                                                                 })
@@ -42,10 +43,10 @@ external_function(clear,          { init_stack();                               
 external_variable(true,  boolean, 1)
 external_variable(false, boolean, 0)
 
-external_function(either, { _Bool a = pop(boolean); push(boolean, pop(boolean) || a);}) // Beware short circuiting.
-external_function(both,   { _Bool a = pop(boolean); push(boolean, pop(boolean) && a );})
+external_function(either, { _Bool a = pop(boolean); push(boolean, pop(boolean) || a);                              }) // Beware short circuiting.
+external_function(both,   { _Bool a = pop(boolean); push(boolean, pop(boolean) && a);                              })
 external_function(one_of, { _Bool a = pop(boolean); _Bool b = pop(boolean); push(boolean, (a && !b) || (!a && b)); })
-external_function(not,    { push(boolean, !pop(boolean)); })
+external_function(not,    { push(boolean, !pop(boolean));                                                          })
 
 
 external_function(equal,          { push(boolean,  compare_objects(pop_any(),pop_any())); })
@@ -55,11 +56,11 @@ external_function(exceed,         { push(boolean, pop(number) <  pop(number)); }
 external_function(equalorpreceed, { push(boolean, pop(number) >= pop(number)); })
 external_function(equalorexceed,  { push(boolean, pop(number) <= pop(number)); })
 
-external_function(number_,  {push(boolean, pop_any().type == number);}) // Question marks are converted to underscores.
-external_function(list_,    {push(boolean, pop_any().type == list);})   // However all other synbols are too.
-external_function(string_,  {push(boolean, pop_any().type == string);}) // So this is a temporary hack!
-external_function(block_,   {push(boolean, pop_any().type == block);})
-external_function(boolean_, {push(boolean, pop_any().type == boolean);})
+external_function(number_,  { push(boolean, pop_any().type == number);  }) // Question marks are converted to underscores.
+external_function(list_,    { push(boolean, pop_any().type == list);    })   // However all other synbols are too.
+external_function(string_,  { push(boolean, pop_any().type == string);  }) // So this is a temporary hack!
+external_function(block_,   { push(boolean, pop_any().type == block);   })
+external_function(boolean_, { push(boolean, pop_any().type == boolean); })
 
 external_function(discard, { 
   // O(n) where n is the number of element being Discarded.

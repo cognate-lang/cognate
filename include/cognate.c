@@ -13,7 +13,6 @@
 #include <unistd.h>
 #include <libgen.h>
 
-
 ssize_t readlink(const char *pathname, char *buf, size_t bufsiz);
 
 static char *stack_start;
@@ -29,7 +28,6 @@ static void get_params(int argc, char** argv)
     params.start[argc-1] = (cognate_object){.type=string, .string=str};
   }
 }
-
 
 static void init(int argc, char** argv)
 {
@@ -67,7 +65,6 @@ static cognate_object check_block(cognate_object obj)
   (obj.type==block) && (obj.block = Block_copy(obj.block));
   return obj;
 }
-
 
 static void copy_blocks()
 {
