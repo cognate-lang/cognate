@@ -15,7 +15,7 @@ do
   echo "Testing $binary_file..."
   # Compile
   #TODO: use -fsanitize=address when memory leaks are fixed
-  ./cognac tests/$source_file -O0 > /dev/null 2>&1
+  ./cognac tests/$source_file -O0 "$@" > /dev/null 2>&1
   # Check if file exists (successful compilation)
   cd tests
   if test -f $binary_file; then

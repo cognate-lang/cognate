@@ -331,12 +331,13 @@ external_function(values, {
 
 external_function(match, {
   // Returns true if string matches regex.
-  static char *old_str = NULL; // Can confirm_hash() return -1, if so this could be problematic.
+  static char *old_str = ""; // Can confirm_hash() return -1, if so this could be problematic.
   char        *reg_str = pop(string);
   static      regex_t reg;
-  if (old_str == NULL || strcmp(reg_str, old_str) != 0)
+  if (strcmp(reg_str, old_str) != 0)
   {
-    if (regcomp(&reg, reg_str, REG_EXTENDED))
+    regfree(&reg); // Apparently freeing an unallocated regex is fine.
+    if (regcomp(&reg, reg_str, REG_EXTENDED|REG_NEWLINE))
     {
       throw_error("Cannot compile invalid regular expression!"); 
     }
