@@ -60,6 +60,13 @@
     stack.modified = temp_modified + stack.items.start; \
   }
 
+#ifdef debug
+#define debug_printf(str, ...) \
+  fprintf(stderr, "[DEBUG] %s:%d -> "#str"\n", __FILE__, __LINE__, __VA_ARGS__);
+#else
+#define debug_printf(str, ...)
+#endif
+
 #define unlikely(expr) __builtin_expect((_Bool)(expr), 0)
 #define likely(expr)   __builtin_expect((_Bool)(expr), 1)
 
@@ -93,7 +100,6 @@ static void get_params(int argc, char** argv)
     char* str = argv[argc];
     params.start[argc-1] = (cognate_object){.type=string, .string=str};
   }
-
 }
 
 
@@ -108,15 +114,15 @@ static void init(int argc, char** argv)
   exe_name = basename(exe_path);
   exe_dir  = dirname(exe_path);
   // Seed the random number generator properly.
-#ifndef noGC
-  GC_INIT(); // Portability.
-#endif
   struct timespec ts;
   timespec_get(&ts, TIME_UTC);
   srand(ts.tv_nsec ^ ts.tv_sec);
   // Generate a stack.
   init_stack();
   get_params(argc, argv);
+#ifndef noGC
+  GC_INIT(); // Portability.
+#endif
 }
 
 static void cleanup()

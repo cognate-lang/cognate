@@ -26,7 +26,7 @@
     push(type, value); }
 
 #ifdef debug
-  #define call(name) {fprintf(stderr, "[DEBUG] %s:%d -> Calling %s\n", __FILE__, __LINE__, #name); cognate_function_ ## name();}
+  #define call(name) {debug_printf("Calling %s\n", #name); cognate_function_ ## name();}
 #else 
   #define call(name) {cognate_function_ ## name();}
 #endif

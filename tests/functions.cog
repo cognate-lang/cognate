@@ -4,7 +4,7 @@ Define Foo as
 ];
 
 If [Foo 4, == 5] [Print 'PASS: Function call and return']
-else                          [Print 'FAIL: Function call and return'];
+else             [Print 'FAIL: Function call and return'];
 
 Do [
   Define Foo as
