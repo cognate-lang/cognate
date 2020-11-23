@@ -212,6 +212,7 @@ parseinformalsyntax =
 
 parseImports :: String -> [Tree] -> [String] -> IO [Tree]
 
+-- TODO: Use strings to store import filepath, relative to currently compiling filepath.
 parseImports path (Leaf filename : Leaf "Import" : xs) imported =
     -- Don't import if its already been imported.
     if (case findIndex (== filename) imported of

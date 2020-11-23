@@ -54,7 +54,6 @@ static void cleanup()
 {
   if (unlikely(stack.items.top != stack.items.start))
   {
-    char err[58];
     throw_error_fmt("Program exiting with non-empty stack of length %lu", stack.items.top - stack.items.start);
   }
 }
