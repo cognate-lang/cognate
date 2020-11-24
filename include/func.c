@@ -10,8 +10,6 @@
 #include <math.h>
 
 
-static char file_name_buf[PATH_MAX+1];
-
 cognate_list params;
 
 external_function(do,             { pop(block)();                         })

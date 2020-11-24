@@ -13,6 +13,7 @@
 static char exe_path[PATH_MAX+1];
 static char *exe_dir;
 static char *exe_name;
+static char file_name_buf[PATH_MAX+1];
 
 #define program(body) \
   int main(int argc, char **argv) \
