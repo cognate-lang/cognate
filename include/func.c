@@ -127,7 +127,7 @@ external_function(characters, {
   lst->top = lst->start + strlen(str);
   for (int i = strlen(str); i >= 0; --i)
   {
-    // This segfaults with GC_cognate_malloc, but GC_cognate_malloc_ATOMIC seems to work.
+    // This segfaults with malloc, but malloc_atomic seems to work.
     // TODO: find out why this even works.
     char *temp = (char*) cognate_malloc_atomic (sizeof(char) * 2);
     temp[0] = str[i];
@@ -161,6 +161,7 @@ external_function(stack,
 
 external_function(if,
 {
+  // Remove blocks from stack, so cond() can access stack values.
   cognate_block cond    = pop(block);
   cognate_block ifTrue  = pop(block);
   cognate_block ifFalse = pop(block);
@@ -193,11 +194,12 @@ external_function(input, {
     *str++ = c; 
     if (temp + str_size == str)
     {
-      temp = cognate_realloc (temp, (str_size << 1));
+      temp = cognate_realloc (temp, (str_size * LIST_GROWTH_FACTOR));
       str = temp + str_size;
     }
   }
   *str = '\0';
+  temp = cognate_realloc (temp, str - temp + 1);
   push(string, temp);
 })
 
