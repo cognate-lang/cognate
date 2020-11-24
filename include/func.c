@@ -114,15 +114,8 @@ external_function(list,  {
   // Restore the original stack
   stack = temp_stack;
   long lst_len = lst->top - lst->start;
-  // If list is empty, don't bother.
-  if (!lst_len)
-  {
-    lst->start = NULL;
-    lst->top   = NULL;
-  } else {
-    lst->start = cognate_realloc(lst->start, lst_len * sizeof(cognate_object));
-    lst->top = lst->start + lst_len;
-  }
+  lst->start = cognate_realloc(lst->start, lst_len * sizeof(cognate_object));
+  lst->top = lst->start + lst_len;
   // Push the created list to the stack
   push(list, lst);
 })
