@@ -5,7 +5,7 @@ Define Factorial
     else [
       Product of X with ~~ Wow much verbose.
         Factorial of
-           Difference between 1 and X;
+          Difference between 1 and X;
   ]
 ];
 

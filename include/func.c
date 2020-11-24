@@ -230,7 +230,7 @@ external_function(number, {
 
 external_function(path, {
   // Get working directory path, TODO how to get exe path.
-  char cwd[PATH_MAX+1]; // Much too big.
+  static char cwd[PATH_MAX+1]; // Much too big.
   if (getcwd(cwd, sizeof(cwd)) == NULL)
     throw_error("Cannot get current directory!");
   char *small_cwd = (char*) cognate_malloc (sizeof(char) * strlen(cwd)); // Much better size.
@@ -261,6 +261,7 @@ external_function(stop, {
 external_function(table, {
   call(list);
   cognate_list init = *pop(list);
+  // The 2 on this line should probably be tuned or something.
   unsigned long table_size = ((init.top - init.start) * 2) + MIN_TABLE_SIZE;
   cognate_table *tab = (cognate_table*) cognate_malloc (sizeof(cognate_table)); // Need to allocate list here.
   tab->items.start = (cognate_object*) calloc (table_size, sizeof(cognate_object) * table_size);
