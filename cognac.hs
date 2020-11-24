@@ -247,7 +247,19 @@ parseImports _ [] _ = return []
 compile :: [Tree] -> String
 
 doesCall :: [Tree] -> String -> Bool
-expr `doesCall` func = func `elem` flatten expr
+
+(Node body : Leaf name : Leaf "Define" : xs) `doesCall` func
+  | xs `doesCall` name = xs `doesCall` func || body `doesCall` func
+  | otherwise = xs `doesCall` func
+
+(Leaf str : xs) `doesCall` func
+  | str == func = True
+  | otherwise = xs `doesCall` func
+
+(Node x : xs) `doesCall` func = xs `doesCall` func || x `doesCall` func
+
+_ `doesCall` _ = False
+
 
 callCount :: [Tree] -> String -> Int
 expr `callCount` func = length $ func `elemIndices` flatten expr
@@ -282,7 +294,6 @@ compile (Leaf "" : xs) = "" ++ compile xs
 
 compile (Node body : Leaf name : Leaf "Define" : xs) =
   -- Defines immutable and nonrecursive if function does not refer to itself in its body and 'Set' is not found in xs.
-  -- TODO: Search for 'Set (Name...)' as opposed to just 'Set'.
   if xs `doesCall` name then
     "function(" 
       ++ lc name ++ ", " 
@@ -290,7 +301,7 @@ compile (Node body : Leaf name : Leaf "Define" : xs) =
       ++ (if any isNode body then "copy," else "nocopy,") 
       ++ "{" 
         ++ compile body
-        ++ "});{"
+      ++ "});{"
     ++ compile xs ++
     "}\n" 
   else compile xs

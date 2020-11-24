@@ -1,3 +1,5 @@
+Import Builtin;
+
 Define Factorial
 [ Let X;
   If [X, == 0]
