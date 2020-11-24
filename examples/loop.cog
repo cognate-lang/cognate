@@ -1,3 +1,4 @@
-Import Example;
+Import Builtin;
 
+~~ This can be easily combined with the Range function is the range.cog example.
 [Print], For each in List [1,2,3,4,5,6,7,8,9];

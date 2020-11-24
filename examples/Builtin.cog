@@ -1,0 +1,142 @@
+Define Head as [Index 0];
+Define Tail as [Discard 1];
+Define Last as  [Let L, Index - 1 Length L of L];
+Define Tuple be [Let X, Let Y, List [X, Y]];
+Define When be [Let P, Let A, If P then A else []];
+
+Define For as
+[
+  Let Lst, Let Body;
+  When [Length of Lst, != 0]
+  [
+    push Head of Lst;
+    Do evaluate Body;
+    For each in Tail of Lst
+      Body;
+  ];
+];
+
+Define Range as
+[
+  Let A, Let B, Let S;
+  List from
+  [
+    Define Count as
+    [
+      Let X;
+      When [X, <= B]
+      [
+        return X; 
+        Count from + X S;
+      ];
+    ];
+    Count from A;
+  ];
+];
+
+Define Zip as
+[
+  Let List1;
+  Let List2;
+  List
+  [
+    For each in List2
+    [
+      get Head of List1;
+      Set List1 to Tail of List1;
+      make Tuple;
+    ];
+  ];
+];
+
+Define Integer?
+[ Let X;
+  X, == Floor X;
+];
+
+Define Reverse
+[
+  Let Lst;
+  If [Lst, Not Empty?]
+  [
+    Reverse Tail of Lst;
+    Append List[Head of Lst];
+  ]
+  else
+  [
+    Lst;
+  ]
+];
+
+Define Empty?
+[
+  Length, == 0
+];
+
+Define Filter
+[
+  Let Cond;
+  Let Lst;
+  List
+  [
+    For each in Lst
+    [
+      Let X; X;
+      When Cond
+      [
+        X;
+      ]
+    ]
+  ]
+];
+
+Define Split
+[
+  Let Cond;
+  Let Lst;
+  List
+  [
+    List [];
+    For each in Lst
+    [
+      Twin, Let X;
+      If Cond
+      [
+        List[];
+      ]
+      else
+      [
+        Append List [ X ]; 
+      ];
+    ];
+  ];
+  Filter [ Not Empty? ];
+];
+
+Define Map
+[
+  Let Expr;
+  Let Lst;
+  List [ For each in Lst do Expr ];
+];
+
+Define Whitespace?
+[ ~~ Returns true if that argument is a whitespace character.
+  Match '^[[:blank:]]$'
+];
+
+Define Lines
+[
+  get Characters;
+  Split when [ == '\n' ];
+  Map [ Join ];
+];
+
+Define Words
+[
+  get Characters;
+  Split when [ Whitespace? ];
+  Map [ Join ];
+];
+
+
