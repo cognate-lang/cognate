@@ -385,7 +385,7 @@ main =
   do
     args <- getArgs
     let compilerFlags = 
-          words "-fblocks -lBlocksRuntime -l:libgc.so -Ofast -s -I include -Wall -Wextra -Werror -Wpedantic -Wno-unused -std=c11 -lm"
+          words "-fblocks -lBlocksRuntime -l:libgc.so -Ofast -s -I include -Wall -Wextra -Werror -Wpedantic -Wno-unused -std=c11 -lm -g0"
     let in_file = head args
     let out_file = head (splitOn "." in_file) ++ ".c"
     let compiler_args = tail args
