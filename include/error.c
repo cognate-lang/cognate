@@ -13,8 +13,8 @@ char* function_name = NULL;
 
 noreturn static void throw_error(const char* message);
 
-noreturn static void type_error(const char* expected, const char* recieved);
-noreturn static void type_error(const char* expected, const char* recieved)
+noreturn static void type_error(const char* const expected, const char* const recieved);
+noreturn static void type_error(const char* const expected, const char* const recieved)
 {
   static char error_message[80];
   // In future, type errors should instead be 'expectation errors'.
@@ -44,7 +44,7 @@ noreturn static void throw_error(const char* message)
       function_name = "[FUNCTION NAME TOO LONG]";
     }
     printf("\342\224\202 \033[0;1mIn function '%c%s'...\033[0m", *function_name-32, function_name+1);
-    for (int j = 60-strlen(function_name); j>0; --j) printf(" ");
+    for (i = 60-strlen(function_name); i>0; --i) printf(" ");
     puts("\342\224\202");
   }
   int len = strlen(message);

@@ -14,7 +14,7 @@
 
 ssize_t readlink(const char *pathname, char *buf, size_t bufsiz);
 
-static char *stack_start;
+static const char *stack_start;
 static struct rlimit stack_max;
 
 static void get_params(int argc, char** argv)

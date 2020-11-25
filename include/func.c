@@ -58,12 +58,12 @@ external_function(boolean_, { push(boolean, pop_any().type == boolean); })
 
 external_function(discard, { 
   // O(n) where n is the number of element being Discarded.
-  double num = (int)pop(number);
-  long num_discarding = num;
+  const double num = pop(number);
+  const long num_discarding = num;
   if (num != num_discarding) throw_error_fmt("Cannot Discard a non-integer number of elements! (%.15g)", num);
   if (num_discarding < 0) throw_error_fmt("Cannot Discard a negative number of elements! (%li)", num_discarding);
-  cognate_list obj = *pop(list);
-  cognate_list *lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
+  const cognate_list obj = *pop(list);
+  cognate_list* const lst = (cognate_list* const) cognate_malloc (sizeof(cognate_list));
   *lst = obj;
   if ((lst->start += num_discarding) > lst->top) throw_error("List is too small to Discard from!");
   push(list, lst);
@@ -71,12 +71,12 @@ external_function(discard, {
 
 external_function(take, {
   // O(n) where n is the number of element being Taken.
-  double num = pop(number);
-  long num_taking = num;
+  const double num = pop(number);
+  const long num_taking = num;
   if (num != num_taking) throw_error_fmt("Cannot Take a non-integer number of elements! (%.15g)", num);
   if (num_taking < 0) throw_error_fmt("Cannot Take a negative number of elements! (%li)", num_taking);
   cognate_list obj = *pop(list);
-  cognate_list *lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
+  cognate_list* const lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
   *lst = obj;
   if (lst->start + num_taking > lst->top) throw_error_fmt ("List is too small to Take from! (length %lu)", lst->top - lst->start);
   lst->top = lst->start + num_taking;
@@ -84,24 +84,24 @@ external_function(take, {
 })
 
 external_function(index, { 
-  int index = pop(number);
-  cognate_list lst = *pop(list);
+  const int index = pop(number);
+  const cognate_list lst = *pop(list);
   if (lst.start + index >= lst.top)
     throw_error("List index out of bounds!");
   push_any(lst.start [index]);
 })
 
 external_function(length,{
-  cognate_list lst = *pop(list);
+  const cognate_list lst = *pop(list);
   push(number, (double)(lst.top - lst.start));
 })
 
 external_function(list,  { 
   // I solemnly swear that I will NEVER RETURN THE ADDRESS OF A LOCAL VARIABLE!
   // Get the block argument
-  cognate_block expr = pop(block);
+  const cognate_block expr = pop(block);
   // Move the stack to temporary storage
-  cognate_stack temp_stack = stack;
+  const cognate_stack temp_stack = stack;
   // Allocate a list as the stack
   init_stack();
   // Eval expr
@@ -111,7 +111,7 @@ external_function(list,  {
   *lst = stack.items;
   // Restore the original stack
   stack = temp_stack;
-  long lst_len = lst->top - lst->start;
+  const long lst_len = lst->top - lst->start;
   lst->start = cognate_realloc(lst->start, lst_len * sizeof(cognate_object));
   lst->top = lst->start + lst_len;
   // Push the created list to the stack
@@ -120,8 +120,8 @@ external_function(list,  {
 
 external_function(characters, {
   const char* const str = pop(string);
-  cognate_list* lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
-  long length = strlen(str);
+  cognate_list* const lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
+  const long length = strlen(str);
   lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * length);
   lst->top = lst->start + length;
   for (int i = length; i >= 0; --i)
@@ -138,9 +138,9 @@ external_function(characters, {
 
 external_function(join, {
   // Joins a list of strings into a single string.
-  cognate_list lst = *pop(list);
+  const cognate_list lst = *pop(list);
   long str_size = 0;
-  cognate_object *i;
+  const cognate_object *i;
   for (i = lst.start; i < lst.top; ++i)
   {
     str_size += strlen(check_type(string, *i).string);
@@ -161,21 +161,21 @@ external_function(stack,
 external_function(if,
 {
   // Remove blocks from stack, so cond() can access stack values.
-  cognate_block cond    = pop(block);
-  cognate_block ifTrue  = pop(block);
-  cognate_block ifFalse = pop(block);
+  const cognate_block cond    = pop(block);
+  const cognate_block ifTrue  = pop(block);
+  const cognate_block ifFalse = pop(block);
   cond();
   pop(boolean) ? ifTrue() : ifFalse();
 })
 
 external_function(append,
 {
-  cognate_list lst1 = *pop(list);
-  cognate_list lst2 = *pop(list);
-  int list1_len = lst1.top - lst1.start;
-  int list2_len = lst2.top - lst2.start;
-  int new_list_len = list1_len + list2_len;
-  cognate_list *lst = (cognate_list*) cognate_malloc (sizeof(cognate_list));
+  const cognate_list lst1 = *pop(list);
+  const cognate_list lst2 = *pop(list);
+  const size_t list1_len = lst1.top - lst1.start;
+  const size_t list2_len = lst2.top - lst2.start;
+  const size_t new_list_len = list1_len + list2_len;
+  cognate_list* const lst = (cognate_list* const) cognate_malloc (sizeof(cognate_list));
   lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * new_list_len);
   lst->top = lst->start + new_list_len;
   memcpy(lst->start, lst2.start, list2_len * sizeof(cognate_object));
@@ -195,6 +195,7 @@ external_function(input, {
     {
       temp = cognate_realloc (temp, (str_size * LIST_GROWTH_FACTOR));
       str = temp + str_size;
+      str_size *= LIST_GROWTH_FACTOR;
     }
   }
   *str = '\0';
@@ -211,7 +212,7 @@ external_function(read, {
   FILE *fp = fopen(file_name_buf, "r");
   if (fp == NULL) throw_error_fmt("Cannot open file '%s'. It probably doesn't exist.", file_name_buf);
   fseek(fp, 0L, SEEK_END);
-  size_t file_size = ftell(fp);
+  const size_t file_size = ftell(fp);
   fseek(fp, 0L, SEEK_SET);
   char* const file_data = (char* const) cognate_malloc (file_size * sizeof(char));
   fread(file_data, sizeof(char), file_size, fp);
@@ -242,7 +243,7 @@ external_function(write, {
   strcat(file_name_buf, exe_dir);
   strcat(file_name_buf, "/");
   strcat(file_name_buf, pop(string));
-  FILE *file = fopen(pop(string), "a"); 
+  FILE* const file = fopen(pop(string), "a"); 
   const char* const str = pop(string);
   fprintf(file, "%s", str);
   fclose(file);
@@ -259,16 +260,16 @@ external_function(stop, {
 
 external_function(table, {
   call(list);
-  cognate_list init = *pop(list);
+  const cognate_list init = *pop(list);
   // The 2 on this line should probably be tuned or something.
-  unsigned long table_size = ((init.top - init.start) * 2) + MIN_TABLE_SIZE;
-  cognate_table *tab = (cognate_table*) cognate_malloc (sizeof(cognate_table)); // Need to allocate list here.
+  const unsigned long table_size = ((init.top - init.start) * 2) + MIN_TABLE_SIZE;
+  cognate_table* const tab = (cognate_table*) cognate_malloc (sizeof(cognate_table)); // Need to allocate list here.
   tab->items.start = (cognate_object*) calloc (table_size, sizeof(cognate_object) * table_size);
   tab->items.top = tab->items.start + table_size;
   tab->confirmation_hash = (long unsigned int*) cognate_malloc (sizeof(long unsigned int) * table_size);
   const char *key;
   cognate_object value;
-  for (cognate_object *i = init.start; i < init.top - 1; i += 2)
+  for (const cognate_object *i = init.start; i < init.top - 1; i += 2)
   {
     key = check_type(string, *(i+1)).string;
     value = *i;
@@ -280,8 +281,8 @@ external_function(table, {
 external_function(insert, {
   // O(n) :(
   const char* const key = pop(string);
-  cognate_object value = pop_any();
-  cognate_table *tab = (cognate_table*) cognate_malloc (sizeof(cognate_table));
+  const cognate_object value = pop_any();
+  cognate_table* const tab = (cognate_table*) cognate_malloc (sizeof(cognate_table));
   *tab = table_add(hash(key), value, table_copy(*pop(table)));
   push(table, tab);
 })
@@ -289,14 +290,14 @@ external_function(insert, {
 external_function(get, {
   // O(1) mostly;
   const char* const key = pop(string);
-  cognate_table tab = *pop(table);
+  const cognate_table tab = *pop(table);
   push_any(table_get(key, tab));
 })
 
 external_function(values, {
   // O(n)
-  cognate_table tab = *pop(table);
-  cognate_list *lst = (cognate_list*) cognate_malloc (sizeof(cognate_list));
+  const cognate_table tab = *pop(table);
+  cognate_list* const lst = (cognate_list*) cognate_malloc (sizeof(cognate_list));
   const long table_size = tab.items.top - tab.items.start;
   lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * table_size);
   int j = 0;
@@ -326,7 +327,7 @@ external_function(match, {
     old_str = reg_str; /* This should probably be strcpy, but I trust that reg_str is either
                           allocated with the garbage collector, or read only in the data segment. */
   }
-  int found = regexec(&reg, pop(string), 0, NULL, 0);
+  const int found = regexec(&reg, pop(string), 0, NULL, 0);
   if (unlikely(found != 0 && found != REG_NOMATCH))
   {
     throw_error_fmt("Regex match error! (%s)", reg_str);
@@ -345,8 +346,8 @@ external_function(ordinal, {
 })
 
 external_function(character, {
-  double d = pop(number);
-  long i = d;
+  const double d = pop(number);
+  const long i = d;
   if (unlikely(i != d))           throw_error_fmt("Cannot convert non-integer (%.15g) to ASCII character!", d);
   if (unlikely(i < 0 || i > 255)) throw_error_fmt("Value (%li) is not in ASCII character range!", i);
   char* const str = (char* const) cognate_malloc (sizeof(char) * 2);
@@ -358,7 +359,7 @@ external_function(character, {
 external_function(parsenumber,
 {
   const char* const str = pop(string);
-  double num;
+  const double num;
   push(number, atof(str));
 })
 
@@ -380,7 +381,7 @@ external_function(ceiling,
 external_function(assert,
 {
   const char* const name = pop(string);
-  _Bool cond = pop(boolean);
+  const _Bool cond = pop(boolean);
   if (unlikely(!cond))
   {
     throw_error_fmt("Assertion '%s' has failed!", name);
