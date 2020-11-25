@@ -5,6 +5,8 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
+failed=0
+
 # Iterate over files to test
 for file_name in $(ls tests | grep .cog | cut -f 1 -d '.')
 do
@@ -30,8 +32,15 @@ do
   if [[ $(grep '^PASS:' $log_file) == $(<$log_file) ]]; then
     echo -e "${GREEN} Pass ${NC}"
   else
+    ((failed++))
     echo -e "${RED} Fail ${NC}"
   fi
 done
+
+if [[ $failed > 0 ]]; then
+  echo -e "${RED}${failed} tests failed!${NC}"
+else
+  echo -e "${GREEN}All tests passed!${NC}"
+fi
 
 rm /tmp/cognac.log
