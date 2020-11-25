@@ -7,7 +7,7 @@
 
 
 static void init_stack();
-static void push_any(cognate_object);
+static void push_any(const cognate_object);
 static cognate_object pop_any();
 static cognate_object peek_any();
 static void expand_stack();
@@ -29,7 +29,7 @@ static void init_stack()
   stack.modified = stack.items.top = stack.items.start = (cognate_object*) cognate_malloc ((stack.size = INITIAL_LIST_SIZE) * sizeof(cognate_object));
 }
 
-static void push_any(cognate_object object)
+static void push_any(const cognate_object object)
 {
   // Profiles says that this function is The Problem.
   // builtin_expect optimises because the stack hardly ever needs to expand.

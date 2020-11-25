@@ -5,9 +5,9 @@
 #include "type.c"
 #include <stdio.h>
 
-static void print_object (cognate_object object, _Bool quotes);
+static void print_object (const cognate_object object, const _Bool quotes);
 
-static void print_object (cognate_object object, _Bool quotes)
+static void print_object (const cognate_object object, const _Bool quotes)
 {
   switch (object.type)
   {
@@ -18,7 +18,7 @@ static void print_object (cognate_object object, _Bool quotes)
     // TODO should show newlines as \n when in quotes mode.
     case string: printf(quotes ? "%s" : "\'%s\'", object.string); break;
     case list  : { 
-                   cognate_list lst = *object.list;
+                   const cognate_list lst = *object.list;
                    printf("[");
                    for (cognate_object *i = lst . start; i != lst . top; ++i)
                    {

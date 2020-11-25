@@ -45,7 +45,7 @@ struct cognate_object
     _Bool boolean;                 // 1bit  bool
     cognate_block block;           // 64bit pointer
     double number;                 // 64bit float
-    const struct cognate_list *list;   // 64bit pointer
+    const struct cognate_list  *list;   // 64bit pointer
     const struct cognate_table *table; // 64bit pointer
   };
   cognate_type type : 16;

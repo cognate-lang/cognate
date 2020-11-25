@@ -8,10 +8,10 @@
 
 
 static unsigned long hash(const char*);
-static cognate_table table_add(unsigned long, cognate_object, cognate_table);
-static cognate_object table_get(const char* const, cognate_table);
-static cognate_table table_grow(cognate_table);
-static cognate_table table_copy(cognate_table tab);
+static cognate_table table_add(const unsigned long, const cognate_object, cognate_table);
+static cognate_object table_get(const char* const, const cognate_table);
+static cognate_table table_grow(const cognate_table);
+static cognate_table table_copy(const cognate_table tab);
 
 static unsigned long hash(const char *str)
 {
@@ -24,7 +24,7 @@ static unsigned long hash(const char *str)
 }
 
 
-static cognate_table table_add(unsigned long key_hash, cognate_object value, cognate_table tab)
+static cognate_table table_add(const unsigned long key_hash, const cognate_object value, cognate_table tab)
 {
   // TODO: find out if this actually works.
   unsigned long table_size = tab.items.top - tab.items.start;
@@ -51,7 +51,7 @@ static cognate_table table_add(unsigned long key_hash, cognate_object value, cog
   }
 }
 
-static cognate_object table_get(const char* const key, cognate_table tab)
+static cognate_object table_get(const char* const key, const cognate_table tab)
 {
   const unsigned long table_size = tab.items.top - tab.items.start;
   const unsigned long key_hash  = hash(key);
@@ -67,7 +67,7 @@ static cognate_object table_get(const char* const key, cognate_table tab)
   throw_error("Cannot find key in table!");
 }
 
-static cognate_table table_grow(cognate_table tab)
+static cognate_table table_grow(const cognate_table tab)
 {
   const long table_size = tab.items.top - tab.items.start;
   const long new_table_size = table_size * TABLE_GROWTH_FACTOR;
@@ -86,7 +86,7 @@ static cognate_table table_grow(cognate_table tab)
   return tab2;
 }
 
-static cognate_table table_copy(cognate_table tab)
+static cognate_table table_copy(const cognate_table tab)
 {
   // Tables are copy on write.
   // This means performance of Insert function is pretty bad.
