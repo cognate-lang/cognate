@@ -5,14 +5,21 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
+# Counter storing total tests failed
 failed=0
+# Counter storing total tests passed
+passed=0
 
 # Iterate over files to test
 for file_name in $(ls tests | grep .cog | cut -f 1 -d '.')
 do
+  # file.cog
   source_file="tests/${file_name}.cog"
+  # file
   binary_file="tests/${file_name}"
+  # file.log
   log_file="tests/${file_name}.log"
+  # $-12s pads with spaces
   printf 'Testing %-12s' $file_name'...'
   # Clear log file
   > $log_file
@@ -25,13 +32,16 @@ do
   else
     # File not exists is error
     echo "FAIL: '$file_name' does not compile!" >> $log_file
-    # If it doesn't compile, put compiler errors in log.
+    # If it doesn't compile, put compiler errors in log
     cat /tmp/cognac.log >> $log_file
   fi
   # Check if any tests failed
   if [[ $(grep '^PASS:' $log_file) == $(<$log_file) ]]; then
+    # If all tests passed
+    ((passed++))
     echo -e "${GREEN} Pass ${NC}"
   else
+    # If all tests failed
     ((failed++))
     echo -e "${RED} Fail ${NC}"
   fi
@@ -40,7 +50,7 @@ done
 if [[ $failed > 0 ]]; then
   echo -e "${RED}${failed} tests failed!${NC}"
 else
-  echo -e "${GREEN}All tests passed!${NC}"
+  echo -e "${GREEN}All ${passed} tests passed!${NC}"
 fi
 
 rm /tmp/cognac.log
