@@ -119,15 +119,16 @@ external_function(list,  {
 })
 
 external_function(characters, {
-  char* str = pop(string);
+  const char* const str = pop(string);
   cognate_list* lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
-  lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * strlen(str));
-  lst->top = lst->start + strlen(str);
-  for (int i = strlen(str); i >= 0; --i)
+  long length = strlen(str);
+  lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * length);
+  lst->top = lst->start + length;
+  for (int i = length; i >= 0; --i)
   {
     // This segfaults with malloc, but malloc_atomic seems to work.
     // TODO: find out why this even works.
-    char *temp = (char*) cognate_malloc_atomic (sizeof(char) * 2);
+    char* const temp = (char*) cognate_malloc_atomic (sizeof(char) * 2);
     temp[0] = str[i];
     temp[1] = '\0';
     lst->start[i] = ((cognate_object){.type=string, .string=temp});
@@ -144,7 +145,7 @@ external_function(join, {
   {
     str_size += strlen(check_type(string, *i).string);
   }
-  char* str = (char*) cognate_malloc (sizeof(char) * (str_size));
+  char* const str = (char*) cognate_malloc (sizeof(char) * (str_size));
   for (i = lst.start; i < lst.top; ++i)
   {
     strcat(str, i->string);
@@ -212,7 +213,7 @@ external_function(read, {
   fseek(fp, 0L, SEEK_END);
   size_t file_size = ftell(fp);
   fseek(fp, 0L, SEEK_SET);
-  char* file_data = (char*) cognate_malloc (file_size * sizeof(char));
+  char* const file_data = (char* const) cognate_malloc (file_size * sizeof(char));
   fread(file_data, sizeof(char), file_size, fp);
   fclose(fp);
   file_data[file_size-1] = '\0'; // Remove trailing newline (for easier splitting, printing, etc).
@@ -222,7 +223,7 @@ external_function(read, {
 
 external_function(number, {
   // casts string to number. 
-  char* str = pop(string);
+  const char* const str = pop(string);
   push(number, (double)strtof(str, NULL)); // strtof uses floats instead of doubles, prepare for rounding error.
 })
 
@@ -231,7 +232,7 @@ external_function(path, {
   static char cwd[PATH_MAX+1]; // Much too big.
   if (getcwd(cwd, sizeof(cwd)) == NULL)
     throw_error("Cannot get current directory!");
-  char *small_cwd = (char*) cognate_malloc (sizeof(char) * strlen(cwd)); // Much better size.
+  char* small_cwd = (char*) cognate_malloc (sizeof(char) * strlen(cwd)); // Much better size.
   strcpy(small_cwd, cwd);
   push(string, small_cwd);
 })
@@ -242,7 +243,7 @@ external_function(write, {
   strcat(file_name_buf, "/");
   strcat(file_name_buf, pop(string));
   FILE *file = fopen(pop(string), "a"); 
-  char *str = pop(string);
+  const char* const str = pop(string);
   fprintf(file, "%s", str);
   fclose(file);
 })
@@ -265,7 +266,7 @@ external_function(table, {
   tab->items.start = (cognate_object*) calloc (table_size, sizeof(cognate_object) * table_size);
   tab->items.top = tab->items.start + table_size;
   tab->confirmation_hash = (long unsigned int*) cognate_malloc (sizeof(long unsigned int) * table_size);
-  char *key;
+  const char *key;
   cognate_object value;
   for (cognate_object *i = init.start; i < init.top - 1; i += 2)
   {
@@ -278,7 +279,7 @@ external_function(table, {
 
 external_function(insert, {
   // O(n) :(
-  char *key = pop(string);
+  const char* const key = pop(string);
   cognate_object value = pop_any();
   cognate_table *tab = (cognate_table*) cognate_malloc (sizeof(cognate_table));
   *tab = table_add(hash(key), value, table_copy(*pop(table)));
@@ -287,7 +288,7 @@ external_function(insert, {
 
 external_function(get, {
   // O(1) mostly;
-  char *key = pop(string);
+  const char* const key = pop(string);
   cognate_table tab = *pop(table);
   push_any(table_get(key, tab));
 })
@@ -312,9 +313,9 @@ external_function(values, {
 
 external_function(match, {
   // Returns true if string matches regex.
-  static char *old_str = ""; // Can confirm_hash() return -1, if so this could be problematic.
-  char        *reg_str = pop(string);
-  static      regex_t reg;
+  static const char *old_str = ""; // Can confirm_hash() return -1, if so this could be problematic.
+  const char* const reg_str = pop(string);
+  static regex_t reg;
   if (strcmp(reg_str, old_str) != 0)
   {
     regfree(&reg); // Apparently freeing an unallocated regex is fine.
@@ -335,7 +336,7 @@ external_function(match, {
 })
 
 external_function(ordinal, {
-  char *str = pop(string);
+  const char* const str = pop(string);
   if (unlikely(strlen(str) != 1))
   {
     throw_error_fmt("Ordinal requires string of length 1. String '%s' is not of length 1!", str);
@@ -348,7 +349,7 @@ external_function(character, {
   long i = d;
   if (unlikely(i != d))           throw_error_fmt("Cannot convert non-integer (%.15g) to ASCII character!", d);
   if (unlikely(i < 0 || i > 255)) throw_error_fmt("Value (%li) is not in ASCII character range!", i);
-  char *str = (char*) cognate_malloc (sizeof(char) * 2);
+  char* const str = (char* const) cognate_malloc (sizeof(char) * 2);
   str[0] = i;
   str[1] = '\0';
   push(string, str);
@@ -356,7 +357,7 @@ external_function(character, {
 
 external_function(parsenumber,
 {
-  char *str = pop(string);
+  const char* const str = pop(string);
   double num;
   push(number, atof(str));
 })
@@ -378,11 +379,10 @@ external_function(ceiling,
 
 external_function(assert,
 {
-  char *name = pop(string);
+  const char* const name = pop(string);
   _Bool cond = pop(boolean);
   if (unlikely(!cond))
   {
-    char *err = (char*)cognate_malloc(strlen(name) * sizeof(char));
     throw_error_fmt("Assertion '%s' has failed!", name);
   }
 })

@@ -57,7 +57,7 @@ static void expand_stack()
 {
   // New stack size = current stack size * growth factor.
 
-  debug_printf("Expanding stack from length %lu to %lu\n", stack.size, (size_t)(stack.size * LIST_GROWTH_FACTOR)); 
+  debug_printf("Expanding stack from length %ti to %ti\n", stack.size, (ptrdiff_t)(stack.size * LIST_GROWTH_FACTOR)); 
  
   ptrdiff_t temp = stack.modified - stack.items.start;
   stack.items.start = (cognate_object*) cognate_realloc (stack.items.start, (size_t)(stack.size * LIST_GROWTH_FACTOR * sizeof(cognate_object)));

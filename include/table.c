@@ -9,7 +9,7 @@
 
 static unsigned long hash(const char*);
 static cognate_table table_add(unsigned long, cognate_object, cognate_table);
-static cognate_object table_get(char*, cognate_table);
+static cognate_object table_get(const char* const, cognate_table);
 static cognate_table table_grow(cognate_table);
 static cognate_table table_copy(cognate_table tab);
 
@@ -51,7 +51,7 @@ static cognate_table table_add(unsigned long key_hash, cognate_object value, cog
   }
 }
 
-static cognate_object table_get(char* key, cognate_table tab)
+static cognate_object table_get(const char* const key, cognate_table tab)
 {
   const unsigned long table_size = tab.items.top - tab.items.start;
   const unsigned long key_hash  = hash(key);

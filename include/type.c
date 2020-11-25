@@ -43,7 +43,7 @@ struct cognate_object
 {
   union
   {
-    char* string;                  // 64bit pointer
+    const char* string;            // 64bit pointer
     _Bool boolean;                 // 1bit  bool
     cognate_block block;           // 64bit pointer
     double number;                 // 64bit float

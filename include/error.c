@@ -44,7 +44,7 @@ noreturn static void throw_error(const char* message)
       function_name = "[FUNCTION NAME TOO LONG]";
     }
     printf("\342\224\202 \033[0;1mIn function '%c%s'...\033[0m", *function_name-32, function_name+1);
-    for (int i = 60-strlen(function_name); i>0; --i) printf(" ");
+    for (int j = 60-strlen(function_name); j>0; --j) printf(" ");
     puts("\342\224\202");
   }
   int len = strlen(message);
