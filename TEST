@@ -24,7 +24,7 @@ do
   # Clear log file
   rm $log_file
   # Compile
-  ./cognac $source_file -Og "$@" > /tmp/cognac.log 2>&1
+  ./cognac $source_file -O0 "$@" > /tmp/cognac.log 2>&1
   # Check if file exists (successful compilation)
   if test -f $binary_file; then
     # Run - outputting to logfile
