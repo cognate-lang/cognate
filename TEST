@@ -11,7 +11,7 @@ do
   source_file="tests/${file_name}.cog"
   binary_file="tests/${file_name}"
   log_file="tests/${file_name}.log"
-  echo -n "Testing $file_name..."
+  printf 'Testing %-12s' $file_name'...'
   # Clear log file
   > $log_file
   # Compile
