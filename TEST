@@ -5,38 +5,33 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
-# Clear log file
-> tests/log.txt
-
 # Iterate over files to test
-for source_file in $(ls tests | grep .cog)
+for file_name in $(ls tests | grep .cog | cut -f 1 -d '.')
 do
-  binary_file=$(echo $source_file | cut -f 1 -d '.')
-  echo "Testing $binary_file..."
+  source_file="tests/${file_name}.cog"
+  binary_file="tests/${file_name}"
+  log_file="tests/${file_name}.log"
+  echo -n "Testing $file_name..."
+  # Clear log file
+  > $log_file
   # Compile
-  #TODO: use -fsanitize=address when memory leaks are fixed
-  ./cognac tests/$source_file -O0 "$@" > /dev/null 2>&1
+  ./cognac $source_file -O0 "$@" > /tmp/cognac.log 2>&1
   # Check if file exists (successful compilation)
-  cd tests
   if test -f $binary_file; then
     # Run - outputting to logfile
-    echo "PASS: $source_file compiles successfully" >> log.txt
-    { ./$binary_file; } 2>>log.txt 1>&2 # Segfaults will also be redirected to logfile
-    rm $binary_file
+    { ./$binary_file; } 2>>$log_file 1>&2 # Segfaults will also be redirected to logfile
   else
     # File not exists is error
-    echo "FAIL: $source_file does not compile!" >> log.txt
+    echo "FAIL: '$file_name' does not compile!" >> $log_file
+    # If it doesn't compile, put compiler errors in log.
+    cat /tmp/cognac.log >> $log_file
   fi
-  cd ..
+  # Check if any tests failed
+  if [[ $(grep '^PASS:' $log_file) == $(<$log_file) ]]; then
+    echo -e "${GREEN} Pass ${NC}"
+  else
+    echo -e "${RED} Fail ${NC}"
+  fi
 done
 
-# Number of tests failed
-while IFS= read -r line;
-do
-  if [[ ! $line == PASS:* ]]; then
-    echo -e "${RED}Some tests failed! See log.txt.${NC}"
-    exit
-  fi
-done < ./tests/log.txt
-
-echo -e "${GREEN}All tests passed!${NC}"
+rm /tmp/cognac.log
