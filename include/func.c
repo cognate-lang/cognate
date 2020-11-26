@@ -12,9 +12,9 @@
 
 cognate_list params;
 
-external_function(do,             { pop(block)();                         })
-external_function(put,            { print_object(pop_any(), 1);           })
-external_function(print,          { print_object(pop_any(), 1); puts(""); })
+external_function(do,             { pop(block)();                               })
+external_function(put,            { print_object(pop_any(), 1); fflush(stdout); })
+external_function(print,          { print_object(pop_any(), 1); puts("");       })
 
 external_function(sum,            { push(number, pop(number) + pop(number));                           })
 external_function(product,        { push(number, pop(number) * pop(number));                           })
