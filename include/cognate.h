@@ -82,9 +82,9 @@ static char file_name_buf[PATH_MAX+1];
   }
 
 #ifndef noGC
-  #define cognate_malloc  GC_MALLOC
-  #define cognate_realloc GC_REALLOC
-  #define cognate_malloc_atomic GC_MALLOC_ATOMIC
+  #define cognate_malloc  GC_malloc_ignore_off_page
+  #define cognate_realloc GC_realloc
+  #define cognate_malloc_atomic GC_malloc_atomic_ignore_off_page
 #else
   #define cognate_malloc malloc
   #define cognate_realloc realloc
