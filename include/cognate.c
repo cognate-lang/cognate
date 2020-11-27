@@ -41,13 +41,14 @@ static void init(int argc, char** argv)
   // Seed the random number generator properly.
   struct timespec ts;
   timespec_get(&ts, TIME_UTC);
-  srand(ts.tv_nsec ^ ts.tv_sec);
+  srand(ts.tv_nsec ^ ts.tv_sec); // TODO make random more random.
+  // Init GC
+#ifndef noGC
+  GC_INIT();
+#endif
   // Generate a stack.
   init_stack();
   get_params(argc, argv);
-#ifndef noGC
-  GC_INIT(); // Portability.
-#endif
 }
 
 static void cleanup()
