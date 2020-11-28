@@ -6,7 +6,7 @@
 #define TABLE_GROWTH_FACTOR 1.5
 #define MAX_TABLE_TRIES 3
 #define PATH_MAX 4096
-#define INITIAL_INPUT_SIZE 64
+#define INITIAL_READ_SIZE 64
 #define MIN_TABLE_SIZE 2
 #define INITIAL_LIST_SIZE 16 // Constant values for initialising stack sizes.
 #define LIST_GROWTH_FACTOR 1.5

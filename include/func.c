@@ -219,7 +219,7 @@ external_function(append,
 external_function(input, {
   // TODO: use getline() here.
   char *line = NULL;
-  size_t chars = INITIAL_INPUT_SIZE;
+  size_t chars = INITIAL_READ_SIZE;
   size_t size = getline(&line, &chars, stdin);
   line[size-1] = '\0'; // Remove trailing newline.
   push(string, line);
@@ -233,14 +233,12 @@ external_function(read, {
   strcat(file_name_buf, pop(string));
   FILE *fp = fopen(file_name_buf, "r");
   if (fp == NULL) throw_error_fmt("Cannot open file '%s'. It probably doesn't exist.", file_name_buf);
-  fseek(fp, 0L, SEEK_END);
-  const size_t file_size = ftell(fp);
-  fseek(fp, 0L, SEEK_SET);
-  char* const file_data = (char* const) cognate_malloc (file_size * sizeof(char));
-  fread(file_data, sizeof(char), file_size, fp);
+  char *text = NULL;
+  size_t chars = INITIAL_READ_SIZE;
+  size_t size = getdelim(&text, &chars, EOF, fp);
   fclose(fp);
-  file_data[file_size-1] = '\0'; // Remove trailing newline (for easier splitting, printing, etc).
-  push(string, file_data);
+  text[size-1] = '\0'; // Remove trailing eof.
+  push(string, text);
   // TODO: single line (or delimited) file reading for better IO performance?
 })
 
