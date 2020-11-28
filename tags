@@ -63,6 +63,7 @@ function	include/cognate.h	34;"	d
 function_name	include/error.c	/^char* function_name = NULL;$/;"	v
 get_params	include/cognate.c	/^static void get_params(int argc, char** argv)$/;"	f	file:
 hash	include/table.c	/^static unsigned long hash(const char *str)$/;"	f	file:
+if_status	include/func.c	/^static _Bool if_status = 0;$/;"	v	file:
 immutable	include/cognate.h	28;"	d
 init	include/cognate.c	/^static void init(int argc, char** argv)$/;"	f	file:
 init_stack	include/stack.c	/^static void init_stack()$/;"	f	file:
@@ -80,7 +81,7 @@ nocopy	include/cognate.h	31;"	d
 noreturn	include/error.c	10;"	d	file:
 number	include/type.c	/^    double number;                 \/\/ 64bit float$/;"	m	union:cognate_object::__anon2	file:
 number	include/type.c	/^  number, $/;"	e	enum:__anon1	file:
-params	include/func.c	/^cognate_list params;$/;"	v
+params	include/func.c	/^static cognate_list params;$/;"	v	file:
 peek	include/cognate.h	124;"	d
 peek_any	include/stack.c	/^static cognate_object peek_any()$/;"	f	file:
 pop	include/cognate.h	121;"	d
