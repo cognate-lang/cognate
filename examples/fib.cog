@@ -1,11 +1,12 @@
 Define Fib ~~ Calculate the Nth fibonacci number.
 [ Let N;
-  If [2, > N]
-    then [1]
-    else [
-     Sum
-        Fib of - 1 N with
-        Fib of - 2 N
+  If [2, > N] [
+    1
+  ];
+  Else [
+    Sum
+      Fib of - 1 N
+      Fib of - 2 N
   ]
 ];
 

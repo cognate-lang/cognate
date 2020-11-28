@@ -1,31 +1,55 @@
-If [Sum of 5 and 6, == 11]
-   [Print 'PASS: Addition']
-   [Print 'FAIL: Addition'];
+If [Sum of 5 and 6, == 11] [
+  Print 'PASS: Addition'
+];
+Else [
+  Print 'FAIL: Addition'
+];
 
-If [Difference between 10 and 19, == 9]
-   [Print 'PASS: Subtraction']
-   [Print 'FAIL: Subtraction'];
+If [Difference between 10 and 19, == 9] [
+  Print 'PASS: Subtraction'
+];
+Else [
+  Print 'FAIL: Subtraction'
+];
 
-If [Product of 9 and 8, == 72] 
-   [Print 'PASS: Multiplication']
-   [Print 'FAIL: Multiplication'];
+If [Product of 9 and 8, == 72] [
+  Print 'PASS: Multiplication'
+];
+Else [
+  Print 'FAIL: Multiplication'
+];
 
-If [Divisor by 7 of 42, == 6]
-   [Print 'PASS: Division']
-   [Print 'FAIL: Division'];
+If [Divisor by 7 of 42, == 6] [
+  Print 'PASS: Division'
+];
+Else [
+  Print 'FAIL: Division'
+];
 
-If [Modulo by 3 of 10, == 1]
-   [Print 'PASS: Modulus']
-   [Print 'FAIL: Modulus'];
+If [Modulo by 3 of 10, == 1] [
+  Print 'PASS: Modulus'
+];
+Else [
+  Print 'FAIL: Modulus'
+];
 
-If [Floor 4.7, == 4]
-   [Print 'PASS: Floor']
-   [Print 'FAIL: Floor'];
+If [Floor 4.7, == 4] [
+  Print 'PASS: Floor'
+];
+Else [
+  Print 'FAIL: Floor'
+];
 
-If [Ceiling 4.3, == 5]
-   [Print 'PASS: Ceiling']
-   [Print 'FAIL: Ceiling'];
+If [Ceiling 4.3, == 5] [
+  Print 'PASS: Ceiling'
+];
+Else [
+  Print 'FAIL: Ceiling'
+];
 
-If [Round 4.7, == 5]
-   [Print 'PASS: Round']
-   [Print 'FAIL: Round'];
+If [Round 4.7, == 5] [
+  Print 'PASS: Round'
+];
+Else [
+  Print 'FAIL: Round'
+];

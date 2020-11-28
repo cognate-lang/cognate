@@ -10,7 +10,9 @@
 #include <math.h>
 
 
-cognate_list params;
+static cognate_list params;
+
+static _Bool if_status = 0;
 
 external_function(do,             { pop(block)();                               })
 external_function(put,            { print_object(pop_any(), 1); fflush(stdout); })
@@ -162,11 +164,39 @@ external_function(stack,
 external_function(if,
 {
   // Remove blocks from stack, so cond() can access stack values.
-  const cognate_block cond    = pop(block);
-  const cognate_block ifTrue  = pop(block);
-  const cognate_block ifFalse = pop(block);
+  const cognate_block cond = pop(block);
+  const cognate_block expr = pop(block);
   cond();
-  pop(boolean) ? ifTrue() : ifFalse();
+  if (pop(boolean))
+  {
+    expr();
+    if_status = 0;
+    return;
+  }
+  if_status = 1;
+})
+
+external_function(else,
+{
+  const cognate_block expr = pop(block);
+  if (if_status)
+  {
+    expr(); 
+  }
+})
+
+external_function(else_if,
+{
+  const cognate_block cond = pop(block);
+  const cognate_block expr = pop(block);
+  cond();
+  if (pop(boolean) && if_status)
+  {
+    expr();
+    if_status = 0;
+    return;
+  }
+  if_status = 1;
 })
 
 external_function(append,

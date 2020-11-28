@@ -2,16 +2,19 @@ Import Builtin;
 
 Define Factorial
 [ Let X;
-  If [X, == 0]
-    then [1]
-    else [
-      Product of X with ~~ Wow much verbose.
-        Factorial of
-          Difference between 1 and X;
+  If [X, == 0] [
+    1
+  ];
+  Else [
+    Product of X with ~~ Wow much verbose.
+      Factorial of
+        Difference between 1 and X;
   ]
 ];
 
-Print 'Enter an integer:';
+Put 'Enter an integer: ';
 Input, ParseNumber, Twin;
 Assert 'Input is an integer' Integer?;
+ ~~ Syntax highlighter breaks here, but actual parser is fine
+Put 'It\'s factorial is... ';
 Print the Factorial;

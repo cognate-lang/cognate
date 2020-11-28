@@ -3,8 +3,12 @@ Define Foo as
   Sum with 1;
 ];
 
-If [Foo 4, == 5] [Print 'PASS: Function call and return']
-else             [Print 'FAIL: Function call and return'];
+If [Foo 4, == 5] [
+  Print 'PASS: Function call and return'
+];
+Else [
+  Print 'FAIL: Function call and return'
+];
 
 Do [
   Define Foo as
@@ -12,46 +16,38 @@ Do [
     Sum with 2;
   ];
 
-  If [Foo 5, == 7] [Print 'PASS: Function shadowing']
-  else             [Print 'FAIL: Function shadowing'];
-];
-
-If [Foo 7, == 8] [Print 'PASS: Function shadowing in block']
-else             [Print 'FAIL: Function shadowing in block'];
-
-~ ~~ TODO: Function mutation?
-Do [
-  Set [Foo of X] be
-  [
-    return Sum of X and 3;
+  If [Foo 5, == 7] [
+    Print 'PASS: Function shadowing'
   ];
-
-  If [Foo 8, == 11] [Print 'PASS: Function modification']
-  else              [Print 'FAIL: Function modification'];
+  Else [
+    Print 'FAIL: Function shadowing'
+  ];
 ];
 
-
-If [Foo 11, == 14] [Print 'PASS: Function modification in block']
-else               [Print 'FAIL: Function modification in block'];
-~
+If [Foo 7, == 8] [
+  Print 'PASS: Function shadowing in block'
+];
+Else [
+  Print 'FAIL: Function shadowing in block'
+];
 
 Let Recurred be False;
 Define Bar as
 [
-  If [== 0] 
-  [
+  If [== 0] [
     Set Recurred to True;
-  ]
-  [
+  ];
+  Else [
     Bar with 0;
   ]; 
 ];
 
 call Bar with 10;
-If [Recurred] [Print 'PASS: Recursion']
-else          [Print 'FAIL: Recursion'];
+If [Recurred] [
+  Print 'PASS: Recursion'
+];
+Else [
+  Print 'FAIL: Recursion'
+];
 
 ~~ Put binary recursion test here when I implement binary recursion.
-
-
-

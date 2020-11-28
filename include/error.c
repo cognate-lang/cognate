@@ -28,7 +28,7 @@ noreturn static void throw_error(const char* message)
 {
   // Uses utf8 box-drawing characters and ansi colour codes to print a pretty error message.
   int i;
-  printf("\342\224\214");
+  printf("\n\342\224\214");
   for (i = 0; i < 30; ++i) printf("\342\224\200");
   printf("\342\224\244 \033[0;1mCognate Error!\033[0m \342\224\234");
   for (i = 0; i < 30; ++i) printf("\342\224\200");
