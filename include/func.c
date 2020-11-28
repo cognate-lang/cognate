@@ -8,8 +8,6 @@
 #include <unistd.h>
 #include <regex.h>
 #include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
 //#include <openssl/rand.h> TODO
 
 
@@ -251,11 +249,9 @@ external_function(number, {
 
 external_function(path, {
   // Get working directory path, TODO how to get exe path.
-  static char cwd[PATH_MAX+1]; // Much too big.
-  if (getcwd(cwd, sizeof(cwd)) == NULL)
+  if (getcwd(file_name_buf, PATH_MAX) == NULL)
     throw_error("Cannot get current directory!");
-  char* small_cwd = (char*) cognate_malloc (sizeof(char) * strlen(cwd)); // Much better size.
-  strcpy(small_cwd, cwd);
+  char* small_cwd = strdup(file_name_buf);
   push(string, small_cwd);
 })
 
@@ -264,7 +260,7 @@ external_function(write, {
   strcat(file_name_buf, exe_dir);
   strcat(file_name_buf, "/");
   strcat(file_name_buf, pop(string));
-  FILE* const file = fopen(pop(string), "a"); 
+  FILE* const file = fopen(file_name_buf, "a"); 
   const char* const str = pop(string);
   fprintf(file, "%s", str);
   fclose(file);
