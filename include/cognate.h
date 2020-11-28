@@ -1,6 +1,8 @@
 #ifndef COGNATE_H
 #define COGNATE_H
 
+#define  _GNU_SOURCE
+
 #define TABLE_GROWTH_FACTOR 1.5
 #define MAX_TABLE_TRIES 3
 #define PATH_MAX 4096

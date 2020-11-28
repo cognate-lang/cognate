@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <regex.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 
 static cognate_list params;
@@ -216,23 +218,11 @@ external_function(append,
 
 external_function(input, {
   // TODO: use getline() here.
-  size_t str_size = INITIAL_INPUT_SIZE;
-  char* str = (char*) cognate_malloc (str_size * sizeof(char));
-  char* temp = str;
-  char c;
-  while((c = getchar()) != '\n' && c != EOF)
-  {
-    *str++ = c; 
-    if (temp + str_size == str)
-    {
-      temp = cognate_realloc (temp, (str_size * LIST_GROWTH_FACTOR));
-      str = temp + str_size;
-      str_size *= LIST_GROWTH_FACTOR;
-    }
-  }
-  *str = '\0';
-  temp = cognate_realloc (temp, str - temp + 1);
-  push(string, temp);
+  char *line = NULL;
+  size_t chars = INITIAL_INPUT_SIZE;
+  size_t size = getline(&line, &chars, stdin);
+  line[size-1] = '\0'; // Remove trailing newline.
+  push(string, line);
 })
 
 external_function(read, {
