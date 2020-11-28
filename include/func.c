@@ -185,7 +185,7 @@ external_function(else,
   }
 })
 
-external_function(else_if,
+external_function(elseif,
 {
   const cognate_block cond = pop(block);
   const cognate_block expr = pop(block);
