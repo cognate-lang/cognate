@@ -10,6 +10,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+//#include <openssl/rand.h> TODO
 
 
 static cognate_list params;
@@ -24,13 +25,13 @@ external_function(sum,            { push(number, pop(number) + pop(number)); })
 external_function(product,        { push(number, pop(number) * pop(number)); })
 external_function(divisor,        { push(number, (1 / pop(number) * pop(number))); })
 external_function(difference,     { push(number, (-pop(number) + pop(number))); })
-external_function(modulo,         { const long n = pop(number); push(number, (double)((int)pop(number) % n)); }) // TODO: add checking if integer.
+external_function(modulo,         { const long long n = pop(number); push(number, (double)((int)pop(number) % n)); }) // TODO: add checking if integer.
 
 external_function(random, { // This function is pretty broken.
   double low = pop(number); double high = pop(number); double step = pop(number); 
-  if (unlikely(high < low))   { throw_error_fmt("Cannot generate random number in range! (%.15g - %.15g)", low, high); }
-  else if (high - low < step) {push(number, low); }
-  else { push(number, low + (double)(rand() % (int)((high - low) / step)) * step); }
+  if (unlikely(high < low))   { throw_error_fmt("Cannot generate random number in range! (%.15g..%.15g)", low, high); }
+  else if (high - low < step) { push(number, low); }
+  else { push(number, low + (double)(rand() % (size_t)((high - low + step) / step)) * step); }
 })
 
 external_function(drop,           { pop_any(); }) // These can be defined within cognate.
@@ -64,7 +65,7 @@ external_function(boolean_, { push(boolean, pop_any().type == boolean); })
 external_function(discard, { 
   // O(n) where n is the number of element being Discarded.
   const double num = pop(number);
-  const long num_discarding = num;
+  const size_t num_discarding = num;
   if (num != num_discarding) throw_error_fmt("Cannot Discard a non-integer number of elements! (%.15g)", num);
   if (num_discarding < 0) throw_error_fmt("Cannot Discard a negative number of elements! (%li)", num_discarding);
   const cognate_list obj = *pop(list);
@@ -77,7 +78,7 @@ external_function(discard, {
 external_function(take, {
   // O(n) where n is the number of element being Taken.
   const double num = pop(number);
-  const long num_taking = num;
+  const size_t num_taking = num;
   if (num != num_taking) throw_error_fmt("Cannot Take a non-integer number of elements! (%.15g)", num);
   if (num_taking < 0) throw_error_fmt("Cannot Take a negative number of elements! (%li)", num_taking);
   cognate_list obj = *pop(list);
@@ -89,7 +90,7 @@ external_function(take, {
 })
 
 external_function(index, { 
-  const int index = pop(number);
+  const size_t index = pop(number);
   const cognate_list lst = *pop(list);
   if (lst.start + index >= lst.top)
     throw_error("List index out of bounds!");

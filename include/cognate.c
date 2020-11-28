@@ -35,9 +35,10 @@ static void init(int argc, char** argv)
   stack_start = &a;
   getrlimit(RLIMIT_STACK, &stack_max);
   // Get executable path stuff.
-  readlink("/proc/self/exe", exe_path, PATH_MAX);
-  exe_name = basename(exe_path);
-  exe_dir  = dirname(exe_path);
+  readlink("/proc/self/exe", file_name_buf, PATH_MAX);
+  exe_path = strdup(file_name_buf);
+  exe_name = basename(file_name_buf);
+  exe_dir  = dirname(file_name_buf);
   // Seed the random number generator properly.
   struct timespec ts;
   timespec_get(&ts, TIME_UTC);

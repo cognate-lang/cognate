@@ -12,7 +12,7 @@
 #define LIST_GROWTH_FACTOR 1.5
 
 static char file_name_buf[PATH_MAX+1];
-static char exe_path[PATH_MAX+1];
+static char *exe_path;
 static char *exe_dir;
 static char *exe_name;
 
