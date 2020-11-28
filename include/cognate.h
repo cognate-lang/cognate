@@ -5,15 +5,14 @@
 #define MAX_TABLE_TRIES 3
 #define PATH_MAX 4096
 #define INITIAL_INPUT_SIZE 64
-#define PATH_MAX 4096
 #define MIN_TABLE_SIZE 2
 #define INITIAL_LIST_SIZE 16 // Constant values for initialising stack sizes.
 #define LIST_GROWTH_FACTOR 1.5
 
+static char file_name_buf[PATH_MAX+1];
 static char exe_path[PATH_MAX+1];
 static char *exe_dir;
 static char *exe_name;
-static char file_name_buf[PATH_MAX+1];
 
 #define program(body) \
   int main(int argc, char **argv) \
@@ -42,9 +41,9 @@ static char file_name_buf[PATH_MAX+1];
   });
 
 #ifdef debug
-  #define call(name) {debug_printf("Calling %s\n", #name); cognate_function_ ## name();}
+  #define call(name) debug_printf("Calling %s\n", #name); cognate_function_ ## name();
 #else 
-  #define call(name) {cognate_function_ ## name();}
+  #define call(name) cognate_function_ ## name();
 #endif
 
 // Macro to define external cognate function.

@@ -163,7 +163,7 @@ external_function(stack,
 
 external_function(if,
 {
-  // Remove blocks from stack, so cond() can access stack values.
+  // TODO: Else and ElseIf should only be allowed directly following an If.
   const cognate_block cond = pop(block);
   const cognate_block expr = pop(block);
   cond();
@@ -175,7 +175,7 @@ external_function(if,
   }
   if_status = 1;
 })
-
+  
 external_function(else,
 {
   const cognate_block expr = pop(block);
@@ -215,6 +215,7 @@ external_function(append,
 })
 
 external_function(input, {
+  // TODO: use getline() here.
   size_t str_size = INITIAL_INPUT_SIZE;
   char* str = (char*) cognate_malloc (str_size * sizeof(char));
   char* temp = str;
