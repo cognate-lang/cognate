@@ -46,7 +46,7 @@ do
     echo -e "${RED} Fail ${NC}"
   fi
   # Delete binary
-  rm $binary_file
+  rm -f $binary_file
 done
 
 if [[ $failed > 0 ]]; then
