@@ -25,9 +25,12 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
+      - name: Enter project directory
+        run: cd $GITHUB_WORKSPACE
+
+      - name: Install dependencies and compile compiler
+        run: ./SETUP
+
       # Runs a set of commands using the runners shell
       - name: Run the test script
-        run: |
-          cd $GITHUB_WORKSPACE
-          ./SETUP > /dev/null 2&>1
-          ./TEST
+        run: ./TEST
