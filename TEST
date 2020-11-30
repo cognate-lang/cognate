@@ -10,6 +10,11 @@ failed=0
 # Counter storing total tests passed
 passed=0
 
+if [ ! -f cognac ]; then
+  echo "Cannot find compiler!"
+  exit 1
+fi
+
 # Iterate over files to test
 for file_name in $(ls tests | grep .cog | cut -f 1 -d '.')
 do
