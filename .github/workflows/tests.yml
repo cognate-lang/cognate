@@ -12,9 +12,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - name: Run the test script
+      - name: Aquire dependencies and compile
+        shell: bash
         run: |
           cd $GITHUB_WORKSPACE
           ./SETUP > /dev/null 2>&1
+      - name: Run test script
+        shell: bash
+        run: |
+          cd $GITHUB_WORKSPACE
           ./TEST
