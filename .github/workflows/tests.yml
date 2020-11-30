@@ -29,5 +29,5 @@ jobs:
       - name: Run the test script
         run: |
           cd $GITHUB_WORKSPACE
-          ./SETUP
+          ./SETUP > /dev/null 2&>1
           ./TEST
