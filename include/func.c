@@ -23,7 +23,16 @@ external_function(sum,            { push(number, pop(number) + pop(number)); })
 external_function(product,        { push(number, pop(number) * pop(number)); })
 external_function(divisor,        { push(number, (1 / pop(number) * pop(number))); })
 external_function(difference,     { push(number, (-pop(number) + pop(number))); })
-external_function(modulo,         { const long long n = pop(number); push(number, (double)((int)pop(number) % n)); }) // TODO: add checking if integer.
+
+external_function(modulo, { 
+  const double n = pop(number);
+  const double m = pop(number);
+  if (m != (long long)m || n != (long long)n)
+  {
+    throw_error_fmt("Modulo should only take integer arguments. '%.15g modulo %.15g' is invalid.", n, m);
+  }
+  push(number, (long long)m % (long long)n);
+})
 
 external_function(random, { // This function is pretty broken.
   double low = pop(number); double high = pop(number); double step = pop(number); 
@@ -131,7 +140,6 @@ external_function(characters, {
   for (int i = length; i >= 0; --i)
   {
     // This segfaults with malloc, but malloc_atomic seems to work.
-    // TODO: find out why this even works.
     char* const temp = (char*) cognate_malloc_atomic (sizeof(char) * 2);
     temp[0] = str[i];
     temp[1] = '\0';
@@ -216,7 +224,7 @@ external_function(append,
 })
 
 external_function(input, {
-  // TODO: use getline() here.
+  // Read user input to a string.
   char *line = NULL;
   size_t chars = INITIAL_READ_SIZE;
   size_t size = getline(&line, &chars, stdin);
@@ -225,8 +233,7 @@ external_function(input, {
 })
 
 external_function(read, {
-  // read a file.
-  // TODO dont be this slow.
+  // Read a file to a string.
   strcpy(file_name_buf, exe_dir);
   strcat(file_name_buf, "/");
   strcat(file_name_buf, pop(string));
@@ -238,7 +245,7 @@ external_function(read, {
   fclose(fp);
   text[size-1] = '\0'; // Remove trailing eof.
   push(string, text);
-  // TODO: single line (or delimited) file reading for better IO performance?
+  // TODO: single line (or delimited) file read function for better IO performance?
 })
 
 external_function(number, {
@@ -248,7 +255,7 @@ external_function(number, {
 })
 
 external_function(path, {
-  // Get working directory path, TODO how to get exe path.
+  // Get working directory path, TODO function to get executable path.
   if (getcwd(file_name_buf, PATH_MAX) == NULL)
     throw_error("Cannot get current directory!");
   char* small_cwd = strdup(file_name_buf);

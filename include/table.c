@@ -26,7 +26,6 @@ static unsigned long hash(const char *str)
 
 static cognate_table table_add(const unsigned long key_hash, const cognate_object value, cognate_table tab)
 {
-  // TODO: find out if this actually works.
   unsigned long table_size = tab.items.top - tab.items.start;
   // WARNING: resizing the table will mess up hashes!!!
   unsigned long shrunk_hash = key_hash % table_size;
