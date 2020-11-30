@@ -49,10 +49,13 @@ do
   rm -f $binary_file
 done
 
+rm /tmp/cognac.log
+
 if [[ $failed > 0 ]]; then
   echo -e "${RED}${failed} tests failed!${NC}"
+  exit 1
 else
   echo -e "${GREEN}All ${passed} tests passed!${NC}"
+  exit 0
 fi
 
-rm /tmp/cognac.log
