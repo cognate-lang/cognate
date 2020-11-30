@@ -16,7 +16,7 @@ jobs:
         shell: bash
         run: |
           cd $GITHUB_WORKSPACE
-          ./SETUP > /dev/null 2>&1
+          ./SETUP
       - name: Run test script
         shell: bash
         run: |
