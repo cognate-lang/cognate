@@ -52,10 +52,10 @@ done
 rm /tmp/cognac.log
 
 if [[ $failed > 0 ]]; then
-  echo -e "${RED}${failed} tests failed!${NC}"
+  echo -e "${RED}${failed} test(s) failed!${NC}"
   exit 1
 else
-  echo -e "${GREEN}All ${passed} tests passed!${NC}"
+  echo -e "${GREEN}All ${passed} test(s) passed!${NC}"
   exit 0
 fi
 
