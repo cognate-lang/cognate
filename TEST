@@ -22,7 +22,7 @@ do
   # $-12s pads with spaces
   printf 'Testing %-12s' $file_name'...'
   # Clear log file
-  rm $log_file
+  rm -f $log_file
   # Compile
   ./cognac $source_file -O0 "$@" > /tmp/cognac.log 2>&1
   # Check if file exists (successful compilation)
