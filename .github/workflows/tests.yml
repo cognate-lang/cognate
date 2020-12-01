@@ -26,7 +26,7 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: debian test log
-          path: /$GITHUB_WORKSPACE/test.log
+          path: test.log
   test-macos:
     runs-on: macOS-latest
     steps:
@@ -45,4 +45,4 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: macos test log
-          path: /$GITHUB_WORKSPACE/test.log
+          path: test.log
