@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  test-debian:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -16,9 +16,19 @@ jobs:
         shell: bash
         run: |
           cd $GITHUB_WORKSPACE
-          ./SETUP
+          ./SETUP.debian
       - name: Run test script
         shell: bash
         run: |
           cd $GITHUB_WORKSPACE
           ./TEST
+  test-macos:
+    runs-on: macOS-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Aquire dependencies and compile
+        shell: bash
+        run: |
+          cd $GITHUB_WORKSPACE
+          ./SETUP.macos
+
