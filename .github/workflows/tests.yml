@@ -23,6 +23,7 @@ jobs:
           cd $GITHUB_WORKSPACE
           ./TEST
       - name: Upload test output
+        if: failure()
         uses: actions/upload-artifact@v2
         with:
           name: tests-debian
@@ -42,6 +43,7 @@ jobs:
           cd $GITHUB_WORKSPACE
           ./TEST
       - name: Upload test output
+        if: failure()
         uses: actions/upload-artifact@v2
         with:
           name: tests-macOS
