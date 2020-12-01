@@ -390,7 +390,7 @@ main =
     let compilerFlagsMac = 
           words "-fblocks -l:libgc.so -Ofast -I include -Wall -Wextra -Werror -Wpedantic -Wno-unused -std=c11 -lm -g0"
     let compilerFlags = if System.Info.os == "linux" then compilerFlagsLinux else compilerFlagsMac
-    putStrLn compilerFlags
+    putStrLn $ unwords $ compilerFlags
     let in_file = head args
     let out_file = head (splitOn "." in_file) ++ ".c"
     let compiler_args = tail args
