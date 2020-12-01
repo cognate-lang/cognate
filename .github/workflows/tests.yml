@@ -25,7 +25,7 @@ jobs:
       - name: Upload tests
         uses: actions/upload-artifact@v1
         with:
-          name: test log
+          name: debian test log
           path: test.log
   test-macos:
     runs-on: macOS-latest
@@ -44,8 +44,5 @@ jobs:
       - name: Upload tests
         uses: actions/upload-artifact@v1
         with:
-          name: test log
+          name: macos test log
           path: test.log
-
-
-
