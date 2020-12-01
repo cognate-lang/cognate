@@ -55,7 +55,7 @@ do
 done
 
 rm /tmp/cognac.log
-cat tests/*.log test.log
+cat tests/*.log > test.log
 
 if [[ $failed > 0 ]]; then
   echo -e "${RED}${failed} tests failed!${NC}"
