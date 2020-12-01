@@ -37,7 +37,12 @@ static void init(int argc, char** argv)
   // Get executable path stuff.
   // TODO readlink probably doesn't work on macOS.
   // TODO read first argument for filepath relative to cwd instead.
+#ifdef __APPLE__
+  int bufsize = PATH_MAX;
+  _NSGetExecutablePath(file_name_buf, &bufsize);
+#else
   readlink("/proc/self/exe", file_name_buf, PATH_MAX);
+#endif
   exe_path = strdup(file_name_buf);
   exe_name = basename(file_name_buf);
   exe_dir  = dirname(file_name_buf);
