@@ -23,7 +23,7 @@ jobs:
           cd $GITHUB_WORKSPACE
           ./TEST
       - name: Upload test output
-      - uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v2
         with:
           name: tests-debian
           path: tests/*.log
@@ -42,7 +42,7 @@ jobs:
           cd $GITHUB_WORKSPACE
           ./TEST
       - name: Upload test output
-      - uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v2
         with:
           name: tests-macOS
           path: tests/*.log
