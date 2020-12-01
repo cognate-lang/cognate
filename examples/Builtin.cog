@@ -3,10 +3,15 @@ Define Tail as [Discard 1];
 Define Last as  [Let L, Index - 1 Length L of L];
 Define Tuple be [Let X, Let Y, List [X, Y]];
 
+Define Empty?
+[
+  Length, == 0
+];
+
 Define For as
 [
   Let Lst, Let Body;
-  If [Length of Lst, != 0]
+  If [Lst, is Not Empty?]
   [
     push Head of Lst;
     Do evaluate Body;
@@ -65,10 +70,6 @@ Define Reverse
   ]
 ];
 
-Define Empty?
-[
-  Length, == 0
-];
 
 Define Filter
 [
