@@ -44,6 +44,7 @@ do
   if [[ $(grep '^PASS:' $log_file) == $(<$log_file) ]]; then
     # If all tests passed
     ((passed++))
+    rm $log_file
     echo -e "${GREEN} Pass ${NC}"
   else
     # If all tests failed
