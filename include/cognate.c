@@ -35,7 +35,8 @@ static void init(int argc, char** argv)
   stack_start = &a;
   getrlimit(RLIMIT_STACK, &stack_max);
   // Get executable path stuff.
-  // TODO readlink probably doesn't work on macOS
+  // TODO readlink probably doesn't work on macOS.
+  // TODO read first argument for filepath relative to cwd instead.
   readlink("/proc/self/exe", file_name_buf, PATH_MAX);
   exe_path = strdup(file_name_buf);
   exe_name = basename(file_name_buf);
