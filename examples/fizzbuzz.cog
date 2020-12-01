@@ -1,18 +1,19 @@
-Import Builtin;
+Import Builtin functions;
 
+~~ See www.wikipedia.org/wiki/Fizz_buzz
 Define FizzBuzz
 [ Let N be a number;
   If [N, Modulo 15, == 0] then [
-    Print 'FizzBuzz';
+    Print 'FizzBuzz'
   ];
   ElseIf [N, Modulo 3, == 0] then [
-    Print 'Fizz';
+    Print 'Fizz'
   ];
   ElseIf [N, Modulo 5, == 0] then [
-    Print 'Buzz';
+    Print 'Buzz'
   ];
   Else then [
-    Print N;
+    Print N
   ];
 ];
 

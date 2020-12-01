@@ -1,7 +1,7 @@
 ## The Cognate programming language
 Cognate is a stack oriented, dynamically typed, functional programming language designed to help programmers specify their intent. Cognate uses optional syntax in order to help programmers write statements that are (mostly) readable in plain English and to include extra information about what statements are for, not just what they do and how they work. This leads to more maintainable codebases. Cognate's syntax is much simpler than other languages that aim for readability such as python, making the language consistent and simple to implement. This repository contains CognaC - the Cognate Compiler.
 
-![Program to compute the 35th Fibonacci number](fibonacci.png?raw=true)
+![FizzBuzz in Cognate](fizzbuzz.png?raw=true)
 
 ### Cognate is readable
 As the above program shows, words starting with lower-case letters are ignored by the compiler (and are not highlighted). This allows comments and code to be easily bundled together, enhancing readability and allowing programmers to more easily express their intentions. While this means that Cognate can be very verbose, verbosity can be a good thing - this 'informal syntax' gives extra information to anyone reading the source.
@@ -40,6 +40,6 @@ You should then run the TEST script to test Cognate's functionality. This should
 ```
 If the tests all pass (they should!), you can then try running some of the included demo programs like this:
 ```
-./cognac examples/fib.cog
-./examples/fib
+./cognac examples/fizzbuzz.cog
+./examples/fizzbuzz
 ```
