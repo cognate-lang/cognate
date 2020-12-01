@@ -233,6 +233,7 @@ external_function(input, {
 })
 
 external_function(read, {
+  // TODO: macOS can't fond the file. Likely a problem with readlink.
   // Read a file to a string.
   strcpy(file_name_buf, exe_dir);
   strcat(file_name_buf, "/");
