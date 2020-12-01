@@ -22,6 +22,11 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE
           ./TEST
+      - name: Upload test output
+      - uses: actions/upload-artifact@v2
+        with:
+          name: tests-debian
+          path: tests/*.log
   test-macos:
     runs-on: macOS-latest
     steps:
@@ -36,3 +41,8 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE
           ./TEST
+      - name: Upload test output
+      - uses: actions/upload-artifact@v2
+        with:
+          name: tests-macOS
+          path: tests/*.log
