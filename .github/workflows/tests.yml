@@ -31,4 +31,10 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE
           ./SETUP.macos
+      - name: Run test script
+        shell: bash
+        run: |
+          cd $GITHUB_WORKSPACE
+          ./TEST
+
 
