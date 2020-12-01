@@ -16,6 +16,7 @@
 
 import System.Process
 import System.Environment
+import System.Info
 import Data.List
 import Data.Char
 import Data.Ratio
@@ -384,8 +385,11 @@ main :: IO ()
 main =
   do
     args <- getArgs
-    let compilerFlags = 
+    let compilerFlagsLinux = 
           words "-fblocks -lBlocksRuntime -l:libgc.so -Ofast -s -I include -Wall -Wextra -Werror -Wpedantic -Wno-unused -std=c11 -lm -g0"
+    let compilerFlagsMac = 
+          words "-fblocks -l:libgc.so -Ofast -I include -Wall -Wextra -Werror -Wpedantic -Wno-unused -std=c11 -lm -g0"
+    let compilerFlags = if System.Info.os == "linux" then compilerFlagsLinux else compilerFlagsMac
     let in_file = head args
     let out_file = head (splitOn "." in_file) ++ ".c"
     let compiler_args = tail args
