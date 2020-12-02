@@ -27,7 +27,7 @@ external_function(difference,     { push(number, (-pop(number) + pop(number))); 
 external_function(modulo, { 
   const double n = pop(number);
   const double m = pop(number);
-  if (m != (long long)m || n != (long long)n)
+  if (unlikely(m != (long long)m || n != (long long)n))
   {
     throw_error_fmt("Modulo should only take integer arguments. '%.15g modulo %.15g' is invalid.", n, m);
   }
@@ -73,12 +73,12 @@ external_function(discard, {
   // O(n) where n is the number of element being Discarded.
   const double num = pop(number);
   const size_t num_discarding = num;
-  if (num != num_discarding) throw_error_fmt("Cannot Discard a non-integer number of elements! (%.15g)", num);
-  if (num_discarding < 0) throw_error_fmt("Cannot Discard a negative number of elements! (%zi)", num_discarding);
+  if (unlikely(num != num_discarding)) throw_error_fmt("Cannot Discard a non-integer number of elements! (%.15g)", num);
+  if (unlikely(num_discarding < 0)) throw_error_fmt("Cannot Discard a negative number of elements! (%zi)", num_discarding);
   const cognate_list obj = *pop(list);
   cognate_list* const lst = (cognate_list* const) cognate_malloc (sizeof(cognate_list));
   *lst = obj;
-  if ((lst->start += num_discarding) > lst->top) throw_error("List is too small to Discard from!");
+  if (unlikely((lst->start += num_discarding) > lst->top)) throw_error("List is too small to Discard from!");
   push(list, lst);
 })
 
@@ -86,21 +86,26 @@ external_function(take, {
   // O(n) where n is the number of element being Taken.
   const double num = pop(number);
   const size_t num_taking = num;
-  if (num != num_taking) throw_error_fmt("Cannot Take a non-integer number of elements! (%.15g)", num);
-  if (num_taking < 0) throw_error_fmt("Cannot Take a negative number of elements! (%zi)", num_taking);
+  if (unlikely(num != num_taking)) throw_error_fmt("Cannot Take a non-integer number of elements! (%.15g)", num);
+  if (unlikely(num_taking < 0)) throw_error_fmt("Cannot Take a negative number of elements! (%zi)", num_taking);
   cognate_list obj = *pop(list);
   cognate_list* const lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
   *lst = obj;
-  if (lst->start + num_taking > lst->top) throw_error_fmt ("List is too small to Take from! (length %zu)", lst->top - lst->start);
+  if (unlikely(lst->start + num_taking > lst->top)) throw_error_fmt ("List is too small to Take from! (length %zu)", lst->top - lst->start);
   lst->top = lst->start + num_taking;
   push(list, lst);
 })
 
 external_function(index, { 
-  const size_t index = pop(number);
+  const double d = pop(number);
+  const size_t index = d;
+  if (unlikely(index != (size_t)d))
+    throw_error_fmt("List index (%.15g) should be an integer!", d);
+  if (unlikely(index < 0))
+    throw_error_fmt("Cannot have negative list index! (%zi)", index);
   const cognate_list lst = *pop(list);
-  if (lst.start + index >= lst.top)
-    throw_error("List index out of bounds!");
+  if (unlikely(lst.start + index >= lst.top))
+    throw_error_fmt("Index %zi is out of bounds!", index);
   push_any(lst.start [index]);
 })
 
@@ -238,7 +243,7 @@ external_function(read, {
   strcat(file_name_buf, "/");
   strcat(file_name_buf, pop(string));
   FILE *fp = fopen(file_name_buf, "r");
-  if (fp == NULL) throw_error_fmt("Cannot open file '%s'. It probably doesn't exist.", file_name_buf);
+  if (unlikely(fp == NULL)) throw_error_fmt("Cannot open file '%s'. It probably doesn't exist.", file_name_buf);
   char *text = NULL;
   size_t chars = INITIAL_READ_SIZE;
   size_t size = getdelim(&text, &chars, EOF, fp);
@@ -344,7 +349,7 @@ external_function(match, {
   if (strcmp(reg_str, old_str) != 0)
   {
     regfree(&reg); // Apparently freeing an unallocated regex is fine.
-    if (regcomp(&reg, reg_str, REG_EXTENDED|REG_NEWLINE))
+    if (unlikely(regcomp(&reg, reg_str, REG_EXTENDED|REG_NEWLINE)))
     {
       throw_error_fmt("Cannot compile invalid regular expression! (%s)", reg_str); 
     }
