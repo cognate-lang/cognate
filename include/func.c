@@ -74,7 +74,7 @@ external_function(discard, {
   const double num = pop(number);
   const size_t num_discarding = num;
   if (num != num_discarding) throw_error_fmt("Cannot Discard a non-integer number of elements! (%.15g)", num);
-  if (num_discarding < 0) throw_error_fmt("Cannot Discard a negative number of elements! (%li)", num_discarding);
+  if (num_discarding < 0) throw_error_fmt("Cannot Discard a negative number of elements! (%zi)", num_discarding);
   const cognate_list obj = *pop(list);
   cognate_list* const lst = (cognate_list* const) cognate_malloc (sizeof(cognate_list));
   *lst = obj;
@@ -87,11 +87,11 @@ external_function(take, {
   const double num = pop(number);
   const size_t num_taking = num;
   if (num != num_taking) throw_error_fmt("Cannot Take a non-integer number of elements! (%.15g)", num);
-  if (num_taking < 0) throw_error_fmt("Cannot Take a negative number of elements! (%li)", num_taking);
+  if (num_taking < 0) throw_error_fmt("Cannot Take a negative number of elements! (%zi)", num_taking);
   cognate_list obj = *pop(list);
   cognate_list* const lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
   *lst = obj;
-  if (lst->start + num_taking > lst->top) throw_error_fmt ("List is too small to Take from! (length %lu)", lst->top - lst->start);
+  if (lst->start + num_taking > lst->top) throw_error_fmt ("List is too small to Take from! (length %zu)", lst->top - lst->start);
   lst->top = lst->start + num_taking;
   push(list, lst);
 })
