@@ -1,2 +1,4 @@
 gc/*      linguist-vendored=true
-examples/*.cog     linguist-language=cognate
+BUILD     linguist-language=shell
+SETUP     linguist-language=shell
+*.cog     linguist-language=cognate
