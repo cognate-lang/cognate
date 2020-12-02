@@ -1,3 +1,4 @@
 gc/*      linguist-vendored=true
 BUILD     linguist-language=shell
 SETUP     linguist-language=shell
+*.cog     linguist-language=cognate
