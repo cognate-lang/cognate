@@ -20,9 +20,9 @@ STACK_C	include/stack.c	2;"	d	file:
 TABLE_GROWTH_FACTOR	include/cognate.h	6;"	d
 TYPE_C	include/type.c	2;"	d	file:
 _GNU_SOURCE	include/cognate.h	4;"	d
-block	include/type.c	/^    cognate_block block;           \/\/ 64bit pointer$/;"	m	union:cognate_object::__anon2	file:
+block	include/type.c	/^    cognate_block block;           \/\/ 64bit block pointer$/;"	m	union:cognate_object::__anon2	file:
 block	include/type.c	/^  block, $/;"	e	enum:__anon1	file:
-boolean	include/type.c	/^    _Bool boolean;                 \/\/ 1bit  bool$/;"	m	union:cognate_object::__anon2	file:
+boolean	include/type.c	/^    _Bool boolean;                 \/\/  1bit bool$/;"	m	union:cognate_object::__anon2	file:
 boolean	include/type.c	/^  boolean, $/;"	e	enum:__anon1	file:
 call	include/cognate.h	46;"	d
 call	include/cognate.h	48;"	d
@@ -70,7 +70,7 @@ init_stack	include/stack.c	/^static void init_stack()$/;"	f	file:
 items	include/stack.c	/^  cognate_list    items;    \/\/ The list holding the stack itself.$/;"	m	struct:cognate_stack	file:
 items	include/type.c	/^  struct cognate_list items;$/;"	m	struct:cognate_table	typeref:struct:cognate_table::cognate_list	file:
 likely	include/cognate.h	110;"	d
-list	include/type.c	/^    const struct cognate_list  *list;   \/\/ 64bit pointer$/;"	m	union:cognate_object::__anon2	typeref:struct:cognate_object::__anon2::cognate_list	file:
+list	include/type.c	/^    const struct cognate_list  *list;  \/\/ 64bit list pointer$/;"	m	union:cognate_object::__anon2	typeref:struct:cognate_object::__anon2::cognate_list	file:
 list	include/type.c	/^  list,$/;"	e	enum:__anon1	file:
 lookup_type	include/type.c	/^static const char* lookup_type(cognate_type type)$/;"	f	file:
 make_block	include/cognate.h	75;"	d
@@ -96,9 +96,9 @@ stack	include/stack.c	/^static cognate_stack stack;$/;"	v	file:
 stack_max	include/cognate.c	/^static struct rlimit stack_max;$/;"	v	typeref:struct:rlimit	file:
 stack_start	include/cognate.c	/^static const char *stack_start;$/;"	v	file:
 start	include/type.c	/^  struct cognate_object* start;$/;"	m	struct:cognate_list	typeref:struct:cognate_list::cognate_object	file:
-string	include/type.c	/^    const char* string;            \/\/ 64bit pointer$/;"	m	union:cognate_object::__anon2	file:
+string	include/type.c	/^    const char* string;            \/\/ 64bit string pointer$/;"	m	union:cognate_object::__anon2	file:
 string	include/type.c	/^  string, $/;"	e	enum:__anon1	file:
-table	include/type.c	/^    const struct cognate_table *table; \/\/ 64bit pointer$/;"	m	union:cognate_object::__anon2	typeref:struct:cognate_object::__anon2::cognate_table	file:
+table	include/type.c	/^    const struct cognate_table *table; \/\/ 64bit table pointer$/;"	m	union:cognate_object::__anon2	typeref:struct:cognate_object::__anon2::cognate_table	file:
 table	include/type.c	/^  table,$/;"	e	enum:__anon1	file:
 table_add	include/table.c	/^static cognate_table table_add(const unsigned long key_hash, const cognate_object value, cognate_table tab)$/;"	f	file:
 table_c	include/table.c	2;"	d	file:
@@ -108,7 +108,7 @@ table_grow	include/table.c	/^static cognate_table table_grow(const cognate_table
 throw_error	include/error.c	/^noreturn static void throw_error(const char* message)$/;"	f	file:
 throw_error_fmt	include/cognate.h	102;"	d
 top	include/type.c	/^  struct cognate_object* top;$/;"	m	struct:cognate_list	typeref:struct:cognate_list::cognate_object	file:
-type	include/type.c	/^  cognate_type type : 16;$/;"	m	struct:cognate_object	file:
+type	include/type.c	/^  cognate_type type : 4;$/;"	m	struct:cognate_object	file:
 type_error	include/error.c	/^noreturn static void type_error(const char* const expected, const char* const recieved)$/;"	f	file:
 unlikely	include/cognate.h	109;"	d
 variable	include/cognate.h	66;"	d
