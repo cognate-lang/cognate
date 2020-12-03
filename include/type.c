@@ -8,7 +8,7 @@
 
 typedef enum 
 {
-  // NOTHING is currently only used for unused hashtable bucksts.
+  // NOTHING is currently only used for unused hashtable buckets.
   NOTHING=0, // Must be zero because of calloc()
   block, 
   boolean, 
@@ -41,14 +41,14 @@ struct cognate_object
 {
   union
   {
-    const char* string;            // 64bit pointer
-    _Bool boolean;                 // 1bit  bool
-    cognate_block block;           // 64bit pointer
+    const char* string;            // 64bit string pointer
+    _Bool boolean;                 //  1bit bool
+    cognate_block block;           // 64bit block pointer
     double number;                 // 64bit float
-    const struct cognate_list  *list;   // 64bit pointer
-    const struct cognate_table *table; // 64bit pointer
+    const struct cognate_list  *list;  // 64bit list pointer
+    const struct cognate_table *table; // 64bit table pointer
   };
-  cognate_type type : 16;
+  cognate_type type : 4;
 };
 
 typedef struct cognate_object cognate_object;
