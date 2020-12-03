@@ -32,7 +32,7 @@ static void print_object (const cognate_object object, const _Bool quotes)
                  break;
     case boolean: printf("%s", object.boolean ? "True" : "False"); break;
     case block  : throw_error("Cannot print a block!");
-    default : throw_error_fmt("Cannot print object of unknown type <%i>", (short)object.type);
+    default:;
   }
 }
 

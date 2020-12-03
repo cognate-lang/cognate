@@ -80,9 +80,7 @@ static const char* lookup_type(cognate_type type)
     case table  : return "Table";
     default:;
   }
-  static char type_number[24]; // Max 32 bit type will take up 10 digits.
-  sprintf(type_number, "<%i>", type);
-  return type_number;
+  throw_error_fmt("Attempted to lookup invalid type <%i>", type);
 }
 
 static _Bool compare_lists(cognate_list lst1, cognate_list lst2)
@@ -117,7 +115,6 @@ static _Bool compare_objects(cognate_object ob1, cognate_object ob2)
     default:      return 0;
     // Records are a lie.
   }
-
   return 0;
 }
 
