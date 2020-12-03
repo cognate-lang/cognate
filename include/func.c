@@ -230,11 +230,15 @@ external_function(append,
 
 external_function(input, {
   // Read user input to a string.
-  char *line = NULL;
-  size_t chars = INITIAL_READ_SIZE;
-  size_t size = getline(&line, &chars, stdin);
-  line[size-1] = '\0'; // Remove trailing newline.
-  push(string, line);
+  char *text = (char*) cognate_malloc (sizeof(char) * INITIAL_LIST_SIZE);
+  size_t i = 0;
+  size_t file_size = INITIAL_LIST_SIZE;
+  while ((text[i++] = fgetc(stdin)) != '\n')
+  {
+    (i >= file_size) && (text = (char*) cognate_realloc (text, (file_size *= LIST_GROWTH_FACTOR)));
+  }
+  text[i-1] = '\0';
+  push(string, text);
 })
 
 external_function(read, {
@@ -244,11 +248,13 @@ external_function(read, {
   strcat(file_name_buf, pop(string));
   FILE *fp = fopen(file_name_buf, "r");
   if (unlikely(fp == NULL)) throw_error_fmt("Cannot open file '%s'. It probably doesn't exist.", file_name_buf);
-  char *text = NULL;
-  size_t chars = INITIAL_READ_SIZE;
-  size_t size = getdelim(&text, &chars, EOF, fp);
+  fseek(fp, 0L, SEEK_END);
+  size_t file_size = ftell(fp);
+  rewind(fp);
+  char *text = (char*) cognate_malloc (sizeof(char) * file_size);
+  fread(text, sizeof(char), file_size, fp);
   fclose(fp);
-  text[size-1] = '\0'; // Remove trailing eof.
+  text[file_size-1] = '\0'; // Remove trailing eof.
   push(string, text);
   // TODO: single line (or delimited) file read function for better IO performance?
 })
