@@ -13,7 +13,7 @@
 
 static cognate_list params;
 
-static _Bool if_status = 0;
+static short if_status = 0;
 
 external_function(do,             { pop(block)();                               })
 external_function(put,            { print_object(pop_any(), 1); fflush(stdout); })
@@ -195,6 +195,10 @@ external_function(else,
   const cognate_block expr = pop(block);
   if (if_status)
   {
+    if (if_status == 2)
+    {
+      throw_error("Else not immediately following an If or Elseif.");
+    }
     expr(); 
   }
 })
@@ -203,9 +207,14 @@ external_function(elseif,
 {
   const cognate_block cond = pop(block);
   const cognate_block expr = pop(block);
+  const short temp_if_status = if_status;
   cond();
-  if (pop(boolean) && if_status)
+  if (pop(boolean) && temp_if_status)
   {
+    if (temp_if_status == 2)
+    {
+      throw_error("ElseIf not immediately following an If or Elseif.");
+    }
     expr();
     if_status = 0;
     return;

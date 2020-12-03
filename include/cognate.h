@@ -75,13 +75,13 @@ static char *exe_name;
 #define make_block(docopy, body) \
   ^{ \
     /* Temp variables causes ~10% performance loss :( */\
-    const _Bool temp_if_status = if_status; \
     const ptrdiff_t temp_modified = stack.modified - stack.items.start; \
     stack.modified = stack.items.top; \
+    if_status = 2; \
     body \
+    if_status = 2; \
     if (docopy) copy_blocks(); \
     stack.modified = temp_modified + stack.items.start; \
-    if_status = temp_if_status; \
   }
 
 #ifndef noGC
