@@ -358,13 +358,14 @@ external_function(match, {
   static const char *old_str = NULL;
   const char* const reg_str = pop(string);
   static regex_t reg;
-  if (strcmp(reg_str, old_str) != 0 || old_str == NULL)
+  if (old_str == NULL || strcmp(reg_str, old_str) != 0)
   {
     regfree(&reg); // Apparently freeing an unallocated regex is fine.
     if (unlikely(regcomp(&reg, reg_str, REG_EXTENDED|REG_NEWLINE)))
     {
       throw_error_fmt("Cannot compile invalid regular expression! (%s)", reg_str); 
     }
+    if (unlikely(regcomp(&reg, reg_str, REG_EXTENDED|REG_NEWLINE)))
     old_str = reg_str; /* This should probably be strcpy, but I trust that reg_str is either
                           allocated with the garbage collector, or read only in the data segment. */
   }

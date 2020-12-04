@@ -25,3 +25,10 @@ If [Both Match Regex '1.234' and Not Match Regex 'Hello world'] [
 Else [
   Print 'FAIL: Extended regex to identify decimal numbers'
 ];
+
+If [Match '' with ''] [
+  Print 'PASS: Regex with empty string';
+];
+Else [
+  Print 'FAIL: Regex with empty string';
+];
