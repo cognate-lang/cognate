@@ -361,9 +361,9 @@ external_function(match, {
   if (old_str == NULL || strcmp(reg_str, old_str) != 0)
   {
     regfree(&reg); // Apparently freeing an unallocated regex is fine.
-    if (unlikely(regcomp(&reg, reg_str, REG_EXTENDED|REG_NEWLINE)))
+    if (unlikely(*reg_str == '\0' || regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE)))
     {
-      throw_error_fmt("Cannot compile invalid regular expression! (%s)", reg_str); 
+      throw_error_fmt("Cannot compile invalid regular expression! ('%s')", reg_str); 
     }
     if (unlikely(regcomp(&reg, reg_str, REG_EXTENDED|REG_NEWLINE)))
     old_str = reg_str; /* This should probably be strcpy, but I trust that reg_str is either
