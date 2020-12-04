@@ -194,7 +194,7 @@ external_function(else,
   const cognate_block expr = pop(block);
   if (if_status)
   {
-    if (if_status == 2)
+    if (unlikely(if_status == 2))
     {
       throw_error("Else statement encountered before [Else]If statement!");
     }
@@ -210,7 +210,7 @@ external_function(elseif,
   const char temp_if_status = if_status; // Need this in case cond() modified if_status.
   if (cond(), pop(boolean) && temp_if_status)
   {
-    if (temp_if_status == 2)
+    if (unlikely(temp_if_status == 2))
     {
       throw_error("ElseIf statement encountered before [Else]If statement!");
     }
