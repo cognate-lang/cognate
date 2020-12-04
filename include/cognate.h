@@ -77,7 +77,10 @@ static char *exe_name;
     /* Temp variables causes ~10% performance loss :( */ \
     const ptrdiff_t temp_modified = stack.modified - stack.items.start; \
     stack.modified = stack.items.top; \
+    const _Bool temp_if_status = if_status; \
+    if_status = 0; \
     body \
+    if_status = temp_if_status; \
     if (docopy) copy_blocks(); \
     stack.modified = temp_modified + stack.items.start; \
   }

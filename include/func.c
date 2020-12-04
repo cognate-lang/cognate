@@ -204,7 +204,7 @@ external_function(elseif,
   // Function calls between an If and ElseIf will mess up if_status.
   const cognate_block cond = pop(block);
   const cognate_block expr = pop(block);
-  const _Bool temp_if_status = if_status;
+  const _Bool temp_if_status = if_status; // Need this in case cond() modified if_status.
   if (cond(), pop(boolean) && temp_if_status)
   {
     expr();
