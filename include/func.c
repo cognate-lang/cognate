@@ -10,10 +10,9 @@
 #include <math.h>
 //#include <openssl/rand.h> TODO
 
-
 static cognate_list params;
 
-static short if_status = 2;
+static char if_status = 2;
 
 external_function(do,         { pop(block)();                               })
 external_function(put,        { print_object(pop_any(), 1); fflush(stdout); })
@@ -208,7 +207,7 @@ external_function(elseif,
   // Function calls between an If and ElseIf will mess up if_status.
   const cognate_block cond = pop(block);
   const cognate_block expr = pop(block);
-  const short temp_if_status = if_status; // Need this in case cond() modified if_status.
+  const char temp_if_status = if_status; // Need this in case cond() modified if_status.
   if (cond(), pop(boolean) && temp_if_status)
   {
     if (temp_if_status == 2)
