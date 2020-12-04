@@ -1,11 +1,3 @@
-Else [
-  Print 'FAIL: Else before If should not execute';
-];
-
-ElseIf [True] [
-  Print 'FAIL: ElseIf before If should not execute';
-];
-
 If [True] [
   Print 'PASS: If True';
 ];

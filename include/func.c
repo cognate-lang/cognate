@@ -13,7 +13,7 @@
 
 static cognate_list params;
 
-static _Bool if_status = 0;
+static short if_status = 2;
 
 external_function(do,         { pop(block)();                               })
 external_function(put,        { print_object(pop_any(), 1); fflush(stdout); })
@@ -195,6 +195,10 @@ external_function(else,
   const cognate_block expr = pop(block);
   if (if_status)
   {
+    if (if_status == 2)
+    {
+      throw_error("Else statement encountered before [Else]If statement!");
+    }
     expr(); 
   }
 })
@@ -204,9 +208,13 @@ external_function(elseif,
   // Function calls between an If and ElseIf will mess up if_status.
   const cognate_block cond = pop(block);
   const cognate_block expr = pop(block);
-  const _Bool temp_if_status = if_status; // Need this in case cond() modified if_status.
+  const short temp_if_status = if_status; // Need this in case cond() modified if_status.
   if (cond(), pop(boolean) && temp_if_status)
   {
+    if (temp_if_status == 2)
+    {
+      throw_error("ElseIf statement encountered before [Else]If statement!");
+    }
     expr();
     if_status = 0;
     return;
