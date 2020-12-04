@@ -1,6 +1,6 @@
-~Print 'Enter a number:';
+Put 'Enter a number: ';
 Let Num1 be Number Input;
-Print 'Enter another number:';
+Put 'Enter another number: ';
 Let Num2 be Number Input;
+Put 'The sum of those numbers is ';
 Print the Sum of Num1 and Num2;~
-Print Input;
