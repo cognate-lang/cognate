@@ -70,14 +70,14 @@ static char *exe_name;
 // Mutate internal variable.
 #define mutate_variable(name) \
   immutable cognate_object cognate_variable_ ## name = check_block(pop_any()); /* Can't remember what check_block does here */\
-  cognate_function_##name = Block_copy(^{push_any(cognate_variable_ ## name);});
+  cognate_function_##name = ^{push_any(cognate_variable_ ## name);};
  
 #define make_block(docopy, body) \
   ^{ \
-    /* Temp variables causes ~10% performance loss :( */\
+    /* Temp variables causes ~10% performance loss :( */ \
     const ptrdiff_t temp_modified = stack.modified - stack.items.start; \
     stack.modified = stack.items.top; \
-    if_status = 2; \
+    if_status = 2; /* TODO Else[if] not following If should be caught by the parser. */ \
     body \
     if_status = 2; \
     if (docopy) copy_blocks(); \
