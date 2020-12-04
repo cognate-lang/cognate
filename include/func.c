@@ -179,26 +179,25 @@ external_function(if,
   // TODO: Else and ElseIf should only be allowed directly following an If.
   const cognate_block cond = pop(block);
   const cognate_block expr = pop(block);
-  if (cond(), pop(boolean))
+  cond();
+  if_status = pop(boolean);
+  if (if_status)
   {
     expr();
-    if_status = 0;
-    return;
   }
-  if_status = 1;
 })
   
 external_function(else,
 {
   // Function calls between an If and Else will mess up if_status.
   const cognate_block expr = pop(block);
-  if (if_status)
+  if (!if_status)
   {
-    if (unlikely(if_status == 2))
-    {
-      throw_error("Else statement encountered before [Else]If statement!");
-    }
     expr(); 
+  }
+  else if (unlikely(if_status == 2))
+  {
+    throw_error("Else statement encountered before [Else]If statement!");
   }
 })
 
@@ -208,17 +207,16 @@ external_function(elseif,
   const cognate_block cond = pop(block);
   const cognate_block expr = pop(block);
   const char temp_if_status = if_status; // Need this in case cond() modified if_status.
-  if (cond(), pop(boolean) && temp_if_status)
+  cond();
+  if_status = pop(boolean) && !temp_if_status;
+  if (if_status)
   {
-    if (unlikely(temp_if_status == 2))
-    {
-      throw_error("ElseIf statement encountered before [Else]If statement!");
-    }
     expr();
-    if_status = 0;
-    return;
   }
-  if_status = 1;
+  else if (unlikely(temp_if_status == 2))
+  {
+    throw_error("ElseIf statement encountered before [Else]If statement!");
+  }
 })
 
 external_function(append,
