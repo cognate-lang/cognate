@@ -1,6 +1,6 @@
 ~~ This is a simple email validator.
 
-Print 'Enter an email:';
+Put 'Enter an email: ';
 Let Email be Input;
 
 If [Email, does Match '^[[:graph:]]+@[[:graph:]]+\\.[[:graph:]]+$']
