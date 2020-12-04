@@ -355,10 +355,10 @@ external_function(values, {
 
 external_function(match, {
   // Returns true if string matches regex.
-  static const char *old_str = ""; // Can confirm_hash() return -1, if so this could be problematic.
+  static const char *old_str = NULL;
   const char* const reg_str = pop(string);
   static regex_t reg;
-  if (strcmp(reg_str, old_str) != 0)
+  if (strcmp(reg_str, old_str) != 0 || old_str == NULL)
   {
     regfree(&reg); // Apparently freeing an unallocated regex is fine.
     if (unlikely(regcomp(&reg, reg_str, REG_EXTENDED|REG_NEWLINE)))
@@ -397,30 +397,25 @@ external_function(character, {
   push(string, str);
 })
 
-external_function(parsenumber,
-{
+external_function(parsenumber, {
   const char* const str = pop(string);
   const double num;
   push(number, atof(str));
 })
 
-external_function(floor,
-{
+external_function(floor, {
   push(number, floor(pop(number)));
 })
 
-external_function(round,
-{
+external_function(round, {
   push(number, round(pop(number)));
 })
 
-external_function(ceiling,
-{
+external_function(ceiling, {
   push(number, ceil(pop(number)));
 })
 
-external_function(assert,
-{
+external_function(assert, {
   const char* const name = pop(string);
   const _Bool cond = pop(boolean);
   if (unlikely(!cond))
