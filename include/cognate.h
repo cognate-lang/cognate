@@ -77,9 +77,7 @@ static char *exe_name;
     /* Temp variables causes ~10% performance loss :( */ \
     const ptrdiff_t temp_modified = stack.modified - stack.items.start; \
     stack.modified = stack.items.top; \
-    if_status = 2; /* TODO Else[if] not following If should be caught by the parser. */ \
     body \
-    if_status = 2; \
     if (docopy) copy_blocks(); \
     stack.modified = temp_modified + stack.items.start; \
   }
@@ -89,7 +87,7 @@ static char *exe_name;
   #define cognate_realloc GC_realloc
   #define cognate_malloc_atomic GC_malloc_atomic
 #else
-  #define cognate_malloc malloc
+  #define cognate_malloc  malloc
   #define cognate_realloc realloc
   #define cognate_malloc_atomic malloc
 #endif
@@ -103,6 +101,7 @@ static char *exe_name;
 
 #define throw_error_fmt(fmtstr, ...) \
 { \
+  /* I'm not sure sizeof(__VA_ARGS__) fits here. May cause problems in future. */ \
   char str[strlen(fmtstr) + sizeof(__VA_ARGS__)]; \
   sprintf(str, fmtstr, __VA_ARGS__); \
   throw_error(str); \

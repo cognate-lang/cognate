@@ -13,18 +13,18 @@
 
 static cognate_list params;
 
-static short if_status = 0;
+static _Bool if_status = 0;
 
-external_function(do,             { pop(block)();                               })
-external_function(put,            { print_object(pop_any(), 1); fflush(stdout); })
-external_function(print,          { print_object(pop_any(), 1); puts("");       })
+external_function(do,         { pop(block)();                               })
+external_function(put,        { print_object(pop_any(), 1); fflush(stdout); })
+external_function(print,      { print_object(pop_any(), 1); puts("");       })
 
-external_function(sum,            { push(number, pop(number) + pop(number)); })
-external_function(product,        { push(number, pop(number) * pop(number)); })
-external_function(divisor,        { push(number, (1 / pop(number) * pop(number))); })
-external_function(difference,     { push(number, (-pop(number) + pop(number))); })
+external_function(sum,        { push(number, pop(number) + pop(number)); })
+external_function(product,    { push(number, pop(number) * pop(number)); })
+external_function(divisor,    { push(number, (1 / pop(number) * pop(number))); })
+external_function(difference, { push(number, (-pop(number) + pop(number))); })
 
-external_function(modulo, { 
+external_function(modulo, {
   const double n = pop(number);
   const double m = pop(number);
   if (unlikely(m != (long long)m || n != (long long)n))
@@ -41,11 +41,11 @@ external_function(random, { // This function is pretty broken.
   else { push(number, low + (double)(rand() % (size_t)((high - low + step) / step)) * step); }
 })
 
-external_function(drop,           { pop_any(); }) // These can be defined within cognate.
-external_function(twin,           { push_any(peek_any()); })
-external_function(triplet,        { const cognate_object a = peek_any(); push_any(a); push_any(a); })
-external_function(swap,           { const cognate_object a = pop_any(); const cognate_object b = pop_any(); push_any(a); push_any(b); })
-external_function(clear,          { init_stack(); })
+external_function(drop,    { pop_any(); }) // These can be defined within cognate.
+external_function(twin,    { push_any(peek_any()); })
+external_function(triplet, { const cognate_object a = peek_any(); push_any(a); push_any(a); })
+external_function(swap,    { const cognate_object a = pop_any(); const cognate_object b = pop_any(); push_any(a); push_any(b); })
+external_function(clear,   { init_stack(); })
 
 external_variable(true,  boolean, 1)
 external_variable(false, boolean, 0)
@@ -64,7 +64,7 @@ external_function(equalorpreceed, { push(boolean, pop(number) >= pop(number)); }
 external_function(equalorexceed,  { push(boolean, pop(number) <= pop(number)); })
 
 external_function(number_,  { push(boolean, pop_any().type == number);  }) // Question marks are converted to underscores.
-external_function(list_,    { push(boolean, pop_any().type == list);    })   // However all other synbols are too.
+external_function(list_,    { push(boolean, pop_any().type == list);    }) // However all other symbols are too.
 external_function(string_,  { push(boolean, pop_any().type == string);  }) // So this is a temporary hack!
 external_function(block_,   { push(boolean, pop_any().type == block);   })
 external_function(boolean_, { push(boolean, pop_any().type == boolean); })
@@ -180,8 +180,7 @@ external_function(if,
   // TODO: Else and ElseIf should only be allowed directly following an If.
   const cognate_block cond = pop(block);
   const cognate_block expr = pop(block);
-  cond();
-  if (pop(boolean))
+  if (cond(), pop(boolean))
   {
     expr();
     if_status = 0;
@@ -192,29 +191,22 @@ external_function(if,
   
 external_function(else,
 {
+  // Function calls between an If and Else will mess up if_status.
   const cognate_block expr = pop(block);
   if (if_status)
   {
-    if (if_status == 2)
-    {
-      throw_error("Else not immediately following an If or Elseif.");
-    }
     expr(); 
   }
 })
 
 external_function(elseif,
 {
+  // Function calls between an If and ElseIf will mess up if_status.
   const cognate_block cond = pop(block);
   const cognate_block expr = pop(block);
-  const short temp_if_status = if_status;
-  cond();
-  if (pop(boolean) && temp_if_status)
+  const _Bool temp_if_status = if_status;
+  if (cond(), pop(boolean) && temp_if_status)
   {
-    if (temp_if_status == 2)
-    {
-      throw_error("ElseIf not immediately following an If or Elseif.");
-    }
     expr();
     if_status = 0;
     return;
