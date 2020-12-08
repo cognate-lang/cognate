@@ -303,7 +303,7 @@ external_function(table, {
   call(list);
   const cognate_list init = *pop(list);
   // The 2 on this line should probably be tuned or something.
-  const unsigned long table_size = ((init.top - init.start) * 2) + MIN_TABLE_SIZE;
+  const unsigned long table_size = ((init.top - init.start) * TABLE_GROWTH_FACTOR) + MIN_TABLE_SIZE;
   cognate_table* const tab = (cognate_table*) cognate_malloc (sizeof(cognate_table)); // Need to allocate list here.
   tab->items.start = (cognate_object*) calloc (table_size, sizeof(cognate_object) * table_size);
   tab->items.top = tab->items.start + table_size;
