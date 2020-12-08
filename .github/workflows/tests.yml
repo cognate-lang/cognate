@@ -1,15 +1,13 @@
 name: Test Cognate features
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-
-  workflow_dispatch:
-
 jobs:
   test-debian:
     runs-on: ubuntu-latest
+    on:
+      push:
+        branches: [ master ]
+      pull_request:
+        branches: [ master ]
+      workflow_dispatch:
     steps:
       - uses: actions/checkout@v2
       - name: Aquire dependencies and compile
@@ -30,6 +28,8 @@ jobs:
           path: tests/*.log
   test-macos:
     runs-on: macOS-latest
+    on:
+      workflow_dispatch:
     steps:
       - uses: actions/checkout@v2
       - name: Aquire dependencies and compile
