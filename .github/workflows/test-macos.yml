@@ -1,4 +1,4 @@
-name: Test Cognate features
+name: Test Cognate features on a macOS system
 on:
   workflow_dispatch:
 jobs:
