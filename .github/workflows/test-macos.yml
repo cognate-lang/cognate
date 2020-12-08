@@ -1,0 +1,24 @@
+name: Test Cognate features
+on:
+  workflow_dispatch:
+jobs:
+  tests:
+    runs-on: macOS-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Aquire dependencies and compile
+        shell: bash
+        run: |
+          cd $GITHUB_WORKSPACE
+          ./SETUP.macos
+      - name: Run test script
+        shell: bash
+        run: |
+          cd $GITHUB_WORKSPACE
+          ./TEST
+      - name: Upload test output
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: tests-macOS
+          path: tests/*.log

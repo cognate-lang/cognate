@@ -1,4 +1,4 @@
-name: Test Cognate features
+name: Test Cognate features on a Debian-based system
 on:
   push:
     branches: [ master ]
@@ -6,7 +6,7 @@ on:
     branches: [ master ]
   workflow_dispatch:
 jobs:
-  test-debian:
+  tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -25,24 +25,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: tests-debian
-          path: tests/*.log
-  test-macos:
-    runs-on: macOS-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Aquire dependencies and compile
-        shell: bash
-        run: |
-          cd $GITHUB_WORKSPACE
-          ./SETUP.macos
-      - name: Run test script
-        shell: bash
-        run: |
-          cd $GITHUB_WORKSPACE
-          ./TEST
-      - name: Upload test output
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          name: tests-macOS
           path: tests/*.log
