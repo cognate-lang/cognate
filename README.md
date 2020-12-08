@@ -26,7 +26,7 @@ Cognate is optimised for functional programming - not complicated static-typed f
 The stack, around which cognate is designed, allows Cognate to do things which many other languages cannot. One example is multiple return values. While other languages - such as python - require the use of tuples or lists to return multiple values, Cognate uses the stack to achieve this without the use of any data structures. Cognate also uses the stack to allow expressions to be written in point-free notation.
 
 ### Building Cognate
-Currently, Cognate will run on Linux and MacOS systems. If you are running Debian or a Debian based system such as Ubuntu or Linux Mint, simply run this command to install Cognate's dependencies and build the compiler:
+Currently, Cognate will run on Linux and MacOS systems. If you use Windows 10, then you can install Cognate on the WIndows Subsystem for Linux, following the instructions for Debian-based systems. If you are running Debian or a Debian based system such as Ubuntu or Linux Mint, simply run this command to install Cognate's dependencies and build the compiler:
 ```
 ./SETUP.debian
 ```
