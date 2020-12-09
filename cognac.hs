@@ -44,10 +44,10 @@ parsefile = -- Parsefile takes a string (the file text) as an argument and retur
   replacesymbols .
   padtokens . -- Space out special characters.
   -- unwords $ parsecharacters $ splitOn "\'" $ -- Convert characters to ASCII value integers
-  filterAscii .
   parseblockcomments . 
   parselinecomments .
-  parsestrings -- Convert strings to lists of characters
+  parsestrings . -- Convert strings to lists of characters
+  filterAscii
 
 filterAscii :: String -> String
 filterAscii str
@@ -337,8 +337,6 @@ compile (Leaf name : Leaf "Let" : xs) =
 compile (Leaf name : Leaf "Set" : xs) =
   "mutate_variable(" ++ lc name ++ ");{" 
   ++ compile xs ++ "}"
-
-
 
 -- Primitive Do inlining.
 compile (Node expr : Leaf "Do" : xs) =
