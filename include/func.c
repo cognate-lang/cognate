@@ -253,7 +253,7 @@ external_function(read, {
   strcat(file_name_buf, "/");
   strcat(file_name_buf, pop(string));
   FILE *fp = fopen(file_name_buf, "r");
-  if (unlikely(fp == NULL)) throw_error_fmt("Cannot open file '%s'. It probably doesn't exist.", file_name_buf);
+  if (unlikely(fp == NULL)) throw_error_fmt("Cannot open file '%.64s'. It probably doesn't exist.", file_name_buf);
   fseek(fp, 0L, SEEK_END);
   size_t file_size = ftell(fp);
   rewind(fp);
@@ -363,7 +363,7 @@ external_function(match, {
     regfree(&reg); // Apparently freeing an unallocated regex is fine.
     if (unlikely(*reg_str == '\0' || regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE)))
     {
-      throw_error_fmt("Cannot compile invalid regular expression! ('%s')", reg_str); 
+      throw_error_fmt("Cannot compile invalid regular expression! ('%.64s')", reg_str); 
     }
     if (unlikely(regcomp(&reg, reg_str, REG_EXTENDED|REG_NEWLINE)))
     old_str = reg_str; /* This should probably be strcpy, but I trust that reg_str is either
@@ -372,7 +372,7 @@ external_function(match, {
   const int found = regexec(&reg, pop(string), 0, NULL, 0);
   if (unlikely(found != 0 && found != REG_NOMATCH))
   {
-    throw_error_fmt("Regex match error! (%s)", reg_str);
+    throw_error_fmt("Regex match error! (%.64s)", reg_str);
     // If this error ever actually appears, use regerror to get the full text.
   }
   push(boolean, !found);
@@ -382,7 +382,7 @@ external_function(ordinal, {
   const char* const str = pop(string);
   if (unlikely(strlen(str) != 1))
   {
-    throw_error_fmt("Ordinal requires string of length 1. String '%s' is not of length 1!", str);
+    throw_error_fmt("Ordinal requires string of length 1. String '%.64s' is not of length 1!", str);
   }
   push(number, str[0]);
 })
@@ -421,7 +421,7 @@ external_function(assert, {
   const _Bool cond = pop(boolean);
   if (unlikely(!cond))
   {
-    throw_error_fmt("Assertion '%s' has failed!", name);
+    throw_error_fmt("Assertion '%.64s' has failed!", name);
   }
 })
 

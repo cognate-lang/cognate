@@ -10,6 +10,7 @@
 #define MIN_TABLE_SIZE 2
 #define INITIAL_LIST_SIZE 16 // Constant values for initialising stack sizes.
 #define LIST_GROWTH_FACTOR 1.5
+#define MAX_ERRORMSG_LEN 256
 
 static char file_name_buf[PATH_MAX+1];
 static char *exe_path;
@@ -105,7 +106,7 @@ static char *exe_name;
 #define throw_error_fmt(fmtstr, ...) \
 { \
   /* I'm not sure sizeof(__VA_ARGS__) fits here. May cause problems in future. */ \
-  char str[strlen(fmtstr) + sizeof(__VA_ARGS__)]; \
+  char str[MAX_ERRORMSG_LEN * sizeof(char)]; \
   sprintf(str, fmtstr, __VA_ARGS__); \
   throw_error(str); \
 }
