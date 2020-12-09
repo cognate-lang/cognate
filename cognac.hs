@@ -396,7 +396,7 @@ main =
     let compiler_args = tail args
     if not (".cog" `isSuffixOf` in_file) then error "Parse Error: Source file must end with .cog file extension" 
     else do
-      putStrLn "   ______                        ______\n  / ____/___  ____ _____  ____ _/ ____/\n / /   / __ \\/ __ `/ __ \\/ __ `/ /\n/ /___/ /_/ / /_/ / / / / /_/ / /___\n\\____/\\____/\\__, /_/ /_/\\__,_/\\____/\n           /____/"
+      putStrLn "   ______                        ______\n  / ____/___  ____  ____  ____  / ____/\n / /   / __ \\/ __ `/ __ \\/ __ `/ /\n/ /___/ /_/ / /_/ / / / / /_/ / /___\n\\____/\\____/\\__, /_/ /_/\\__,_/\\____/\n           /____/"
       putStrLn $ "Cognate Compiler - Version " ++ version
       putStrLn $ "Compiling " ++ in_file ++ " to " ++ out_file ++ "... "
       source <- readFile in_file

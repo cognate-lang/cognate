@@ -106,9 +106,9 @@ static char *exe_name;
 #define throw_error_fmt(fmtstr, ...) \
 { \
   /* I'm not sure sizeof(__VA_ARGS__) fits here. May cause problems in future. */ \
-  char str[MAX_ERRORMSG_LEN * sizeof(char)]; \
-  sprintf(str, fmtstr, __VA_ARGS__); \
-  throw_error(str); \
+  char __str[MAX_ERRORMSG_LEN * sizeof(char)]; \
+  sprintf(__str, fmtstr, __VA_ARGS__); \
+  throw_error(__str); \
 }
 
 #define unlikely(expr) __builtin_expect((_Bool)(expr), 0)

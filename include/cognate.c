@@ -11,6 +11,7 @@
 #include <sys/resource.h>
 #include <libgen.h>
 #include <Block.h>
+#include <locale.h>
 
 ssize_t readlink(const char *pathname, char *buf, size_t bufsiz);
 
@@ -34,6 +35,9 @@ static void init(int argc, char** argv)
   char a;
   stack_start = &a;
   getrlimit(RLIMIT_STACK, &stack_max);
+  // Set locale for strings.
+  if (setlocale(LC_ALL, "") == NULL)
+    throw_error("Cannot set locale!");
   // Get executable path stuff.
 #ifdef __APPLE__ // '/proc/self/exe' doesn't exist on macos
   short bufsize = PATH_MAX;
