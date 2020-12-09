@@ -77,7 +77,7 @@ external_function(discard, {
   const cognate_list obj = *pop(list);
   cognate_list* const lst = (cognate_list* const) cognate_malloc (sizeof(cognate_list));
   *lst = obj;
-  if (unlikely((lst->start += num_discarding) > lst->top)) throw_error("List is too small to Discard from!");
+  if (unlikely((lst->start += num_discarding) > lst->top)) throw_error_fmt("List of length %zu is too small to Discard %zu elements from!", lst->top - lst->start, num_discarding);
   push(list, lst);
 })
 
@@ -90,7 +90,7 @@ external_function(take, {
   cognate_list obj = *pop(list);
   cognate_list* const lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
   *lst = obj;
-  if (unlikely(lst->start + num_taking > lst->top)) throw_error_fmt ("List is too small to Take from! (length %zu)", lst->top - lst->start);
+  if (unlikely(lst->start + num_taking > lst->top)) throw_error_fmt ("List of length %zu is too small to Take %zu elements from!", lst->top - lst->start, num_taking);
   lst->top = lst->start + num_taking;
   push(list, lst);
 })
@@ -104,7 +104,7 @@ external_function(index, {
     throw_error_fmt("Cannot have negative list index! (%zi)", index);
   const cognate_list lst = *pop(list);
   if (unlikely(lst.start + index >= lst.top))
-    throw_error_fmt("Index %zi is out of bounds!", index);
+    throw_error_fmt("Index %zu is out of bounds! (list is of length %zu)", index, lst.top - lst.start);
   push_any(lst.start [index]);
 })
 
