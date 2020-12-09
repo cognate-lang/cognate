@@ -44,10 +44,10 @@ parsefile = -- Parsefile takes a string (the file text) as an argument and retur
   replacesymbols .
   padtokens . -- Space out special characters.
   -- unwords $ parsecharacters $ splitOn "\'" $ -- Convert characters to ASCII value integers
+  filterAscii .
   parseblockcomments . 
   parselinecomments .
-  parsestrings . -- Convert strings to lists of characters
-  filterAscii
+  parsestrings -- Convert strings to lists of characters
 
 filterAscii :: String -> String
 filterAscii str
