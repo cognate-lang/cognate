@@ -141,7 +141,7 @@ external_function(characters, {
   const long length = strlen(str);
   lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * length);
   lst->top = lst->start + length;
-  for (int i = length; i >= 0; --i)
+  for (size_t i = length; i >= 0; --i)
   {
     // This segfaults with malloc, but malloc_atomic seems to work.
     char* const temp = (char*) cognate_malloc_atomic (sizeof(char) * 2);
