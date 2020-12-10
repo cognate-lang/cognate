@@ -115,7 +115,6 @@ static _Bool compare_objects(cognate_object ob1, cognate_object ob2)
     default:      return 0;
     // Records are a lie.
   }
-  return 0;
 }
 
 
