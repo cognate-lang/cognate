@@ -34,24 +34,35 @@ static void init(int argc, char** argv)
   // Get return stack limit
   char a;
   stack_start = &a;
-  getrlimit(RLIMIT_STACK, &stack_max);
+  if (getrlimit(RLIMIT_STACK, &stack_max) == -1)
+  {
+    throw_error("Cannot get return stack limit!");
+  }
   // Set locale for strings.
   if (setlocale(LC_ALL, "") == NULL)
+  {
     throw_error("Cannot set locale!");
+  }
   // Get executable path stuff.
 #ifdef __APPLE__ // '/proc/self/exe' doesn't exist on macos
   short bufsize = PATH_MAX;
-  _NSGetExecutablePath(file_name_buf, &bufsize);
+  if (_NSGetExecutablePath(file_name_buf, &bufsize) == -1);
 #else
-  readlink("/proc/self/exe", file_name_buf, PATH_MAX);
+  if (readlink("/proc/self/exe", file_name_buf, PATH_MAX) == -1)
 #endif
+  {
+    throw_error("Cannot get executable directory!");
+  }
   // Need to use strdup here, since basename and dirname modify their arguments.
   exe_path = strdup(file_name_buf);
   exe_name = basename(strdup(file_name_buf));
   exe_dir  = dirname(file_name_buf);
   // Seed the random number generator properly.
   struct timespec ts;
-  timespec_get(&ts, TIME_UTC);
+  if (timespec_get(&ts, TIME_UTC) == 0)
+  {
+    throw_error("Cannot get system time!");
+  }
   srand(ts.tv_nsec ^ ts.tv_sec); // TODO make random more random.
   // Init GC
 #ifndef noGC
