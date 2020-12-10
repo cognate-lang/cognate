@@ -286,7 +286,6 @@ constructStr str =
       readNumber (Node _) = error "Parse Error: Cannot parse malformed string literal!"
       sanitise = 
         replace "\"" "\\\"" .
-        replace "\\'" "'" .
         replace "¸" "'"
 
 
