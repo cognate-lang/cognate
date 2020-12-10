@@ -56,7 +56,7 @@ static void init(int argc, char** argv)
   // Need to use strdup here, since basename and dirname modify their arguments.
   exe_path = strdup(file_name_buf);
   exe_name = basename(strdup(file_name_buf));
-  exe_dir  = dirname(file_name_buf);
+  exe_dir  = dirname(strdup(file_name_buf));
   // Seed the random number generator properly.
   struct timespec ts;
   if (unlikely(timespec_get(&ts, TIME_UTC) == 0))

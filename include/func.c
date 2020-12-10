@@ -360,6 +360,8 @@ external_function(match, {
   static regex_t reg;
   if (old_str == NULL || strcmp(reg_str, old_str) != 0)
   {
+    // Technically, the last regex to be used in the program will leak memory.
+    // However, this is minor, since only a limited amount of memory can be leaked.
     regfree(&reg); // Apparently freeing an unallocated regex is fine.
     if (unlikely(*reg_str == '\0' || regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE)))
     {
