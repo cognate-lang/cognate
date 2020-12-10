@@ -108,10 +108,10 @@ static _Bool compare_objects(cognate_object ob1, cognate_object ob2)
   {
     case number:  return ob1.number  == ob2.number;           break;
     case boolean: return ob1.boolean == ob2.boolean;          break;
-    case block:   return ob1.block   == ob2.block;            break;
     case string:  return strcmp(ob1.string, ob2.string) == 0; break;
     case list:    return compare_lists(*ob1.list, *ob2.list); break;
     case table:   return compare_lists(ob1.table->items, ob2.table->items); break;
+    case block:   throw_error("Cannot compare blocks!");
     default:      return 0;
     // Records are a lie.
   }
