@@ -138,13 +138,12 @@ external_function(list,  {
 external_function(characters, {
   const char* const str = pop(string);
   cognate_list* const lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
-  const long length = strlen(str);
+  const size_t length = strlen(str);
   lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * length);
   lst->top = lst->start + length;
-  for (size_t i = length; i >= 0; --i)
+  for (size_t i = 0; i < length; ++i)
   {
-    // This segfaults with malloc, but malloc_atomic seems to work.
-    char* const temp = (char*) cognate_malloc_atomic (sizeof(char) * 2);
+    char* const temp = (char*) cognate_malloc (sizeof(char) * 2);
     temp[0] = str[i];
     temp[1] = '\0';
     lst->start[i] = ((cognate_object){.type=string, .string=temp});
