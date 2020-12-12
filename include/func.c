@@ -249,11 +249,9 @@ external_function(input, {
 
 external_function(read, {
   // Read a file to a string.
-  strcpy(file_name_buf, exe_dir);
-  strcat(file_name_buf, "/");
-  strcat(file_name_buf, pop(string));
-  FILE *fp = fopen(file_name_buf, "r");
-  if (unlikely(fp == NULL)) throw_error_fmt("Cannot open file '%.64s'. It probably doesn't exist.", file_name_buf);
+  const char* const filename = pop(string);
+  FILE *fp = fopen(filename, "r");
+  if (unlikely(fp == NULL)) throw_error_fmt("Cannot open file '%.64s'. It probably doesn't exist.", filename);
   fseek(fp, 0L, SEEK_END);
   size_t file_size = ftell(fp);
   rewind(fp);
@@ -275,16 +273,13 @@ external_function(path, {
   // Get working directory path, TODO function to get executable path.
   if (getcwd(file_name_buf, PATH_MAX) == NULL)
     throw_error("Cannot get current directory!");
-  char* small_cwd = strdup(file_name_buf);
+  const char* const small_cwd = strdup(file_name_buf);
   push(string, small_cwd);
 })
 
 external_function(write, {
   // Write string to end of file, without a newline.
-  strcat(file_name_buf, exe_dir);
-  strcat(file_name_buf, "/");
-  strcat(file_name_buf, pop(string));
-  FILE* const file = fopen(file_name_buf, "a"); 
+  FILE* const file = fopen(pop(string), "a"); 
   const char* const str = pop(string);
   fprintf(file, "%s", str);
   fclose(file);
@@ -425,6 +420,11 @@ external_function(assert, {
   {
     throw_error_fmt("Assertion '%.64s' has failed!", name);
   }
+})
+
+external_function(error, {
+  const char* const str = pop(string);
+  throw_error(str);
 })
 
 #endif

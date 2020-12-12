@@ -1,5 +1,5 @@
 ~~ If print is broken, we probably know by now.
-Read 'io.txt';
+Read 'tests/io.txt';
 If [== 'foo\nbar'] [
   Print 'PASS: Reading multi-line file to string'
 ];
