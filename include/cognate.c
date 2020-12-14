@@ -18,17 +18,6 @@ ssize_t readlink(const char *pathname, char *buf, size_t bufsiz);
 static const char *stack_start;
 static struct rlimit stack_max;
 
-static void get_params(int argc, char** argv)
-{
-  params.start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * (argc-1));
-  params.top = params.start + argc - 1;
-  while (--argc >= 1)
-  {
-    char* str = argv[argc];
-    params.start[argc-1] = (cognate_object){.type=string, .string=str};
-  }
-}
-
 static void init(int argc, char** argv)
 {
   // Get return stack limit
@@ -43,6 +32,10 @@ static void init(int argc, char** argv)
   {
     throw_error("Cannot set locale!");
   }
+  // Init GC
+#ifndef noGC
+  GC_INIT();
+#endif
   // Get executable path stuff.
 #ifdef __APPLE__ // '/proc/self/exe' doesn't exist on macos
   short bufsize = PATH_MAX;
@@ -64,13 +57,16 @@ static void init(int argc, char** argv)
     throw_error("Cannot get system time!");
   }
   srand(ts.tv_nsec ^ ts.tv_sec); // TODO make random more random.
-  // Init GC
-#ifndef noGC
-  GC_INIT();
-#endif
-  // Generate a stack.
+  // Load parameters
+  params.start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * (argc-1));
+  params.top = params.start + argc - 1;
+  while (--argc >= 1)
+  {
+    char* str = argv[argc];
+    params.start[argc-1] = (cognate_object){.type=string, .string=str};
+  }
+    // Generate a stack.
   init_stack();
-  get_params(argc, argv);
 }
 
 static void cleanup()

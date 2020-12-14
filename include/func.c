@@ -205,14 +205,13 @@ external_function(elseif,
   // Function calls between an If and ElseIf will mess up if_status.
   const cognate_block cond = pop(block);
   const cognate_block expr = pop(block);
-  const char temp_if_status = if_status; // Need this in case cond() modified if_status.
   cond();
-  if_status = pop(boolean) && !temp_if_status;
+  if_status = pop(boolean) && !if_status;
   if (if_status)
   {
     expr();
   }
-  else if (unlikely(temp_if_status == 2))
+  else if (unlikely(if_status == 2))
   {
     throw_error("ElseIf statement encountered before [Else]If statement!");
   }
