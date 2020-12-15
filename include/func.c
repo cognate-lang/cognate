@@ -239,7 +239,10 @@ external_function(input, {
   size_t file_size = INITIAL_LIST_SIZE;
   while ((text[i++] = fgetc(stdin)) != '\n')
   {
-    (i >= file_size) && (text = (char*) cognate_realloc (text, (file_size *= LIST_GROWTH_FACTOR)));
+    if (i == file_size)
+    {
+      text = (char*) cognate_realloc (text, (file_size *= LIST_GROWTH_FACTOR));
+    }
   }
   text[i-1] = '\0';
   push(string, text);
