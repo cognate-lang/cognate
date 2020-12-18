@@ -63,7 +63,7 @@ static cognate_object table_get(const char* const key, const cognate_table tab)
       return tab.items.start[shrunk_hash];
     }
   }
-  throw_error_fmt("Cannot find key '%.64s' in table!", key);
+  throw_error("Cannot find key '%.64s' in table!", key);
 }
 
 static cognate_table table_grow(const cognate_table tab)

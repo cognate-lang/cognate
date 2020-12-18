@@ -11,7 +11,7 @@
 
 char* function_name = NULL;
 
-noreturn static void throw_error(const char* message);
+noreturn static void throw_error(const char*, ...);
 
 noreturn static void type_error(const char* const expected, const char* const recieved);
 noreturn static void type_error(const char* const expected, const char* const recieved)
@@ -19,11 +19,15 @@ noreturn static void type_error(const char* const expected, const char* const re
   // In future, type errors should instead be 'expectation errors'.
   // These print an expected predicate, and the value that didn't satisfy it.
   // This allows the language to move away from types in future.
-  throw_error_fmt("Type Error! Expected type '%s' but recieved type '%s'", expected, recieved);
+  throw_error("Type Error! Expected type '%s' but recieved type '%s'", expected, recieved);
 }
 
-noreturn static void throw_error(const char* message)
+noreturn static void throw_error(const char* fmt, ...)
 {
+  va_list args;
+  va_start(args, fmt);
+  char* message = malloc(sizeof(char) * MAX_ERRORMSG_LEN);
+  vsprintf(message, fmt, args);
   // Uses utf8 box-drawing characters and ansi colour codes to print a pretty error message.
   int i;
   printf("\n\342\224\214");

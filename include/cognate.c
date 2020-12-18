@@ -73,7 +73,7 @@ static void cleanup()
 {
   if (unlikely(stack.items.top != stack.items.start))
   {
-    throw_error_fmt("Program exiting with non-empty stack of length %ti", stack.items.top - stack.items.start);
+    throw_error("Program exiting with non-empty stack of length %ti", stack.items.top - stack.items.start);
   }
 }
 
@@ -103,7 +103,7 @@ static void check_call_stack()
     // if (how much stack left < stack change between checks)
     if (unlikely(stack_max.rlim_cur + &b - stack_start < stack_start - &b - old_stack_size))
     {
-      throw_error_fmt("Call stack overflow - too much recursion! (call stack is %ti bytes)", stack_start - &b);
+      throw_error("Call stack overflow - too much recursion! (call stack is %ti bytes)", stack_start - &b);
     }
     old_stack_size = stack_start - &b;
   }

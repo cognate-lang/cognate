@@ -80,7 +80,7 @@ static const char* lookup_type(cognate_type type)
     case table  : return "Table";
     default:;
   }
-  throw_error_fmt("Attempted to lookup invalid type <%i>", type);
+  throw_error("Attempted to lookup invalid type <%i>", type);
 }
 
 static _Bool compare_lists(cognate_list lst1, cognate_list lst2)

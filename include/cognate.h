@@ -95,13 +95,6 @@ static char *exe_name;
 #define debug_printf(str, ...)
 #endif
 
-#define throw_error_fmt(fmtstr, ...) \
-{ \
-  char __str[MAX_ERRORMSG_LEN * sizeof(char)]; \
-  sprintf(__str, fmtstr, __VA_ARGS__); \
-  throw_error(__str); \
-}
-
 #define unlikely(expr) __builtin_expect((_Bool)(expr), 0)
 #define likely(expr)   __builtin_expect((_Bool)(expr), 1)
 
