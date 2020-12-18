@@ -12,7 +12,45 @@
 
 static cognate_list params;
 
-static char if_status = 2;
+#define cognate_function_if() { \
+  /* TODO: Else and ElseIf should only be allowed directly following an If. */\
+  const cognate_block cond = pop(block); \
+  const cognate_block expr = pop(block); \
+  cond(); \
+  if_status = pop(boolean); \
+  if (if_status) \
+  { \
+    expr(); \
+  } \
+}
+  
+#define cognate_function_else() { \
+  /* Function calls between an If and Else will mess up if_status. */\
+  const cognate_block expr = pop(block); \
+  if (!if_status) \
+  { \
+    expr();  \
+  } \
+  else if (unlikely(if_status == 2)) \
+  { \
+    throw_error("Else statement encountered before [Else]If statement!"); \
+  } \
+}
+
+#define cognate_function_elseif() { \
+  const cognate_block cond = pop(block); \
+  const cognate_block expr = pop(block); \
+  cond(); \
+  if_status = pop(boolean) && !if_status; \
+  if (if_status) \
+  { \
+    expr(); \
+  } \
+  else if (unlikely(if_status == 2)) \
+  { \
+    throw_error("ElseIf statement encountered before [Else]If statement!"); \
+  } \
+}
 
 static void cognate_function_do()         { pop(block)();                               }
 static void cognate_function_put()        { print_object(pop_any(), 1); fflush(stdout); }
@@ -172,46 +210,7 @@ static void cognate_function_stack() {
   push(list, &stack.items);
 }
 
-static void cognate_function_if() {
-  // TODO: Else and ElseIf should only be allowed directly following an If.
-  const cognate_block cond = pop(block);
-  const cognate_block expr = pop(block);
-  cond();
-  if_status = pop(boolean);
-  if (if_status)
-  {
-    expr();
-  }
-}
-  
-static void cognate_function_else() {
-  // Function calls between an If and Else will mess up if_status.
-  const cognate_block expr = pop(block);
-  if (!if_status)
-  {
-    expr(); 
-  }
-  else if (unlikely(if_status == 2))
-  {
-    throw_error("Else statement encountered before [Else]If statement!");
-  }
-}
 
-static void cognate_function_elseif() {
-  // Function calls between an If and ElseIf will mess up if_status.
-  const cognate_block cond = pop(block);
-  const cognate_block expr = pop(block);
-  cond();
-  if_status = pop(boolean) && !if_status;
-  if (if_status)
-  {
-    expr();
-  }
-  else if (unlikely(if_status == 2))
-  {
-    throw_error("ElseIf statement encountered before [Else]If statement!");
-  }
-}
 
 static void cognate_function_append() {
   const cognate_list lst1 = *pop(list);

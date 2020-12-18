@@ -22,6 +22,7 @@ static char *exe_name;
   int main(int argc, char **argv) \
   { \
     init(argc, argv); \
+    __attribute__((unused)) char if_status = 2; \
     body \
     cleanup(); \
     return 0; \
@@ -71,10 +72,8 @@ static char *exe_name;
     /* Temp variables causes ~10% performance loss :( */ \
     const ptrdiff_t temp_modified = stack.modified - stack.items.start; \
     stack.modified = stack.items.top; \
-    const char temp_if_status = if_status; \
-    if_status = 2; \
+    __attribute__((unused)) char if_status = 2; \
     body \
-    if_status = temp_if_status; \
     if (docopy) copy_blocks(); \
     stack.modified = temp_modified + stack.items.start; \
   }
