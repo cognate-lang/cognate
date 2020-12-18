@@ -13,8 +13,6 @@
 #include <Block.h>
 #include <locale.h>
 
-ssize_t readlink(const char *pathname, char *buf, size_t bufsiz);
-
 static const char *stack_start;
 static struct rlimit stack_max;
 
@@ -36,20 +34,6 @@ static void init(int argc, char** argv)
 #ifndef noGC
   GC_INIT();
 #endif
-  // Get executable path stuff.
-#ifdef __APPLE__ // '/proc/self/exe' doesn't exist on macos
-  short bufsize = PATH_MAX;
-  if (unlikely(_NSGetExecutablePath(file_name_buf, &bufsize) == -1));
-#else
-  if (unlikely(readlink("/proc/self/exe", file_name_buf, PATH_MAX) == -1))
-#endif
-  {
-    throw_error("Cannot get executable directory!");
-  }
-  // Need to use strdup here, since basename and dirname modify their arguments.
-  exe_path = strdup(file_name_buf);
-  exe_name = basename(strdup(file_name_buf));
-  exe_dir  = dirname(strdup(file_name_buf));
   // Seed the random number generator properly.
   struct timespec ts;
   if (unlikely(timespec_get(&ts, TIME_UTC) == 0))
@@ -65,7 +49,7 @@ static void init(int argc, char** argv)
     char* str = argv[argc];
     params.start[argc-1] = (cognate_object){.type=string, .string=str};
   }
-    // Generate a stack.
+  // Generate a stack.
   init_stack();
 }
 
@@ -94,18 +78,18 @@ static void copy_blocks()
 static void check_call_stack()
 {
   // Performance here is not great.
-  static unsigned short calls = 1024;
-  if (unlikely(!--calls))
+  static unsigned short function_calls = 1024;
+  if (unlikely(!--function_calls))
   {
-    calls = 1024;
+    function_calls = 1024;
     static long old_stack_size;
-    char b;
+    char stack_end;
     // if (how much stack left < stack change between checks)
-    if (unlikely(stack_max.rlim_cur + &b - stack_start < stack_start - &b - old_stack_size))
+    if (unlikely(stack_max.rlim_cur + &stack_end - stack_start < stack_start - &stack_end - old_stack_size))
     {
-      throw_error("Call stack overflow - too much recursion! (call stack is %ti bytes)", stack_start - &b);
+      throw_error("Call stack overflow - too much recursion! (call stack is %ti bytes)", stack_start - &stack_end);
     }
-    old_stack_size = stack_start - &b;
+    old_stack_size = stack_start - &stack_end;
   }
 }
 

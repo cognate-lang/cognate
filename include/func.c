@@ -12,6 +12,8 @@
 
 static cognate_list params;
 
+static char file_name_buf[PATH_MAX+1];
+
 #define cognate_function_if() { \
   /* TODO: Else and ElseIf should only be allowed directly following an If. */\
   const cognate_block cond = pop(block); \

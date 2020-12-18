@@ -13,10 +13,6 @@
 #define LIST_GROWTH_FACTOR 1.5
 #define MAX_ERRORMSG_LEN 256
 
-static char file_name_buf[PATH_MAX+1];
-static char *exe_path;
-static char *exe_dir;
-static char *exe_name;
 
 #define program(body) \
   int main(int argc, char **argv) \
@@ -52,10 +48,8 @@ static char *exe_name;
   #define call(name) cognate_function_ ## name();
 #endif
 
-/*
 #define mutate_function(name, docopy, body) \
   cognate_function_ ## name = make_block(docopy, body);
-*/
 
 // Internal cognate variable.
 #define variable(name, flags) \
