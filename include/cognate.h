@@ -51,15 +51,6 @@ static char *exe_name;
   #define call(name) cognate_function_ ## name();
 #endif
 
-// Macro to define external cognate function.
-#define external_function(name, body) \
-  static void cognate_function_ ## name () body
-
-// Macro for defining external cognate variables with specified type.
-#define external_variable(name, type, value) \
-  static void cognate_function_ ## name () { \
-    push(type, value); }
-
 /*
 #define mutate_function(name, docopy, body) \
   cognate_function_ ## name = make_block(docopy, body);

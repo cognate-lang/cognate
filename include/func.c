@@ -14,16 +14,16 @@ static cognate_list params;
 
 static char if_status = 2;
 
-external_function(do,         { pop(block)();                               })
-external_function(put,        { print_object(pop_any(), 1); fflush(stdout); })
-external_function(print,      { print_object(pop_any(), 1); puts("");       })
+static void cognate_function_do()         { pop(block)();                               }
+static void cognate_function_put()        { print_object(pop_any(), 1); fflush(stdout); }
+static void cognate_function_print()      { print_object(pop_any(), 1); puts("");       }
 
-external_function(sum,        { push(number, pop(number) + pop(number)); })
-external_function(product,    { push(number, pop(number) * pop(number)); })
-external_function(divisor,    { push(number, (1 / pop(number) * pop(number))); })
-external_function(difference, { push(number, (-pop(number) + pop(number))); })
+static void cognate_function_sum()        { push(number, pop(number) + pop(number)); }
+static void cognate_function_product()    { push(number, pop(number) * pop(number)); }
+static void cognate_function_divisor()    { push(number, (1 / pop(number) * pop(number))); }
+static void cognate_function_difference() { push(number, (-pop(number) + pop(number))); }
 
-external_function(modulo, {
+static void cognate_function_modulo() {
   const double n = pop(number);
   const double m = pop(number);
   if (unlikely(m != (long long)m || n != (long long)n))
@@ -31,44 +31,44 @@ external_function(modulo, {
     throw_error_fmt("Modulo should only take integer arguments. '%.15g modulo %.15g' is invalid.", n, m);
   }
   push(number, (long long)m % (long long)n);
-})
+}
 
-external_function(random, { // This function is pretty broken.
+static void cognate_function_random() { // This function is pretty broken.
   double low = pop(number); double high = pop(number); double step = pop(number); 
   if (unlikely(high < low))   { throw_error_fmt("Cannot generate random number in range! (%.15g..%.15g)", low, high); }
   else if (high - low < step) { push(number, low); }
   else { push(number, low + (double)(rand() % (size_t)((high - low + step) / step)) * step); }
-})
+}
 
-external_function(drop,    { pop_any(); }) // These can be defined within cognate.
-external_function(twin,    { push_any(peek_any()); })
-external_function(triplet, { const cognate_object a = peek_any(); push_any(a); push_any(a); })
-external_function(swap,    { const cognate_object a = pop_any(); const cognate_object b = pop_any(); push_any(a); push_any(b); })
-external_function(clear,   { init_stack(); })
+static void cognate_function_drop()    { pop_any(); } // These can be defined within cognate.
+static void cognate_function_twin()    { push_any(peek_any()); }
+static void cognate_function_triplet() { const cognate_object a = peek_any(); push_any(a); push_any(a); }
+static void cognate_function_swap()    { const cognate_object a = pop_any(); const cognate_object b = pop_any(); push_any(a); push_any(b); }
+static void cognate_function_clear()   { init_stack(); }
 
-external_variable(true,  boolean, 1)
-external_variable(false, boolean, 0)
+static void cognate_function_true()  {push(boolean,1);}
+static void cognate_function_false() {push(boolean,0);}
 
-external_function(either, { const _Bool a = pop(boolean); push(boolean, pop(boolean) || a); }) // Beware short circuiting.
-external_function(both,   { const _Bool a = pop(boolean); push(boolean, pop(boolean) && a); })
-external_function(one_of, { const _Bool a = pop(boolean); const _Bool b = pop(boolean); push(boolean, (a && !b) || (!a && b)); })
-external_function(not,    { push(boolean, !pop(boolean)); })
+static void cognate_function_either() { const _Bool a = pop(boolean); push(boolean, pop(boolean) || a); } // Beware short circuiting.
+static void cognate_function_both()   { const _Bool a = pop(boolean); push(boolean, pop(boolean) && a); }
+static void cognate_function_one_of() { const _Bool a = pop(boolean); const _Bool b = pop(boolean); push(boolean, (a && !b) || (!a && b)); }
+static void cognate_function_not()    { push(boolean, !pop(boolean)); }
 
 
-external_function(equal,          { push(boolean,  compare_objects(pop_any(),pop_any())); })
-external_function(unequal,        { push(boolean, !compare_objects(pop_any(),pop_any())); })
-external_function(preceed,        { push(boolean, pop(number) >  pop(number)); })
-external_function(exceed,         { push(boolean, pop(number) <  pop(number)); })
-external_function(equalorpreceed, { push(boolean, pop(number) >= pop(number)); })
-external_function(equalorexceed,  { push(boolean, pop(number) <= pop(number)); })
+static void cognate_function_equal()          { push(boolean,  compare_objects(pop_any(),pop_any())); }
+static void cognate_function_unequal()        { push(boolean, !compare_objects(pop_any(),pop_any())); }
+static void cognate_function_preceed()        { push(boolean, pop(number) >  pop(number)); }
+static void cognate_function_exceed()         { push(boolean, pop(number) <  pop(number)); }
+static void cognate_function_equalorpreceed() { push(boolean, pop(number) >= pop(number)); }
+static void cognate_function_equalorexceed()  { push(boolean, pop(number) <= pop(number)); }
 
-external_function(number_,  { push(boolean, pop_any().type == number);  }) // Question marks are converted to underscores.
-external_function(list_,    { push(boolean, pop_any().type == list);    }) // However all other symbols are too.
-external_function(string_,  { push(boolean, pop_any().type == string);  }) // So this is a temporary hack!
-external_function(block_,   { push(boolean, pop_any().type == block);   })
-external_function(boolean_, { push(boolean, pop_any().type == boolean); })
+static void cognate_function_number_()  { push(boolean, pop_any().type == number);  } // Question marks are converted to underscores.
+static void cognate_function_list_()    { push(boolean, pop_any().type == list);    } // However all other symbols are too.
+static void cognate_function_string_()  { push(boolean, pop_any().type == string);  } // So this is a temporary hack!
+static void cognate_function_block_()   { push(boolean, pop_any().type == block);   }
+static void cognate_function_boolean_() { push(boolean, pop_any().type == boolean); }
 
-external_function(discard, { 
+static void cognate_function_discard() { 
   // O(n) where n is the number of element being Discarded.
   const double num = pop(number);
   const size_t num_discarding = num;
@@ -79,9 +79,9 @@ external_function(discard, {
   *lst = obj;
   if (unlikely((lst->start += num_discarding) > lst->top)) throw_error_fmt("List of length %zu is too small to Discard %zu elements from!", lst->top - lst->start, num_discarding);
   push(list, lst);
-})
+}
 
-external_function(take, {
+static void cognate_function_take() {
   // O(n) where n is the number of element being Taken.
   const double num = pop(number);
   const size_t num_taking = num;
@@ -93,9 +93,9 @@ external_function(take, {
   if (unlikely(lst->start + num_taking > lst->top)) throw_error_fmt ("List of length %zu is too small to Take %zu elements from!", lst->top - lst->start, num_taking);
   lst->top = lst->start + num_taking;
   push(list, lst);
-})
+}
 
-external_function(index, { 
+static void cognate_function_index() { 
   const double d = pop(number);
   const size_t index = d;
   if (unlikely(index != (size_t)d))
@@ -106,14 +106,14 @@ external_function(index, {
   if (unlikely(lst.start + index >= lst.top))
     throw_error_fmt("Index %zu is out of bounds! (list is of length %zu)", index, lst.top - lst.start);
   push_any(lst.start [index]);
-})
+}
 
-external_function(length,{
+static void cognate_function_length() {
   const cognate_list lst = *pop(list);
   push(number, (double)(lst.top - lst.start));
-})
+}
 
-external_function(list,  { 
+static void cognate_function_list() { 
   // I solemnly swear that I will NEVER RETURN THE ADDRESS OF A LOCAL VARIABLE!
   // Get the block argument
   const cognate_block expr = pop(block);
@@ -133,9 +133,9 @@ external_function(list,  {
   lst->top = lst->start + lst_len;
   // Push the created list to the stack
   push(list, lst);
-})
+}
 
-external_function(characters, {
+static void cognate_function_characters() {
   const char* const str = pop(string);
   cognate_list* const lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
   const size_t length = strlen(str);
@@ -149,9 +149,9 @@ external_function(characters, {
     lst->start[i] = ((cognate_object){.type=string, .string=temp});
   }
   push(list, lst);
-})
+}
 
-external_function(join, {
+static void cognate_function_join() {
   // Joins a list of strings into a single string.
   const cognate_list lst = *pop(list);
   long str_size = 0;
@@ -166,15 +166,13 @@ external_function(join, {
     strcat(str, i->string);
   }
   push(string, str);
-})
+}
 
-external_function(stack,
-{
+static void cognate_function_stack() {
   push(list, &stack.items);
-})
+}
 
-external_function(if,
-{
+static void cognate_function_if() {
   // TODO: Else and ElseIf should only be allowed directly following an If.
   const cognate_block cond = pop(block);
   const cognate_block expr = pop(block);
@@ -184,10 +182,9 @@ external_function(if,
   {
     expr();
   }
-})
+}
   
-external_function(else,
-{
+static void cognate_function_else() {
   // Function calls between an If and Else will mess up if_status.
   const cognate_block expr = pop(block);
   if (!if_status)
@@ -198,10 +195,9 @@ external_function(else,
   {
     throw_error("Else statement encountered before [Else]If statement!");
   }
-})
+}
 
-external_function(elseif,
-{
+static void cognate_function_elseif() {
   // Function calls between an If and ElseIf will mess up if_status.
   const cognate_block cond = pop(block);
   const cognate_block expr = pop(block);
@@ -215,10 +211,9 @@ external_function(elseif,
   {
     throw_error("ElseIf statement encountered before [Else]If statement!");
   }
-})
+}
 
-external_function(append,
-{
+static void cognate_function_append() {
   const cognate_list lst1 = *pop(list);
   const cognate_list lst2 = *pop(list);
   const size_t list1_len = lst1.top - lst1.start;
@@ -230,9 +225,9 @@ external_function(append,
   memcpy(lst->start, lst2.start, list2_len * sizeof(cognate_object));
   memcpy(lst->start+list2_len, lst1.start, list1_len * sizeof(cognate_object));
   push(list, lst);
-})
+}
 
-external_function(input, {
+static void cognate_function_input() {
   // Read user input to a string.
   char *text = (char*) cognate_malloc (sizeof(char) * INITIAL_LIST_SIZE);
   size_t i = 0;
@@ -246,9 +241,9 @@ external_function(input, {
   }
   text[i-1] = '\0';
   push(string, text);
-})
+}
 
-external_function(read, {
+static void cognate_function_read() {
   // Read a file to a string.
   const char* const filename = pop(string);
   FILE *fp = fopen(filename, "r");
@@ -262,40 +257,40 @@ external_function(read, {
   text[file_size-1] = '\0'; // Remove trailing eof.
   push(string, text);
   // TODO: single line (or delimited) file read function for better IO performance?
-})
+}
 
-external_function(number, {
+static void cognate_function_number() {
   // casts string to number. 
   const char* const str = pop(string);
   push(number, (double)strtof(str, NULL)); // strtof uses floats instead of doubles, prepare for rounding error.
-})
+}
 
-external_function(path, {
+static void cognate_function_path() {
   // Get working directory path, TODO function to get executable path.
   if (getcwd(file_name_buf, PATH_MAX) == NULL)
     throw_error("Cannot get current directory!");
   const char* const small_cwd = strdup(file_name_buf);
   push(string, small_cwd);
-})
+}
 
-external_function(write, {
+static void cognate_function_write() {
   // Write string to end of file, without a newline.
   FILE* const file = fopen(pop(string), "a"); 
   const char* const str = pop(string);
   fprintf(file, "%s", str);
   fclose(file);
-})
+}
 
-external_function(parameters, {
+static void cognate_function_parameters() {
   push(list, &params);
-})
+}
 
-external_function(stop, {
+static void cognate_function_stop() {
   // Don't check stack length, because it probably wont be empty.
   exit(0);
-})
+}
 
-external_function(table, {
+static void cognate_function_table() {
   call(list);
   const cognate_list init = *pop(list);
   // The 2 on this line should probably be tuned or something.
@@ -313,25 +308,25 @@ external_function(table, {
     *tab = table_add(hash(key), value, *tab);
   }
   push(table, tab);
-})
+}
 
-external_function(insert, {
+static void cognate_function_insert() {
   // O(n) :(
   const char* const key = pop(string);
   const cognate_object value = pop_any();
   cognate_table* const tab = (cognate_table*) cognate_malloc (sizeof(cognate_table));
   *tab = table_add(hash(key), value, table_copy(*pop(table)));
   push(table, tab);
-})
+}
 
-external_function(get, {
+static void cognate_function_get() {
   // O(1) mostly;
   const char* const key = pop(string);
   const cognate_table tab = *pop(table);
   push_any(table_get(key, tab));
-})
+}
 
-external_function(values, {
+static void cognate_function_values() {
   // O(n)
   const cognate_table tab = *pop(table);
   cognate_list* const lst = (cognate_list*) cognate_malloc (sizeof(cognate_list));
@@ -347,9 +342,9 @@ external_function(values, {
   }
   lst->top = lst->start + j;
   push(list, lst);
-})
+}
 
-external_function(match, {
+static void cognate_function_match() {
   // Returns true if string matches regex.
   static const char *old_str = NULL;
   const char* const reg_str = pop(string);
@@ -374,18 +369,18 @@ external_function(match, {
     // If this error ever actually appears, use regerror to get the full text.
   }
   push(boolean, !found);
-})
+}
 
-external_function(ordinal, {
+static void cognate_function_ordinal() {
   const char* const str = pop(string);
   if (unlikely(strlen(str) != 1))
   {
     throw_error_fmt("Ordinal requires string of length 1. String '%.64s' is not of length 1!", str);
   }
   push(number, str[0]);
-})
+}
 
-external_function(character, {
+static void cognate_function_character() {
   const double d = pop(number);
   const long i = d;
   if (unlikely(i != d))           throw_error_fmt("Cannot convert non-integer (%.15g) to ASCII character!", d);
@@ -394,38 +389,38 @@ external_function(character, {
   str[0] = i;
   str[1] = '\0';
   push(string, str);
-})
+}
 
-external_function(parsenumber, {
+static void cognate_function_parsenumber() {
   const char* const str = pop(string);
   const double num;
   push(number, atof(str));
-})
+}
 
-external_function(floor, {
+static void cognate_function_floor() {
   push(number, floor(pop(number)));
-})
+}
 
-external_function(round, {
+static void cognate_function_round() {
   push(number, round(pop(number)));
-})
+}
 
-external_function(ceiling, {
+static void cognate_function_ceiling() {
   push(number, ceil(pop(number)));
-})
+}
 
-external_function(assert, {
+static void cognate_function_assert() {
   const char* const name = pop(string);
   const _Bool cond = pop(boolean);
   if (unlikely(!cond))
   {
     throw_error_fmt("Assertion '%.64s' has failed!", name);
   }
-})
+}
 
-external_function(error, {
+static void cognate_function_error() {
   const char* const str = pop(string);
   throw_error(str);
-})
+}
 
 #endif
