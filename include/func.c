@@ -72,7 +72,7 @@ static void cognate_function_modulo() {
 }
 
 static void cognate_function_random() { // This function is pretty broken.
-  double low = pop(number); double high = pop(number); double step = pop(number); 
+  const double low = pop(number); const double high = pop(number); const double step = pop(number); 
   if (unlikely(high < low))   { throw_error("Cannot generate random number in range! (%.15g..%.15g)", low, high); }
   else if (high - low < step) { push(number, low); }
   else { push(number, low + (double)(rand() % (size_t)((high - low + step) / step)) * step); }
@@ -162,7 +162,7 @@ static void cognate_function_list() {
   // Eval expr
   expr();
   // Store the resultant list, GC_cognate_realloc-ing to fit snugly in memory.
-  cognate_list* lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
+  cognate_list* const lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
   *lst = stack.items;
   // Restore the original stack
   stack = temp_stack;
