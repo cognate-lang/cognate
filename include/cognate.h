@@ -9,7 +9,7 @@
 #define MAX_TABLE_TRIES 3
 #define INITIAL_READ_SIZE 64
 #define MIN_TABLE_SIZE 2
-#define INITIAL_LIST_SIZE 16 // Constant values for initialising stack sizes.
+#define INITIAL_LIST_SIZE 16
 #define LIST_GROWTH_FACTOR 1.5
 #define MAX_ERRORMSG_LEN 256
 
@@ -39,7 +39,7 @@ static char *exe_name;
 #define function(name, flags, docopy, body) \
   flags cognate_block cognate_function_ ## name = make_block(docopy, \
   { \
-    char* temp_func_name = function_name; \
+    char* const temp_func_name = function_name; \
     function_name = #name; \
     check_call_stack(); \
     body \
@@ -86,13 +86,6 @@ static char *exe_name;
   #define cognate_malloc  malloc
   #define cognate_realloc realloc
   #define cognate_malloc_atomic malloc
-#endif
-
-#ifdef debug
-#define debug_printf(str, ...) \
-  fprintf(stderr, "[DEBUG] %s:%d -> "#str"\n", __FILE__, __LINE__, __VA_ARGS__);
-#else
-#define debug_printf(str, ...)
 #endif
 
 #define unlikely(expr) __builtin_expect((_Bool)(expr), 0)

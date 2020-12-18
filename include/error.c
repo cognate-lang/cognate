@@ -26,7 +26,7 @@ noreturn static void throw_error(const char* fmt, ...)
 {
   va_list args;
   va_start(args, fmt);
-  char* message = malloc(sizeof(char) * MAX_ERRORMSG_LEN);
+  char* message = malloc(sizeof(char) * (MAX_ERRORMSG_LEN + 1));
   vsprintf(message, fmt, args);
   // Uses utf8 box-drawing characters and ansi colour codes to print a pretty error message.
   int i;
@@ -62,6 +62,16 @@ noreturn static void throw_error(const char* fmt, ...)
   for (i = 0; i < 78; ++i) printf("\342\224\200");
   puts("\342\224\230");
   exit(-1);
+}
+
+static void debug_printf(__attribute__((unused)) const char* fmt, ...)
+{
+#if debug
+  va_list args;
+  va_start(args, fmt);
+  fprintf(stderr, "[DEBUG] %s:%d -> ", __FILE__, __LINE__);
+  vfprintf(stderr, fmt, args);
+#endif
 }
 
 #endif
