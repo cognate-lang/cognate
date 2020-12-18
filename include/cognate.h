@@ -27,8 +27,9 @@ static char *exe_name;
     return 0; \
   }
 
-#define mutable   __block
+
 #define immutable const
+#define mutable __block
 
 #define copy   1
 #define nocopy 0
