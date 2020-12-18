@@ -43,7 +43,7 @@
   });
 
 #ifdef debug
-  #define call(name) debug_printf("Calling %s\n", #name); cognate_function_ ## name();
+  #define call(name) debug_printf("Calling %s", #name); cognate_function_ ## name();
 #else 
   #define call(name) cognate_function_ ## name();
 #endif

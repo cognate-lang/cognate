@@ -51,6 +51,7 @@ static void init(int argc, char** argv)
   }
   // Generate a stack.
   init_stack();
+  debug_printf("Initialisation successful");
 }
 
 static void cleanup()
