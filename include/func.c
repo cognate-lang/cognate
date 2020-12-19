@@ -117,7 +117,7 @@ static void cognate_function_discard() {
   const double num = pop(number);
   const size_t num_discarding = num;
   if unlikely(num != num_discarding) throw_error("Cannot Discard a non-integer number of elements! (%.15g)", num);
-  if unlikely(num_discarding < 0) throw_error("Cannot Discard a negative number of elements! (%zi)", num_discarding);
+  if unlikely(num_discarding < 0)    throw_error("Cannot Discard a negative number of elements! (%zi)", num_discarding);
   const cognate_list obj = *pop(list);
   cognate_list* const lst = (cognate_list* const) cognate_malloc (sizeof(cognate_list));
   *lst = obj;
@@ -130,7 +130,7 @@ static void cognate_function_take() {
   const double num = pop(number);
   const size_t num_taking = num;
   if unlikely(num != num_taking) throw_error("Cannot Take a non-integer number of elements! (%.15g)", num);
-  if unlikely(num_taking < 0) throw_error("Cannot Take a negative number of elements! (%zi)", num_taking);
+  if unlikely(num_taking < 0)    throw_error("Cannot Take a negative number of elements! (%zi)", num_taking);
   cognate_list obj = *pop(list);
   cognate_list* const lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
   *lst = obj;
@@ -284,7 +284,7 @@ static void cognate_function_path() {
 
 static void cognate_function_write() {
   // Write string to end of file, without a newline.
-  FILE* const file = fopen(pop(string), "a"); 
+  FILE* const file = fopen(pop(string), "a");
   const char* const str = pop(string);
   fprintf(file, "%s", str);
   fclose(file);
@@ -302,7 +302,6 @@ static void cognate_function_stop() {
 static void cognate_function_table() {
   call(list);
   const cognate_list init = *pop(list);
-  // The 2 on this line should probably be tuned or something.
   const unsigned long table_size = ((init.top - init.start) * LIST_GROWTH_FACTOR) + MIN_TABLE_SIZE;
   cognate_table* const tab = (cognate_table*) cognate_malloc (sizeof(cognate_table)); // Need to allocate list here.
   tab->items.start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * table_size);
@@ -420,16 +419,14 @@ static void cognate_function_ceiling() {
 
 static void cognate_function_assert() {
   const char* const name = pop(string);
-  const _Bool cond = pop(boolean);
-  if unlikely(!cond)
+  if unlikely(!pop(boolean))
   {
     throw_error("Assertion '%.64s' has failed!", name);
   }
 }
 
 static void cognate_function_error() {
-  const char* const str = pop(string);
-  throw_error(str);
+  throw_error(pop(string));
 }
 
 #endif
