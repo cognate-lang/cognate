@@ -82,8 +82,8 @@
   #define cognate_malloc_atomic malloc
 #endif
 
-#define unlikely(expr) __builtin_expect((_Bool)(expr), 0)
-#define likely(expr)   __builtin_expect((_Bool)(expr), 1)
+#define unlikely(expr) (__builtin_expect((_Bool)(expr), 0))
+#define likely(expr)   (__builtin_expect((_Bool)(expr), 1))
 
 
 #ifdef debug // Push an object to the stack. Print if debugging.

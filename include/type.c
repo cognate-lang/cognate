@@ -61,7 +61,7 @@ static _Bool compare_lists(cognate_list, cognate_list);
 
 static cognate_object check_type(cognate_type expected_type, cognate_object object)
 {
-  if (likely(object.type == expected_type)) 
+  if likely(object.type == expected_type)
   {
     return object;
   }

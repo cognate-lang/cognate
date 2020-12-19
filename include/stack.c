@@ -33,14 +33,14 @@ static void push_any(const cognate_object object)
 {
   // Profiles says that this function is The Problem.
   // builtin_expect optimises because the stack hardly ever needs to expand.
-  if (unlikely(stack.items.start + stack.size == stack.items.top))
+  if unlikely(stack.items.start + stack.size == stack.items.top)
     expand_stack();
   *stack.items.top++ = object;
 }
 
 static cognate_object pop_any()
 { 
-  if (unlikely(stack.items.top == stack.items.start))
+  if unlikely(stack.items.top == stack.items.start)
     throw_error("Stack underflow!");
   stack.modified -= (stack.modified == stack.items.top);
   return *--stack.items.top;
@@ -48,7 +48,7 @@ static cognate_object pop_any()
 
 static cognate_object peek_any()
 {
-  if (unlikely(stack.items.top == stack.items.start))
+  if unlikely(stack.items.top == stack.items.start)
     throw_error("Stack underflow!");
   return *(stack.items.top - 1);
 }

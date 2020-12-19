@@ -19,36 +19,34 @@ static char file_name_buf[PATH_MAX+1];
   const cognate_block cond = pop(block); \
   const cognate_block expr = pop(block); \
   cond(); \
-  if_status = pop(boolean); \
-  if (if_status) \
+  if ((if_status = pop(boolean))) \
   { \
     expr(); \
   } \
 }
   
 #define cognate_function_else() { \
-  /* Function calls between an If and Else will mess up if_status. */\
   const cognate_block expr = pop(block); \
   if (!if_status) \
   { \
     expr();  \
   } \
-  else if (unlikely(if_status == 2)) \
+  else if unlikely(if_status == 2) \
   { \
     throw_error("Else statement encountered before [Else]If statement!"); \
   } \
+  if_status = 2; \
 }
 
 #define cognate_function_elseif() { \
   const cognate_block cond = pop(block); \
   const cognate_block expr = pop(block); \
   cond(); \
-  if_status = pop(boolean) && !if_status; \
-  if (if_status) \
+  if ((if_status = pop(boolean) && !if_status)) \
   { \
     expr(); \
   } \
-  else if (unlikely(if_status == 2)) \
+  else if unlikely(if_status == 2) \
   { \
     throw_error("ElseIf statement encountered before [Else]If statement!"); \
   } \
@@ -66,7 +64,7 @@ static void cognate_function_difference() { push(number, (-pop(number) + pop(num
 static void cognate_function_modulo() {
   const double n = pop(number);
   const double m = pop(number);
-  if (unlikely(m != (long long)m || n != (long long)n))
+  if unlikely(m != (long long)m || n != (long long)n)
   {
     throw_error("Modulo should only take integer arguments. '%.15g modulo %.15g' is invalid.", n, m);
   }
@@ -75,7 +73,7 @@ static void cognate_function_modulo() {
 
 static void cognate_function_random() { // This function is pretty broken.
   const double low = pop(number); const double high = pop(number); const double step = pop(number); 
-  if (unlikely(high < low))   { throw_error("Cannot generate random number in range! (%.15g..%.15g)", low, high); }
+  if unlikely(high < low)   { throw_error("Cannot generate random number in range! (%.15g..%.15g)", low, high); }
   else if (high - low < step) { push(number, low); }
   else { push(number, low + (double)(rand() % (size_t)((high - low + step) / step)) * step); }
 }
@@ -112,12 +110,12 @@ static void cognate_function_discard() {
   // O(n) where n is the number of element being Discarded.
   const double num = pop(number);
   const size_t num_discarding = num;
-  if (unlikely(num != num_discarding)) throw_error("Cannot Discard a non-integer number of elements! (%.15g)", num);
-  if (unlikely(num_discarding < 0)) throw_error("Cannot Discard a negative number of elements! (%zi)", num_discarding);
+  if unlikely(num != num_discarding) throw_error("Cannot Discard a non-integer number of elements! (%.15g)", num);
+  if unlikely(num_discarding < 0) throw_error("Cannot Discard a negative number of elements! (%zi)", num_discarding);
   const cognate_list obj = *pop(list);
   cognate_list* const lst = (cognate_list* const) cognate_malloc (sizeof(cognate_list));
   *lst = obj;
-  if (unlikely((lst->start += num_discarding) > lst->top)) throw_error("List of length %zu is too small to Discard %zu elements from!", lst->top - lst->start, num_discarding);
+  if unlikely((lst->start += num_discarding) > lst->top) throw_error("List of length %zu is too small to Discard %zu elements from!", lst->top - lst->start, num_discarding);
   push(list, lst);
 }
 
@@ -125,12 +123,12 @@ static void cognate_function_take() {
   // O(n) where n is the number of element being Taken.
   const double num = pop(number);
   const size_t num_taking = num;
-  if (unlikely(num != num_taking)) throw_error("Cannot Take a non-integer number of elements! (%.15g)", num);
-  if (unlikely(num_taking < 0)) throw_error("Cannot Take a negative number of elements! (%zi)", num_taking);
+  if unlikely(num != num_taking) throw_error("Cannot Take a non-integer number of elements! (%.15g)", num);
+  if unlikely(num_taking < 0) throw_error("Cannot Take a negative number of elements! (%zi)", num_taking);
   cognate_list obj = *pop(list);
   cognate_list* const lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
   *lst = obj;
-  if (unlikely(lst->start + num_taking > lst->top)) throw_error ("List of length %zu is too small to Take %zu elements from!", lst->top - lst->start, num_taking);
+  if unlikely(lst->start + num_taking > lst->top) throw_error ("List of length %zu is too small to Take %zu elements from!", lst->top - lst->start, num_taking);
   lst->top = lst->start + num_taking;
   push(list, lst);
 }
@@ -138,12 +136,12 @@ static void cognate_function_take() {
 static void cognate_function_index() { 
   const double d = pop(number);
   const size_t index = d;
-  if (unlikely(index != (size_t)d))
+  if unlikely(index != (size_t)d)
     throw_error("List index (%.15g) should be an integer!", d);
-  if (unlikely(index < 0))
+  if unlikely(index < 0)
     throw_error("Cannot have negative list index! (%zi)", index);
   const cognate_list lst = *pop(list);
-  if (unlikely(lst.start + index >= lst.top))
+  if unlikely(lst.start + index >= lst.top)
     throw_error("Index %zu is out of bounds! (list is of length %zu)", index, lst.top - lst.start);
   push_any(lst.start [index]);
 }
@@ -248,7 +246,7 @@ static void cognate_function_read() {
   // Read a file to a string.
   const char* const filename = pop(string);
   FILE *fp = fopen(filename, "r");
-  if (unlikely(fp == NULL)) throw_error("Cannot open file '%.64s'. It probably doesn't exist.", filename);
+  if unlikely(fp == NULL) throw_error("Cannot open file '%.64s'. It probably doesn't exist.", filename);
   fseek(fp, 0L, SEEK_END);
   size_t file_size = ftell(fp);
   rewind(fp);
@@ -355,16 +353,16 @@ static void cognate_function_match() {
     // Technically, the last regex to be used in the program will leak memory.
     // However, this is minor, since only a limited amount of memory can be leaked.
     regfree(&reg); // Apparently freeing an unallocated regex is fine.
-    if (unlikely(*reg_str == '\0' || regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE)))
+    if unlikely(*reg_str == '\0' || regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE))
     {
       throw_error("Cannot compile invalid regular expression! ('%.64s')", reg_str); 
     }
-    if (unlikely(regcomp(&reg, reg_str, REG_EXTENDED|REG_NEWLINE)))
+    if unlikely(regcomp(&reg, reg_str, REG_EXTENDED|REG_NEWLINE))
     old_str = reg_str; /* This should probably be strcpy, but I trust that reg_str is either
                           allocated with the garbage collector, or read only in the data segment. */
   }
   const int found = regexec(&reg, pop(string), 0, NULL, 0);
-  if (unlikely(found != 0 && found != REG_NOMATCH))
+  if unlikely(found != 0 && found != REG_NOMATCH)
   {
     throw_error("Regex match error! (%.64s)", reg_str);
     // If this error ever actually appears, use regerror to get the full text.
@@ -374,7 +372,7 @@ static void cognate_function_match() {
 
 static void cognate_function_ordinal() {
   const char* const str = pop(string);
-  if (unlikely(strlen(str) != 1))
+  if unlikely(strlen(str) != 1)
   {
     throw_error("Ordinal requires string of length 1. String '%.64s' is not of length 1!", str);
   }
@@ -384,8 +382,8 @@ static void cognate_function_ordinal() {
 static void cognate_function_character() {
   const double d = pop(number);
   const long i = d;
-  if (unlikely(i != d))           throw_error("Cannot convert non-integer (%.15g) to ASCII character!", d);
-  if (unlikely(i < 0 || i > 255)) throw_error("Value (%li) is not in ASCII character range!", i);
+  if unlikely(i != d)           throw_error("Cannot convert non-integer (%.15g) to ASCII character!", d);
+  if unlikely(i < 0 || i > 255) throw_error("Value (%li) is not in ASCII character range!", i);
   char* const str = (char* const) cognate_malloc (sizeof(char) * 2);
   str[0] = i;
   str[1] = '\0';
@@ -413,7 +411,7 @@ static void cognate_function_ceiling() {
 static void cognate_function_assert() {
   const char* const name = pop(string);
   const _Bool cond = pop(boolean);
-  if (unlikely(!cond))
+  if unlikely(!cond)
   {
     throw_error("Assertion '%.64s' has failed!", name);
   }
