@@ -14,6 +14,12 @@ static cognate_list params;
 
 static char file_name_buf[PATH_MAX+1];
 
+#ifdef debug
+  #define call(name) debug_printf("Calling %s", #name); cognate_function_ ## name();
+#else 
+  #define call(name) cognate_function_ ## name();
+#endif
+
 #define cognate_function_if() { \
   /* TODO: Else and ElseIf should only be allowed directly following an If. */\
   const cognate_block cond = pop(block); \
@@ -295,7 +301,7 @@ static void cognate_function_table() {
   // The 2 on this line should probably be tuned or something.
   const unsigned long table_size = ((init.top - init.start) * LIST_GROWTH_FACTOR) + MIN_TABLE_SIZE;
   cognate_table* const tab = (cognate_table*) cognate_malloc (sizeof(cognate_table)); // Need to allocate list here.
-  tab->items.start = (cognate_object*) calloc (table_size, sizeof(cognate_object) * table_size);
+  tab->items.start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * table_size);
   tab->items.top = tab->items.start + table_size;
   tab->confirmation_hash = (long unsigned int*) cognate_malloc (sizeof(long unsigned int) * table_size);
   const char *key;

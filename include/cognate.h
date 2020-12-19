@@ -12,7 +12,6 @@
 #define LIST_GROWTH_FACTOR 1.5
 #define MAX_ERRORMSG_LEN 256
 
-
 #define program(body) \
   int main(int argc, char **argv) \
   { \
@@ -40,12 +39,6 @@
     body \
     function_name = temp_func_name; \
   });
-
-#ifdef debug
-  #define call(name) debug_printf("Calling %s", #name); cognate_function_ ## name();
-#else 
-  #define call(name) cognate_function_ ## name();
-#endif
 
 #define mutate_function(name, docopy, body) \
   cognate_function_ ## name = make_block(docopy, body);
@@ -83,21 +76,5 @@
 
 #define unlikely(expr) (__builtin_expect((_Bool)(expr), 0))
 #define likely(expr)   (__builtin_expect((_Bool)(expr), 1))
-
-
-#ifdef debug // Push an object to the stack. Print if debugging.
-  #define push(object_type, object) \
-    debug_printf("Pushing %s", #object); \
-    push_any((cognate_object){.object_type=object, .type=object_type});
-#else
-  #define push(object_type, object) \
-    push_any((cognate_object){.object_type=object, .type=object_type})
-#endif
-
-#define pop(object_type) \
-  check_type(object_type, pop_any()) . object_type
-
-#define peek(object_type) \
-  check_type(object_type, peek_any()) . object_type
 
 #endif

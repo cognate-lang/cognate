@@ -70,7 +70,7 @@ static void debug_printf(__attribute__((unused)) const char* fmt, ...)
   va_start(args, fmt);
   fprintf(stderr, "[DEBUG] %s:%d -> ", __FILE__, __LINE__);
   vfprintf(stderr, fmt, args);
-  fputs(stderr, "");
+  fputs("\n", stderr);
 #endif
 }
 

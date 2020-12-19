@@ -26,8 +26,25 @@ static cognate_stack stack;
 static void init_stack()
 {
   // Allocate dynamic stack memory.
-  stack.modified = stack.items.top = stack.items.start = (cognate_object*) cognate_malloc ((stack.size = INITIAL_LIST_SIZE) * sizeof(cognate_object));
+  stack.modified = stack.items.top = stack.items.start = 
+    (cognate_object*) cognate_malloc ((stack.size = INITIAL_LIST_SIZE) * sizeof(cognate_object));
 }
+
+#ifdef debug // Push an object to the stack. Print if debugging.
+  #define push(object_type, object) \
+    debug_printf("Pushing %s", #object); \
+    push_any((cognate_object){.object_type=object, .type=object_type});
+#else
+  #define push(object_type, object) \
+    push_any((cognate_object){.object_type=object, .type=object_type})
+#endif
+
+#define pop(object_type) \
+  check_type(object_type, pop_any()) . object_type
+
+#define peek(object_type) \
+  check_type(object_type, peek_any()) . object_type
+
 
 static void push_any(const cognate_object object)
 {
