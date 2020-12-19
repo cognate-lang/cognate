@@ -69,7 +69,7 @@ static cognate_object table_get(const char* const key, const cognate_table tab)
 static cognate_table table_grow(const cognate_table tab)
 {
   const long table_size = tab.items.top - tab.items.start;
-  const long new_table_size = table_size * TABLE_GROWTH_FACTOR;
+  const long new_table_size = table_size * LIST_GROWTH_FACTOR;
   cognate_table tab2;
   tab2.items.start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * new_table_size);
   tab2.items.top = tab2.items.start + new_table_size;

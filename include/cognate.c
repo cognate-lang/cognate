@@ -21,12 +21,12 @@ static void init(int argc, char** argv)
   // Get return stack limit
   char a;
   stack_start = &a;
-  if (unlikely(getrlimit(RLIMIT_STACK, &stack_max) == -1))
+  if unlikely(getrlimit(RLIMIT_STACK, &stack_max) == -1)
   {
     throw_error("Cannot get return stack limit!");
   }
   // Set locale for strings.
-  if (unlikely(setlocale(LC_ALL, "") == NULL))
+  if unlikely(setlocale(LC_ALL, "") == NULL)
   {
     throw_error("Cannot set locale!");
   }
@@ -36,7 +36,7 @@ static void init(int argc, char** argv)
 #endif
   // Seed the random number generator properly.
   struct timespec ts;
-  if (unlikely(timespec_get(&ts, TIME_UTC) == 0))
+  if unlikely(timespec_get(&ts, TIME_UTC) == 0)
   {
     throw_error("Cannot get system time!");
   }
@@ -56,7 +56,7 @@ static void init(int argc, char** argv)
 
 static void cleanup()
 {
-  if (unlikely(stack.items.top != stack.items.start))
+  if unlikely(stack.items.top != stack.items.start)
   {
     throw_error("Program exiting with non-empty stack of length %ti", stack.items.top - stack.items.start);
   }
@@ -64,7 +64,7 @@ static void cleanup()
 
 static cognate_object check_block(cognate_object obj)
 {
-  (obj.type==block) && (obj.block = Block_copy(obj.block));
+  unlikely(obj.type==block) && (obj.block = Block_copy(obj.block));
   return obj;
 }
 
@@ -72,7 +72,7 @@ static void copy_blocks()
 {
   for (; stack.modified != stack.items.top; stack.modified++)
   {
-    (stack.modified->type==block) && (stack.modified->block = Block_copy(stack.modified->block)); // Copy block to heap.
+    unlikely(stack.modified->type==block) && (stack.modified->block = Block_copy(stack.modified->block)); // Copy block to heap.
   }
 }
 
@@ -80,13 +80,13 @@ static void check_call_stack()
 {
   // Performance here is not great.
   static unsigned short function_calls = 1024;
-  if (unlikely(!--function_calls))
+  if unlikely(!--function_calls)
   {
     function_calls = 1024;
     static long old_stack_size;
     char stack_end;
     // if (how much stack left < stack change between checks)
-    if (unlikely(stack_max.rlim_cur + &stack_end - stack_start < stack_start - &stack_end - old_stack_size))
+    if unlikely(stack_max.rlim_cur + &stack_end - stack_start < stack_start - &stack_end - old_stack_size)
     {
       throw_error("Call stack overflow - too much recursion! (call stack is %ti bytes)", stack_start - &stack_end);
     }

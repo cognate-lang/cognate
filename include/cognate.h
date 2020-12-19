@@ -5,7 +5,6 @@
 
 #include <limits.h>
 
-#define TABLE_GROWTH_FACTOR 1.5
 #define MAX_TABLE_TRIES 3
 #define INITIAL_READ_SIZE 64
 #define MIN_TABLE_SIZE 2
@@ -35,7 +34,7 @@
 #define function(name, flags, docopy, body) \
   flags cognate_block cognate_function_ ## name = make_block(docopy, \
   { \
-    char* const temp_func_name = function_name; \
+    const char* const temp_func_name = function_name; \
     function_name = #name; \
     check_call_stack(); \
     body \
