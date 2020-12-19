@@ -125,12 +125,12 @@ Define Lines
 [
   get Characters;
   Split when [ == '\n' ];
-  Map [ Join ];
+  Map [ Join with '' ];
 ];
 
 Define Words
 [
   get Characters;
   Split when [ Whitespace? ];
-  Map [ Join ];
+  Map [ Join with '' ];
 ];

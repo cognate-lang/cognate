@@ -5,7 +5,7 @@ Else [
   Print 'FAIL: Extracting characters from strings'
 ];
 
-If [Join List ['H','e','llo'], == 'Hello'] [
+If [Join with ' ' List ['Hello','world'], == 'Hello world'] [
   Print 'PASS: Converting list of strings to combined string'
 ];
 Else [

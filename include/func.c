@@ -79,7 +79,7 @@ static void cognate_function_modulo() {
 
 static void cognate_function_random() { // This function is pretty broken.
   const double low = pop(number); const double high = pop(number); const double step = pop(number); 
-  if unlikely(high < low)   { throw_error("Cannot generate random number in range! (%.15g..%.15g)", low, high); }
+  if unlikely(high < low) { throw_error("Cannot generate random number in range! (%.15g..%.15g)", low, high); }
   else if (high - low < step) { push(number, low); }
   else { push(number, low + (double)(rand() % (size_t)((high - low + step) / step)) * step); }
 }
@@ -167,7 +167,7 @@ static void cognate_function_list() {
   init_stack();
   // Eval expr
   expr();
-  // Store the resultant list, GC_cognate_realloc-ing to fit snugly in memory.
+  // Store the resultant list, GC_realloc-ing to fit snugly in memory.
   cognate_list* const lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
   *lst = stack.items;
   // Restore the original stack
@@ -197,16 +197,20 @@ static void cognate_function_characters() {
 
 static void cognate_function_join() {
   // Joins a list of strings into a single string.
+  const char* const delimiter = pop(string);
+  const long delim_size = strlen(delimiter);
   const cognate_list lst = *pop(list);
   long str_size = 0;
   const cognate_object *i;
   for (i = lst.start; i < lst.top; ++i)
   {
-    str_size += strlen(check_type(string, *i).string);
+    str_size += strlen(check_type(string, *i).string) + delim_size;
   }
   char* const str = (char*) cognate_malloc (sizeof(char) * (str_size));
-  for (i = lst.start; i < lst.top; ++i)
+  strcpy(str, lst.start->string);
+  for (i = lst.start+1; i < lst.top; ++i)
   {
+    strcat(str, delimiter);
     strcat(str, i->string);
   }
   push(string, str);
