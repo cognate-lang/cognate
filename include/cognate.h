@@ -10,7 +10,6 @@
 #define MIN_TABLE_SIZE 2
 #define INITIAL_LIST_SIZE 16
 #define LIST_GROWTH_FACTOR 1.5
-#define MAX_ERRORMSG_LEN 256
 
 #define program(body) \
   int main(int argc, char **argv) \
