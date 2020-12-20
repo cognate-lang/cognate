@@ -5,10 +5,9 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <gc.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 const char* function_name = NULL;
 

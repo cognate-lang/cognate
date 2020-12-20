@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <regex.h>
 #include <math.h>
+#include <string.h>
 //#include <openssl/rand.h> TODO
 
 static cognate_list params;
