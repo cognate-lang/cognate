@@ -83,7 +83,7 @@ static void check_call_stack()
   if unlikely(!--function_calls)
   {
     function_calls = 1024;
-    static long old_stack_size;
+    static long old_stack_size = 0;
     char stack_end;
     // if (how much stack left < stack change between checks)
     if unlikely(stack_max.rlim_cur + &stack_end - stack_start < stack_start - &stack_end - old_stack_size)
