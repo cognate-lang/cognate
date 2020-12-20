@@ -11,13 +11,7 @@
 
 const char* function_name = NULL;
 
-__attribute__((noreturn)) static void type_error(const char* const expected, const char* const recieved);
 __attribute__((noreturn)) static void throw_error(const char* const, ...);
-
-__attribute__((noreturn)) static void type_error(const char* const expected, const char* const recieved)
-{
-  throw_error("Type Error! Expected type '%s' but recieved type '%s'", expected, recieved);
-}
 
 __attribute__((noreturn)) static void throw_error(const char* const fmt, ...)
 {

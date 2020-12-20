@@ -66,7 +66,7 @@ static cognate_object check_type(cognate_type expected_type, cognate_object obje
   {
     return object;
   }
-  type_error(lookup_type(expected_type), lookup_type(object.type));
+  throw_error("Type Error! Expected type '%s' but recieved type '%s'", lookup_type(expected_type), lookup_type(object.type));
 }
 
 static const char* lookup_type(cognate_type type)
