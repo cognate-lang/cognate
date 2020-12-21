@@ -13,8 +13,6 @@
 
 static cognate_list params;
 
-static char file_name_buf[PATH_MAX+1];
-
 #ifdef debug
   #define call(name) debug_printf("Calling %s", #name); cognate_function_ ## name();
 #else 
@@ -188,7 +186,7 @@ static void cognate_function_characters() {
   lst->top = lst->start + length;
   for (size_t i = 0; i < length; ++i)
   {
-    char* const temp = (char*) cognate_malloc (sizeof(char) * 2);
+    char* const temp = (char*) cognate_malloc (2);
     temp[0] = str[i];
     temp[1] = '\0';
     lst->start[i] = ((cognate_object){.type=string, .string=temp});
@@ -207,7 +205,7 @@ static void cognate_function_join() {
   {
     str_size += strlen(check_type(string, *i).string) + delim_size;
   }
-  char* const str = (char*) cognate_malloc (sizeof(char) * (str_size));
+  char* const str = (char*) cognate_malloc (str_size);
   strcpy(str, lst.start->string);
   for (i = lst.start+1; i < lst.top; ++i)
   {
@@ -239,7 +237,7 @@ static void cognate_function_append() {
 
 static void cognate_function_input() {
   // Read user input to a string.
-  char *text = (char*) cognate_malloc (sizeof(char) * INITIAL_LIST_SIZE);
+  char *text = (char*) cognate_malloc (INITIAL_LIST_SIZE);
   size_t i = 0;
   size_t file_size = INITIAL_LIST_SIZE;
   while ((text[i++] = fgetc(stdin)) != '\n')
@@ -261,7 +259,7 @@ static void cognate_function_read() {
   fseek(fp, 0L, SEEK_END);
   size_t file_size = ftell(fp);
   rewind(fp);
-  char *text = (char*) cognate_malloc (sizeof(char) * file_size);
+  char *text = (char*) cognate_malloc (file_size);
   fread(text, sizeof(char), file_size, fp);
   fclose(fp);
   text[file_size-1] = '\0'; // Remove trailing eof.
@@ -276,11 +274,12 @@ static void cognate_function_number() {
 }
 
 static void cognate_function_path() {
-  // Get working directory path, TODO function to get executable path.
-  if (getcwd(file_name_buf, PATH_MAX) == NULL)
-    throw_error("Cannot get current directory!");
-  const char* const small_cwd = strdup(file_name_buf);
-  push(string, small_cwd);
+  // get_current_dir_name() allocates memory, so we must copy it to a GC'd buffer.
+  char* buf = get_current_dir_name();
+  const char* cwd = (const char*) cognate_malloc (strlen(buf));
+  cwd = strdup(buf);
+  free(buf);
+  push(string, cwd);
 }
 
 static void cognate_function_write() {
@@ -394,7 +393,7 @@ static void cognate_function_character() {
   const long i = d;
   if unlikely(i != d)           throw_error("Cannot convert non-integer (%.15g) to ASCII character!", d);
   if unlikely(i < 0 || i > 255) throw_error("Value (%li) is not in ASCII character range!", i);
-  char* const str = (char* const) cognate_malloc (sizeof(char) * 2);
+  char* const str = (char* const) cognate_malloc (2);
   str[0] = i;
   str[1] = '\0';
   push(string, str);
