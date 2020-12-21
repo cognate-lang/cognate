@@ -4,7 +4,7 @@
 #include "cognate.h"
 #include <stdio.h>
 #include <ctype.h>
-#include <gc.h>
+#include <gc/gc.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <stdlib.h>

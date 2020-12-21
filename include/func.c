@@ -5,6 +5,7 @@
 #include "stack.c"
 #include "table.c"
 #include "io.c"
+#include <gc/gc.h>
 #include <unistd.h>
 #include <regex.h>
 #include <math.h>

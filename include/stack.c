@@ -3,7 +3,7 @@
 
 #include "cognate.h"
 #include "type.c"
-#include <gc.h>
+#include <gc/gc.h>
 
 
 static void init_stack();
@@ -73,6 +73,7 @@ static cognate_object peek_any()
 static void expand_stack()
 {
   // New stack size = current stack size * growth factor.
+  // Assumes that stack is currently of length stack.size.
 
   debug_printf("Expanding stack from length %ti to %ti", stack.size, (ptrdiff_t)(stack.size * LIST_GROWTH_FACTOR)); 
  

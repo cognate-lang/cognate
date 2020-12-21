@@ -4,7 +4,7 @@
 #include "cognate.h"
 #include "type.c"
 #include <stdlib.h>
-#include <gc.h>
+#include <gc/gc.h>
 
 
 static unsigned long hash(const char*);
@@ -40,7 +40,7 @@ static cognate_table table_add(const unsigned long key_hash, const cognate_objec
       tab.confirmation_hash[shrunk_hash] = key_hash;
       return tab;
     }
-    if (tries == MAX_TABLE_TRIES)
+    else if (tries == MAX_TABLE_TRIES)
     {
       tab = table_grow(tab);
       table_size = tab.items.top - tab.items.start;
