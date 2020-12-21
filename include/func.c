@@ -287,7 +287,7 @@ static void cognate_function_write() {
   // Write string to end of file, without a newline.
   FILE* const file = fopen(pop(string), "a");
   const char* const str = pop(string);
-  fprintf(file, "%s", str);
+  fputs(str, file);
   fclose(file);
 }
 

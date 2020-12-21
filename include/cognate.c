@@ -44,7 +44,7 @@ static void init(int argc, char** argv)
   // Load parameters
   params.start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * (argc-1));
   params.top = params.start + argc - 1;
-  while (--argc >= 1)
+  while (argc --> 1)
   {
     char* str = argv[argc];
     params.start[argc-1] = (cognate_object){.type=string, .string=str};
