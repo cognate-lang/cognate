@@ -8,6 +8,7 @@
 #include "type.c"
 #include "func.c"
 #include <time.h>
+#include "gc/gc.h"
 #include <sys/resource.h>
 #include <libgen.h>
 #include <Block.h>
