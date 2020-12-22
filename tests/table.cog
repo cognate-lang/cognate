@@ -15,7 +15,7 @@ Else [
 
 Insert 'bar' is 'baz' into Tab, Set Tab;
 
-Print 'PASS: Inserting into table without error';
+Print 'PASS: Inserting into table without error.';
 
 If [Get 'bar' from Tab, == 'baz'] then [
   Print 'PASS: Extracting inserted key from table.'
@@ -29,4 +29,30 @@ If [Values in Table ['hello' is 'world'], == List ['world']] then [
 ];
 Else [
   Print 'PASS: Extracting values from small table.'
+];
+
+Let Tab2 be
+Table [
+  'foo' is 'bar',
+  'Hello' is 'world'
+];
+
+Let Tab3 be
+Table [
+  'foo' is 'baz'
+  'Hello' is 'world'
+];
+
+If [Tab, == Tab2] then [
+  Print 'PASS: Comparing identical tables.'
+];
+Else [
+  Print 'FAIL: Comparing identical tables.'
+];
+
+If [Tab, != Tab3] then [
+  Print 'PASS: Comparing different tables.'
+];
+Else [
+  Print 'FAIL: Comparing different tables.'
 ];

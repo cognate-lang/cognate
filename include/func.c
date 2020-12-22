@@ -256,7 +256,7 @@ static void cognate_function_read() {
   // Read a file to a string.
   const char* const filename = pop(string);
   FILE *fp = fopen(filename, "r");
-  if unlikely(fp == NULL) throw_error("Cannot open file '%.64s'. It probably doesn't exist.", filename);
+  if unlikely(fp == NULL) throw_error("Cannot open file '%s'. It probably doesn't exist.", filename);
   fseek(fp, 0L, SEEK_END);
   size_t file_size = ftell(fp);
   rewind(fp);
@@ -310,10 +310,10 @@ static void cognate_function_table() {
   tab->confirmation_hash = (long unsigned int*) cognate_malloc (sizeof(long unsigned int) * table_size);
   const char *key;
   cognate_object value;
-  for (const cognate_object *i = init.start; i < init.top - 1; i += 2)
+  for (const cognate_object *i = init.start + 1; i < init.top; i += 2)
   {
-    key = check_type(string, *(i+1)).string;
-    value = *i;
+    key = check_type(string, *i).string;
+    value = *(i-1);
     *tab = table_add(hash(key), value, *tab);
   }
   push(table, tab);
@@ -337,6 +337,8 @@ static void cognate_function_get() {
 
 static void cognate_function_values() {
   // O(n)
+  // Resulting list is NOT in any order at all.
+  // Equivilant tables may give differently ordered lists.
   const cognate_table tab = *pop(table);
   cognate_list* const lst = (cognate_list*) cognate_malloc (sizeof(cognate_list));
   const long table_size = tab.items.top - tab.items.start;
@@ -365,7 +367,7 @@ static void cognate_function_match() {
     regfree(&reg); // Apparently freeing an unallocated regex is fine.
     if unlikely(*reg_str == '\0' || regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE))
     {
-      throw_error("Cannot compile invalid regular expression! ('%.64s')", reg_str); 
+      throw_error("Cannot compile invalid regular expression! ('%s')", reg_str); 
     }
     if unlikely(regcomp(&reg, reg_str, REG_EXTENDED|REG_NEWLINE))
     old_str = reg_str; /* This should probably be strcpy, but I trust that reg_str is either
@@ -374,7 +376,7 @@ static void cognate_function_match() {
   const int found = regexec(&reg, pop(string), 0, NULL, 0);
   if unlikely(found != 0 && found != REG_NOMATCH)
   {
-    throw_error("Regex match error! (%.64s)", reg_str);
+    throw_error("Regex match error! (%s)", reg_str);
     // If this error ever actually appears, use regerror to get the full text.
   }
   push(boolean, !found);
@@ -384,7 +386,7 @@ static void cognate_function_ordinal() {
   const char* const str = pop(string);
   if unlikely(strlen(str) != 1)
   {
-    throw_error("Ordinal requires string of length 1. String '%.64s' is not of length 1!", str);
+    throw_error("Ordinal requires string of length 1. String '%s' is not of length 1!", str);
   }
   push(number, str[0]);
 }
@@ -422,7 +424,7 @@ static void cognate_function_assert() {
   const char* const name = pop(string);
   if unlikely(!pop(boolean))
   {
-    throw_error("Assertion '%.64s' has failed!", name);
+    throw_error("Assertion '%s' has failed!", name);
   }
 }
 

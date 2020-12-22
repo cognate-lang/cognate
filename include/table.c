@@ -10,8 +10,10 @@
 static unsigned long hash(const char*);
 static cognate_table table_add(const unsigned long, const cognate_object, cognate_table);
 static cognate_object table_get(const char* const, const cognate_table);
+static cognate_object table_get_hash(const unsigned long, const cognate_table);
 static cognate_table table_grow(const cognate_table);
-static cognate_table table_copy(const cognate_table tab);
+static cognate_table table_copy(const cognate_table);
+static _Bool compare_tables(const cognate_table, const cognate_table);
 
 static unsigned long hash(const char *str)
 {
@@ -26,8 +28,8 @@ static unsigned long hash(const char *str)
 
 static cognate_table table_add(const unsigned long key_hash, const cognate_object value, cognate_table tab)
 {
+  // This will replace a key if it is already in the table.
   unsigned long table_size = tab.items.top - tab.items.start;
-  // WARNING: resizing the table will mess up hashes!!!
   unsigned long shrunk_hash = key_hash % table_size;
   for (char tries = 0;; ++tries)
   {
@@ -36,7 +38,7 @@ static cognate_table table_add(const unsigned long key_hash, const cognate_objec
     if (tab.items.start[shrunk_hash].type == NOTHING || key_hash == tab.confirmation_hash[shrunk_hash])
     {
       tab.items.start[shrunk_hash] = value;
-      // Confirmation hash should prevent collisions.
+      // Confirmation hash should probably prevent collisions.
       tab.confirmation_hash[shrunk_hash] = key_hash;
       return tab;
     }
@@ -52,8 +54,14 @@ static cognate_table table_add(const unsigned long key_hash, const cognate_objec
 
 static cognate_object table_get(const char* const key, const cognate_table tab)
 {
+  cognate_object obj = table_get_hash(hash(key), tab);
+  if (obj.type == NOTHING) throw_error("Cannot find key '%s' in table!", key);
+  return obj;
+}
+
+static cognate_object table_get_hash(const unsigned long key_hash, const cognate_table tab)
+{
   const unsigned long table_size = tab.items.top - tab.items.start;
-  const unsigned long key_hash  = hash(key);
   unsigned long shrunk_hash = key_hash % table_size;
   for (char tries = 0; tries < MAX_TABLE_TRIES; ++tries)
   {
@@ -63,7 +71,7 @@ static cognate_object table_get(const char* const key, const cognate_table tab)
       return tab.items.start[shrunk_hash];
     }
   }
-  throw_error("Cannot find key '%.64s' in table!", key);
+  return (cognate_object){.type=NOTHING};
 }
 
 static cognate_table table_grow(const cognate_table tab)
@@ -98,5 +106,21 @@ static cognate_table table_copy(const cognate_table tab)
   memcpy(tab2.confirmation_hash, tab.confirmation_hash, table_size * sizeof(unsigned long));
   return tab2;
 }
+
+static _Bool compare_tables(const cognate_table tab1, const cognate_table tab2)
+{
+  // We can't just use compare_lists, since tables do not have guaranteed order.
+  const long table_size = tab1.items.top - tab1.items.start;
+  if (table_size != tab2.items.top - tab2.items.start) return 0; // If tables are different sizes, they're probably different.
+  for (long i = 0; i < table_size; ++i)
+  {
+    // Iterate over each key in tab1, finding the corresponding one in tab2
+    if (tab1.items.start[i].type == NOTHING) continue;
+    if (!compare_objects(tab1.items.start[i], table_get_hash(tab1.confirmation_hash[i], tab2))) return 0;
+  }
+  return 1;
+}
+
+
 
 #endif

@@ -2,6 +2,7 @@
 #define TYPE_C
 
 #include "cognate.h"
+#include "table.c"
 #include "error.c"
 #include <stddef.h>
 #include <string.h>
@@ -99,6 +100,9 @@ static _Bool compare_lists(cognate_list lst1, cognate_list lst2)
   return 1;
 }
 
+
+static _Bool compare_tables(const cognate_table, const cognate_table);
+
 static _Bool compare_objects(cognate_object ob1, cognate_object ob2)
 {
   if (ob1.type != ob2.type)
@@ -111,10 +115,9 @@ static _Bool compare_objects(cognate_object ob1, cognate_object ob2)
     case boolean: return ob1.boolean == ob2.boolean;
     case string:  return strcmp(ob1.string, ob2.string) == 0;
     case list:    return compare_lists(*ob1.list, *ob2.list);
-    case table:   return compare_lists(ob1.table->items, ob2.table->items);
+    case table:   return compare_tables(*ob1.table, *ob2.table);
     case block:   throw_error("Cannot compare blocks!");
-    default:      return 0;
-    // Records are a lie.
+    case NOTHING: throw_error("Cognate should not be in this state - compiler bug!");
   }
 }
 

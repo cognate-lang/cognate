@@ -2,6 +2,7 @@
 #define COGNATE_C
 
 #include "cognate.h"
+#include "table.c"
 #include "stack.c"
 #include "io.c"
 #include "error.c"
@@ -94,5 +95,7 @@ static void check_call_stack()
     old_stack_size = stack_start - &stack_end;
   }
 }
+
+
 
 #endif
