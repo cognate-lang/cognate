@@ -44,7 +44,7 @@ __attribute__((noreturn)) static void throw_error(const char* const fmt, ...)
   exit(-1);
 }
 
-static void debug_printf(__attribute__((unused)) const char* fmt, ...)
+static void debug_printf(__attribute__((unused)) const char* const fmt, ...)
 {
 #if debug
   va_list args;
