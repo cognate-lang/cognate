@@ -60,6 +60,7 @@ static cognate_object check_type(cognate_type, cognate_object);
 static const char* lookup_type(cognate_type);
 static _Bool compare_objects(cognate_object, cognate_object);
 static _Bool compare_lists(cognate_list, cognate_list);
+static _Bool compare_tables(const cognate_table, const cognate_table); // This function is defined in table.c
 
 static cognate_object check_type(cognate_type expected_type, cognate_object object)
 {
@@ -100,9 +101,6 @@ static _Bool compare_lists(cognate_list lst1, cognate_list lst2)
   return 1;
 }
 
-
-static _Bool compare_tables(const cognate_table, const cognate_table);
-
 static _Bool compare_objects(cognate_object ob1, cognate_object ob2)
 {
   if (ob1.type != ob2.type)
@@ -120,6 +118,5 @@ static _Bool compare_objects(cognate_object ob1, cognate_object ob2)
     case NOTHING: throw_error("Cognate should not be in this state - compiler bug!");
   }
 }
-
 
 #endif

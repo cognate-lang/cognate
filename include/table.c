@@ -121,6 +121,4 @@ static _Bool compare_tables(const cognate_table tab1, const cognate_table tab2)
   return 1;
 }
 
-
-
 #endif

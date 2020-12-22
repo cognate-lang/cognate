@@ -18,6 +18,11 @@
 static const char *stack_start;
 static struct rlimit stack_max;
 
+static void init(int, char**);
+static void check_call_stack();
+static void cleanup();
+static void copy_blocks();
+
 static void init(int argc, char** argv)
 {
   // Get return stack limit
@@ -95,7 +100,5 @@ static void check_call_stack()
     old_stack_size = stack_start - &stack_end;
   }
 }
-
-
 
 #endif
