@@ -4,16 +4,16 @@
 #include "cognate.h"
 #include "types.h"
 
-#include "error.c"
-#include "table.c"
-
-#include <string.h>
-
 static cognate_object check_type(cognate_type, cognate_object);
 static const char* lookup_type(cognate_type);
 static _Bool compare_objects(cognate_object, cognate_object);
 static _Bool compare_lists(cognate_list, cognate_list);
 static _Bool compare_tables(cognate_table, cognate_table);
+
+#include "error.c"
+#include "table.c"
+
+#include <string.h>
 
 static cognate_object check_type(cognate_type expected_type, cognate_object object)
 {

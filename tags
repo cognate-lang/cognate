@@ -23,8 +23,8 @@ block	include/types.h	/^    cognate_block block;           \/\/ 64bit block poin
 block	include/types.h	/^  block, $/;"	e	enum:cognate_type
 boolean	include/types.h	/^    _Bool boolean;                 \/\/  1bit bool$/;"	m	union:cognate_object::__anon1
 boolean	include/types.h	/^  boolean, $/;"	e	enum:cognate_type
-call	include/func.c	24;"	d	file:
-call	include/func.c	26;"	d	file:
+call	include/func.c	10;"	d	file:
+call	include/func.c	12;"	d	file:
 check_block	include/cognate.c	/^static cognate_object check_block(cognate_object obj)$/;"	f	file:
 check_call_stack	include/cognate.c	/^static void check_call_stack()$/;"	f	file:
 check_type	include/type.c	/^static cognate_object check_type(cognate_type expected_type, cognate_object object)$/;"	f	file:
@@ -137,14 +137,14 @@ nocopy	include/cognate.h	29;"	d
 number	include/types.h	/^    double number;                 \/\/ 64bit float$/;"	m	union:cognate_object::__anon1
 number	include/types.h	/^  number, $/;"	e	enum:cognate_type
 params	include/func.c	/^static cognate_list params;$/;"	v	file:
-peek	include/stack.c	48;"	d	file:
+peek	include/stack.c	25;"	d	file:
 peek_any	include/stack.c	/^static cognate_object peek_any()$/;"	f	file:
-pop	include/stack.c	45;"	d	file:
+pop	include/stack.c	22;"	d	file:
 pop_any	include/stack.c	/^static cognate_object pop_any()$/;"	f	file:
 print_object	include/io.c	/^static void print_object (const cognate_object object, const _Bool quotes)$/;"	f	file:
 program	include/cognate.h	14;"	d
-push	include/stack.c	37;"	d	file:
-push	include/stack.c	41;"	d	file:
+push	include/stack.c	14;"	d	file:
+push	include/stack.c	18;"	d	file:
 push_any	include/stack.c	/^static void push_any(const cognate_object object)$/;"	f	file:
 size	include/stack.c	/^  ptrdiff_t       size;     \/\/ Allocated size of the stack.$/;"	m	struct:cognate_stack	file:
 stack	include/stack.c	/^static cognate_stack stack;$/;"	v	file:

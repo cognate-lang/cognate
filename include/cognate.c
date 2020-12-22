@@ -8,21 +8,23 @@
 #include "error.c"
 #include "type.c"
 #include "func.c"
-#include <time.h>
-#include "gc/gc.h"
-#include <sys/resource.h>
-#include <libgen.h>
-#include <Block.h>
-#include <locale.h>
 
 static const char *stack_start;
-static struct rlimit stack_max;
 
 static void init(int, char**);
 static void cleanup();
 static cognate_object check_block(cognate_object);
 static void copy_blocks();
 static void check_call_stack();
+
+#include <time.h>
+#include <gc/gc.h>
+#include <sys/resource.h>
+#include <libgen.h>
+#include <Block.h>
+#include <locale.h>
+
+static struct rlimit stack_max;
 
 static void init(int argc, char** argv)
 {

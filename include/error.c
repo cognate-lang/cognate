@@ -3,6 +3,9 @@
 
 #include "cognate.h"
 
+__attribute__((noreturn)) static void throw_error(const char* const, ...);
+static void debug_printf(__attribute__((unused)) const char*, ...);
+
 #include <stdio.h>
 #include <ctype.h>
 #include <gc/gc.h>
@@ -11,8 +14,6 @@
 #include <stdlib.h>
 
 const char* function_name = NULL;
-
-__attribute__((noreturn)) static void throw_error(const char* const, ...);
 
 __attribute__((noreturn)) static void throw_error(const char* const fmt, ...)
 {

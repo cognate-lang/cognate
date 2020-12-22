@@ -4,9 +4,9 @@
 #include "cognate.h"
 #include "types.h"
 
-#include <stdio.h>
-
 static void print_object (const cognate_object object, const _Bool quotes);
+
+#include <stdio.h>
 
 static void print_object (const cognate_object object, const _Bool quotes)
 {
