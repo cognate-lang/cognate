@@ -19,9 +19,10 @@ static const char *stack_start;
 static struct rlimit stack_max;
 
 static void init(int, char**);
-static void check_call_stack();
 static void cleanup();
+static cognate_object check_block(cognate_object);
 static void copy_blocks();
+static void check_call_stack();
 
 static void init(int argc, char** argv)
 {

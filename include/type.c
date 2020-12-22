@@ -2,65 +2,18 @@
 #define TYPE_C
 
 #include "cognate.h"
-#include "table.c"
+#include "types.h"
+
 #include "error.c"
-#include <stddef.h>
+#include "table.c"
+
 #include <string.h>
-
-
-typedef enum 
-{
-  // NOTHING is currently only used for unused hashtable buckets.
-  NOTHING=0, // Must be zero because of calloc()
-  block, 
-  boolean, 
-  string, 
-  number, 
-  list,
-  table,
-} cognate_type;
-
-typedef void(^cognate_block)();
-
-struct cognate_list
-{
-  struct cognate_object* start;
-  struct cognate_object* top;
-};
-
-
-struct cognate_table
-{
-  struct cognate_list items;
-  long unsigned int* confirmation_hash;
-};
-
-typedef struct cognate_table cognate_table;
-
-
-// __attribute__((packed)) could save memory here.
-struct cognate_object
-{
-  union
-  {
-    const char* string;            // 64bit string pointer
-    _Bool boolean;                 //  1bit bool
-    cognate_block block;           // 64bit block pointer
-    double number;                 // 64bit float
-    const struct cognate_list  *list;  // 64bit list pointer
-    const struct cognate_table *table; // 64bit table pointer
-  };
-  cognate_type type : 4;
-};
-
-typedef struct cognate_object cognate_object;
-typedef struct cognate_list   cognate_list;
 
 static cognate_object check_type(cognate_type, cognate_object);
 static const char* lookup_type(cognate_type);
 static _Bool compare_objects(cognate_object, cognate_object);
 static _Bool compare_lists(cognate_list, cognate_list);
-static _Bool compare_tables(const cognate_table, const cognate_table); // This function is defined in table.c
+static _Bool compare_tables(cognate_table, cognate_table);
 
 static cognate_object check_type(cognate_type expected_type, cognate_object object)
 {
@@ -97,6 +50,20 @@ static _Bool compare_lists(cognate_list lst1, cognate_list lst2)
     {
       return 0;
     }
+  }
+  return 1;
+}
+
+static _Bool compare_tables(const cognate_table tab1, const cognate_table tab2)
+{
+  // We can't just use compare_lists, since tables do not have guaranteed order.
+  const long table_size = tab1.items.top - tab1.items.start;
+  if (table_size != tab2.items.top - tab2.items.start) return 0; // If tables are different sizes, they're probably different.
+  for (long i = 0; i < table_size; ++i)
+  {
+    // Iterate over each key in tab1, finding the corresponding one in tab2
+    if (tab1.items.start[i].type == NOTHING) continue;
+    if (!compare_objects(tab1.items.start[i], table_get_hash(tab1.confirmation_hash[i], tab2))) return 0;
   }
   return 1;
 }

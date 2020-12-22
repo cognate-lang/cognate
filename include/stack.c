@@ -2,9 +2,12 @@
 #define STACK_C
 
 #include "cognate.h"
-#include "type.c"
-#include <gc/gc.h>
+#include "types.h"
 
+#include "error.c"
+
+#include <gc/gc.h>
+#include <stdio.h>
 
 static void init_stack();
 static void push_any(const cognate_object);
@@ -40,10 +43,10 @@ static void init_stack()
 #endif
 
 #define pop(object_type) \
-  check_type(object_type, pop_any()) . object_type
+  (check_type(object_type, pop_any()) . object_type)
 
 #define peek(object_type) \
-  check_type(object_type, peek_any()) . object_type
+  (check_type(object_type, peek_any()) . object_type)
 
 
 static void push_any(const cognate_object object)

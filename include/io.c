@@ -2,7 +2,8 @@
 #define IO_C
 
 #include "cognate.h"
-#include "type.c"
+#include "types.h"
+
 #include <stdio.h>
 
 static void print_object (const cognate_object object, const _Bool quotes);

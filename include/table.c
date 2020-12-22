@@ -2,10 +2,13 @@
 #define table_c
 
 #include "cognate.h"
-#include "type.c"
-#include <stdlib.h>
-#include <gc/gc.h>
+#include "types.h"
 
+#include "error.c"
+
+#include <stdlib.h>
+#include <string.h>
+#include <gc/gc.h>
 
 static unsigned long hash(const char*);
 static cognate_table table_add(const unsigned long, const cognate_object, cognate_table);
@@ -13,7 +16,6 @@ static cognate_object table_get(const char* const, const cognate_table);
 static cognate_object table_get_hash(const unsigned long, const cognate_table);
 static cognate_table table_grow(const cognate_table);
 static cognate_table table_copy(const cognate_table);
-static _Bool compare_tables(const cognate_table, const cognate_table);
 
 static unsigned long hash(const char *str)
 {
@@ -105,20 +107,6 @@ static cognate_table table_copy(const cognate_table tab)
   memcpy(tab2.items.start, tab.items.start, table_size * sizeof(cognate_object));
   memcpy(tab2.confirmation_hash, tab.confirmation_hash, table_size * sizeof(unsigned long));
   return tab2;
-}
-
-static _Bool compare_tables(const cognate_table tab1, const cognate_table tab2)
-{
-  // We can't just use compare_lists, since tables do not have guaranteed order.
-  const long table_size = tab1.items.top - tab1.items.start;
-  if (table_size != tab2.items.top - tab2.items.start) return 0; // If tables are different sizes, they're probably different.
-  for (long i = 0; i < table_size; ++i)
-  {
-    // Iterate over each key in tab1, finding the corresponding one in tab2
-    if (tab1.items.start[i].type == NOTHING) continue;
-    if (!compare_objects(tab1.items.start[i], table_get_hash(tab1.confirmation_hash[i], tab2))) return 0;
-  }
-  return 1;
 }
 
 #endif

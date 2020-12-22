@@ -2,6 +2,7 @@
 #define ERROR_C
 
 #include "cognate.h"
+
 #include <stdio.h>
 #include <ctype.h>
 #include <gc/gc.h>

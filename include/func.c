@@ -2,9 +2,13 @@
 #define FUNC_C
 
 #include "cognate.h"
+#include "types.h"
+
+#include "type.c"
 #include "stack.c"
 #include "table.c"
 #include "io.c"
+
 #include <gc/gc.h>
 #include <unistd.h>
 #include <regex.h>
