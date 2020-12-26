@@ -44,7 +44,7 @@
 // Mutate internal variable.
 #define mutate_variable(name) \
   immutable cognate_object cognate_variable_ ## name = check_block(pop_any()); /* Can't remember what check_block does here */\
-  cognate_function_##name = ^{push_any(cognate_variable_ ## name);};
+  cognate_function_##name = Block_copy(^{push_any(cognate_variable_ ## name);});
  
 #define make_block(docopy, body) \
   ^{ \
