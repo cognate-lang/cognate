@@ -12,14 +12,8 @@
 #define LIST_GROWTH_FACTOR 1.5
 
 #define program(body) \
-  int main(int argc, char **argv) \
-  { \
-    init(argc, argv); \
-    __attribute__((unused)) char if_status = 2; \
-    body \
-    cleanup(); \
-    return 0; \
-  }
+  static void run_program() \
+    body
 
 
 #define immutable const

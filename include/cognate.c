@@ -10,9 +10,9 @@
 #include "func.c"
 
 static const char *stack_start;
+__attribute__((unused)) char if_status = 2; \
 
-static void init(int, char**);
-static void cleanup();
+static void run_program();
 static cognate_object check_block(cognate_object);
 static void copy_blocks();
 static void check_call_stack();
@@ -26,7 +26,7 @@ static void check_call_stack();
 
 static struct rlimit stack_max;
 
-static void init(int argc, char** argv)
+int main(int argc, char** argv)
 {
   // Get return stack limit
   char a;
@@ -62,10 +62,9 @@ static void init(int argc, char** argv)
   // Generate a stack.
   init_stack();
   debug_printf("Initialisation successful");
-}
-
-static void cleanup()
-{
+  // Actually run the program.
+  run_program();
+  // Clean up.
   if unlikely(stack.items.top != stack.items.start)
   {
     throw_error("Program exiting with non-empty stack of length %ti", stack.items.top - stack.items.start);
