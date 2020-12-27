@@ -31,7 +31,7 @@ __attribute__((noreturn)) static void throw_error(const char* const fmt, ...)
   fputs("\nCognate has encountered an unrecoverable error.\n"
          "Details are below:\n", stderr);
   // Print the function name, if inside a function.
-  if (function_name != NULL) fprintf(stderr, "\033[0;1mIn function '%c%s'...\033[0m\n\n", toupper(*function_name), function_name+1);
+  if (function_name) fprintf(stderr, "\033[0;1mIn function '%c%s'...\033[0m\n\n", toupper(*function_name), function_name+1);
   // Actually print the error message now.
   fprintf(stderr, "\033[31;1m");
   vfprintf(stderr, fmt, args);

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # This script will automatically install CognaC's dependencies on macOS systems
-brew install ghc clang-format cabal-install bdw-gc
+brew install ghc clang-format cabal-install bdw-gc openssl
 cabal update
 cabal install --lib split
 ghc cognac.hs
