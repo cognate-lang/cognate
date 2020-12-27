@@ -112,12 +112,12 @@ static void cognate_function_triplet() { const cognate_object a = peek_any(); pu
 static void cognate_function_swap()    { const cognate_object a = pop_any(); const cognate_object b = pop_any(); push_any(a); push_any(b); }
 static void cognate_function_clear()   { init_stack(); }
 
-static void cognate_function_true()  {push(boolean,1);}
-static void cognate_function_false() {push(boolean,0);}
+static void cognate_function_true()  { push(boolean,1); }
+static void cognate_function_false() { push(boolean,0); }
 
-static void cognate_function_either() { const _Bool a = pop(boolean); push(boolean, pop(boolean) || a); } // Beware short circuiting.
-static void cognate_function_both()   { const _Bool a = pop(boolean); push(boolean, pop(boolean) && a); }
-static void cognate_function_one_of() { const _Bool a = pop(boolean); const _Bool b = pop(boolean); push(boolean, (a && !b) || (!a && b)); }
+static void cognate_function_either() { push(boolean, pop(boolean) + pop(boolean)); } // Use unconventional operators to avoid short-circuits.
+static void cognate_function_both()   { push(boolean, pop(boolean) & pop(boolean)); }
+static void cognate_function_one_of() { push(boolean, pop(boolean) ^ pop(boolean)); }
 static void cognate_function_not()    { push(boolean, !pop(boolean)); }
 
 
