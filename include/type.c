@@ -13,8 +13,6 @@ static _Bool compare_tables(cognate_table, cognate_table);
 #include "error.c"
 #include "table.c"
 
-#include <string.h>
-
 static cognate_object check_type(cognate_type expected_type, cognate_object object)
 {
   if likely(object.type == expected_type)

@@ -104,8 +104,8 @@ static cognate_table table_copy(const cognate_table tab)
   tab2.items.start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * table_size);
   tab2.items.top = tab2.items.start + table_size;
   tab2.confirmation_hash = (unsigned long*) cognate_malloc (sizeof(unsigned long) * table_size);
-  memcpy(tab2.items.start, tab.items.start, table_size * sizeof(cognate_object));
-  memcpy(tab2.confirmation_hash, tab.confirmation_hash, table_size * sizeof(unsigned long));
+  memmove(tab2.items.start, tab.items.start, table_size * sizeof(cognate_object));
+  memmove(tab2.confirmation_hash, tab.confirmation_hash, table_size * sizeof(unsigned long));
   return tab2;
 }
 

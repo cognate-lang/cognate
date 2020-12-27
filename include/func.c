@@ -23,7 +23,7 @@ static cognate_list params;
 #include <unistd.h>
 #include <regex.h>
 #include <math.h>
-#include <string.h>
+#include <bsd/string.h>
 #include <openssl/rand.h>
 
 #define cognate_function_if() { \
@@ -112,8 +112,8 @@ static void cognate_function_triplet() { const cognate_object a = peek_any(); pu
 static void cognate_function_swap()    { const cognate_object a = pop_any(); const cognate_object b = pop_any(); push_any(a); push_any(b); }
 static void cognate_function_clear()   { init_stack(); }
 
-static void cognate_function_true()  { push(boolean,1); }
-static void cognate_function_false() { push(boolean,0); }
+static void cognate_function_true()  { push(boolean, 1); }
+static void cognate_function_false() { push(boolean, 0); }
 
 static void cognate_function_either() { push(boolean, pop(boolean) + pop(boolean)); } // Use unconventional operators to avoid short-circuits.
 static void cognate_function_both()   { push(boolean, pop(boolean) & pop(boolean)); }
@@ -222,18 +222,18 @@ static void cognate_function_join() {
   const char* const delimiter = pop(string);
   const long delim_size = strlen(delimiter);
   const cognate_list lst = *pop(list);
-  long str_size = 0;
+  long str_size = 1; // Add extra 1 for \0
   const cognate_object *i;
   for (i = lst.start; i < lst.top; ++i)
   {
     str_size += strlen(check_type(string, *i).string) + delim_size;
   }
   char* const str = (char*) cognate_malloc (str_size);
-  strcpy(str, lst.start->string);
+  strlcpy(str, lst.start->string, str_size);
   for (i = lst.start+1; i < lst.top; ++i)
   {
-    strcat(str, delimiter);
-    strcat(str, i->string);
+    strlcat(str, delimiter, str_size);
+    strlcat(str, i->string, str_size);
   }
   push(string, str);
 }
@@ -253,24 +253,19 @@ static void cognate_function_append() {
   cognate_list* const lst = (cognate_list* const) cognate_malloc (sizeof(cognate_list));
   lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * new_list_len);
   lst->top = lst->start + new_list_len;
-  memcpy(lst->start, lst2.start, list2_len * sizeof(cognate_object));
-  memcpy(lst->start+list2_len, lst1.start, list1_len * sizeof(cognate_object));
+  memmove(lst->start, lst2.start, list2_len * sizeof(cognate_object));
+  memmove(lst->start+list2_len, lst1.start, list1_len * sizeof(cognate_object));
   push(list, lst);
 }
 
 static void cognate_function_input() {
   // Read user input to a string.
-  char *text = (char*) cognate_malloc (INITIAL_LIST_SIZE);
-  size_t i = 0;
-  size_t file_size = INITIAL_LIST_SIZE;
-  while ((text[i++] = fgetc(stdin)) != '\n')
-  {
-    if (i == file_size)
-    {
-      text = (char*) cognate_realloc (text, (file_size *= LIST_GROWTH_FACTOR));
-    }
-  }
-  text[i-1] = '\0';
+  size_t size = 0;
+  char* buf;
+  getline(&buf, &size, stdin);
+  char* const text = (char* const) cognate_malloc (size);
+  strlcpy(text, buf, size);
+  free(buf);
   push(string, text);
 }
 
@@ -299,8 +294,9 @@ static void cognate_function_number() {
 static void cognate_function_path() {
   // get_current_dir_name() allocates memory, so we must copy it to a GC'd buffer.
   char* buf = get_current_dir_name();
-  const char* cwd = (const char*) cognate_malloc (strlen(buf));
-  cwd = strdup(buf);
+  const size_t size = strlen(buf) + 1;
+  char* cwd = (char*) cognate_malloc (size);
+  strlcpy(cwd, buf, size);
   free(buf);
   push(string, cwd);
 }
@@ -406,7 +402,7 @@ static void cognate_function_match() {
 
 static void cognate_function_ordinal() {
   const char* const str = pop(string);
-  if unlikely(strlen(str) != 1)
+  if unlikely(str[0] == '\0' || str[1] != '\0')
   {
     throw_error("Ordinal requires string of length 1. String '%s' is not of length 1!", str);
   }
