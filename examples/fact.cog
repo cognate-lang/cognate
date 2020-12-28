@@ -6,9 +6,9 @@ Define Factorial
     1
   ];
   Else [
-    Product of X with ~~ Wow much verbose.
-      Factorial of
-        Difference between 1 and X;
+    Subtract 1 from X;
+    find the Factorial;
+    Multiply by X;
   ]
 ];
 

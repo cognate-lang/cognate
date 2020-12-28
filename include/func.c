@@ -67,10 +67,10 @@ static void cognate_function_do()         { pop(block)();                       
 static void cognate_function_put()        { print_object(pop_any(), 1); fflush(stdout); }
 static void cognate_function_print()      { print_object(pop_any(), 1); puts("");       }
 
-static void cognate_function_sum()        { push(number, pop(number) + pop(number)); }
-static void cognate_function_product()    { push(number, pop(number) * pop(number)); }
-static void cognate_function_divisor()    { push(number, (1 / pop(number) * pop(number))); }
-static void cognate_function_difference() { push(number, (-pop(number) + pop(number))); }
+static void cognate_function_sum()      { push(number, pop(number) + pop(number)); }
+static void cognate_function_multiply() { push(number, pop(number) * pop(number)); }
+static void cognate_function_divide()   { push(number, (1 / pop(number) * pop(number))); }
+static void cognate_function_subtract() { push(number, (-pop(number) + pop(number))); }
 
 static void cognate_function_modulo() {
   const double n = pop(number);
@@ -98,7 +98,7 @@ static void cognate_function_random() { // This function is pretty broken.
   }
   // This is not cryptographically secure btw.
   // Since RAND_MAX may only be 2^15, we need to do this:
-  long num 
+  const long num 
     = ((long)(short)random())
     | ((long)(short)random() << 15)
     | ((long)(short)random() << 30)

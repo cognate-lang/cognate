@@ -73,9 +73,9 @@ replacesymbols =
   replace [ ">=" ] [ "EqualOrExceed"  ] .
   replace [ "<=" ] [ "EqualOrPreceed" ] .
   replace [ "+"  ] [ "Sum"            ] .
-  replace [ "-"  ] [ "Difference"     ] .
-  replace [ "*"  ] [ "Product"        ] .
-  replace [ "/"  ] [ "Divisor"        ] .
+  replace [ "-"  ] [ "Subtract"       ] .
+  replace [ "*"  ] [ "Multiply"       ] .
+  replace [ "/"  ] [ "Divide"         ] .
   words
 
 

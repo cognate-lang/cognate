@@ -1,25 +1,25 @@
-If [Sum of 5 and 6, == 11] [
+If [Sum 5 with 6, == 11] [
   Print 'PASS: Addition'
 ];
 Else [
   Print 'FAIL: Addition'
 ];
 
-If [Difference between 10 and 19, == 9] [
+If [Subtract 10 from 19, == 9] [
   Print 'PASS: Subtraction'
 ];
 Else [
   Print 'FAIL: Subtraction'
 ];
 
-If [Product of 9 and 8, == 72] [
+If [Multiply 9 by 8, == 72] [
   Print 'PASS: Multiplication'
 ];
 Else [
   Print 'FAIL: Multiplication'
 ];
 
-If [Divisor by 7 of 42, == 6] [
+If [Divide by 7 of 42, == 6] [
   Print 'PASS: Division'
 ];
 Else [
