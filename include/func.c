@@ -86,25 +86,25 @@ static void cognate_function_random() { // This function is pretty broken.
   const double low  = pop(number); 
   const double high = pop(number); 
   const double step = pop(number); 
-  // This is not cryptographically secure btw.
-  // Since RAND_MAX may only be 2^15, we need to do this.
-  long num = ((long)(short)random()) 
-           | ((long)(short)random() << 15)
-           | ((long)(short)random() << 30)
-           | ((long)(short)random() << 45)
-           | ((long)       random() << 60);
-  if unlikely(high < low) 
-  { 
+  if unlikely(high < low)
+  {
     throw_error("Cannot generate random number in range! (%.15g..%.15g)", low, high); 
+    return;
   }
-  else if (high - low < step) 
-  { 
+  else if (high - low < step)
+  {
     push(number, low); 
+    return;
   }
-  else 
-  { 
-    push(number, low + (double)(num % (unsigned long)((high - low + step) / step)) * step); 
-  }
+  // This is not cryptographically secure btw.
+  // Since RAND_MAX may only be 2^15, we need to do this:
+  long num 
+    = ((long)(short)random())
+    | ((long)(short)random() << 15)
+    | ((long)(short)random() << 30)
+    | ((long)(short)random() << 45)
+    | ((long)       random() << 60);
+  push(number, low + (double)(num % (unsigned long)((high - low + step) / step)) * step); 
 }
 
 static void cognate_function_drop()    { pop_any(); } // These can be defined within cognate.
@@ -165,7 +165,7 @@ static void cognate_function_take() {
 static void cognate_function_index() { 
   const double d = pop(number);
   const size_t index = d;
-  if unlikely(index != (size_t)d)
+  if unlikely(index != floor(d))
     throw_error("List index (%.15g) should be an integer!", d);
   if unlikely(index < 0)
     throw_error("Cannot have negative list index! (%zi)", index);
