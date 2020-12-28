@@ -23,7 +23,7 @@ static cognate_list params;
 #include <unistd.h>
 #include <regex.h>
 #include <math.h>
-#include <bsd/string.h>
+#include <string.h>
 #include <openssl/rand.h>
 
 #define cognate_function_if() { \
@@ -229,11 +229,11 @@ static void cognate_function_join() {
     str_size += strlen(check_type(string, *i).string) + delim_size;
   }
   char* const str = (char*) cognate_malloc (str_size);
-  strlcpy(str, lst.start->string, str_size);
+  strcpy(str, lst.start->string);
   for (i = lst.start+1; i < lst.top; ++i)
   {
-    strlcat(str, delimiter, str_size);
-    strlcat(str, i->string, str_size);
+    strcat(str, delimiter);
+    strcat(str, i->string);
   }
   push(string, str);
 }
@@ -264,7 +264,7 @@ static void cognate_function_input() {
   char* buf;
   getline(&buf, &size, stdin);
   char* const text = (char* const) cognate_malloc (size);
-  strlcpy(text, buf, size);
+  strcpy(text, buf);
   free(buf);
   push(string, text);
 }
@@ -296,7 +296,7 @@ static void cognate_function_path() {
   char* buf = get_current_dir_name();
   const size_t size = strlen(buf) + 1;
   char* cwd = (char*) cognate_malloc (size);
-  strlcpy(cwd, buf, size);
+  strcpy(cwd, buf);
   free(buf);
   push(string, cwd);
 }
