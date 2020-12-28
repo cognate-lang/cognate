@@ -44,6 +44,13 @@ int main(int argc, char** argv)
 #ifndef noGC
   GC_INIT();
 #endif
+  // Seed the random number generator properly.
+  struct timespec ts;
+  if unlikely(timespec_get(&ts, TIME_UTC) == 0)
+  {
+    throw_error("Cannot get system time!");
+  }
+  srandom(ts.tv_nsec ^ ts.tv_sec); // TODO make random more random.
   // Load parameters
   params.start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * (argc-1));
   params.top = params.start + argc - 1;

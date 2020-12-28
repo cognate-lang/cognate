@@ -24,7 +24,6 @@ static cognate_list params;
 #include <regex.h>
 #include <math.h>
 #include <string.h>
-#include <openssl/rand.h>
 
 #define cognate_function_if() { \
   /* TODO: Else and ElseIf should only be allowed directly following an If. */\
@@ -87,11 +86,13 @@ static void cognate_function_random() { // This function is pretty broken.
   const double low  = pop(number); 
   const double high = pop(number); 
   const double step = pop(number); 
-  long num; // RAND_bytes will write a random number to this variable.
-  if (unlikely(RAND_bytes((unsigned char*)&num, 8) == 0))
-  {
-    throw_error("Cannot get random number from system!");
-  }
+  // This is not cryptographically secure btw.
+  // Since RAND_MAX may only be 2^15, we need to do this.
+  long num = ((long)(short)random()) 
+           | ((long)(short)random() << 15)
+           | ((long)(short)random() << 30)
+           | ((long)(short)random() << 45)
+           | ((long)       random() << 60);
   if unlikely(high < low) 
   { 
     throw_error("Cannot generate random number in range! (%.15g..%.15g)", low, high); 
