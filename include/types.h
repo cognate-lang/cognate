@@ -2,7 +2,7 @@
 #define TYPE_H
 
 #include <Block.h>
-#include <stdbool.h>
+#include <stddef.h>
 
 enum cognate_type
 {

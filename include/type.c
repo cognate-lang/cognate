@@ -9,9 +9,11 @@ static const char* lookup_type(cognate_type);
 static _Bool compare_objects(cognate_object, cognate_object);
 static _Bool compare_lists(cognate_list, cognate_list);
 static _Bool compare_tables(cognate_table, cognate_table);
+static size_t list_len(const cognate_list);
 
 #include "error.c"
 #include "table.c"
+#include <string.h>
 
 static cognate_object check_type(cognate_type expected_type, cognate_object object)
 {
@@ -82,6 +84,11 @@ static _Bool compare_objects(cognate_object ob1, cognate_object ob2)
     case block:   throw_error("Cannot compare blocks!");
     case NOTHING: throw_error("Cognate should not be in this state - compiler bug!");
   }
+}
+
+static size_t list_len(const cognate_list lst)
+{
+  return lst.top - lst.start;
 }
 
 #endif

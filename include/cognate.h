@@ -3,11 +3,10 @@
 
 #define  _GNU_SOURCE
 
-#include <limits.h>
+#include <stddef.h>
 
 #define MAX_TABLE_TRIES 3
 #define INITIAL_READ_SIZE 64
-#define MIN_TABLE_SIZE 2
 #define INITIAL_LIST_SIZE 16
 #define LIST_GROWTH_FACTOR 1.5
 
@@ -49,12 +48,12 @@
 #define make_block(docopy, body) \
   ^{ \
     /* Temp variables causes ~10% performance loss :( */ \
-    const ptrdiff_t temp_modified = stack.modified - stack.items.start; \
-    stack.modified = stack.items.top; \
+    const ptrdiff_t temp_modified = stack.modified; \
+    stack.modified = 0; \
     __attribute__((unused)) char if_status = 2; \
     body \
     if (docopy) copy_blocks(); \
-    stack.modified = temp_modified + stack.items.start; \
+    stack.modified = temp_modified; \
   }
 
 #ifndef noGC

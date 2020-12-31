@@ -10,7 +10,7 @@
 #include "func.c"
 
 static const char *stack_start;
-__attribute__((unused)) char if_status = 2; \
+__attribute__((unused)) char if_status = 2;
 
 static void run_program();
 static cognate_object check_block(cognate_object);
@@ -79,9 +79,10 @@ static cognate_object check_block(cognate_object obj)
 
 static void copy_blocks()
 {
-  for (; stack.modified != stack.items.top; stack.modified++)
+  for (; stack.modified != 0; stack.modified--)
   {
-    unlikely(stack.modified->type==block) && (stack.modified->block = Block_copy(stack.modified->block)); // Copy block to heap.
+    cognate_object* mod = stack.items.top - stack.modified;
+    unlikely(mod->type==block) && (mod->block = Block_copy(mod->block)); // Copy block to heap.
   }
 }
 

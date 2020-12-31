@@ -25,47 +25,54 @@ static cognate_list params;
 #include <math.h>
 #include <string.h>
 
-#define cognate_function_if() { \
-  /* TODO: Else and ElseIf should only be allowed directly following an If. */\
-  const cognate_block cond = pop(block); \
-  const cognate_block expr = pop(block); \
+static void cognate_function_if(char* if_status)
+{
+  // TODO: Else and ElseIf should only be allowed directly following an If.
+  const cognate_block cond = pop(block);
+  const cognate_block expr = pop(block);
   cond(); \
-  if ((if_status = pop(boolean))) \
-  { \
-    expr(); \
-  } \
+  if ((*if_status = pop(boolean)))
+  {
+    expr();
+  }
 }
+#define cognate_function_if() cognate_function_if(&if_status)
   
-#define cognate_function_else() { \
-  const cognate_block expr = pop(block); \
-  if (!if_status) \
-  { \
-    expr();  \
-  } \
-  else if unlikely(if_status == 2) \
-  { \
-    throw_error("Else statement encountered before [Else]If statement!"); \
-  } \
-  if_status = 2; \
+static void cognate_function_else(char* if_status) 
+{
+  const cognate_block expr = pop(block);
+  if (!*if_status)
+  {
+    expr();
+  }
+  else if unlikely(*if_status == 2)
+  {
+    throw_error("Else statement encountered before [Else]If statement!");
+  }
+  *if_status = 2;
 }
+#define cognate_function_else() cognate_function_else(&if_status)
 
-#define cognate_function_elseif() { \
-  const cognate_block cond = pop(block); \
-  const cognate_block expr = pop(block); \
-  cond(); \
-  if ((if_status = pop(boolean) && !if_status)) \
-  { \
-    expr(); \
-  } \
-  else if unlikely(if_status == 2) \
-  { \
-    throw_error("ElseIf statement encountered before [Else]If statement!"); \
-  } \
+static void cognate_function_elseif(char* if_status)
+{
+  const cognate_block cond = pop(block);
+  const cognate_block expr = pop(block);
+  cond();
+  if ((*if_status = pop(boolean) && !*if_status))
+  {
+    expr();
+  }
+  else if unlikely(*if_status == 2)
+  {
+    throw_error("ElseIf statement encountered before [Else]If statement!");
+  }
 }
+#define cognate_function_elseif() cognate_function_elseif(&if_status)
 
-static void cognate_function_do()         { pop(block)();                               }
-static void cognate_function_put()        { print_object(pop_any(), 1); fflush(stdout); }
-static void cognate_function_print()      { print_object(pop_any(), 1); puts("");       }
+static void cognate_function_do() { pop(block)(); }
+
+static void cognate_function_put()   { print_object(pop_any(), 1); fflush(stdout); }
+static void cognate_function_print() { print_object(pop_any(), 1); puts("");       }
 
 static void cognate_function_sum()      { push(number, pop(number) + pop(number)); }
 static void cognate_function_multiply() { push(number, pop(number) * pop(number)); }
@@ -139,12 +146,12 @@ static void cognate_function_discard() {
   // O(n) where n is the number of element being Discarded.
   const double num = pop(number);
   const size_t num_discarding = num;
-  if unlikely(num != num_discarding) throw_error("Cannot Discard a non-integer number of elements! (%.15g)", num);
-  if unlikely(num_discarding < 0)    throw_error("Cannot Discard a negative number of elements! (%zi)", num_discarding);
+  if unlikely(num != num_discarding) throw_error("Number of elements to Discard must be positive integer, not %.15g!", num);
   const cognate_list obj = *pop(list);
   cognate_list* const lst = (cognate_list* const) cognate_malloc (sizeof(cognate_list));
   *lst = obj;
-  if unlikely((lst->start += num_discarding) > lst->top) throw_error("List of length %zu is too small to Discard %zu elements from!", lst->top - lst->start, num_discarding);
+  if unlikely(num_discarding > list_len(*lst)) throw_error("List of length %zu is too small to Discard %zu elements from!", list_len(*lst), num_discarding);
+  lst->start += num_discarding;
   push(list, lst);
 }
 
@@ -152,12 +159,11 @@ static void cognate_function_take() {
   // O(n) where n is the number of element being Taken.
   const double num = pop(number);
   const size_t num_taking = num;
-  if unlikely(num != num_taking) throw_error("Cannot Take a non-integer number of elements! (%.15g)", num);
-  if unlikely(num_taking < 0)    throw_error("Cannot Take a negative number of elements! (%zi)", num_taking);
+  if unlikely(num != num_taking) throw_error("Number of elements to Take must be positive integer, not %.15g!", num);
   cognate_list obj = *pop(list);
   cognate_list* const lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
   *lst = obj;
-  if unlikely(lst->start + num_taking > lst->top) throw_error ("List of length %zu is too small to Take %zu elements from!", lst->top - lst->start, num_taking);
+  if unlikely(num_taking > list_len(*lst)) throw_error ("List of length %zu is too small to Take %zu elements from!", list_len(*lst), num_taking);
   lst->top = lst->start + num_taking;
   push(list, lst);
 }
@@ -165,19 +171,17 @@ static void cognate_function_take() {
 static void cognate_function_index() { 
   const double d = pop(number);
   const size_t index = d;
-  if unlikely(index != floor(d))
-    throw_error("List index (%.15g) should be an integer!", d);
-  if unlikely(index < 0)
-    throw_error("Cannot have negative list index! (%zi)", index);
+  if unlikely(index != d)
+    throw_error("List Index must be a positive integer, not %15g!", d);
   const cognate_list lst = *pop(list);
-  if unlikely(lst.start + index >= lst.top)
-    throw_error("Index %zu is out of bounds! (list is of length %zu)", index, lst.top - lst.start);
+  if unlikely(index >= list_len(lst))
+    throw_error("Index %zu is out of bounds! (list is of length %zu)", index, list_len(lst));
   push_any(lst.start [index]);
 }
 
 static void cognate_function_length() {
   const cognate_list lst = *pop(list);
-  push(number, (double)(lst.top - lst.start));
+  push(number, (double)list_len(lst));
 }
 
 static void cognate_function_list() { 
@@ -195,7 +199,7 @@ static void cognate_function_list() {
   *lst = stack.items;
   // Restore the original stack
   stack = temp_stack;
-  const long lst_len = lst->top - lst->start;
+  const long lst_len = list_len(*lst);
   lst->start = cognate_realloc(lst->start, lst_len * sizeof(cognate_object));
   lst->top = lst->start + lst_len;
   // Push the created list to the stack
@@ -205,15 +209,15 @@ static void cognate_function_list() {
 static void cognate_function_characters() {
   const char* const str = pop(string);
   cognate_list* const lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
-  const size_t length = strlen(str);
+  size_t length = strlen(str);
   lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * length);
   lst->top = lst->start + length;
-  for (size_t i = 0; i < length; ++i)
+  while (length --> 0)
   {
     char* const temp = (char*) cognate_malloc (2);
-    temp[0] = str[i];
+    temp[0] = str[length];
     temp[1] = '\0';
-    lst->start[i] = ((cognate_object){.type=string, .string=temp});
+    lst->start[length] = ((cognate_object){.type=string, .string=temp});
   }
   push(list, lst);
 }
@@ -248,8 +252,8 @@ static void cognate_function_stack() {
 static void cognate_function_append() {
   const cognate_list lst1 = *pop(list);
   const cognate_list lst2 = *pop(list);
-  const size_t list1_len = lst1.top - lst1.start;
-  const size_t list2_len = lst2.top - lst2.start;
+  const size_t list1_len = list_len(lst1);
+  const size_t list2_len = list_len(lst2);
   const size_t new_list_len = list1_len + list2_len;
   cognate_list* const lst = (cognate_list* const) cognate_malloc (sizeof(cognate_list));
   lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * new_list_len);
@@ -322,11 +326,11 @@ static void cognate_function_stop() {
 static void cognate_function_table() {
   call(list);
   const cognate_list init = *pop(list);
-  const unsigned long table_size = ((init.top - init.start) * LIST_GROWTH_FACTOR) + MIN_TABLE_SIZE;
+  const size_t table_size = (list_len(init) * LIST_GROWTH_FACTOR);
   cognate_table* const tab = (cognate_table*) cognate_malloc (sizeof(cognate_table)); // Need to allocate list here.
   tab->items.start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * table_size);
   tab->items.top = tab->items.start + table_size;
-  tab->confirmation_hash = (long unsigned int*) cognate_malloc (sizeof(long unsigned int) * table_size);
+  tab->confirmation_hash = (unsigned long*) cognate_malloc (sizeof(unsigned long) * table_size);
   const char *key;
   cognate_object value;
   for (const cognate_object *i = init.start + 1; i < init.top; i += 2)
@@ -360,7 +364,7 @@ static void cognate_function_values() {
   // Equivilant tables may give differently ordered lists.
   const cognate_table tab = *pop(table);
   cognate_list* const lst = (cognate_list*) cognate_malloc (sizeof(cognate_list));
-  const long table_size = tab.items.top - tab.items.start;
+  const long table_size = list_len(tab.items);
   lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * table_size);
   int j = 0;
   for (int i = 0; i < table_size; ++i)

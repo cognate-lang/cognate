@@ -12,6 +12,7 @@ static cognate_table table_grow(const cognate_table);
 static cognate_table table_copy(const cognate_table);
 
 #include "error.c"
+#include "type.c"
 
 #include <stdlib.h>
 #include <string.h>
@@ -31,7 +32,7 @@ static unsigned long hash(const char *str)
 static cognate_table table_add(const unsigned long key_hash, const cognate_object value, cognate_table tab)
 {
   // This will replace a key if it is already in the table.
-  unsigned long table_size = tab.items.top - tab.items.start;
+  size_t table_size = list_len(tab.items);
   unsigned long shrunk_hash = key_hash % table_size;
   for (char tries = 0;; ++tries)
   {
@@ -63,7 +64,7 @@ static cognate_object table_get(const char* const key, const cognate_table tab)
 
 static cognate_object table_get_hash(const unsigned long key_hash, const cognate_table tab)
 {
-  const unsigned long table_size = tab.items.top - tab.items.start;
+  const size_t table_size = list_len(tab.items);
   unsigned long shrunk_hash = key_hash % table_size;
   for (char tries = 0; tries < MAX_TABLE_TRIES; ++tries)
   {
@@ -78,14 +79,14 @@ static cognate_object table_get_hash(const unsigned long key_hash, const cognate
 
 static cognate_table table_grow(const cognate_table tab)
 {
-  const long table_size = tab.items.top - tab.items.start;
-  const long new_table_size = table_size * LIST_GROWTH_FACTOR;
+  const size_t table_size = list_len(tab.items);
+  const size_t new_table_size = table_size * LIST_GROWTH_FACTOR;
   cognate_table tab2;
   tab2.items.start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * new_table_size);
   tab2.items.top = tab2.items.start + new_table_size;
   // Segfaults with normal cognate_malloc() for some reason.
   tab2.confirmation_hash = (unsigned long*) cognate_malloc_atomic (sizeof(unsigned long) * new_table_size);
-  for (int i = 0; i < table_size; ++i)
+  for (size_t i = 0; i < table_size; ++i)
   {
     if (tab.items.start[i].type != NOTHING)
     {
@@ -99,7 +100,7 @@ static cognate_table table_copy(const cognate_table tab)
 {
   // Tables are copy on write.
   // This means performance of Insert function is pretty bad.
-  const unsigned long table_size = tab.items.top - tab.items.start;
+  const size_t table_size = list_len(tab.items);
   cognate_table tab2;
   tab2.items.start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * table_size);
   tab2.items.top = tab2.items.start + table_size;
