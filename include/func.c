@@ -25,7 +25,7 @@ static cognate_list params;
 #include <math.h>
 #include <string.h>
 
-static void cognate_function_if(char* if_status)
+static void cognate_function_if(char* const if_status)
 {
   // TODO: Else and ElseIf should only be allowed directly following an If.
   const cognate_block cond = pop(block);
@@ -38,7 +38,7 @@ static void cognate_function_if(char* if_status)
 }
 #define cognate_function_if() cognate_function_if(&if_status)
   
-static void cognate_function_else(char* if_status) 
+static void cognate_function_else(char* const if_status) 
 {
   const cognate_block expr = pop(block);
   if (!*if_status)
@@ -53,7 +53,7 @@ static void cognate_function_else(char* if_status)
 }
 #define cognate_function_else() cognate_function_else(&if_status)
 
-static void cognate_function_elseif(char* if_status)
+static void cognate_function_elseif(char* const if_status)
 {
   const cognate_block cond = pop(block);
   const cognate_block expr = pop(block);
@@ -89,18 +89,18 @@ static void cognate_function_modulo() {
   push(number, (long long)m % (long long)n);
 }
 
-static void cognate_function_random() { // This function is pretty broken.
-  const double low  = pop(number); 
-  const double high = pop(number); 
-  const double step = pop(number); 
+static void cognate_function_random() {
+  const double low  = pop(number);
+  const double high = pop(number);
+  const double step = pop(number);
   if unlikely(high < low)
   {
-    throw_error("Cannot generate random number in range! (%.15g..%.15g)", low, high); 
+    throw_error("Cannot generate random number in range! (%.15g..%.15g)", low, high);
     return;
   }
   else if (high - low < step)
   {
-    push(number, low); 
+    push(number, low);
     return;
   }
   // This is not cryptographically secure btw.
@@ -246,8 +246,6 @@ static void cognate_function_join() {
 static void cognate_function_stack() {
   push(list, &stack.items);
 }
-
-
 
 static void cognate_function_append() {
   const cognate_list lst1 = *pop(list);

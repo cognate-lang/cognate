@@ -32,9 +32,9 @@ static void expand_stack();
 
 struct cognate_stack
 {
-  cognate_list    items;    // The list holding the stack itself.
-  ptrdiff_t       size;     // Allocated size of the stack.
-  ptrdiff_t       modified; // Lowest stack element modified by current block.
+  cognate_list items;    // The list holding the stack itself.
+  ptrdiff_t    size;     // Allocated size of the stack.
+  ptrdiff_t    modified; // Offset of last modified element from top.
 };
 
 typedef struct cognate_stack cognate_stack;
@@ -44,7 +44,8 @@ static cognate_stack stack;
 static void init_stack()
 {
   // Allocate dynamic stack memory.
-  stack.modified = 0; stack.items.top = stack.items.start = 
+  stack.modified = 0;
+  stack.items.top = stack.items.start =
     (cognate_object*) cognate_malloc ((stack.size = INITIAL_LIST_SIZE) * sizeof(cognate_object));
 }
 
@@ -76,12 +77,8 @@ static void expand_stack()
 {
   // New stack size = current stack size * growth factor.
   // Assumes that stack is currently of length stack.size.
-
   debug_printf("Expanding stack from length %ti to %ti\n", stack.size, (ptrdiff_t)(stack.size * LIST_GROWTH_FACTOR)); 
- 
-  //ptrdiff_t temp = stack.modified - stack.items.start;
   stack.items.start = (cognate_object*) cognate_realloc (stack.items.start, (ptrdiff_t)(stack.size * LIST_GROWTH_FACTOR * sizeof(cognate_object)));
-  //stack.modified = stack.items.start + temp;
   stack.items.top = stack.items.start + stack.size;
   stack.size *= LIST_GROWTH_FACTOR;
 }

@@ -73,16 +73,17 @@ int main(int argc, char** argv)
 
 static cognate_object check_block(cognate_object obj)
 {
-  unlikely(obj.type==block) && (obj.block = Block_copy(obj.block));
+  if unlikely(obj.type==block) obj.block = Block_copy(obj.block);
   return obj;
 }
 
 static void copy_blocks()
 {
-  for (; stack.modified != 0; stack.modified--)
+  while (stack.modified)
   {
-    cognate_object* mod = stack.items.top - stack.modified;
-    unlikely(mod->type==block) && (mod->block = Block_copy(mod->block)); // Copy block to heap.
+    cognate_object* const obj = stack.items.top - stack.modified;
+    if unlikely(obj->type==block) obj->block = Block_copy(obj->block); // Copy block to heap.
+    --stack.modified;
   }
 }
 
@@ -94,7 +95,7 @@ static void check_call_stack()
   {
     function_calls = 1024;
     static long old_stack_size = 0;
-    char stack_end;
+    const char stack_end;
     // if (how much stack left < stack change between checks)
     if unlikely(stack_max.rlim_cur + &stack_end - stack_start < stack_start - &stack_end - old_stack_size)
     {
