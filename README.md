@@ -11,7 +11,7 @@ CognaC compiles Cognate directly to C. This produces very efficient binaries and
 
 |                 | Python 3 | Ruby  | CognaC | Haskell (GHC) | Lisp (SBCL) | C++ (G++) | C (GCC) | Golang |
 |-----------------|----------|-------|--------|---------------|-------------|-----------|---------|--------|
-| fib(35) runtime | 4.00s    | 1.34s | 1.12s  | 0.72s         | 0.19s       | 0.04s     | 0.04s   | 0.08s  |
+| fib(35) runtime | 4.00s    | 1.34s | 1.15s  | 0.72s         | 0.19s       | 0.04s     | 0.04s   | 0.08s  |
 | fib binary size | N/A      | N/A   | 20k    | 964k          | N/A         | 24k       | 20k     | 2M     |
 
 (If newer language versions produce different results, please submit an issue so I can update this table)

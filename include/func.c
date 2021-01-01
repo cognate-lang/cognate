@@ -7,9 +7,14 @@
 static cognate_list params;
 
 #ifdef debug
-  #define call(name) debug_printf("Calling %s", #name); cognate_function_ ## name();
+  #define call(name) \
+  debug_printf("Calling %s", #name); \
+  word_name = #name; \
+  cognate_function_ ## name();
 #else 
-  #define call(name) cognate_function_ ## name();
+  #define call(name) \
+  word_name = #name; \
+  cognate_function_ ## name();
 #endif
 
 // I'm not putting type signatures for every single function here.
@@ -324,7 +329,7 @@ static void cognate_function_stop() {
 }
 
 static void cognate_function_table() {
-  call(list);
+  cognate_function_list();
   const cognate_list init = *pop(list);
   const size_t table_size = (list_len(init) * LIST_GROWTH_FACTOR);
   cognate_table* const tab = (cognate_table*) cognate_malloc (sizeof(cognate_table)); // Need to allocate list here.

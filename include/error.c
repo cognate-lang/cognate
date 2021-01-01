@@ -14,7 +14,8 @@ static void debug_printf(__attribute__((unused)) const char*, ...);
 #include <stdlib.h>
 #include <stdarg.h>
 
-const char* function_name = NULL;
+static const char* function_name = NULL;
+static const char* word_name = NULL;
 
 __attribute__((noreturn)) static void throw_error(const char* const fmt, ...)
 {
@@ -32,7 +33,8 @@ __attribute__((noreturn)) static void throw_error(const char* const fmt, ...)
   fputs("\nCognate has encountered an unrecoverable error.\n"
          "Details are below:\n", stderr);
   // Print the function name, if inside a function.
-  if (function_name) fprintf(stderr, "In function '\033[0;1m%c%s\033[0m'...\n", toupper(*function_name), function_name+1);
+  if (function_name) fprintf(stderr, "In function '\033[0;1m%c%s\033[0m'\n", toupper(*function_name), function_name+1);
+  if (word_name != function_name && word_name) fprintf(stderr, "While evaluating '\033[0;1m%c%s\033[0m'\n", toupper(*word_name), word_name+1);
   // Actually print the error message now.
   fprintf(stderr, "\n\033[31;1m");
   vfprintf(stderr, fmt, args);
