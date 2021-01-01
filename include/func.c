@@ -58,13 +58,13 @@ static void cognate_function_elseif(char* const if_status)
   const cognate_block cond = pop(block);
   const cognate_block expr = pop(block);
   cond();
-  if ((*if_status = pop(boolean) && !*if_status))
-  {
-    expr();
-  }
-  else if unlikely(*if_status == 2)
+  if unlikely(*if_status == 2)
   {
     throw_error("ElseIf statement encountered before [Else]If statement!");
+  }
+  else if ((*if_status = pop(boolean) && !*if_status))
+  {
+    expr();
   }
 }
 #define cognate_function_elseif() cognate_function_elseif(&if_status)
