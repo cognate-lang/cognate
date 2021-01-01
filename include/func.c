@@ -295,13 +295,15 @@ static void cognate_function_number() {
 }
 
 static void cognate_function_path() {
-  // get_current_dir_name() allocates memory, so we must copy it to a GC'd buffer.
-  char* buf = get_current_dir_name();
-  const size_t size = strlen(buf) + 1;
-  char* cwd = (char*) cognate_malloc (size);
-  strcpy(cwd, buf);
-  free(buf);
-  push(string, cwd);
+  char buf[FILENAME_MAX];
+  if (!getcwd(buf, FILENAME_MAX))
+  {
+    throw_error("Cannot get executable path!");
+  }
+  const size_t len = strlen(buf);
+  char* const path = (char* const) cognate_malloc(len);
+  strcpy(path, buf);
+  push(string, path);
 }
 
 static void cognate_function_write() {

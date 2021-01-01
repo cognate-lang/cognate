@@ -12,6 +12,7 @@ static void debug_printf(__attribute__((unused)) const char*, ...);
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 const char* function_name = NULL;
 
