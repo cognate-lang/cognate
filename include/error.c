@@ -5,6 +5,7 @@
 
 __attribute__((noreturn)) static void throw_error(const char* const, ...);
 static void debug_printf(__attribute__((unused)) const char*, ...);
+static void handle_signal(int);
 
 #include <stdio.h>
 #include <ctype.h>
@@ -14,6 +15,8 @@ static void debug_printf(__attribute__((unused)) const char*, ...);
 #include <stdlib.h>
 #include <stdarg.h>
 #include <execinfo.h>
+#include <signal.h>
+#include <string.h>
 
 static const char* function_name = NULL;
 static const char* word_name = NULL;
@@ -26,6 +29,7 @@ __attribute__((noreturn)) static void throw_error(const char* const fmt, ...)
   // If we cannot determine the terminal size (redirected to file or something), assume width is 80.
   if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &term) == -1) term.ws_col = 80;
   long i;
+  fputs("\n", stderr);
   // Print the title bar.
   for (i = 0; i < (term.ws_col - 18) / 2; ++i) fputs("\342\224\200", stderr);
   fputs("\342\224\244 \033[0;1mCognate Error!\033[0m \342\224\234", stderr);
@@ -51,6 +55,11 @@ __attribute__((noreturn)) static void throw_error(const char* const fmt, ...)
   for (i = 0; i < term.ws_col; ++i) fputs("\342\224\200", stderr);
   // Exit, with error.
   exit(-1);
+}
+
+static void handle_signal(int sig)
+{
+  throw_error("Recieved signal %i (%s), exiting", sig, strsignal(sig));
 }
 
 static void debug_printf(__attribute__((unused)) const char* const fmt, ...)

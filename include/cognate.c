@@ -59,6 +59,13 @@ int main(int argc, char** argv)
     char* str = argv[argc];
     params.start[argc-1] = (cognate_object){.type=string, .string=str};
   }
+  // Bind error signals.
+  signal(SIGABRT, handle_signal);
+  signal(SIGFPE, handle_signal);
+  signal(SIGILL, handle_signal);
+  signal(SIGINT, handle_signal);
+  signal(SIGTERM, handle_signal);
+  signal(SIGSEGV, handle_signal); // Will only sometimes work.
   // Generate a stack.
   init_stack();
   debug_printf("Initialisation successful");
