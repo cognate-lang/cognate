@@ -59,7 +59,7 @@ __attribute__((noreturn)) static void throw_error(const char* const fmt, ...)
 
 static void handle_signal(int sig)
 {
-  throw_error("Recieved signal %i (%s), exiting", sig, strsignal(sig));
+  throw_error("Recieved signal %i (%s), exiting.", sig, strsignal(sig));
 }
 
 static void debug_printf(__attribute__((unused)) const char* const fmt, ...)
