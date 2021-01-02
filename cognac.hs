@@ -383,7 +383,7 @@ main =
   do
     args <- getArgs
     let compilerFlagsLinux = 
-          words "-fblocks -lBlocksRuntime -l:libgc.so -Ofast -s -I include -Wall -Wextra -Werror -Wno-unused -pedantic-errors -std=c11 -lm -g0"
+          words "-fblocks -lBlocksRuntime -l:libgc.so -Ofast -I include -Wall -Wextra -Werror -Wno-unused -pedantic-errors -std=c11 -lm -g0"
     let compilerFlagsMac = 
           words "-fblocks -lgc -Ofast -I include -Wall -Wextra -Werror -Wpedantic -Wno-unused -std=c11 -lm -g0"
     let compilerFlags = if System.Info.os == "linux" then compilerFlagsLinux else compilerFlagsMac

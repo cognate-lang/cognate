@@ -13,6 +13,7 @@ static void debug_printf(__attribute__((unused)) const char*, ...);
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <execinfo.h>
 
 static const char* function_name = NULL;
 static const char* word_name = NULL;
@@ -39,7 +40,13 @@ __attribute__((noreturn)) static void throw_error(const char* const fmt, ...)
   fprintf(stderr, "\n\033[31;1m");
   vfprintf(stderr, fmt, args);
   va_end(args);
-  fprintf(stderr, "\033[0m\n");
+  fprintf(stderr, "\033[0m\n\n");
+  // Print a backtrace.
+  void *trace[5];
+  size_t size = backtrace(trace, 5);
+  fputs("\033[2;37mHere is a backtrace:\n", stderr);
+  backtrace_symbols_fd(trace, size, STDERR_FILENO);
+  fputs("\033[0m", stderr);
   // Print the bottom row thing.
   for (i = 0; i < term.ws_col; ++i) fputs("\342\224\200", stderr);
   // Exit, with error.

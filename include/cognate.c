@@ -10,7 +10,7 @@
 #include "func.c"
 
 static const char *stack_start;
-__attribute__((unused)) char if_status = 2;
+static __attribute__((unused)) char if_status = 2;
 
 static void run_program();
 static cognate_object check_block(cognate_object);
