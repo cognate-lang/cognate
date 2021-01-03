@@ -33,15 +33,13 @@ static const float LIST_GROWTH_FACTOR = 1.5;
 
 // Internal cognate variable.
 #define variable(name, flags) \
-  immutable cognate_object cognate_variable_ ## name = pop_any(); \
+  const cognate_object cognate_variable_ ## name = pop_any(); \
   flags cognate_block cognate_function_ ## name = ^{push_any(cognate_variable_ ## name);};
 
 // Mutate internal variable.
 #define mutate_variable(name) \
-  immutable cognate_object cognate_variable_ ## name = check_block(pop_any()); \
-  /* This line below checks is a bodge to prevent memory leaks due to Block_copy() not using GC.*/ \
-  if unlikely((((struct {void *isa; int flags;}*)cognate_function_##name)->flags) & (1<<24)) Block_release(cognate_function_##name); \
-  cognate_function_##name = Block_copy(^{push_any(cognate_variable_ ## name);});
+  __block cognate_object cognate_variable_ ## name = check_block(pop_any()); \
+  cognate_function_##name = ^{push_any(cognate_variable_ ## name);}; /* This may break in future and need Block_copy() */
  
 #define make_block(docopy, body) \
   ^{ \
