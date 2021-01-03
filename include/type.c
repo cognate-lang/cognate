@@ -78,7 +78,7 @@ static _Bool compare_objects(cognate_object ob1, cognate_object ob2)
   {
     case number:  return ob1.number  == ob2.number;
     case boolean: return ob1.boolean == ob2.boolean;
-    case string:  return strcmp(ob1.string, ob2.string) == 0;
+    case string:  return strcoll(ob1.string, ob2.string) == 0;
     case list:    return compare_lists(*ob1.list, *ob2.list);
     case table:   return compare_tables(*ob1.table, *ob2.table);
     case block:   throw_error("Cannot compare blocks!");
