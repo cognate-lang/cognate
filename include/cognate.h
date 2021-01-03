@@ -5,21 +5,17 @@
 
 #include <stddef.h>
 
-#define MAX_TABLE_TRIES 3
-#define INITIAL_READ_SIZE 64
-#define INITIAL_LIST_SIZE 16
-#define LIST_GROWTH_FACTOR 1.5
+static const int MAX_TABLE_TRIES = 3;
+static const int INITIAL_READ_SIZE = 64;
+static const int INITIAL_LIST_SIZE = 16;
+static const float LIST_GROWTH_FACTOR = 1.5;
 
 #define program(body) \
   static void run_program() \
     body
 
-
 #define immutable const
 #define mutable __block
-
-#define copy   1
-#define nocopy 0
 
 // Global-local variable swapping is causing performance losses. :(
 #define function(name, flags, docopy, body) \

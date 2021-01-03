@@ -298,7 +298,7 @@ compile (Node body : Leaf name : Leaf "Define" : xs) =
     "function(" 
       ++ lc name ++ ", " 
       ++ (if xs `doesMutate` name || body `doesCall` name then "mutable," else "immutable,") 
-      ++ (if any isNode body then "copy," else "nocopy,") 
+      ++ (if any isNode body then "1," else "0,") 
       ++ "{" 
         ++ compile body
       ++ "});{"
@@ -314,7 +314,7 @@ compile (Node body : Node call : Leaf "Set" : xs) =
     ++ lc (case name of 
             Leaf str -> str ++ ","
             _        -> error "Parse Error: Invalid function name!") 
-    ++ (if any isNode body then "copy, {" else "nocopy, {")
+    ++ (if any isNode body then "1, {" else "0, {")
     ++ compile (intersperse (Leaf "Let") (reverse args) ++ [Leaf "Let" | not (null args)] ++ body)
     ++ "});\n{\n"
   ++ compile xs ++
@@ -348,7 +348,7 @@ compile (Node str : Leaf "StringLiteral" : xs) =
   "push(string,\"" ++ constructStr str ++ "\");" ++ compile xs
     
 compile (Node expr : xs) =
-  "push(block,\nmake_block(" ++ (if any isNode expr then "copy," else "nocopy,") ++ "{\n"
+  "push(block,\nmake_block(" ++ (if any isNode expr then "1," else "0,") ++ "{\n"
   ++ compile expr
   ++ "}));\n"
   ++ compile xs
