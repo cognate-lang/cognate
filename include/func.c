@@ -205,17 +205,19 @@ static void cognate_function_list() {
 }
 
 static void cognate_function_characters() {
-  const char* const str = pop(string);
+  const char* str = pop(string);
   cognate_list* const lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
-  size_t length = strlen(str);
+  size_t length = mbstrlen(str);
   lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * length);
   lst->top = lst->start + length;
-  while (length --> 0)
+  for (size_t i = 0; i < length; ++i)
   {
-    char* const temp = (char*) cognate_malloc (2);
-    temp[0] = str[length];
-    temp[1] = '\0';
-    lst->start[length] = ((cognate_object){.type=string, .string=temp});
+    size_t char_len = mblen(str, MB_CUR_MAX);
+    char* const temp = (char*) cognate_malloc (char_len+1);
+    memmove(temp, str, char_len);
+    temp[char_len] = '\0';
+    lst->start[i] = ((cognate_object){.type=string, .string=temp});
+    str += char_len;
   }
   push(list, lst);
 }

@@ -91,4 +91,12 @@ static size_t list_len(const cognate_list lst)
   return lst.top - lst.start;
 }
 
+static size_t mbstrlen(const char* str)
+{
+  // Get the number of characters in a multibyte string.
+  size_t i = 0;
+  for (; *str != '\0'; str += mblen(str, MB_CUR_MAX), ++i);
+  return i;
+}
+
 #endif

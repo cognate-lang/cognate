@@ -51,8 +51,6 @@ static void print_object (const cognate_object object, const _Bool quotes)
       putchar('[');
       for (cognate_object *i = lst . start; i != lst . top; ++i)
       {
-        // Probably don't need this check.
-        if (!i) throw_error("Null pointer in print_object(). This is definitely a compiler bug!");
         // Strings within lists ALWAYS printed with quotes.
         print_object(*i, 0);
         if (i + 1 != lst . top) fputs(", ", stdout);
