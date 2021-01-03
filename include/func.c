@@ -6,16 +6,9 @@
 
 static cognate_list params;
 
-#ifdef debug
-  #define call(name) \
-  debug_printf("Calling %s", #name); \
+#define call(name) \
   word_name = #name; \
   cognate_function_ ## name();
-#else 
-  #define call(name) \
-  word_name = #name; \
-  cognate_function_ ## name();
-#endif
 
 // I'm not putting type signatures for every single function here.
 

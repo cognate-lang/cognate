@@ -10,14 +10,8 @@ static cognate_object pop_any();
 static cognate_object peek_any();
 static void expand_stack();
 
-#ifdef debug // Push an object to the stack. Print if debugging.
-  #define push(object_type, object) \
-    debug_printf("Pushing %s", #object); \
-    push_any((cognate_object){.object_type=object, .type=object_type});
-#else
-  #define push(object_type, object) \
-    push_any((cognate_object){.object_type=object, .type=object_type})
-#endif
+#define push(object_type, object) \
+  push_any((cognate_object){.object_type=object, .type=object_type})
 
 #define pop(object_type) \
   (check_type(object_type, pop_any()) . object_type)
@@ -77,7 +71,6 @@ static void expand_stack()
 {
   // New stack size = current stack size * growth factor.
   // Assumes that stack is currently of length stack.size.
-  debug_printf("Expanding stack from length %ti to %ti\n", stack.size, (ptrdiff_t)(stack.size * LIST_GROWTH_FACTOR)); 
   stack.items.start = (cognate_object*) cognate_realloc (stack.items.start, (ptrdiff_t)(stack.size * LIST_GROWTH_FACTOR * sizeof(cognate_object)));
   stack.items.top = stack.items.start + stack.size;
   stack.size *= LIST_GROWTH_FACTOR;

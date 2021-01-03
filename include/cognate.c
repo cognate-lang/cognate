@@ -68,7 +68,6 @@ int main(int argc, char** argv)
   signal(SIGSEGV, handle_signal); // Will only sometimes work.
   // Generate a stack.
   init_stack();
-  debug_printf("Initialisation successful");
   // Actually run the program.
   run_program();
   // Clean up.
