@@ -22,6 +22,7 @@ static cognate_list params;
 #include <regex.h>
 #include <math.h>
 #include <string.h>
+#include <limits.h>
 
 static void cognate_function_if(char* const if_status)
 {
@@ -206,7 +207,7 @@ static void cognate_function_list() {
 
 static void cognate_function_characters() {
   const char* str = pop(string);
-  cognate_list* const lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
+  cognate_list* const lst = (cognate_list*) cognate_malloc (sizeof(cognate_list));
   size_t length = mbstrlen(str);
   lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * length);
   lst->top = lst->start + length;
@@ -227,13 +228,13 @@ static void cognate_function_join() {
   const char* const delimiter = pop(string);
   const long delim_size = strlen(delimiter);
   const cognate_list lst = *pop(list);
-  long str_size = 1; // Add extra 1 for \0
+  long str_size = 0;
   const cognate_object *i;
   for (i = lst.start; i < lst.top; ++i)
   {
     str_size += strlen(check_type(string, *i).string) + delim_size;
   }
-  char* const str = (char*) cognate_malloc (str_size);
+  char* const str = (char*) cognate_malloc (str_size+1);
   strcpy(str, lst.start->string);
   for (i = lst.start+1; i < lst.top; ++i)
   {
@@ -266,7 +267,7 @@ static void cognate_function_input() {
   size_t size = 0;
   char* buf;
   getline(&buf, &size, stdin);
-  char* const text = (char* const) cognate_malloc (size);
+  char* const text = (char* const) cognate_malloc (size); // Does size include room for '\0'?
   strcpy(text, buf);
   free(buf);
   push(string, text);
@@ -301,7 +302,7 @@ static void cognate_function_path() {
     throw_error("Cannot get executable path!");
   }
   const size_t len = strlen(buf);
-  char* const path = (char* const) cognate_malloc(len);
+  char* const path = (char* const) cognate_malloc(len + 1);
   strcpy(path, buf);
   push(string, path);
 }
@@ -407,21 +408,21 @@ static void cognate_function_match() {
 
 static void cognate_function_ordinal() {
   const char* const str = pop(string);
-  if unlikely(str[0] == '\0' || str[1] != '\0')
+  if unlikely(mbstrlen(str) != 1)
   {
     throw_error("Ordinal requires string of length 1. String '%s' is not of length 1!", str);
   }
-  push(number, str[0]);
+  int chr = '\0';
+  mbtowc(&chr, str, MB_CUR_MAX);
+  push(number, chr);
 }
 
 static void cognate_function_character() {
   const double d = pop(number);
-  const long i = d;
-  if unlikely(i != d)           throw_error("Cannot convert non-integer (%.15g) to ASCII character!", d);
-  if unlikely(i < 0 || i > 255) throw_error("Value (%li) is not in ASCII character range!", i);
-  char* const str = (char* const) cognate_malloc (2);
-  str[0] = i;
-  str[1] = '\0';
+  const int i = d;
+  if unlikely(i != d) throw_error("Cannot convert %.15g to UTF8 character!", d);
+  char* const str = (char* const) cognate_malloc (MB_CUR_MAX + 1);
+  wctomb(str, i);
   push(string, str);
 }
 

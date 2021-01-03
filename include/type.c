@@ -94,6 +94,7 @@ static size_t list_len(const cognate_list lst)
 static size_t mbstrlen(const char* str)
 {
   // Get the number of characters in a multibyte string.
+  // Normal strlen() gets number of bytes for some reason.
   size_t i = 0;
   for (; *str != '\0'; str += mblen(str, MB_CUR_MAX), ++i);
   return i;

@@ -36,7 +36,7 @@ int main(int argc, char** argv)
     throw_error("Cannot get return stack limit!");
   }
   // Set locale for strings.
-  if unlikely(setlocale(LC_ALL, "") == NULL)
+  if unlikely(setlocale(LC_ALL, "C.UTF-8") == NULL)
   {
     throw_error("Cannot set locale!");
   }
