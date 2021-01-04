@@ -35,3 +35,10 @@ If [Index 4 of Bar, == 8] [
 Else [
   Print 'FAIL: Indexing lists'
 ];
+
+If [List [Deconstruct List[1,2,3,4,5]], == List[1,2,3,4,5]] [
+  Print 'PASS: Deconstructing lists onto the stack';
+];
+Else [
+  Print 'FAIL: Deconstructing lists onto the stack';
+];

@@ -206,6 +206,7 @@ static void cognate_function_list() {
 }
 
 static void cognate_function_characters() {
+  // Should this return a list, or just push all the characters to the stack?
   const char* str = pop(string);
   cognate_list* const lst = (cognate_list*) cognate_malloc (sizeof(cognate_list));
   size_t length = mbstrlen(str);
@@ -260,6 +261,14 @@ static void cognate_function_append() {
   memmove(lst->start, lst2.start, list2_len * sizeof(cognate_object));
   memmove(lst->start+list2_len, lst1.start, list1_len * sizeof(cognate_object));
   push(list, lst);
+}
+
+static void cognate_function_deconstruct() {
+  cognate_list lst = *pop(list);
+  for (cognate_object* obj = lst.start; obj != lst.top; ++obj)
+  {
+    push_any(*obj);
+  }
 }
 
 static void cognate_function_input() {
