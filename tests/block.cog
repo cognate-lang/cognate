@@ -1,8 +1,8 @@
 Define Foo as
-[
+(
   Let X;
-  [Print X]  
-];
+  (Print X);
+);
 
 Foo 'PASS: Implicit block copying';
 Foo 'FAIL: Implicit block copying';
@@ -10,13 +10,13 @@ Drop, Do;
 
 
 
-Let Y be [];
+Let Y be ();
 
 Define Foo as
-[
+(
   Let X;
-  Set Y to [Print X];
-];
+  Set Y to (Print X);
+);
 
 
 Foo 'PASS: Implicit block copying with mutation', Let Z be Y;

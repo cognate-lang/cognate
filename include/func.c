@@ -208,8 +208,8 @@ static void cognate_function_list() {
 static void cognate_function_characters() {
   // Should this return a list, or just push all the characters to the stack?
   const char* str = pop(string);
-  cognate_list* const lst = (cognate_list*) cognate_malloc (sizeof(cognate_list));
   size_t length = mbstrlen(str);
+  cognate_list* const lst = (cognate_list*) cognate_malloc (sizeof(cognate_list));
   lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * length);
   lst->top = lst->start + length;
   for (size_t i = 0; i < length; ++i)
@@ -218,8 +218,33 @@ static void cognate_function_characters() {
     char* const temp = (char*) cognate_malloc (char_len+1);
     memmove(temp, str, char_len);
     temp[char_len] = '\0';
-    lst->start[i] = ((cognate_object){.type=string, .string=temp});
+    lst->start[i] = (cognate_object) {.type=string, .string=temp};
     str += char_len;
+  }
+  push(list, lst);
+}
+
+static void cognate_function_split() {
+  // TODO regex split?
+  const char* const delimiter = pop(string);
+  const size_t delim_len = strlen(delimiter);
+  if unlikely(delim_len == 0) throw_error("Cannot Split a string with a zero-length delimiter!");
+  const char* str = pop(string);
+  const size_t str_len = strlen(str);
+  size_t length = 1;
+  for (const char* temp = str; (temp = strstr(temp, delimiter) + delim_len) - delim_len; length++);
+  cognate_list* const lst = (cognate_list* const) cognate_malloc (sizeof(cognate_list));
+  lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * length);
+  lst->top = lst->start + length;
+  for (size_t i = 0; i < length; i++)
+  {
+    const char* c = strstr(str, delimiter);
+    if unlikely(c == NULL) c = str + strlen(str);
+    char* const buf = (char* const) cognate_malloc (c - str + 1);
+    strncpy(buf, str, c - str);
+    buf[c - str] = '\0';
+    lst->start[i] = (cognate_object) {.type=string, .string=buf};
+    str = c + delim_len;
   }
   push(list, lst);
 }
@@ -263,7 +288,7 @@ static void cognate_function_append() {
   push(list, lst);
 }
 
-static void cognate_function_deconstruct() {
+static void cognate_function_push() {
   cognate_list lst = *pop(list);
   for (cognate_object* obj = lst.start; obj != lst.top; ++obj)
   {
@@ -402,7 +427,6 @@ static void cognate_function_match() {
     {
       throw_error("Cannot compile invalid regular expression! ('%s')", reg_str); 
     }
-    if unlikely(regcomp(&reg, reg_str, REG_EXTENDED|REG_NEWLINE))
     old_str = reg_str; /* This should probably be strcpy, but I trust that reg_str is either
                           allocated with the garbage collector, or read only in the data segment. */
   }

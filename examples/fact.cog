@@ -1,16 +1,16 @@
 Import Builtin;
 
 Define Factorial
-[ Let X;
-  If [X, == 0] [
+( Let X;
+  If (X, == 0) (
     1
-  ];
-  Else [
+  );
+  Else (
     Subtract 1 from X;
     find the Factorial;
     Multiply by X;
-  ]
-];
+  )
+);
 
 Put 'Enter an integer: ';
 Input, ParseNumber, Twin;

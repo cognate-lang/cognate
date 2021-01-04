@@ -1,9 +1,9 @@
 ~~ Demo of some list functions. All of these functions also work on strings.
 
-Print the List [1,2,3,4,5];
+Print the List (1,2,3,4,5);
 
-Discard 1 from the List [1,2,3], Print;
+Discard 1 from the List (1,2,3), Print;
 
-Take 2 from the List [4,5,6], Print;
+Take 2 from the List (4,5,6), Print;
 
-Print Index 2 of List [1,2,3,4,5];
+Print Index 2 of List (1,2,3,4,5);

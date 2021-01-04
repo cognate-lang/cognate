@@ -80,8 +80,8 @@ replacesymbols =
 
 
 -- Constants!!!
-openbrackets  = [ '['                 ]
-closebrackets = [ ']'                 ]
+openbrackets  = [ '('                 ]
+closebrackets = [ ')'                 ]
 delims        = [ ';',','             ]
 upperletters  = [ 'A'..'Z'            ]
 lowerletters  = [ 'a'..'z'            ]

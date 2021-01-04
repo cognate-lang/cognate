@@ -2,11 +2,11 @@ Import Builtin functions;
 
 ~~ See www.wikipedia.org/wiki/Fizz_buzz
 Define FizzBuzz
-[ Let N be a number;
-  If     [N, Modulo 15, == 0] then [Print 'FizzBuzz'];
-  ElseIf [N, Modulo 3,  == 0] then [Print 'Fizz'];
-  ElseIf [N, Modulo 5,  == 0] then [Print 'Buzz'];
-  Else                        then [Print N];
-];
+( Let N be a number;
+  If     (N, Modulo 15, == 0) then (Print 'FizzBuzz');
+  ElseIf (N, Modulo 3,  == 0) then (Print 'Fizz');
+  ElseIf (N, Modulo 5,  == 0) then (Print 'Buzz');
+  Else                        then (Print N);
+);
 
-[FizzBuzz], For each in Range from 1 to 100 with step 1;
+(FizzBuzz), For each in Range from 1 to 100 with step 1;

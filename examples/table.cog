@@ -1,7 +1,7 @@
-Let X be Table [
+Let X be Table (
   'foo'   -> 'bar';
   'hello' -> 'world';
-];
+);
 
 Get 'foo' from X, Print;
 

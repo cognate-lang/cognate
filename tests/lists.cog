@@ -1,44 +1,44 @@
-Let Foo be List [1,2,3];
-Let Bar be List [4,5,6,7,8];
+Let Foo be List (1,2,3);
+Let Bar be List (4,5,6,7,8);
 
-If [Append Bar to Foo, == List [1,2,3,4,5,6,7,8]] [
+If (Append Bar to Foo, == List (1,2,3,4,5,6,7,8)) (
   Print 'PASS: Appending lists'
-];
-Else [
+);
+Else (
   Print 'FAIL: Appending lists'
-];
+);
 
-If [Discard 2 from Bar, == List [6,7,8]] [
+If (Discard 2 from Bar, == List (6,7,8)) (
   Print 'PASS: Discarding from lists'
-];
-Else [
+);
+Else (
   Print 'FAIL: Discarding from lists'
-];
+);
 
-If [Take 2 from Bar, == List [4,5]] [
+If (Take 2 from Bar, == List (4,5)) (
   Print 'PASS: Taking from lists'
-];
-Else [
+);
+Else (
   Print 'FAIL: Taking from lists'
-];
+);
 
-If [Length of Foo, == 3] [
+If (Length of Foo, == 3) (
   Print 'PASS: Length of lists'
-];
-Else [
+);
+Else (
   Print 'FAIL: Length of lists'
-];
+);
 
-If [Index 4 of Bar, == 8] [
+If (Index 4 of Bar, == 8) (
   Print 'PASS: Indexing lists'
-];
-Else [
+);
+Else (
   Print 'FAIL: Indexing lists'
-];
+);
 
-If [List [Deconstruct List[1,2,3,4,5]], == List[1,2,3,4,5]] [
+If (List (Push List(1,2,3,4,5)), == List(1,2,3,4,5)) (
   Print 'PASS: Deconstructing lists onto the stack';
-];
-Else [
+);
+Else (
   Print 'FAIL: Deconstructing lists onto the stack';
-];
+);

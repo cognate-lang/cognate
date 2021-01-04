@@ -1,55 +1,55 @@
-If [Sum 5 with 6, == 11] [
+If (Sum 5 with 6, == 11) (
   Print 'PASS: Addition'
-];
-Else [
+);
+Else (
   Print 'FAIL: Addition'
-];
+);
 
-If [Subtract 10 from 19, == 9] [
+If (Subtract 10 from 19, == 9) (
   Print 'PASS: Subtraction'
-];
-Else [
+);
+Else (
   Print 'FAIL: Subtraction'
-];
+);
 
-If [Multiply 9 by 8, == 72] [
+If (Multiply 9 by 8, == 72) (
   Print 'PASS: Multiplication'
-];
-Else [
+);
+Else (
   Print 'FAIL: Multiplication'
-];
+);
 
-If [Divide by 7 of 42, == 6] [
+If (Divide by 7 of 42, == 6) (
   Print 'PASS: Division'
-];
-Else [
+);
+Else (
   Print 'FAIL: Division'
-];
+);
 
-If [Modulo by 3 of 10, == 1] [
+If (Modulo by 3 of 10, == 1) (
   Print 'PASS: Modulus'
-];
-Else [
+);
+Else (
   Print 'FAIL: Modulus'
-];
+);
 
-If [Floor 4.7, == 4] [
+If (Floor 4.7, == 4) (
   Print 'PASS: Floor'
-];
-Else [
+);
+Else (
   Print 'FAIL: Floor'
-];
+);
 
-If [Ceiling 4.3, == 5] [
+If (Ceiling 4.3, == 5) (
   Print 'PASS: Ceiling'
-];
-Else [
+);
+Else (
   Print 'FAIL: Ceiling'
-];
+);
 
-If [Round 4.7, == 5] [
+If (Round 4.7, == 5) (
   Print 'PASS: Round'
-];
-Else [
+);
+Else (
   Print 'FAIL: Round'
-];
+);

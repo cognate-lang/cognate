@@ -1,98 +1,98 @@
-If [Both True and True, == True] [
+If (Both True and True, == True) (
   Print 'PASS: True AND True'
-];
-Else [
+);
+Else (
   Print 'FAIL: True AND True'
-];
+);
 
-If [Both True and False, == False] [
+If (Both True and False, == False) (
   Print 'PASS: True AND False'
-];
-Else [
+);
+Else (
   Print 'FAIL: True AND False'
-];
+);
 
-If [Both False and True, == False] [
+If (Both False and True, == False) (
   Print 'PASS: False AND True'
-];
-Else [
+);
+Else (
   Print 'FAIL: False AND True'
-];
+);
 
-If [Both False and False, == False] [
+If (Both False and False, == False) (
   Print 'PASS: False AND False'
-];
-Else [
+);
+Else (
   Print 'FAIL: False AND False'
-];
+);
 
-If [Either True or True, == True] [
+If (Either True or True, == True) (
   Print 'PASS: True OR True'
-];
-Else [
+);
+Else (
   Print 'FAIL: True OR True'
-];
+);
 
-If [Either True and False, == True] [
+If (Either True and False, == True) (
   Print 'PASS: True OR False'
-];
-Else [
+);
+Else (
   Print 'FAIL: True OR False'
-];
+);
 
-If [Either False and True, == True] [
+If (Either False and True, == True) (
   Print 'PASS: False OR True'
-];
-Else [
+);
+Else (
   Print 'FAIL: False OR True'
-];
+);
 
-If [Either False and False, == False] [
+If (Either False and False, == False) (
   Print 'PASS: False OR False'
-];
-Else [
+);
+Else (
   Print 'FAIL: False OR False'
-];
+);
 
-If [One_of True or True, == False] [
+If (One_of True or True, == False) (
   Print 'PASS: True XOR True'
-];
-Else [
+);
+Else (
   Print 'FAIL: True XOR True'
-];
+);
 
-If [One_of True and False, == True] [
+If (One_of True and False, == True) (
   Print 'PASS: True XOR False'
-];
-Else [
+);
+Else (
   Print 'FAIL: True XOR False'
-];
+);
 
-If [One_of False and True, == True] [
+If (One_of False and True, == True) (
   Print 'PASS: False XOR True'
-];
-Else [
+);
+Else (
   Print 'FAIL: False XOR True'
-];
+);
 
-If [One_of False and False, == False] [
+If (One_of False and False, == False) (
   Print 'PASS: False XOR False'
-];
-Else [
+);
+Else (
   Print 'FAIL: False XOR False'
-];
+);
 
-If [Not True, == False] [
+If (Not True, == False) (
   Print 'PASS: NOT True'
-];
-Else [
+);
+Else (
   Print 'PASS: NOT True'
-];
+);
 
-If [Not False, == True] [
+If (Not False, == True) (
   Print 'PASS: NOT False'
-];
-Else [
+);
+Else (
   Print 'PASS: NOT False'
-];
+);
 

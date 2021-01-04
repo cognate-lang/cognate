@@ -1,53 +1,53 @@
 Define Foo as
-[
+(
   Sum with 1;
-];
+);
 
-If [Foo 4, == 5] [
+If (Foo 4, == 5) (
   Print 'PASS: Function call and return'
-];
-Else [
+);
+Else (
   Print 'FAIL: Function call and return'
-];
+);
 
-Do [
+Do (
   Define Foo as
-  [
+  (
     Sum with 2;
-  ];
+  );
 
-  If [Foo 5, == 7] [
+  If (Foo 5, == 7) (
     Print 'PASS: Function shadowing'
-  ];
-  Else [
+  );
+  Else (
     Print 'FAIL: Function shadowing'
-  ];
-];
+  );
+);
 
-If [Foo 7, == 8] [
+If (Foo 7, == 8) (
   Print 'PASS: Function shadowing in block'
-];
-Else [
+);
+Else (
   Print 'FAIL: Function shadowing in block'
-];
+);
 
 Let Recurred be False;
 Define Bar as
-[
-  If [== 0] [
+(
+  If (== 0) (
     Set Recurred to True;
-  ];
-  Else [
+  );
+  Else (
     Bar with 0;
-  ]; 
-];
+  ); 
+);
 
 call Bar with 10;
-If [Recurred] [
+If (Recurred) (
   Print 'PASS: Recursion'
-];
-Else [
+);
+Else (
   Print 'FAIL: Recursion'
-];
+);
 
 ~~ Put binary recursion test here when I implement binary recursion.
