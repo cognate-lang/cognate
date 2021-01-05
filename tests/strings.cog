@@ -26,7 +26,7 @@ Else (
   Print 'FAIL: Converting UTF8 value to string'
 );
 
-If (ParseNumber '123.4', == 123.4) (
+If (Number '123.4', == 123.4) (
   Print 'PASS: Casting strings to numbers'
 );
 Else (

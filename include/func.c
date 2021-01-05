@@ -147,10 +147,10 @@ static void cognate_function_discard() {
   const size_t num_discarding = num;
   if unlikely(num != num_discarding) throw_error("Number of elements to Discard must be positive integer, not %.15g!", num);
   const cognate_list obj = *pop(list);
+  if unlikely(num_discarding > list_len(obj)) throw_error("List of length %zu is too small to Discard %zu elements from!", list_len(obj), num_discarding);
   cognate_list* const lst = (cognate_list* const) cognate_malloc (sizeof(cognate_list));
-  *lst = obj;
-  if unlikely(num_discarding > list_len(*lst)) throw_error("List of length %zu is too small to Discard %zu elements from!", list_len(*lst), num_discarding);
-  lst->start += num_discarding;
+  lst->start = obj.start + num_discarding;
+  lst->top = obj.top;
   push(list, lst);
 }
 
@@ -160,9 +160,9 @@ static void cognate_function_take() {
   const size_t num_taking = num;
   if unlikely(num != num_taking) throw_error("Number of elements to Take must be positive integer, not %.15g!", num);
   cognate_list obj = *pop(list);
+  if unlikely(num_taking > list_len(obj)) throw_error ("List of length %zu is too small to Take %zu elements from!", list_len(obj), num_taking);
   cognate_list* const lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
-  *lst = obj;
-  if unlikely(num_taking > list_len(*lst)) throw_error ("List of length %zu is too small to Take %zu elements from!", list_len(*lst), num_taking);
+  lst->start = obj.start;
   lst->top = lst->start + num_taking;
   push(list, lst);
 }
@@ -248,6 +248,31 @@ static void cognate_function_split() {
   }
   push(list, lst);
 }
+
+/*
+static void cognate_function_split_regex() {
+  const char* reg_str = pop(string);
+  const char* str     = pop(string);
+  regmatch_t pmatch[2];
+  regex_t reg;
+  regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE);
+  cognate_list* lst = cognate_malloc (sizeof(cognate_list));
+  lst->start = cognate_malloc (sizeof(cognate_object) * 1000); // TODO
+  lst->top = lst->start;
+  while (regexec(&reg, str, 1, pmatch, 0) != REG_NOMATCH)
+  {
+    const size_t match_start = pmatch[0].rm_so;
+    const size_t match_len = pmatch[0].rm_eo - match_start;
+    char* buf = cognate_malloc(match_start + 1);
+    strncpy(buf, str, match_start);
+    buf[match_start] = '\0';
+    *lst->top++ = (cognate_object) {.type=string, .string=buf};
+    str += match_start + match_len;
+  }
+  *lst->top++ = (cognate_object) {.type=string, .string=str};
+  push(list, lst);
+}
+*/
 
 static void cognate_function_join() {
   // Joins a list of strings into a single string.
@@ -423,7 +448,7 @@ static void cognate_function_match() {
     // Technically, the last regex to be used in the program will leak memory.
     // However, this is minor, since only a limited amount of memory can be leaked.
     regfree(&reg); // Apparently freeing an unallocated regex is fine.
-    if unlikely(*reg_str == '\0' || regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE))
+    if unlikely(*reg_str == '\0' || regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE | REG_NOSUB))
     {
       throw_error("Cannot compile invalid regular expression! ('%s')", reg_str); 
     }
@@ -457,12 +482,6 @@ static void cognate_function_character() {
   char* const str = (char* const) cognate_malloc (MB_CUR_MAX + 1);
   wctomb(str, i);
   push(string, str);
-}
-
-static void cognate_function_parsenumber() {
-  const char* const str = pop(string);
-  const double num;
-  push(number, atof(str));
 }
 
 static void cognate_function_floor() {
