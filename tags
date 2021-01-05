@@ -8,12 +8,11 @@ COGNATE_C	include/cognate.c	2;"	d	file:
 COGNATE_H	include/cognate.h	2;"	d
 ERROR_C	include/error.c	2;"	d	file:
 FUNC_C	include/func.c	2;"	d	file:
-INITIAL_LIST_SIZE	include/cognate.h	11;"	d
-INITIAL_READ_SIZE	include/cognate.h	9;"	d
+INITIAL_LIST_SIZE	include/cognate.h	/^static const int INITIAL_LIST_SIZE = 16;$/;"	v
+INITIAL_READ_SIZE	include/cognate.h	/^static const int INITIAL_READ_SIZE = 64;$/;"	v
 IO_C	include/io.c	2;"	d	file:
-LIST_GROWTH_FACTOR	include/cognate.h	12;"	d
-MAX_TABLE_TRIES	include/cognate.h	8;"	d
-MIN_TABLE_SIZE	include/cognate.h	10;"	d
+LIST_GROWTH_FACTOR	include/cognate.h	/^static const float LIST_GROWTH_FACTOR = 1.5;$/;"	v
+MAX_TABLE_TRIES	include/cognate.h	/^static const int MAX_TABLE_TRIES = 3;$/;"	v
 NOTHING	include/types.h	/^  NOTHING=0, \/\/ Must be zero because of calloc()$/;"	e	enum:cognate_type
 STACK_C	include/stack.c	2;"	d	file:
 TYPE_C	include/type.c	2;"	d	file:
@@ -23,8 +22,7 @@ block	include/types.h	/^    cognate_block block;           \/\/ 64bit block poin
 block	include/types.h	/^  block, $/;"	e	enum:cognate_type
 boolean	include/types.h	/^    _Bool boolean;                 \/\/  1bit bool$/;"	m	union:cognate_object::__anon1
 boolean	include/types.h	/^  boolean, $/;"	e	enum:cognate_type
-call	include/func.c	10;"	d	file:
-call	include/func.c	12;"	d	file:
+call	include/func.c	9;"	d	file:
 check_block	include/cognate.c	/^static cognate_object check_block(cognate_object obj)$/;"	f	file:
 check_call_stack	include/cognate.c	/^static void check_call_stack()$/;"	f	file:
 check_type	include/type.c	/^static cognate_object check_type(cognate_type expected_type, cognate_object object)$/;"	f	file:
@@ -37,14 +35,15 @@ cognate_function_ceiling	include/func.c	/^static void cognate_function_ceiling()
 cognate_function_character	include/func.c	/^static void cognate_function_character() {$/;"	f	file:
 cognate_function_characters	include/func.c	/^static void cognate_function_characters() {$/;"	f	file:
 cognate_function_clear	include/func.c	/^static void cognate_function_clear()   { init_stack(); }$/;"	f	file:
-cognate_function_difference	include/func.c	/^static void cognate_function_difference() { push(number, (-pop(number) + pop(number))); }$/;"	f	file:
 cognate_function_discard	include/func.c	/^static void cognate_function_discard() { $/;"	f	file:
-cognate_function_divisor	include/func.c	/^static void cognate_function_divisor()    { push(number, (1 \/ pop(number) * pop(number))); }$/;"	f	file:
-cognate_function_do	include/func.c	/^static void cognate_function_do()         { pop(block)();                               }$/;"	f	file:
+cognate_function_divide	include/func.c	/^static void cognate_function_divide()   { push(number, (1 \/ pop(number) * pop(number))); }$/;"	f	file:
+cognate_function_do	include/func.c	/^static void cognate_function_do() { pop(block)(); }$/;"	f	file:
 cognate_function_drop	include/func.c	/^static void cognate_function_drop()    { pop_any(); } \/\/ These can be defined within cognate.$/;"	f	file:
 cognate_function_either	include/func.c	/^static void cognate_function_either() { push(boolean, pop(boolean) + pop(boolean)); } \/\/ Use unconventional operators to avoid short-circuits.$/;"	f	file:
-cognate_function_else	include/func.c	39;"	d	file:
-cognate_function_elseif	include/func.c	52;"	d	file:
+cognate_function_else	include/func.c	/^static void cognate_function_else(char* const if_status) $/;"	f	file:
+cognate_function_else	include/func.c	53;"	d	file:
+cognate_function_elseif	include/func.c	/^static void cognate_function_elseif(char* const if_status)$/;"	f	file:
+cognate_function_elseif	include/func.c	69;"	d	file:
 cognate_function_equal	include/func.c	/^static void cognate_function_equal()          { push(boolean,  compare_objects(pop_any(),pop_any())); }$/;"	f	file:
 cognate_function_equalorexceed	include/func.c	/^static void cognate_function_equalorexceed()  { push(boolean, pop(number) <= pop(number)); }$/;"	f	file:
 cognate_function_equalorpreceed	include/func.c	/^static void cognate_function_equalorpreceed() { push(boolean, pop(number) >= pop(number)); }$/;"	f	file:
@@ -53,7 +52,8 @@ cognate_function_exceed	include/func.c	/^static void cognate_function_exceed()  
 cognate_function_false	include/func.c	/^static void cognate_function_false() { push(boolean, 0); }$/;"	f	file:
 cognate_function_floor	include/func.c	/^static void cognate_function_floor() {$/;"	f	file:
 cognate_function_get	include/func.c	/^static void cognate_function_get() {$/;"	f	file:
-cognate_function_if	include/func.c	28;"	d	file:
+cognate_function_if	include/func.c	/^static void cognate_function_if(char* const if_status)$/;"	f	file:
+cognate_function_if	include/func.c	38;"	d	file:
 cognate_function_index	include/func.c	/^static void cognate_function_index() { $/;"	f	file:
 cognate_function_input	include/func.c	/^static void cognate_function_input() {$/;"	f	file:
 cognate_function_insert	include/func.c	/^static void cognate_function_insert() {$/;"	f	file:
@@ -63,6 +63,7 @@ cognate_function_list	include/func.c	/^static void cognate_function_list() { $/;
 cognate_function_list_	include/func.c	/^static void cognate_function_list_()    { push(boolean, pop_any().type == list);    } \/\/ However all other symbols are too.$/;"	f	file:
 cognate_function_match	include/func.c	/^static void cognate_function_match() {$/;"	f	file:
 cognate_function_modulo	include/func.c	/^static void cognate_function_modulo() {$/;"	f	file:
+cognate_function_multiply	include/func.c	/^static void cognate_function_multiply() { push(number, pop(number) * pop(number)); }$/;"	f	file:
 cognate_function_not	include/func.c	/^static void cognate_function_not()    { push(boolean, !pop(boolean)); }$/;"	f	file:
 cognate_function_number	include/func.c	/^static void cognate_function_number() {$/;"	f	file:
 cognate_function_number_	include/func.c	/^static void cognate_function_number_()  { push(boolean, pop_any().type == number);  } \/\/ Question marks are converted to underscores.$/;"	f	file:
@@ -72,16 +73,18 @@ cognate_function_parameters	include/func.c	/^static void cognate_function_parame
 cognate_function_parsenumber	include/func.c	/^static void cognate_function_parsenumber() {$/;"	f	file:
 cognate_function_path	include/func.c	/^static void cognate_function_path() {$/;"	f	file:
 cognate_function_preceed	include/func.c	/^static void cognate_function_preceed()        { push(boolean, pop(number) >  pop(number)); }$/;"	f	file:
-cognate_function_print	include/func.c	/^static void cognate_function_print()      { print_object(pop_any(), 1); puts("");       }$/;"	f	file:
-cognate_function_product	include/func.c	/^static void cognate_function_product()    { push(number, pop(number) * pop(number)); }$/;"	f	file:
-cognate_function_put	include/func.c	/^static void cognate_function_put()        { print_object(pop_any(), 1); fflush(stdout); }$/;"	f	file:
-cognate_function_random	include/func.c	/^static void cognate_function_random() { \/\/ This function is pretty broken.$/;"	f	file:
+cognate_function_print	include/func.c	/^static void cognate_function_print() { print_object(pop_any(), 1); puts("");       }$/;"	f	file:
+cognate_function_push	include/func.c	/^static void cognate_function_push() {$/;"	f	file:
+cognate_function_put	include/func.c	/^static void cognate_function_put()   { print_object(pop_any(), 1); fflush(stdout); }$/;"	f	file:
+cognate_function_random	include/func.c	/^static void cognate_function_random() {$/;"	f	file:
 cognate_function_read	include/func.c	/^static void cognate_function_read() {$/;"	f	file:
 cognate_function_round	include/func.c	/^static void cognate_function_round() {$/;"	f	file:
+cognate_function_split	include/func.c	/^static void cognate_function_split() {$/;"	f	file:
 cognate_function_stack	include/func.c	/^static void cognate_function_stack() {$/;"	f	file:
 cognate_function_stop	include/func.c	/^static void cognate_function_stop() {$/;"	f	file:
 cognate_function_string_	include/func.c	/^static void cognate_function_string_()  { push(boolean, pop_any().type == string);  } \/\/ So this is a temporary hack!$/;"	f	file:
-cognate_function_sum	include/func.c	/^static void cognate_function_sum()        { push(number, pop(number) + pop(number)); }$/;"	f	file:
+cognate_function_subtract	include/func.c	/^static void cognate_function_subtract() { push(number, (-pop(number) + pop(number))); }$/;"	f	file:
+cognate_function_sum	include/func.c	/^static void cognate_function_sum()      { push(number, pop(number) + pop(number)); }$/;"	f	file:
 cognate_function_swap	include/func.c	/^static void cognate_function_swap()    { const cognate_object a = pop_any(); const cognate_object b = pop_any(); push_any(a); push_any(b); }$/;"	f	file:
 cognate_function_table	include/func.c	/^static void cognate_function_table() {$/;"	f	file:
 cognate_function_take	include/func.c	/^static void cognate_function_take() {$/;"	f	file:
@@ -93,14 +96,14 @@ cognate_function_values	include/func.c	/^static void cognate_function_values() {
 cognate_function_write	include/func.c	/^static void cognate_function_write() {$/;"	f	file:
 cognate_list	include/types.h	/^struct cognate_list$/;"	s
 cognate_list	include/types.h	/^typedef struct cognate_list   cognate_list;$/;"	t	typeref:struct:cognate_list
-cognate_malloc	include/cognate.h	61;"	d
-cognate_malloc	include/cognate.h	65;"	d
-cognate_malloc_atomic	include/cognate.h	63;"	d
-cognate_malloc_atomic	include/cognate.h	67;"	d
+cognate_malloc	include/cognate.h	56;"	d
+cognate_malloc	include/cognate.h	60;"	d
+cognate_malloc_atomic	include/cognate.h	58;"	d
+cognate_malloc_atomic	include/cognate.h	62;"	d
 cognate_object	include/types.h	/^struct cognate_object$/;"	s
 cognate_object	include/types.h	/^typedef struct cognate_object cognate_object;$/;"	t	typeref:struct:cognate_object
-cognate_realloc	include/cognate.h	62;"	d
-cognate_realloc	include/cognate.h	66;"	d
+cognate_realloc	include/cognate.h	57;"	d
+cognate_realloc	include/cognate.h	61;"	d
 cognate_stack	include/stack.c	/^struct cognate_stack$/;"	s	file:
 cognate_stack	include/stack.c	/^typedef struct cognate_stack cognate_stack;$/;"	t	typeref:struct:cognate_stack	file:
 cognate_table	include/types.h	/^struct cognate_table$/;"	s
@@ -111,42 +114,41 @@ compare_lists	include/type.c	/^static _Bool compare_lists(cognate_list lst1, cog
 compare_objects	include/type.c	/^static _Bool compare_objects(cognate_object ob1, cognate_object ob2)$/;"	f	file:
 compare_tables	include/type.c	/^static _Bool compare_tables(const cognate_table tab1, const cognate_table tab2)$/;"	f	file:
 confirmation_hash	include/types.h	/^  long unsigned int* confirmation_hash;$/;"	m	struct:cognate_table
-copy	include/cognate.h	22;"	d
 copy_blocks	include/cognate.c	/^static void copy_blocks()$/;"	f	file:
-debug_printf	include/error.c	/^static void debug_printf(__attribute__((unused)) const char* const fmt, ...)$/;"	f	file:
 expand_stack	include/stack.c	/^static void expand_stack()$/;"	f	file:
-function	include/cognate.h	26;"	d
-function_name	include/error.c	/^const char* function_name = NULL;$/;"	v
+function	include/cognate.h	21;"	d
+function_name	include/error.c	/^static const char* function_name = NULL;$/;"	v	file:
+handle_signal	include/error.c	/^static void handle_signal(int sig)$/;"	f	file:
 hash	include/table.c	/^static unsigned long hash(const char *str)$/;"	f	file:
-if_status	include/cognate.c	/^__attribute__((unused)) char if_status = 2; \\$/;"	v
-immutable	include/cognate.h	19;"	d
+if_status	include/cognate.c	/^static __attribute__((unused)) char if_status = 2;$/;"	v	file:
+immutable	include/cognate.h	17;"	d
 init_stack	include/stack.c	/^static void init_stack()$/;"	f	file:
-items	include/stack.c	/^  cognate_list    items;    \/\/ The list holding the stack itself.$/;"	m	struct:cognate_stack	file:
+items	include/stack.c	/^  cognate_list items;    \/\/ The list holding the stack itself.$/;"	m	struct:cognate_stack	file:
 items	include/types.h	/^  struct cognate_list items;$/;"	m	struct:cognate_table	typeref:struct:cognate_table::cognate_list
-likely	include/cognate.h	71;"	d
+likely	include/cognate.h	66;"	d
 list	include/types.h	/^    const struct cognate_list  *list;  \/\/ 64bit list pointer$/;"	m	union:cognate_object::__anon1	typeref:struct:cognate_object::__anon1::cognate_list
 list	include/types.h	/^  list,$/;"	e	enum:cognate_type
+list_len	include/type.c	/^static size_t list_len(const cognate_list lst)$/;"	f	file:
 lookup_type	include/type.c	/^static const char* lookup_type(cognate_type type)$/;"	f	file:
 main	include/cognate.c	/^int main(int argc, char** argv)$/;"	f
-make_block	include/cognate.h	49;"	d
-modified	include/stack.c	/^  cognate_object* modified; \/\/ Lowest stack element modified by current block.$/;"	m	struct:cognate_stack	file:
-mutable	include/cognate.h	20;"	d
-mutate_function	include/cognate.h	36;"	d
-mutate_variable	include/cognate.h	45;"	d
-nocopy	include/cognate.h	23;"	d
+make_block	include/cognate.h	44;"	d
+mbstrlen	include/type.c	/^static size_t mbstrlen(const char* str)$/;"	f	file:
+modified	include/stack.c	/^  ptrdiff_t    modified; \/\/ Offset of last modified element from top.$/;"	m	struct:cognate_stack	file:
+mutable	include/cognate.h	18;"	d
+mutate_function	include/cognate.h	31;"	d
+mutate_variable	include/cognate.h	40;"	d
 number	include/types.h	/^    double number;                 \/\/ 64bit float$/;"	m	union:cognate_object::__anon1
 number	include/types.h	/^  number, $/;"	e	enum:cognate_type
 params	include/func.c	/^static cognate_list params;$/;"	v	file:
-peek	include/stack.c	25;"	d	file:
+peek	include/stack.c	19;"	d	file:
 peek_any	include/stack.c	/^static cognate_object peek_any()$/;"	f	file:
-pop	include/stack.c	22;"	d	file:
+pop	include/stack.c	16;"	d	file:
 pop_any	include/stack.c	/^static cognate_object pop_any()$/;"	f	file:
 print_object	include/io.c	/^static void print_object (const cognate_object object, const _Bool quotes)$/;"	f	file:
-program	include/cognate.h	14;"	d
-push	include/stack.c	14;"	d	file:
-push	include/stack.c	18;"	d	file:
+program	include/cognate.h	13;"	d
+push	include/stack.c	13;"	d	file:
 push_any	include/stack.c	/^static void push_any(const cognate_object object)$/;"	f	file:
-size	include/stack.c	/^  ptrdiff_t       size;     \/\/ Allocated size of the stack.$/;"	m	struct:cognate_stack	file:
+size	include/stack.c	/^  ptrdiff_t    size;     \/\/ Allocated size of the stack.$/;"	m	struct:cognate_stack	file:
 stack	include/stack.c	/^static cognate_stack stack;$/;"	v	file:
 stack_max	include/cognate.c	/^static struct rlimit stack_max;$/;"	v	typeref:struct:rlimit	file:
 stack_start	include/cognate.c	/^static const char *stack_start;$/;"	v	file:
@@ -164,5 +166,6 @@ table_grow	include/table.c	/^static cognate_table table_grow(const cognate_table
 throw_error	include/error.c	/^__attribute__((noreturn)) static void throw_error(const char* const fmt, ...)$/;"	f	file:
 top	include/types.h	/^  struct cognate_object* top;$/;"	m	struct:cognate_list	typeref:struct:cognate_list::cognate_object
 type	include/types.h	/^  cognate_type type : 4;$/;"	m	struct:cognate_object
-unlikely	include/cognate.h	70;"	d
-variable	include/cognate.h	40;"	d
+unlikely	include/cognate.h	65;"	d
+variable	include/cognate.h	35;"	d
+word_name	include/error.c	/^static const char* word_name = NULL;$/;"	v	file:

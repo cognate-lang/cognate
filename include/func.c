@@ -486,6 +486,7 @@ static void cognate_function_assert() {
 }
 
 static void cognate_function_error() {
+  word_name = NULL;
   throw_error(pop(string));
 }
 
