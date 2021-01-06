@@ -59,7 +59,7 @@ static void print_object (const cognate_object object, const _Bool quotes)
       return;
     }
     case boolean: object.boolean ? fputs("True", stdout) : fputs("False", stdout); return;
-    case block: throw_error("Cannot print a block!"); return;
+    case block: printf("<Block %p>", (void*)object.block); return;
     default:;
   }
 }
