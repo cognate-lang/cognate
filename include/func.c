@@ -295,10 +295,6 @@ static void cognate_function_join() {
   push(string, str);
 }
 
-static void cognate_function_stack() {
-  push(list, &stack.items);
-}
-
 static void cognate_function_append() {
   const cognate_list lst1 = *pop(list);
   const cognate_list lst2 = *pop(list);

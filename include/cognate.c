@@ -2,12 +2,7 @@
 #define COGNATE_C
 
 #include "cognate.h"
-#include "table.c"
-#include "stack.c"
-#include "io.c"
-#include "error.c"
-#include "type.c"
-#include "func.c"
+#include "types.h"
 
 static const char *stack_start;
 static __attribute__((unused)) char if_status = 2;
@@ -16,6 +11,13 @@ static void run_program();
 static cognate_object check_block(cognate_object);
 static void copy_blocks();
 static void check_call_stack();
+
+#include "table.c"
+#include "stack.c"
+#include "io.c"
+#include "error.c"
+#include "type.c"
+#include "func.c"
 
 #include <time.h>
 #include <gc/gc.h>
