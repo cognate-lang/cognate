@@ -362,6 +362,17 @@ static void cognate_function_path() {
   push(string, path);
 }
 
+static void cognate_function_stack() {
+  copy_blocks();
+  const size_t len = stack.items.top - stack.items.start;
+  const size_t bytes = len * sizeof(cognate_object);
+  cognate_list* lst = (cognate_list*) cognate_malloc (sizeof(cognate_list));
+  lst->start = (cognate_object*) cognate_malloc (bytes);
+  lst->top = lst->start + len;
+  memmove(lst->start, stack.items.start, bytes);
+  push(list, lst);
+}
+
 static void cognate_function_write() {
   // Write string to end of file, without a newline.
   FILE* const file = fopen(pop(string), "a");
