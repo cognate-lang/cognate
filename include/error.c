@@ -45,7 +45,7 @@ __attribute__((noreturn)) static void throw_error(const char* const fmt, ...)
   fprintf(stderr, "\n\033[31;1m");
   vfprintf(stderr, fmt, args);
   va_end(args);
-  if (errno) fprintf(stderr, "\n\033[0m\033[37;2m[%s]", strerror(errno));
+  if (errno) fprintf(stderr, "\n\033[0m\033[37;2m%s", strerror(errno));
   fputs("\033[0m\n\n", stderr);
   // Print a backtrace.
   void *trace[5];
