@@ -17,6 +17,7 @@ static void handle_signal(int);
 #include <execinfo.h>
 #include <signal.h>
 #include <string.h>
+#include <errno.h>
 
 static const char* function_name = NULL;
 static const char* word_name = NULL;
@@ -44,11 +45,12 @@ __attribute__((noreturn)) static void throw_error(const char* const fmt, ...)
   fprintf(stderr, "\n\033[31;1m");
   vfprintf(stderr, fmt, args);
   va_end(args);
-  fprintf(stderr, "\033[0m\n\n");
+  if (errno) fprintf(stderr, "\n\033[0m\033[37;2m[%s]", strerror(errno));
+  fputs("\033[0m\n\n", stderr);
   // Print a backtrace.
   void *trace[5];
   size_t size = backtrace(trace, 5);
-  fputs("\033[2;37mHere is a backtrace:\n", stderr);
+  fputs("\033[37;2mHere is a backtrace:\n", stderr);
   backtrace_symbols_fd(trace, size, STDERR_FILENO);
   fputs("\033[0m", stderr);
   // Print the bottom row thing.
