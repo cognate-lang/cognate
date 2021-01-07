@@ -72,7 +72,7 @@ replacesymbols =
   replace [ ">"  ] [ "Exceed"         ] .
   replace [ ">=" ] [ "EqualOrExceed"  ] .
   replace [ "<=" ] [ "EqualOrPreceed" ] .
-  replace [ "+"  ] [ "Sum"            ] .
+  replace [ "+"  ] [ "Add"            ] .
   replace [ "-"  ] [ "Subtract"       ] .
   replace [ "*"  ] [ "Multiply"       ] .
   replace [ "/"  ] [ "Divide"         ] .

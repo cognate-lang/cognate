@@ -73,7 +73,7 @@ static void cognate_function_do() { pop(block)(); }
 static void cognate_function_put()   { print_object(pop_any(), 1); fflush(stdout); }
 static void cognate_function_print() { print_object(pop_any(), 1); puts("");       }
 
-static void cognate_function_sum()      { push(number, pop(number) + pop(number)); }
+static void cognate_function_add()      { push(number, pop(number) + pop(number)); }
 static void cognate_function_multiply() { push(number, pop(number) * pop(number)); }
 static void cognate_function_divide()   { push(number, (1 / pop(number) * pop(number))); }
 static void cognate_function_subtract() { push(number, (-pop(number) + pop(number))); }
