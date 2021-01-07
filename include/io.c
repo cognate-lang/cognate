@@ -6,6 +6,8 @@
 
 static void print_object (const cognate_object object, const _Bool quotes);
 
+#include "error.c"
+
 #include <stdio.h>
 
 static void print_object (const cognate_object object, const _Bool quotes)
@@ -48,19 +50,20 @@ static void print_object (const cognate_object object, const _Bool quotes)
     case list: 
     { 
       const cognate_list lst = *object.list;
-      putchar('[');
+      putchar('(');
       for (cognate_object *i = lst . start; i != lst . top; ++i)
       {
         // Strings within lists ALWAYS printed with quotes.
         print_object(*i, 0);
         if (i + 1 != lst . top) fputs(", ", stdout);
       }
-      putchar(']');
+      putchar(')');
       return;
     }
-    case boolean: object.boolean ? fputs("True", stdout) : fputs("False", stdout); return;
+    case boolean: fputs(object.boolean ? "True" : "False", stdout); return;
     case block: printf("<Block %p>", (void*)object.block); return;
-    default:;
+    case table: printf("<Table %p>", (void*)object.table); return;
+    default: throw_error("Cannot print object of unknown type %li. This may be a compiler bug!", object.type);
   }
 }
 

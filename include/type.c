@@ -21,6 +21,7 @@ static cognate_object check_type(cognate_type expected_type, cognate_object obje
   {
     return object;
   }
+  // TODO: Print the object itself here.
   throw_error("Type Error! Expected type '%s' but recieved type '%s'", lookup_type(expected_type), lookup_type(object.type));
 }
 
@@ -34,18 +35,16 @@ static const char* lookup_type(cognate_type type)
     case number : return "Number";
     case list   : return "List";
     case table  : return "Table";
-    default:;
+    default: throw_error("Attempted to lookup invalid type <%i>", type);
   }
-  throw_error("Attempted to lookup invalid type <%i>", type);
 }
 
 static _Bool compare_lists(cognate_list lst1, cognate_list lst2)
 {
   ptrdiff_t len = lst1.top - lst1.start;
   if (len != lst2.top - lst2.start) return 0; // Not equal if differing length.
-  while (len > 0)
+  while (len-- > 0)
   {
-    --len;
     if (!compare_objects(lst1.start[len], lst2.start[len])) // Compare each list object.
     {
       return 0;
