@@ -1,4 +1,4 @@
-If (Add 5 with 6, == 11) (
+If (Sum 5 with 6, == 11) (
   Print 'PASS: Addition'
 );
 Else (

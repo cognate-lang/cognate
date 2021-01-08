@@ -4,8 +4,8 @@ Define Fib ~~ Calculate the Nth fibonacci number.
     return 1
   );
   Else (
-    Add 
-      Fib of - 1 N to
+    Sum 
+      Fib of - 1 N and
       Fib of - 2 N
   )
 );

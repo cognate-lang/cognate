@@ -1,6 +1,6 @@
 Define Foo as
 (
-  Add 1;
+  Sum with 1;
 );
 
 If (Foo 4, == 5) (
@@ -13,7 +13,7 @@ Else (
 Do (
   Define Foo as
   (
-    Add 2;
+    Sum with 2;
   );
 
   If (Foo 5, == 7) (
