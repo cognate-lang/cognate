@@ -3,6 +3,9 @@ Define First as (Index 0);
 Define Last as  (Let L, Index - 1 Length L of L);
 Define Tuple be (Let X, Let Y, List (X, Y));
 
+Define Prepend (Swap, Append);
+Define Prefix  (Swap, Suffix);
+
 Define Empty?
 (
   Length, == 0

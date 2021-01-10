@@ -210,8 +210,8 @@ static void cognate_function_characters() {
   const char* str = pop(string);
   size_t length = mbstrlen(str);
   cognate_list* const lst = (cognate_list*) cognate_malloc (sizeof(cognate_list));
-  lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * length);
-  lst->top = lst->start + length;
+  lst->top = lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * length);
+  lst->top += length;
   for (size_t i = 0; i < length; ++i)
   {
     size_t char_len = mblen(str, MB_CUR_MAX);
@@ -225,27 +225,25 @@ static void cognate_function_characters() {
 }
 
 static void cognate_function_split() {
-  // TODO regex split?
   const char* const delimiter = pop(string);
-  const size_t delim_len = strlen(delimiter);
-  if unlikely(delim_len == 0) throw_error("Cannot Split a string with a zero-length delimiter!");
+  const size_t delim_size     = strlen(delimiter);
+  if unlikely(!delim_size) throw_error("Cannot Split a string with a zero-length delimiter!");
   const char* str = pop(string);
-  const size_t str_len = strlen(str);
   size_t length = 1;
-  for (const char* temp = str; (temp = strstr(temp, delimiter) + delim_len) - delim_len; length++);
+    for (const char* temp = str; (temp = strstr(temp, delimiter) + delim_size) - delim_size; ++length);
   cognate_list* const lst = (cognate_list* const) cognate_malloc (sizeof(cognate_list));
-  lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * length);
-  lst->top = lst->start + length;
-  for (size_t i = 0; i < length; i++)
+  lst->top = lst->start   = (cognate_object*)     cognate_malloc (sizeof(cognate_object) * length);
+  lst->top += length;
+  size_t i = 0;
+  for (const char* c; (c = strstr(str, delimiter)); i++)
   {
-    const char* c = strstr(str, delimiter);
-    if unlikely(c == NULL) c = str + strlen(str);
     char* const buf = (char* const) cognate_malloc (c - str + 1);
     strncpy(buf, str, c - str);
     buf[c - str] = '\0';
     lst->start[i] = (cognate_object) {.type=string, .string=buf};
-    str = c + delim_len;
+    str = c + delim_size;
   }
+  lst->start[i] = (cognate_object) {.type=string, .string=str};
   push(list, lst);
 }
 
@@ -257,7 +255,7 @@ static void cognate_function_split_regex() {
   regex_t reg;
   regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE);
   cognate_list* lst = cognate_malloc (sizeof(cognate_list));
-  lst->start = cognate_malloc (sizeof(cognate_object) * 1000); // TODO
+  lst->start = cognate_malloc (sizeof(cognate_object) * strlen(str)); // TODO
   lst->top = lst->start;
   while (regexec(&reg, str, 1, pmatch, 0) != REG_NOMATCH)
   {
@@ -274,45 +272,41 @@ static void cognate_function_split_regex() {
 }
 */
 
-static void cognate_function_join() {
-  // Joins a list of strings into a single string.
-  const char* const delimiter = pop(string);
-  const long delim_size = strlen(delimiter);
-  const cognate_list lst = *pop(list);
-  long str_size = 0;
-  const cognate_object *i;
-  for (i = lst.start; i < lst.top; ++i)
-  {
-    str_size += strlen(check_type(string, *i).string) + delim_size;
-  }
-  char* const str = (char*) cognate_malloc (str_size+1);
-  strcpy(str, lst.start->string);
-  for (i = lst.start+1; i < lst.top; ++i)
-  {
-    strcat(str, delimiter);
-    strcat(str, i->string);
-  }
-  push(string, str);
-}
-
 static void cognate_function_append() {
+  // Joins a list to the end of another list.
+  // Define Prepend (Swap, Append);
   const cognate_list lst1 = *pop(list);
   const cognate_list lst2 = *pop(list);
   const size_t list1_len = list_len(lst1);
   const size_t list2_len = list_len(lst2);
-  const size_t new_list_len = list1_len + list2_len;
-  cognate_list* const lst = (cognate_list* const) cognate_malloc (sizeof(cognate_list));
-  lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * new_list_len);
-  lst->top = lst->start + new_list_len;
-  memmove(lst->start, lst2.start, list2_len * sizeof(cognate_object));
-  memmove(lst->start+list2_len, lst1.start, list1_len * sizeof(cognate_object));
-  push(list, lst);
+  const size_t new_lst_len = list1_len + list2_len;
+  cognate_list* const new_lst = (cognate_list* const) cognate_malloc (sizeof(cognate_list));
+  new_lst->top = new_lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * new_lst_len);
+  new_lst->top += new_lst_len;
+  memmove(new_lst->start, lst2.start, list2_len * sizeof(cognate_object));
+  memmove(new_lst->start+list2_len, lst1.start, list1_len * sizeof(cognate_object));
+  push(list, new_lst);
+}
+
+static void cognate_function_suffix() {
+  // Joins a string to the end of another string.
+  // Define Prefix (Swap, Suffix);
+  const char* const str1 = pop(string);  
+  const char* const str2 = pop(string);  
+  const size_t str1_size = strlen(str1);
+  const size_t str2_size = strlen(str2);
+  const size_t new_string_size = str1_size + str2_size;
+  char* const new_str = (char* const) cognate_malloc (new_string_size);
+  memmove(new_str, str2, str2_size);
+  memmove(new_str+str2_size, str1, str1_size);
+  push(string, new_str);
 }
 
 static void cognate_function_push() {
   cognate_list lst = *pop(list);
   for (cognate_object* obj = lst.start; obj != lst.top; ++obj)
   {
+    // This can probably be optimised.
     push_any(*obj);
   }
 }
