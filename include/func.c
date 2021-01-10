@@ -81,7 +81,7 @@ static void cognate_function_subtract() { push(number, (-pop(number) + pop(numbe
 static void cognate_function_modulo() {
   const double n = pop(number);
   const double m = pop(number);
-  if unlikely(m != (long long)m || n != (long long)n)
+  if unlikely(m != floor(m) || n != floor(n))
   {
     throw_error("Modulo should only take integer arguments. '%.15g modulo %.15g' is invalid.", n, m);
   }
@@ -104,7 +104,7 @@ static void cognate_function_random() {
   }
   // This is not cryptographically secure btw.
   // Since RAND_MAX may only be 2^15, we need to do this:
-  const long num 
+  const long num
     = ((long)(short)random())
     | ((long)(short)random() << 15)
     | ((long)(short)random() << 30)
@@ -147,7 +147,7 @@ static void cognate_function_discard() {
   const size_t num_discarding = num;
   if unlikely(num != num_discarding) throw_error("Number of elements to Discard must be positive integer, not %.15g!", num);
   const cognate_list obj = *pop(list);
-  if unlikely(num_discarding > list_len(obj)) throw_error("List of length %zu is too small to Discard %zu elements from!", list_len(obj), num_discarding);
+  if unlikely(num_discarding > (size_t)(obj.top - obj.start)) throw_error("List of length %zu is too small to Discard %zu elements from!", obj.top - obj.start, num_discarding);
   cognate_list* const lst = (cognate_list* const) cognate_malloc (sizeof(cognate_list));
   lst->start = obj.start + num_discarding;
   lst->top = obj.top;
@@ -160,7 +160,7 @@ static void cognate_function_take() {
   const size_t num_taking = num;
   if unlikely(num != num_taking) throw_error("Number of elements to Take must be positive integer, not %.15g!", num);
   cognate_list obj = *pop(list);
-  if unlikely(num_taking > list_len(obj)) throw_error ("List of length %zu is too small to Take %zu elements from!", list_len(obj), num_taking);
+  if unlikely(num_taking > (size_t)(obj.top - obj.start)) throw_error ("List of length %zu is too small to Take %zu elements from!", obj.top - obj.start, num_taking);
   cognate_list* const lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
   lst->start = obj.start;
   lst->top = lst->start + num_taking;
@@ -173,14 +173,14 @@ static void cognate_function_index() {
   if unlikely(index != d)
     throw_error("List Index must be a positive integer, not %15g!", d);
   const cognate_list lst = *pop(list);
-  if unlikely(index >= list_len(lst))
-    throw_error("Index %zu is out of bounds! (list is of length %zu)", index, list_len(lst));
+  if unlikely(index >= (size_t)(lst.top - lst.start))
+    throw_error("Index %zu is out of bounds! (list is of length %zu)", index, lst.top - lst.start);
   push_any(lst.start [index]);
 }
 
 static void cognate_function_length() {
   const cognate_list lst = *pop(list);
-  push(number, (double)list_len(lst));
+  push(number, (double)(lst.top - lst.start));
 }
 
 static void cognate_function_list() { 
@@ -198,7 +198,7 @@ static void cognate_function_list() {
   *lst = stack.items;
   // Restore the original stack
   stack = temp_stack;
-  const long lst_len = list_len(*lst);
+  const long lst_len = lst->top - lst->start;
   lst->start = cognate_realloc(lst->start, lst_len * sizeof(cognate_object));
   lst->top = lst->start + lst_len;
   // Push the created list to the stack
@@ -278,8 +278,8 @@ static void cognate_function_append() {
   // Define Prepend (Swap, Append);
   const cognate_list lst1 = *pop(list);
   const cognate_list lst2 = *pop(list);
-  const size_t list1_len = list_len(lst1);
-  const size_t list2_len = list_len(lst2);
+  const size_t list1_len = lst1.top - lst1.start;
+  const size_t list2_len = lst2.top - lst2.start;
   const size_t new_lst_len = list1_len + list2_len;
   cognate_list* const new_lst = (cognate_list* const) cognate_malloc (sizeof(cognate_list));
   new_lst->top = new_lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * new_lst_len);
@@ -427,7 +427,7 @@ static void cognate_function_stop() {
 static void cognate_function_table() {
   cognate_function_list();
   const cognate_list init = *pop(list);
-  const size_t table_size = (list_len(init) * LIST_GROWTH_FACTOR);
+  const size_t table_size = ((init.top - init.start) * LIST_GROWTH_FACTOR);
   cognate_table* const tab = (cognate_table*) cognate_malloc (sizeof(cognate_table)); // Need to allocate list here.
   tab->items.start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * table_size);
   tab->items.top = tab->items.start + table_size;
@@ -465,7 +465,7 @@ static void cognate_function_values() {
   // Equivilant tables may give differently ordered lists.
   const cognate_table tab = *pop(table);
   cognate_list* const lst = (cognate_list*) cognate_malloc (sizeof(cognate_list));
-  const long table_size = list_len(tab.items);
+  const long table_size = tab.items.top - tab.items.start;
   lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * table_size);
   int j = 0;
   for (int i = 0; i < table_size; ++i)

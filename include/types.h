@@ -7,13 +7,13 @@
 enum cognate_type
 {
   // NOTHING is currently only used for unused hashtable buckets.
-  NOTHING=0, // Must be zero because of calloc()
-  block, 
-  boolean, 
-  string, 
-  number, 
-  list,
-  table,
+  NOTHING = 0, // Must be zero because of calloc()
+  block   = 1, 
+  boolean = 2, 
+  string  = 3, 
+  number  = 4, 
+  list    = 5,
+  table   = 6,
 };
 
 typedef struct cognate_table cognate_table;
@@ -39,10 +39,10 @@ struct cognate_object
 {
   union
   {
-    const char* string;            // 64bit string pointer
-    _Bool boolean;                 //  1bit bool
-    cognate_block block;           // 64bit block pointer
-    double number;                 // 64bit float
+    const char* string;                // 64bit string pointer
+    _Bool boolean;                     //  1bit bool
+    cognate_block block;               // 64bit block pointer
+    double number;                     // 64bit float
     const struct cognate_list  *list;  // 64bit list pointer
     const struct cognate_table *table; // 64bit table pointer
   };

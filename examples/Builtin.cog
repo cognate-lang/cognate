@@ -29,7 +29,7 @@ Define Range as
     Define Count as
     (
       Let X;
-      If (X, <= B)
+      If (X, < B)
       (
         return X; 
         Count from + X S;

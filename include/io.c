@@ -29,18 +29,17 @@ static void print_object (const cognate_object object, const _Bool quotes)
       putchar('\'');
       for (const char* c = object.string; *c != '\0'; ++c)
       {
-        
         switch (*c)
         {
-          case '\\': putchar('\\');  break;
           case '\a': fputs("\\a", stdout); break;
           case '\b': fputs("\\b", stdout); break;
-          case '\f': fputs("\\f", stdout); break;
-          case '\n': fputs("\\n", stdout); break;
-          case '\r': fputs("\\r", stdout); break;
           case '\t': fputs("\\t", stdout); break;
+          case '\n': fputs("\\n", stdout); break;
           case '\v': fputs("\\v", stdout); break;
+          case '\f': fputs("\\f", stdout); break;
+          case '\r': fputs("\\r", stdout); break;
           case '\'': fputs("\\'", stdout); break;
+          case '\\': fputs("\\\\",stdout); break;
           default: putchar(*c);
         }
       }
