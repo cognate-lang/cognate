@@ -99,4 +99,15 @@ static size_t mbstrlen(const char* str)
   return i;
 }
 
+/*
+static size_t fast_strlen(const char* str)
+{
+  // It's only O(n) once.
+  static const char* buf = NULL;
+  static size_t len = 0;
+  if (str == buf) return len;
+  return (len = strlen((buf = str)));
+}
+*/
+
 #endif

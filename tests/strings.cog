@@ -39,3 +39,10 @@ If ('Hello λ world λ testing', Split on ' λ ', == List('Hello', 'world', 'tes
 Else (
   Print 'FAIL: Splitting a string with a multi-character delimiter';
 );
+
+If (SubString from 1 to 7 of 'Hello ☺ world', == 'ello ☺ ') (
+  Print 'PASS: SubStringing';
+);
+Else (
+  Print 'FAIL: SubStringing';
+);

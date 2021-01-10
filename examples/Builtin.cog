@@ -86,3 +86,8 @@ Define Map
 ( Let Expr; Let Lst;
   List ( For each in Lst do Expr );
 );
+
+Define Join
+( Let Lst;
+  For each in Lst (add Suffix) starting from '';
+);

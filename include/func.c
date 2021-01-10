@@ -206,7 +206,7 @@ static void cognate_function_list() {
 }
 
 static void cognate_function_characters() {
-  // Should this return a list, or just push all the characters to the stack?
+  // Can be rewritten using substring, albeit O(n^2)
   const char* str = pop(string);
   size_t length = mbstrlen(str);
   cognate_list* const lst = (cognate_list*) cognate_malloc (sizeof(cognate_list));
@@ -225,6 +225,7 @@ static void cognate_function_characters() {
 }
 
 static void cognate_function_split() {
+  // Can be rewritten using Substring.
   const char* const delimiter = pop(string);
   const size_t delim_size     = strlen(delimiter);
   if unlikely(!delim_size) throw_error("Cannot Split a string with a zero-length delimiter!");
@@ -300,6 +301,45 @@ static void cognate_function_suffix() {
   memmove(new_str, str2, str2_size);
   memmove(new_str+str2_size, str1, str1_size);
   push(string, new_str);
+}
+
+static void cognate_function_string_length() {
+  push(number, mbstrlen(pop(string)));
+}
+
+static void cognate_function_substring() {
+  // O(end).
+  // Only allocates a new string if it has to.
+  const double startf = pop(number);
+  const double endf   = pop(number);
+  size_t start  = startf;
+  size_t end    = endf;
+  if unlikely(start != startf || end != endf || start > end)
+    throw_error("Cannot substring with character range %.15g...%.15g!", startf, endf);
+  const char* str = pop(string);
+  size_t str_size = 0;
+  end -= start; end += 1;
+  for (;start != 0; --start)
+  {
+    str += mblen(str, MB_CUR_MAX);
+  }
+  for (;end != 0; --end)
+  {
+    if unlikely(str[str_size] == '\0') throw_error("String is too small (%li characters) to take substring from!", mbstrlen(str));
+    str_size += mblen(str+str_size, MB_CUR_MAX);
+  }
+  if unlikely(str[str_size] == '\0')
+  {
+    // We don't need to make a new string here.
+    push(string, str);
+  }
+  else
+  {
+    char* const sub_str = (char* const) cognate_malloc (str_size + 1);
+    memmove(sub_str, str, str_size);
+    sub_str[str_size] = '\0';
+    push(string, sub_str);
+  }
 }
 
 static void cognate_function_push() {
