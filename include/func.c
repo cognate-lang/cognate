@@ -61,12 +61,24 @@ static void cognate_function_elseif(char* const if_status)
   {
     throw_error("ElseIf statement encountered before [Else]If statement!");
   }
-  else if ((*if_status = pop(boolean) && !*if_status))
+  else if (pop(boolean) && !*if_status)
   {
     expr();
+    *if_status = 1;
   }
 }
 #define cognate_function_elseif() cognate_function_elseif(&if_status)
+
+static void cognate_function_while() {
+  cognate_block cond = pop(block);
+  cognate_block body = pop(block);
+  cond();
+  while (pop(boolean))
+  {
+    body();
+    cond();
+  }
+}
 
 static void cognate_function_do() { pop(block)(); }
 

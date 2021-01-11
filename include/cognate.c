@@ -75,6 +75,8 @@ int main(int argc, char** argv)
   // Clean up.
   if unlikely(stack.items.top != stack.items.start)
   {
+    word_name = NULL;
+    function_name = NULL;
     throw_error("Program exiting with non-empty stack of length %ti", stack.items.top - stack.items.start);
   }
 }
