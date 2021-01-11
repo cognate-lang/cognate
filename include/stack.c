@@ -56,7 +56,7 @@ static cognate_object pop_any()
 { 
   if unlikely(stack.items.top == stack.items.start)
     throw_error("Stack underflow!");
-  stack.modified += (stack.modified == 0);
+  ++stack.modified;
   return *--stack.items.top;
 }
 
@@ -71,7 +71,7 @@ static void expand_stack()
 {
   // New stack size = current stack size * growth factor.
   // Assumes that stack is currently of length stack.size.
-  stack.items.start = (cognate_object*) cognate_realloc (stack.items.start, (ptrdiff_t)(stack.size * LIST_GROWTH_FACTOR * sizeof(cognate_object)));
+  stack.items.start = (cognate_object*) cognate_realloc (stack.items.start, stack.size * LIST_GROWTH_FACTOR * sizeof(cognate_object));
   stack.items.top = stack.items.start + stack.size;
   stack.size *= LIST_GROWTH_FACTOR;
 }

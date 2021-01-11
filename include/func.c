@@ -117,7 +117,7 @@ static void cognate_function_drop()    { pop_any(); } // These can be defined wi
 static void cognate_function_twin()    { push_any(peek_any()); }
 static void cognate_function_triplet() { const cognate_object a = peek_any(); push_any(a); push_any(a); }
 static void cognate_function_swap()    { const cognate_object a = pop_any(); const cognate_object b = pop_any(); push_any(a); push_any(b); }
-static void cognate_function_clear()   { init_stack(); }
+static void cognate_function_clear()   { stack.items.top=stack.items.start; }
 
 static void cognate_function_true()  { push(boolean, 1); }
 static void cognate_function_false() { push(boolean, 0); }
