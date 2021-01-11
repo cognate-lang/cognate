@@ -57,6 +57,7 @@ static cognate_object pop_any()
 {
   if unlikely(stack.items.top == stack.items.start)
     throw_error("Stack underflow!");
+  stack.modified-=(_Bool)stack.modified;
   return *--stack.items.top;
 }
 
