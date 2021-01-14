@@ -21,7 +21,7 @@ static void print_object (const cognate_object object, const _Bool quotes)
     case string: 
     {
       // Quotes is whether or not to print strings with quotes.
-      if (quotes)
+      if (!quotes)
       {
         fputs(object.string, stdout);
         return;
@@ -53,7 +53,7 @@ static void print_object (const cognate_object object, const _Bool quotes)
       for (cognate_object *i = lst . start; i != lst . top; ++i)
       {
         // Strings within lists ALWAYS printed with quotes.
-        print_object(*i, 0);
+        print_object(*i, 1);
         if (i + 1 != lst . top) fputs(", ", stdout);
       }
       putchar(')');

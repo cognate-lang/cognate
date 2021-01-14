@@ -82,8 +82,8 @@ static void cognate_function_while() {
 
 static void cognate_function_do() { pop(block)(); }
 
-static void cognate_function_put()   { print_object(pop_any(), 1); fflush(stdout); }
-static void cognate_function_print() { print_object(pop_any(), 1); puts("");       }
+static void cognate_function_put()   { print_object(pop_any(), 0); fflush(stdout); }
+static void cognate_function_print() { print_object(pop_any(), 0); puts("");       }
 
 static void cognate_function_sum()      { push(number, pop(number) + pop(number)); }
 static void cognate_function_multiply() { push(number, pop(number) * pop(number)); }
