@@ -50,7 +50,7 @@ static void push_any(cognate_object object)
   // builtin_expect optimises because the stack hardly ever needs to expand.
   if unlikely(stack.items.start + stack.size == stack.items.top)
     expand_stack();
-  stack.uncopied_blocks -= (object.type == block);
+  stack.uncopied_blocks += (object.type == block);
   *stack.items.top++ = object;
 }
 
@@ -59,7 +59,7 @@ static cognate_object pop_any()
   if unlikely(stack.items.top == stack.items.start)
     throw_error("Stack underflow!");
   const cognate_object obj = *--stack.items.top;
-  stack.uncopied_blocks += (obj.type == block);
+  stack.uncopied_blocks -= (obj.type == block);
   return obj;
 }
 

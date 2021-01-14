@@ -94,7 +94,7 @@ static void copy_blocks()
     if unlikely(obj->type==block) 
     {
       obj->block = Block_copy(obj->block); // Copy block to heap.
-      ++stack.uncopied_blocks;
+      --stack.uncopied_blocks;
     }
   }
 }
