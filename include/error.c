@@ -28,6 +28,7 @@ __attribute__((noreturn)) static void throw_error(const char* const fmt, ...)
   va_start(args, fmt);
   struct winsize term;
   // If we cannot determine the terminal size (redirected to file or something), assume width is 80.
+  const char tmp_errno = errno;
   if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &term) == -1) term.ws_col = 80;
   fputs("\n", stderr);
   // Print the title bar.
@@ -45,7 +46,7 @@ __attribute__((noreturn)) static void throw_error(const char* const fmt, ...)
   fprintf(stderr, "\n\033[31;1m");
   vfprintf(stderr, fmt, args);
   va_end(args);
-  if (errno) fprintf(stderr, "\n\033[0m\033[37;2m%s", strerror(errno));
+  if (tmp_errno) fprintf(stderr, "\n\033[0m\033[37;2m%s", strerror(tmp_errno));
   fputs("\033[0m\n\n", stderr);
   // Print a backtrace.
   void *trace[5];
