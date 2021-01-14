@@ -29,7 +29,7 @@ struct cognate_stack
 {
   cognate_list items;    // The list holding the stack itself.
   ptrdiff_t    size;     // Allocated size of the stack.
-  short uncopied_blocks;
+  size_t uncopied_blocks;
 };
 
 typedef struct cognate_stack cognate_stack;
