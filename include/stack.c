@@ -27,9 +27,9 @@ static void expand_stack();
 
 struct cognate_stack
 {
-  cognate_list items;    // The list holding the stack itself.
-  ptrdiff_t    size;     // Allocated size of the stack.
-  size_t uncopied_blocks;
+  cognate_list items;     // The list holding the stack itself.
+  ptrdiff_t    size;      // Allocated size of the stack.
+  size_t uncopied_blocks; // Number of cognate_blocks this function has produced that are not on the heap.
 };
 
 typedef struct cognate_stack cognate_stack;
@@ -58,9 +58,9 @@ static cognate_object pop_any()
 {
   if unlikely(stack.items.top == stack.items.start)
     throw_error("Stack underflow!");
-  const cognate_object obj = *--stack.items.top;
-  stack.uncopied_blocks -= (obj.type == block);
-  return obj;
+  const cognate_object object = *--stack.items.top;
+  stack.uncopied_blocks -= (object.type == block);
+  return object;
 }
 
 static cognate_object peek_any()
