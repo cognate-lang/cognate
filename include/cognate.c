@@ -89,11 +89,13 @@ static cognate_object check_block(cognate_object obj)
 
 static void copy_blocks()
 {
-  while (stack.modified)
+  for (cognate_object* obj = stack.items.top; stack.uncopied_blocks; --obj)
   {
-    cognate_object* const obj = stack.items.top - stack.modified;
-    if unlikely(obj->type==block) obj->block = Block_copy(obj->block); // Copy block to heap.
-    --stack.modified;
+    if unlikely(obj->type==block) 
+    {
+      obj->block = Block_copy(obj->block); // Copy block to heap.
+      ++stack.uncopied_blocks;
+    }
   }
 }
 

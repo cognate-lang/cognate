@@ -44,12 +44,12 @@ static const float LIST_GROWTH_FACTOR = 1.5;
 #define make_block(docopy, body) \
   ^{ \
     /* Temp variables causes ~10% performance loss :( */ \
-    const ptrdiff_t temp_modified = stack.modified; \
-    stack.modified = 0; \
+    const ptrdiff_t temp_blocks = stack.uncopied_blocks; \
+    stack.uncopied_blocks = 0; \
     __attribute__((unused)) char if_status = 2; \
     body \
-    if (docopy) copy_blocks(); \
-    stack.modified = temp_modified; \
+    copy_blocks(); \
+    stack.uncopied_blocks = temp_blocks; \
   }
 
 #ifndef noGC
