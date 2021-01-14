@@ -91,7 +91,7 @@ static void copy_blocks()
 {
   for (cognate_object* obj = stack.items.top; stack.uncopied_blocks; --obj)
   {
-    if unlikely(obj->type==block) 
+    if unlikely(obj->type==block)
     {
       obj->block = Block_copy(obj->block); // Copy block to heap.
       --stack.uncopied_blocks;

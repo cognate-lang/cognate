@@ -40,7 +40,7 @@ static const float LIST_GROWTH_FACTOR = 1.5;
 #define mutate_variable(name) \
   __block cognate_object cognate_variable_ ## name = check_block(pop_any()); \
   cognate_function_##name = ^{push_any(cognate_variable_ ## name);}; /* This may break in future and need Block_copy() */
- 
+
 #define make_block(docopy, body) \
   ^{ \
     /* Temp variables causes ~10% performance loss :( */ \

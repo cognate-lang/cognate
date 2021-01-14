@@ -8,10 +8,10 @@ enum cognate_type
 {
   // NOTHING is currently only used for unused hashtable buckets.
   NOTHING = 0, // Must be zero because of calloc()
-  block   = 1, 
-  boolean = 2, 
-  string  = 3, 
-  number  = 4, 
+  block   = 1,
+  boolean = 2,
+  string  = 3,
+  number  = 4,
   list    = 5,
   table   = 6,
 };

@@ -18,7 +18,7 @@ static void print_object (const cognate_object object, const _Bool quotes)
     // Double precision float has 15sf precision.
     // Switch to scientific notation after 15 digits to eliminate rounding errors.
     case number: printf("%.15g", object.number);  return;
-    case string: 
+    case string:
     {
       // Quotes is whether or not to print strings with quotes.
       if (!quotes)
@@ -46,8 +46,8 @@ static void print_object (const cognate_object object, const _Bool quotes)
       putchar('\'');
       return;
     }
-    case list: 
-    { 
+    case list:
+    {
       const cognate_list lst = *object.list;
       putchar('(');
       for (cognate_object *i = lst . start; i != lst . top; ++i)

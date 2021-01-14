@@ -45,7 +45,7 @@ parsefile = -- Parsefile takes a string (the file text) as an argument and retur
   padtokens . -- Space out special characters.
   -- unwords $ parsecharacters $ splitOn "\'" $ -- Convert characters to ASCII value integers
   filterAscii .
-  parseblockcomments . 
+  parseblockcomments .
   parselinecomments .
   parsestrings -- Convert strings to lists of characters
 
@@ -107,7 +107,7 @@ parsenumbers (x:xs)
 
 parsenumbers _ = ""
 
-parseAfterMinus ('.':xs) 
+parseAfterMinus ('.':xs)
   | parseAfterDecimal xs /= "" = '.' : parseAfterDecimal xs
   | otherwise = ""
 
@@ -119,7 +119,7 @@ parseAfterMinus _ = ""
 
 parseAfterDecimal (x:xs)
   | x `elem` ['0'..'9'] = x : parseAfterDecimal xs
-  | otherwise = "" 
+  | otherwise = ""
 
 parseAfterDecimal _ = ""
 
@@ -198,7 +198,7 @@ parsesemicolons =
   where
     nodes (Node x) = Node $ parsesemicolons x
     nodes       x  = x
-    semicolon (Leaf (x:xs)) 
+    semicolon (Leaf (x:xs))
       | x `elem` delims = True
       | otherwise       = False
     semicolon _         = False
@@ -218,9 +218,9 @@ parseImports path (Leaf filename : Leaf "Import" : xs) imported =
     -- Don't import if its already been imported.
     if (case findIndex (== filename) imported of
           Just x -> True
-          Nothing -> False) 
+          Nothing -> False)
     then
-      parseImports path xs imported 
+      parseImports path xs imported
     else do
       putStrLn $ "Importing " ++ filename ++ " from " ++ filename ++ ".cog"
       importedFile <- readFile ((join "/" $ init $ splitOn "/" path) ++ (if (length (splitOn "/" path) > 1) then "/" else "") ++ filename ++ ".cog")
@@ -238,7 +238,7 @@ parseImports path (Node x : xs) imported =
     xs' <- parseImports path xs imported
     return $ Node x' : xs'
 
-parseImports path (x:xs) imported = 
+parseImports path (x:xs) imported =
   do
     xs' <- parseImports path xs imported
     return $ x : xs'
@@ -280,11 +280,11 @@ flatten [] = []
 constructStr :: [Tree] -> String
 constructStr str =
   sanitise (map (chr . readNumber) str)
-    where 
+    where
       readNumber :: Tree -> Int
       readNumber (Leaf num) = read num
       readNumber (Node _) = error "Parse Error: Cannot parse malformed string literal!"
-      sanitise = 
+      sanitise =
         replace "\"" "\\\"" .
         replace "¸" "'"
 
@@ -295,25 +295,25 @@ compile (Leaf "" : xs) = "" ++ compile xs
 compile (Node body : Leaf name : Leaf "Define" : xs) =
   -- Defines immutable and nonrecursive if function does not refer to itself in its body and 'Set' is not found in xs.
   if xs `doesCall` name then
-    "function(" 
-      ++ lc name ++ ", " 
-      ++ (if xs `doesMutate` name || body `doesCall` name then "mutable," else "immutable,") 
-      ++ (if any isNode body then "1," else "0,") 
-      ++ "{" 
+    "function("
+      ++ lc name ++ ", "
+      ++ (if xs `doesMutate` name || body `doesCall` name then "mutable," else "immutable,")
+      ++ (if any isNode body then "1," else "0,")
+      ++ "{"
         ++ compile body
       ++ "});{"
     ++ compile xs ++
-    "}\n" 
+    "}\n"
   else compile xs
 
 {-
 compile (Node body : Node call : Leaf "Set" : xs) =
   let name = last call
       args = init call in
-  "mutate_function(" 
-    ++ lc (case name of 
+  "mutate_function("
+    ++ lc (case name of
             Leaf str -> str ++ ","
-            _        -> error "Parse Error: Invalid function name!") 
+            _        -> error "Parse Error: Invalid function name!")
     ++ (if any isNode body then "1, {" else "0, {")
     ++ compile (intersperse (Leaf "Let") (reverse args) ++ [Leaf "Let" | not (null args)] ++ body)
     ++ "});\n{\n"
@@ -324,7 +324,7 @@ compile (Node body : Node call : Leaf "Set" : xs) =
 -- Bind is more elegant, but cannot reccur. Maybe a compromise, where the function is defined at the start of the current block.
 {- compile (Leaf name : Leaf "Bind" : xs) = "void(^cognate_" ++ lc name
   ++ ")(void)=pop(block);"
-  ++ compile xs 
+  ++ compile xs
 -}
 
 compile (Leaf name : Leaf "Let" : xs) =
@@ -334,7 +334,7 @@ compile (Leaf name : Leaf "Let" : xs) =
   ++ compile xs ++ "}"
 
 compile (Leaf name : Leaf "Set" : xs) =
-  "mutate_variable(" ++ lc name ++ ");{" 
+  "mutate_variable(" ++ lc name ++ ");{"
   ++ compile xs ++ "}"
 
 -- Primitive Do inlining.
@@ -346,7 +346,7 @@ compile (Node expr : Leaf "Do" : xs) =
 
 compile (Node str : Leaf "StringLiteral" : xs) =
   "push(string,\"" ++ constructStr str ++ "\");" ++ compile xs
-    
+
 compile (Node expr : xs) =
   "push(block,\nmake_block(" ++ (if any isNode expr then "1," else "0,") ++ "{\n"
   ++ compile expr
@@ -390,7 +390,7 @@ main =
     let in_file = head args
     let out_file = head (splitOn "." in_file) ++ ".c"
     let compiler_args = tail args
-    if not (".cog" `isSuffixOf` in_file) then error "Parse Error: Source file must end with .cog file extension" 
+    if not (".cog" `isSuffixOf` in_file) then error "Parse Error: Source file must end with .cog file extension"
     else do
       putStrLn "   ______                        ______\n  / ____/___  ____  ____  ____  / ____/\n / /   / __ \\/ __ `/ __ \\/ __ `/ /\n/ /___/ /_/ / /_/ / / / / /_/ / /___\n\\____/\\____/\\__, /_/ /_/\\__,_/\\____/\n           /____/"
       putStrLn $ "Cognate Compiler - Version " ++ version

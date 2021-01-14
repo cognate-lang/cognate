@@ -17,7 +17,7 @@ CognaC compiles Cognate directly to C. This produces very efficient binaries and
 (If newer language versions produce different results, please submit an issue so I can update this table)
 
 ### Cognate is simple
-Cognate has only a handful of syntax elements. In future, this will allow me to elegantly introduce compile time macros and reflection, similar to those found in lisp dialects, that manipulate the syntax tree directly. I am also looking at implementing Forth-style code metaprogramming with immediate words, etc. 
+Cognate has only a handful of syntax elements. In future, this will allow me to elegantly introduce compile time macros and reflection, similar to those found in lisp dialects, that manipulate the syntax tree directly. I am also looking at implementing Forth-style code metaprogramming with immediate words, etc.
 
 ### Cognate is functional
 Cognate is optimised for functional programming - not complicated static-typed functional programming with monads and applicative functors as you might see in a Haskell program, but the more simplistic dynamically typed functional programming often seen in scheme dialects. In Cognate, a bracketed expression (known as a Block) represents a closure - an anonymous function that inherits variables from where it was defined. These allow functions to be passed as arguments and returned from other functions. Cognate also discourages variable mutation in favour of shadowing variables instead and limiting side-effects.

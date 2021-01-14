@@ -36,8 +36,8 @@ static void cognate_function_if(char* const if_status)
   }
 }
 #define cognate_function_if() cognate_function_if(&if_status)
-  
-static void cognate_function_else(char* const if_status) 
+
+static void cognate_function_else(char* const if_status)
 {
   const cognate_block expr = pop(block);
   if (!*if_status)
@@ -122,7 +122,7 @@ static void cognate_function_random() {
     | ((long)(short)random() << 30)
     | ((long)(short)random() << 45)
     | ((long)       random() << 60);
-  push(number, low + (double)(num % (unsigned long)((high - low + step) / step)) * step); 
+  push(number, low + (double)(num % (unsigned long)((high - low + step) / step)) * step);
 }
 
 static void cognate_function_drop()    { pop_any(); } // These can be defined within cognate.
@@ -153,7 +153,7 @@ static void cognate_function_string_()  { push(boolean, pop_any().type == string
 static void cognate_function_block_()   { push(boolean, pop_any().type == block);   }
 static void cognate_function_boolean_() { push(boolean, pop_any().type == boolean); }
 
-static void cognate_function_discard() { 
+static void cognate_function_discard() {
   // O(n) where n is the number of element being Discarded.
   const double num = pop(number);
   const size_t num_discarding = num;
@@ -179,7 +179,7 @@ static void cognate_function_take() {
   push(list, lst);
 }
 
-static void cognate_function_index() { 
+static void cognate_function_index() {
   const double d = pop(number);
   const size_t index = d;
   if unlikely(index != d)
@@ -195,7 +195,7 @@ static void cognate_function_length() {
   push(number, (double)(lst.top - lst.start));
 }
 
-static void cognate_function_list() { 
+static void cognate_function_list() {
   // I solemnly swear that I will NEVER RETURN THE ADDRESS OF A LOCAL VARIABLE!
   // Get the block argument
   const cognate_block expr = pop(block);
@@ -304,8 +304,8 @@ static void cognate_function_append() {
 static void cognate_function_suffix() {
   // Joins a string to the end of another string.
   // Define Prefix (Swap, Suffix);
-  const char* const str1 = pop(string);  
-  const char* const str2 = pop(string);  
+  const char* const str1 = pop(string);
+  const char* const str2 = pop(string);
   const size_t str1_size = strlen(str1);
   const size_t str2_size = strlen(str2);
   const size_t new_string_size = str1_size + str2_size;
@@ -391,7 +391,7 @@ static void cognate_function_read() {
 }
 
 static void cognate_function_number() {
-  // casts string to number. 
+  // casts string to number.
   const char* const str = pop(string);
   push(number, (double)strtof(str, NULL)); // strtof uses floats instead of doubles, prepare for rounding error.
 }
@@ -482,7 +482,7 @@ static void cognate_function_values() {
   int j = 0;
   for (int i = 0; i < table_size; ++i)
   {
-    if (tab.items.start[i].type != NOTHING) 
+    if (tab.items.start[i].type != NOTHING)
     {
       lst->start[j++] = tab.items.start[i];
     }
@@ -503,7 +503,7 @@ static void cognate_function_match() {
     regfree(&reg); // Apparently freeing an unallocated regex is fine.
     if unlikely(*reg_str == '\0' || regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE | REG_NOSUB))
     {
-      throw_error("Cannot compile invalid regular expression! ('%s')", reg_str); 
+      throw_error("Cannot compile invalid regular expression! ('%s')", reg_str);
     }
     old_str = reg_str; /* This should probably be strcpy, but I trust that reg_str is either
                           allocated with the garbage collector, or read only in the data segment. */
