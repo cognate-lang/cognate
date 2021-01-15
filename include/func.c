@@ -92,12 +92,7 @@ static void cognate_function_subtract() { push(number, (-pop(number) + pop(numbe
 
 static void cognate_function_modulo() {
   const double n = pop(number);
-  const double m = pop(number);
-  if unlikely(m != floor(m) || n != floor(n))
-  {
-    throw_error("Modulo should only take integer arguments. '%.15g modulo %.15g' is invalid.", n, m);
-  }
-  push(number, (long long)m % (long long)n);
+  push(number, fmod(pop(number), n));
 }
 
 static void cognate_function_random() {

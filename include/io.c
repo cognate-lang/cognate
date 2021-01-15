@@ -9,6 +9,7 @@ static void print_object (const cognate_object object, const _Bool quotes);
 #include "error.c"
 
 #include <stdio.h>
+#include <float.h>
 
 static void print_object (const cognate_object object, const _Bool quotes)
 {
@@ -17,7 +18,7 @@ static void print_object (const cognate_object object, const _Bool quotes)
   {
     // Double precision float has 15sf precision.
     // Switch to scientific notation after 15 digits to eliminate rounding errors.
-    case number: printf("%.15g", object.number);  return;
+    case number: printf("%.%g", DBL_DIG, object.number);  return;
     case string:
     {
       // Quotes is whether or not to print strings with quotes.
