@@ -29,7 +29,7 @@ struct cognate_stack
 {
   cognate_list items;     // The list holding the stack itself.
   ptrdiff_t    size;      // Allocated size of the stack.
-  size_t uncopied_blocks; // Number of cognate_blocks this function has produced that are not on the heap.
+  long uncopied_blocks; // Number of cognate_blocks this function has produced (or consumed).
 };
 
 typedef struct cognate_stack cognate_stack;

@@ -49,7 +49,7 @@ static const float LIST_GROWTH_FACTOR = 1.5;
     __attribute__((unused)) char if_status = 2; \
     body \
     copy_blocks(); \
-    stack.uncopied_blocks = temp_blocks; \
+    stack.uncopied_blocks += temp_blocks; \
   }
 
 #ifndef noGC

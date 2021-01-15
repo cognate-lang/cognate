@@ -31,7 +31,7 @@ Define Range as
       Let X;
       If (X, < B)
       (
-        return X; 
+        return X;
         Count from + X S;
       );
     );
