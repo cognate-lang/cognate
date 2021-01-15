@@ -117,7 +117,7 @@ static void cognate_function_random() {
     | ((long)(short)random() << 30)
     | ((long)(short)random() << 45)
     | ((long)       random() << 60);
-  push(number, low + (double)(num % (unsigned long)((high - low + step) / step)) * step);
+  push(number, low + (double)(num % (unsigned long)((high - low) / step)) * step);
 }
 
 static void cognate_function_drop()    { pop_any(); } // These can be defined within cognate.
@@ -325,7 +325,7 @@ static void cognate_function_substring() {
     throw_error("Cannot substring with character range %.*g...%.*g!", DBL_DIG, DBL_DIG, startf, endf);
   const char* str = pop(string);
   size_t str_size = 0;
-  end -= start; end += 1;
+  end -= start;
   for (;start != 0; --start)
   {
     str += mblen(str, MB_CUR_MAX);
