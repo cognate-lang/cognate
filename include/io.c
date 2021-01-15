@@ -17,7 +17,7 @@ static void print_object (const cognate_object object, const _Bool quotes)
   switch (object.type)
   {
     // Double precision float has 15sf precision.
-    // Switch to scientific notation after 15 digits to eliminate rounding errors.
+    // Switch to scientific notation after 10 digits to eliminate rounding errors.
     case number: printf("%.*g", DBL_DIG, object.number);  return;
     case string:
     {

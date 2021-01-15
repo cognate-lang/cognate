@@ -284,9 +284,11 @@ constructStr str =
       readNumber :: Tree -> Int
       readNumber (Leaf num) = read num
       readNumber (Node _) = error "Parse Error: Cannot parse malformed string literal!"
-      sanitise =
-        replace "\"" "\\\"" .
-        replace "¸" "'"
+      sanitise str
+        | "\\?" `isInfixOf` str = error "Invalid Escape Character \\?"
+        | "\\\"" `isInfixOf` str = error "Invalid Escape Character \\\""
+        | "\\0" `isInfixOf` str = error "Invalid Escape Character \\0"
+        | otherwise = replace "\"" "\\\"" $ replace "¸" "'" str
 
 
 compile (Leaf "" : xs) = "" ++ compile xs
