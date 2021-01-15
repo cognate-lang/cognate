@@ -9,7 +9,6 @@ static void print_object (const cognate_object object, const _Bool quotes);
 #include "error.c"
 
 #include <stdio.h>
-#include <float.h>
 
 static void print_object (const cognate_object object, const _Bool quotes)
 {
