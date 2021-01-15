@@ -9,7 +9,7 @@
 
 -- Known Parsing Bugs:
 --  Strings inside comments are parsed improperly.
---  Only ASCII is supported - not extended ASCII
+--  \nnn and \xhh escape sequences in strings are not caught.
 
 
 {-# LANGUAGE LambdaCase #-}
