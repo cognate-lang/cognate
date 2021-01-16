@@ -101,7 +101,7 @@ static void cognate_function_random() {
   const double step = pop(number);
   if unlikely((high - low) * step < 0 || !step)
   {
-    throw_error("Cannot generate random number in range %.*g..%.*g with step %.*g", DBL_DIG, low, DBL_DIG, high, DBL_DIG, step);
+    throw_error("Cannot generate random number in range %.14g..%.14g with step %.14g", low, high, step);
     return;
   }
   else if ((high - low) / step < 1)
@@ -152,7 +152,7 @@ static void cognate_function_discard() {
   // O(n) where n is the number of element being Discarded.
   const double num = pop(number);
   const size_t num_discarding = num;
-  if unlikely(num != num_discarding) throw_error("Number of elements to Discard must be positive integer, not %.*g!",DBL_DIG ,num);
+  if unlikely(num != num_discarding) throw_error("Number of elements to Discard must be positive integer, not %.14g!", num);
   const cognate_list obj = *pop(list);
   if unlikely(num_discarding > (size_t)(obj.top - obj.start)) throw_error("List of length %zu is too small to Discard %zu elements from!", obj.top - obj.start, num_discarding);
   cognate_list* const lst = (cognate_list* const) cognate_malloc (sizeof(cognate_list));
@@ -165,7 +165,7 @@ static void cognate_function_take() {
   // O(n) where n is the number of element being Taken.
   const double num = pop(number);
   const size_t num_taking = num;
-  if unlikely(num != num_taking) throw_error("Number of elements to Take must be positive integer, not %.*g!", DBL_DIG, num);
+  if unlikely(num != num_taking) throw_error("Number of elements to Take must be positive integer, not %.14g!", num);
   cognate_list obj = *pop(list);
   if unlikely(num_taking > (size_t)(obj.top - obj.start)) throw_error ("List of length %zu is too small to Take %zu elements from!", obj.top - obj.start, num_taking);
   cognate_list* const lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
@@ -322,7 +322,7 @@ static void cognate_function_substring() {
   size_t start  = startf;
   size_t end    = endf;
   if unlikely(start != startf || end != endf || start > end)
-    throw_error("Cannot substring with character range %.*g...%.*g!", DBL_DIG, DBL_DIG, startf, endf);
+    throw_error("Cannot substring with character range %.14g...%.14g!", startf, endf);
   const char* str = pop(string);
   size_t str_size = 0;
   end -= start;
@@ -526,7 +526,7 @@ static void cognate_function_ordinal() {
 static void cognate_function_character() {
   const double d = pop(number);
   const int i = d;
-  if unlikely(i != d) throw_error("Cannot convert %.*g to UTF8 character!", DBL_DIG, d);
+  if unlikely(i != d) throw_error("Cannot convert %.14g to UTF8 character!", d);
   char* const str = (char* const) cognate_malloc (MB_CUR_MAX + 1);
   wctomb(str, i);
   push(string, str);

@@ -10,7 +10,7 @@ static const int INITIAL_READ_SIZE = 64;
 static const int INITIAL_LIST_SIZE = 16;
 static const float LIST_GROWTH_FACTOR = 1.5;
 
-#define DBL_DIG 14
+#define DIGITS 14
 
 #define program(body) \
   static void run_program() \
