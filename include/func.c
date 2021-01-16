@@ -99,12 +99,12 @@ static void cognate_function_random() {
   const double low  = pop(number);
   const double high = pop(number);
   const double step = pop(number);
-  if unlikely(high < low)
+  if unlikely((high - low) * step < 0 || !step)
   {
-    throw_error("Cannot generate random number in range! (%.*g..%.*g)", DBL_DIG, low, high);
+    throw_error("Cannot generate random number in range %.*g..%.*g with step %.*g", DBL_DIG, low, DBL_DIG, high, DBL_DIG, step);
     return;
   }
-  else if (high - low < step)
+  else if ((high - low) / step < 1)
   {
     push(number, low);
     return;
@@ -117,7 +117,7 @@ static void cognate_function_random() {
     | ((long)(short)random() << 30)
     | ((long)(short)random() << 45)
     | ((long)       random() << 60);
-  push(number, low + (double)fmod(num, (unsigned long)((high - low) / step)) * step);
+  push(number, low + (double)(num % (unsigned long)((high - low) / step)) * step);
 }
 
 static void cognate_function_drop()    { pop_any(); } // These can be defined within cognate.
