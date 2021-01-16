@@ -24,6 +24,7 @@ static const char* word_name = NULL;
 
 __attribute__((noreturn)) static void throw_error(const char* const fmt, ...)
 {
+  // TODO: Print top 5 stack elements.
   va_list args;
   va_start(args, fmt);
   struct winsize term;
