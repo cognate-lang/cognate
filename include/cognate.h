@@ -41,7 +41,7 @@ static const float LIST_GROWTH_FACTOR = 1.5;
 // Mutate internal variable.
 #define mutate_variable(name) \
   const cognate_object cognate_variable_ ## name = check_block(pop_any()); \
-  cognate_function_##name = block_copy_gc(^{ push_any(cognate_variable_ ## name); }); \
+  cognate_function_##name = Block_copy(^{ push_any(cognate_variable_ ## name); }); \
 
 #define make_block(docopy, body) \
   ^{ \

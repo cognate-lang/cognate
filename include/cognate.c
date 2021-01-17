@@ -11,8 +11,6 @@ static void run_program();
 static cognate_object check_block(cognate_object);
 static void copy_blocks();
 static void check_call_stack();
-static cognate_block block_copy_gc(cognate_block);
-static void block_dealloc_callback(void* _, __attribute__((unused)) void*);
 
 #include "table.c"
 #include "stack.c"
@@ -88,14 +86,8 @@ int main(int argc, char** argv)
 
 static cognate_object check_block(cognate_object obj)
 {
-  if unlikely(obj.type==block) obj.block = block_copy_gc(obj.block);
+  if unlikely(obj.type==block) obj.block = Block_copy(obj.block);
   return obj;
-}
-
-void block_dealloc_callback(void* blk, __attribute__((unused)) void* _)
-{
-  //printf("Dealloc-ing block %p\n", blk);
-  Block_release(blk);
 }
 
 static void copy_blocks()
@@ -105,18 +97,10 @@ static void copy_blocks()
   {
     if unlikely(obj->type==block)
     {
-      obj->block = block_copy_gc(obj->block); // Copy block to heap.
+      obj->block = Block_copy(obj->block); // Copy block to heap.
       --stack.uncopied_blocks;
     }
   }
-}
-
-static cognate_block block_copy_gc(cognate_block blk)
-{
-  blk = Block_copy(blk); // Copy block to heap.
-  //printf("Alloc-ing block %p\n", (void*)blk);
-  GC_register_finalizer(blk, &block_dealloc_callback, NULL, NULL, NULL);
-  return blk;
 }
 
 static void check_call_stack()
