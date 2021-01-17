@@ -81,7 +81,6 @@ int main(int argc, char** argv)
     function_name = NULL;
     throw_error("Program exiting with non-empty stack of length %ti", stack.items.top - stack.items.start);
   }
-  GC_gcollect();
 }
 
 static cognate_object check_block(cognate_object obj)
