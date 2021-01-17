@@ -22,11 +22,13 @@ static void block_dealloc_callback(void* _, __attribute__((unused)) void*);
 #include "func.c"
 
 #include <time.h>
-#include <gc/gc.h>
 #include <sys/resource.h>
 #include <libgen.h>
 #include <Block.h>
 #include <locale.h>
+#ifndef noGC
+#include <gc/gc.h>
+#endif
 
 static struct rlimit stack_max;
 

@@ -22,8 +22,10 @@ static void expand_stack();
 
 #include "error.c"
 
-#include <gc/gc.h>
 #include <stdio.h>
+#ifndef noGC
+#include <gc/gc.h>
+#endif
 
 struct cognate_stack
 {

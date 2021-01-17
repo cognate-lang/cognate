@@ -16,7 +16,9 @@ static cognate_table table_copy(const cognate_table);
 
 #include <stdlib.h>
 #include <string.h>
+#ifndef noGC
 #include <gc/gc.h>
+#endif
 
 static unsigned long hash(const char *str)
 {

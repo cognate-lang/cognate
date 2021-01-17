@@ -17,12 +17,14 @@ static cognate_list params;
 #include "table.c"
 #include "io.c"
 
-#include <gc/gc.h>
 #include <unistd.h>
 #include <regex.h>
 #include <math.h>
 #include <string.h>
 #include <limits.h>
+#ifndef noGC
+#include <gc/gc.h>
+#endif
 
 static void cognate_function_if(char* const if_status)
 {
