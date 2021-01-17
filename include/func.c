@@ -155,7 +155,7 @@ static void cognate_function_discard() {
   if unlikely(num != num_discarding) throw_error("Number of elements to Discard must be positive integer, not %.14g!", num);
   const cognate_list obj = *pop(list);
   if unlikely(num_discarding > (size_t)(obj.top - obj.start)) throw_error("List of length %zu is too small to Discard %zu elements from!", obj.top - obj.start, num_discarding);
-  cognate_list* const lst = (cognate_list* const) cognate_malloc (sizeof(cognate_list));
+  cognate_list* const lst = GC_NEW(cognate_list);
   lst->start = obj.start + num_discarding;
   lst->top = obj.top;
   push(list, lst);
@@ -168,7 +168,7 @@ static void cognate_function_take() {
   if unlikely(num != num_taking) throw_error("Number of elements to Take must be positive integer, not %.14g!", num);
   cognate_list obj = *pop(list);
   if unlikely(num_taking > (size_t)(obj.top - obj.start)) throw_error ("List of length %zu is too small to Take %zu elements from!", obj.top - obj.start, num_taking);
-  cognate_list* const lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
+  cognate_list* const lst = GC_NEW(cognate_list);
   lst->start = obj.start;
   lst->top = lst->start + num_taking;
   push(list, lst);
@@ -201,7 +201,7 @@ static void cognate_function_list() {
   // Eval expr
   expr();
   // Store the resultant list, GC_realloc-ing to fit snugly in memory.
-  cognate_list* const lst = (cognate_list*)cognate_malloc(sizeof(cognate_list));
+  cognate_list* const lst = GC_NEW(cognate_list);
   *lst = stack.items;
   // Restore the original stack
   stack = temp_stack;
@@ -216,7 +216,7 @@ static void cognate_function_characters() {
   // Can be rewritten using substring, albeit O(n^2)
   const char* str = pop(string);
   size_t length = mbstrlen(str);
-  cognate_list* const lst = (cognate_list*) cognate_malloc (sizeof(cognate_list));
+  cognate_list* const lst = GC_NEW(cognate_list);
   lst->top = lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * length);
   lst->top += length;
   for (size_t i = 0; i < length; ++i)
@@ -236,8 +236,8 @@ static void cognate_function_split() {
   const char* str = pop(string);
   size_t length = 1;
     for (const char* temp = str; (temp = strstr(temp, delimiter) + delim_size) - delim_size; ++length);
-  cognate_list* const lst = (cognate_list* const) cognate_malloc (sizeof(cognate_list));
-  lst->top = lst->start   = (cognate_object*)     cognate_malloc (sizeof(cognate_object) * length);
+  cognate_list* const lst = GC_NEW(cognate_list);
+  lst->top = lst->start   = (cognate_object*) cognate_malloc (sizeof(cognate_object) * length);
   lst->top += length;
   size_t i = 0;
   for (const char* c; (c = strstr(str, delimiter)); i++)
@@ -282,7 +282,7 @@ static void cognate_function_append() {
   const size_t list1_len = lst1.top - lst1.start;
   const size_t list2_len = lst2.top - lst2.start;
   const size_t new_lst_len = list1_len + list2_len;
-  cognate_list* const new_lst = (cognate_list* const) cognate_malloc (sizeof(cognate_list));
+  cognate_list* const new_lst = GC_NEW(cognate_list);
   new_lst->top = new_lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * new_lst_len);
   new_lst->top += new_lst_len;
   memmove(new_lst->start, lst2.start, list2_len * sizeof(cognate_object));
@@ -394,7 +394,7 @@ static void cognate_function_stack() {
   copy_blocks();
   const size_t len = stack.items.top - stack.items.start;
   const size_t bytes = len * sizeof(cognate_object);
-  cognate_list* lst = (cognate_list*) cognate_malloc (sizeof(cognate_list));
+  cognate_list* lst = GC_NEW(cognate_list);
   lst->start = (cognate_object*) cognate_malloc (bytes);
   lst->top = lst->start + len;
   memmove(lst->start, stack.items.start, bytes);
@@ -422,7 +422,7 @@ static void cognate_function_table() {
   cognate_function_list();
   const cognate_list init = *pop(list);
   const size_t table_size = ((init.top - init.start) * LIST_GROWTH_FACTOR);
-  cognate_table* const tab = (cognate_table*) cognate_malloc (sizeof(cognate_table)); // Need to allocate list here.
+  cognate_table* const tab = GC_NEW(cognate_table); // Need to allocate list here.
   tab->items.start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * table_size);
   tab->items.top = tab->items.start + table_size;
   tab->confirmation_hash = (unsigned long*) cognate_malloc (sizeof(unsigned long) * table_size);
@@ -441,7 +441,7 @@ static void cognate_function_insert() {
   // O(n) :(
   const char* const key = pop(string);
   const cognate_object value = pop_any();
-  cognate_table* const tab = (cognate_table*) cognate_malloc (sizeof(cognate_table));
+  cognate_table* const tab = GC_NEW(cognate_table);
   *tab = table_add(hash(key), value, table_copy(*pop(table)));
   push(table, tab);
 }
@@ -458,7 +458,7 @@ static void cognate_function_values() {
   // Resulting list is NOT in any order at all.
   // Equivilant tables may give differently ordered lists.
   const cognate_table tab = *pop(table);
-  cognate_list* const lst = (cognate_list*) cognate_malloc (sizeof(cognate_list));
+  cognate_list* const lst = GC_NEW(cognate_list);
   const long table_size = tab.items.top - tab.items.start;
   lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * table_size);
   int j = 0;
