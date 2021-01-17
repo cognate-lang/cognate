@@ -21,7 +21,7 @@ If (X, == 1) (
 );
 Else (
   Print 'FAIL: Variable shadowing in block'
-); 
+);
 
 Do (
   Set X to 3;

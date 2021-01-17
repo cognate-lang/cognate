@@ -222,10 +222,7 @@ static void cognate_function_characters() {
   for (size_t i = 0; i < length; ++i)
   {
     size_t char_len = mblen(str, MB_CUR_MAX);
-    char* const temp = (char*) cognate_malloc (char_len+1);
-    memmove(temp, str, char_len);
-    temp[char_len] = '\0';
-    lst->start[i] = (cognate_object) {.type=string, .string=temp};
+    lst->start[i] = (cognate_object) {.type=string, .string=GC_STRNDUP(str, char_len)};
     str += char_len;
   }
   push(list, lst);
@@ -245,10 +242,7 @@ static void cognate_function_split() {
   size_t i = 0;
   for (const char* c; (c = strstr(str, delimiter)); i++)
   {
-    char* const buf = (char* const) cognate_malloc (c - str + 1);
-    strncpy(buf, str, c - str);
-    buf[c - str] = '\0';
-    lst->start[i] = (cognate_object) {.type=string, .string=buf};
+    lst->start[i] = (cognate_object) {.type=string, .string=GC_STRNDUP(str, c - str)};
     str = c + delim_size;
   }
   lst->start[i] = (cognate_object) {.type=string, .string=str};
@@ -342,10 +336,7 @@ static void cognate_function_substring() {
   }
   else
   {
-    char* const sub_str = (char* const) cognate_malloc (str_size + 1);
-    memmove(sub_str, str, str_size);
-    sub_str[str_size] = '\0';
-    push(string, sub_str);
+    push(string, GC_STRNDUP(str, str_size));
   }
 }
 
@@ -363,10 +354,8 @@ static void cognate_function_input() {
   size_t size = 0;
   char* buf;
   getline(&buf, &size, stdin);
-  char* const text = (char* const) cognate_malloc (size); // Does size include room for '\0'?
-  strcpy(text, buf);
+  push(string, GC_STRDUP(buf));
   free(buf);
-  push(string, text);
 }
 
 static void cognate_function_read() {
@@ -397,10 +386,8 @@ static void cognate_function_path() {
   {
     throw_error("Cannot get executable path!");
   }
-  const size_t len = strlen(buf);
-  char* const path = (char* const) cognate_malloc(len + 1);
-  strcpy(path, buf);
-  push(string, path);
+  push(string, GC_STRDUP(buf));
+  free(buf);
 }
 
 static void cognate_function_stack() {

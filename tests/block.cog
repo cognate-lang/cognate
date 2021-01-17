@@ -1,6 +1,7 @@
 Define Foo as
 (
   Let X;
+  Set X to X;
   (Print X);
 );
 
