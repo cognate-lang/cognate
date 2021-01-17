@@ -54,14 +54,10 @@ static const float LIST_GROWTH_FACTOR = 1.5;
     stack.uncopied_blocks += temp_blocks; \
   }
 
-#ifndef noGC
-  #define cognate_malloc  GC_malloc
-  #define cognate_realloc GC_realloc
-  #define cognate_malloc_atomic GC_malloc_atomic
-#else
-  #define cognate_malloc  malloc
-  #define cognate_realloc realloc
-  #define cognate_malloc_atomic malloc
+#ifdef noGC
+  #define GC_MALLOC  malloc
+  #define GC_REALLOC realloc
+  #define GC_REALLOC_ATOMIC malloc
 #endif
 
 #define unlikely(expr) (__builtin_expect((_Bool)(expr), 0))

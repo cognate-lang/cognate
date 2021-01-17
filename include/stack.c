@@ -41,7 +41,7 @@ static void init_stack()
   // Allocate dynamic stack memory.
   stack.uncopied_blocks = 0;
   stack.items.top = stack.items.start =
-    (cognate_object*) cognate_malloc ((stack.size = INITIAL_LIST_SIZE) * sizeof(cognate_object));
+    (cognate_object*) GC_MALLOC ((stack.size = INITIAL_LIST_SIZE) * sizeof(cognate_object));
 }
 
 static void push_any(cognate_object object)
@@ -74,7 +74,7 @@ static void expand_stack()
 {
   // New stack size = current stack size * growth factor.
   // Assumes that stack is currently of length stack.size.
-  stack.items.start = (cognate_object*) cognate_realloc (stack.items.start, stack.size * LIST_GROWTH_FACTOR * sizeof(cognate_object));
+  stack.items.start = (cognate_object*) GC_REALLOC (stack.items.start, stack.size * LIST_GROWTH_FACTOR * sizeof(cognate_object));
   stack.items.top = stack.items.start + stack.size;
   stack.size *= LIST_GROWTH_FACTOR;
 }

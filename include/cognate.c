@@ -56,7 +56,7 @@ int main(int argc, char** argv)
   }
   srandom(ts.tv_nsec ^ ts.tv_sec); // TODO make random more random.
   // Load parameters
-  params.start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * (argc-1));
+  params.start = (cognate_object*) GC_MALLOC (sizeof(cognate_object) * (argc-1));
   params.top = params.start + argc - 1;
   while (argc --> 1)
   {

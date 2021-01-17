@@ -206,7 +206,7 @@ static void cognate_function_list() {
   // Restore the original stack
   stack = temp_stack;
   const long lst_len = lst->top - lst->start;
-  lst->start = cognate_realloc(lst->start, lst_len * sizeof(cognate_object));
+  lst->start = GC_REALLOC(lst->start, lst_len * sizeof(cognate_object));
   lst->top = lst->start + lst_len;
   // Push the created list to the stack
   push(list, lst);
@@ -217,7 +217,7 @@ static void cognate_function_characters() {
   const char* str = pop(string);
   size_t length = mbstrlen(str);
   cognate_list* const lst = GC_NEW(cognate_list);
-  lst->top = lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * length);
+  lst->top = lst->start = (cognate_object*) GC_MALLOC (sizeof(cognate_object) * length);
   lst->top += length;
   for (size_t i = 0; i < length; ++i)
   {
@@ -237,7 +237,7 @@ static void cognate_function_split() {
   size_t length = 1;
     for (const char* temp = str; (temp = strstr(temp, delimiter) + delim_size) - delim_size; ++length);
   cognate_list* const lst = GC_NEW(cognate_list);
-  lst->top = lst->start   = (cognate_object*) cognate_malloc (sizeof(cognate_object) * length);
+  lst->top = lst->start   = (cognate_object*) GC_MALLOC (sizeof(cognate_object) * length);
   lst->top += length;
   size_t i = 0;
   for (const char* c; (c = strstr(str, delimiter)); i++)
@@ -256,14 +256,14 @@ static void cognate_function_split_regex() {
   regmatch_t pmatch[2];
   regex_t reg;
   regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE);
-  cognate_list* lst = cognate_malloc (sizeof(cognate_list));
-  lst->start = cognate_malloc (sizeof(cognate_object) * strlen(str)); // TODO
+  cognate_list* lst = GC_MALLOC (sizeof(cognate_list));
+  lst->start = GC_MALLOC (sizeof(cognate_object) * strlen(str)); // TODO
   lst->top = lst->start;
   while (regexec(&reg, str, 1, pmatch, 0) != REG_NOMATCH)
   {
     const size_t match_start = pmatch[0].rm_so;
     const size_t match_len = pmatch[0].rm_eo - match_start;
-    char* buf = cognate_malloc(match_start + 1);
+    char* buf = GC_MALLOC(match_start + 1);
     strncpy(buf, str, match_start);
     buf[match_start] = '\0';
     *lst->top++ = (cognate_object) {.type=string, .string=buf};
@@ -283,7 +283,7 @@ static void cognate_function_append() {
   const size_t list2_len = lst2.top - lst2.start;
   const size_t new_lst_len = list1_len + list2_len;
   cognate_list* const new_lst = GC_NEW(cognate_list);
-  new_lst->top = new_lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * new_lst_len);
+  new_lst->top = new_lst->start = (cognate_object*) GC_MALLOC (sizeof(cognate_object) * new_lst_len);
   new_lst->top += new_lst_len;
   memmove(new_lst->start, lst2.start, list2_len * sizeof(cognate_object));
   memmove(new_lst->start+list2_len, lst1.start, list1_len * sizeof(cognate_object));
@@ -298,7 +298,7 @@ static void cognate_function_suffix() {
   const size_t str1_size = strlen(str1);
   const size_t str2_size = strlen(str2);
   const size_t new_string_size = str1_size + str2_size;
-  char* const new_str = (char* const) cognate_malloc (new_string_size);
+  char* const new_str = (char* const) GC_MALLOC (new_string_size);
   memmove(new_str, str2, str2_size);
   memmove(new_str+str2_size, str1, str1_size);
   push(string, new_str);
@@ -366,7 +366,7 @@ static void cognate_function_read() {
   fseek(fp, 0L, SEEK_END);
   size_t file_size = ftell(fp);
   rewind(fp);
-  char *text = (char*) cognate_malloc (file_size);
+  char *text = (char*) GC_MALLOC (file_size);
   fread(text, sizeof(char), file_size, fp);
   fclose(fp);
   text[file_size-1] = '\0'; // Remove trailing eof.
@@ -395,7 +395,7 @@ static void cognate_function_stack() {
   const size_t len = stack.items.top - stack.items.start;
   const size_t bytes = len * sizeof(cognate_object);
   cognate_list* lst = GC_NEW(cognate_list);
-  lst->start = (cognate_object*) cognate_malloc (bytes);
+  lst->start = (cognate_object*) GC_MALLOC (bytes);
   lst->top = lst->start + len;
   memmove(lst->start, stack.items.start, bytes);
   push(list, lst);
@@ -423,9 +423,9 @@ static void cognate_function_table() {
   const cognate_list init = *pop(list);
   const size_t table_size = ((init.top - init.start) * LIST_GROWTH_FACTOR);
   cognate_table* const tab = GC_NEW(cognate_table); // Need to allocate list here.
-  tab->items.start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * table_size);
+  tab->items.start = (cognate_object*) GC_MALLOC (sizeof(cognate_object) * table_size);
   tab->items.top = tab->items.start + table_size;
-  tab->confirmation_hash = (unsigned long*) cognate_malloc (sizeof(unsigned long) * table_size);
+  tab->confirmation_hash = (unsigned long*) GC_MALLOC (sizeof(unsigned long) * table_size);
   const char *key;
   cognate_object value;
   for (const cognate_object *i = init.start + 1; i < init.top; i += 2)
@@ -460,7 +460,7 @@ static void cognate_function_values() {
   const cognate_table tab = *pop(table);
   cognate_list* const lst = GC_NEW(cognate_list);
   const long table_size = tab.items.top - tab.items.start;
-  lst->start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * table_size);
+  lst->start = (cognate_object*) GC_MALLOC (sizeof(cognate_object) * table_size);
   int j = 0;
   for (int i = 0; i < table_size; ++i)
   {
@@ -514,7 +514,7 @@ static void cognate_function_character() {
   const double d = pop(number);
   const int i = d;
   if unlikely(i != d) throw_error("Cannot convert %.14g to UTF8 character!", d);
-  char* const str = (char* const) cognate_malloc (MB_CUR_MAX + 1);
+  char* const str = (char* const) GC_MALLOC (MB_CUR_MAX + 1);
   wctomb(str, i);
   push(string, str);
 }

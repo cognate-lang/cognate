@@ -82,10 +82,10 @@ static cognate_table table_grow(const cognate_table tab)
   const size_t table_size = tab.items.top - tab.items.start;
   const size_t new_table_size = table_size * LIST_GROWTH_FACTOR;
   cognate_table tab2;
-  tab2.items.start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * new_table_size);
+  tab2.items.start = (cognate_object*) GC_MALLOC (sizeof(cognate_object) * new_table_size);
   tab2.items.top = tab2.items.start + new_table_size;
-  // Segfaults with normal cognate_malloc() for some reason.
-  tab2.confirmation_hash = (unsigned long*) cognate_malloc_atomic (sizeof(unsigned long) * new_table_size);
+  // Segfaults with normal GC_MALLOC() for some reason.
+  tab2.confirmation_hash = (unsigned long*) GC_MALLOC_ATOMIC (sizeof(unsigned long) * new_table_size);
   for (size_t i = 0; i < table_size; ++i)
   {
     if (tab.items.start[i].type != NOTHING)
@@ -102,9 +102,9 @@ static cognate_table table_copy(const cognate_table tab)
   // This means performance of Insert function is pretty bad.
   const size_t table_size = tab.items.top - tab.items.start;
   cognate_table tab2;
-  tab2.items.start = (cognate_object*) cognate_malloc (sizeof(cognate_object) * table_size);
+  tab2.items.start = (cognate_object*) GC_MALLOC (sizeof(cognate_object) * table_size);
   tab2.items.top = tab2.items.start + table_size;
-  tab2.confirmation_hash = (unsigned long*) cognate_malloc (sizeof(unsigned long) * table_size);
+  tab2.confirmation_hash = (unsigned long*) GC_MALLOC (sizeof(unsigned long) * table_size);
   memmove(tab2.items.start, tab.items.start, table_size * sizeof(cognate_object));
   memmove(tab2.confirmation_hash, tab.confirmation_hash, table_size * sizeof(unsigned long));
   return tab2;
