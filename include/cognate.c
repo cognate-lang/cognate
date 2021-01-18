@@ -12,7 +12,6 @@ static cognate_object check_block(cognate_object);
 static void copy_blocks();
 static void check_call_stack();
 
-
 #include "table.c"
 #include "stack.c"
 #include "io.c"
@@ -27,6 +26,15 @@ static void check_call_stack();
 #include <locale.h>
 #ifndef noGC
 #include <gc/gc.h>
+#endif
+
+#ifdef blockGC
+#include <Block_private.h>
+BLOCK_EXPORT void* blk_alloc(const unsigned long size, __attribute__((unused)) const _Bool _, __attribute__((unused)) const _Bool __) { return GC_MALLOC(size); }
+BLOCK_EXPORT void blk_setHasRefcount(__attribute__((unused)) const void* _, __attribute__((unused)) const _Bool __) {}
+BLOCK_EXPORT void blk_gc_assign_strong(void* src, void** dst) { *dst = src; }
+BLOCK_EXPORT void blk_gc_assign_weak(const void* src, void* dst) { *(void**)dst = (void*)src; }
+BLOCK_EXPORT void blk_gc_memmove(void* dst, void* src, unsigned long size) { memmove(dst, src, size); }
 #endif
 
 static struct rlimit stack_max;
@@ -48,6 +56,9 @@ int main(int argc, char** argv)
   // Init GC
 #ifndef noGC
   GC_INIT();
+#ifdef blockGC
+  _Block_use_GC(blk_alloc, blk_setHasRefcount, blk_gc_assign_strong, blk_gc_assign_weak, blk_gc_memmove);
+#endif
 #endif
   // Seed the random number generator properly.
   struct timespec ts;
