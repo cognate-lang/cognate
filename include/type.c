@@ -28,13 +28,14 @@ static const char* lookup_type(cognate_type type)
   //return types+(type << 3);
   switch(type)
   {
-    case NOTHING: return "NOTHING";
-    case block  : return "Block";
-    case boolean: return "Boolean";
-    case string : return "String";
-    case number : return "Number";
-    case list   : return "List";
-    case table  : return "Table";
+    case NOTHING    : return "NOTHING";
+    case boolean    : return "Boolean";
+    case string     : return "String";
+    case number     : return "Number";
+    case list       : return "List";
+    case table      : return "Table";
+    case block      : return "Block";
+    case heap_block : return "Block";
   }
 }
 
@@ -74,13 +75,14 @@ static _Bool compare_objects(cognate_object ob1, cognate_object ob2)
   }
   switch (ob1.type)
   {
-    case number:  return ob1.number  == ob2.number;
-    case boolean: return ob1.boolean == ob2.boolean;
-    case string:  return strcoll(ob1.string, ob2.string) == 0;
-    case list:    return compare_lists(*ob1.list, *ob2.list);
-    case table:   return compare_tables(*ob1.table, *ob2.table);
-    case block:   throw_error("Cannot compare blocks!");
-    case NOTHING: throw_error("Cognate should not be in this state - compiler bug!");
+    case number     : return ob1.number  == ob2.number;
+    case boolean    : return ob1.boolean == ob2.boolean;
+    case string     : return strcoll(ob1.string, ob2.string) == 0;
+    case list       : return compare_lists(*ob1.list, *ob2.list);
+    case table      : return compare_tables(*ob1.table, *ob2.table);
+    case NOTHING    : throw_error("Cognate should not be in this state - compiler bug!");
+    case block      : throw_error("Cannot compare blocks!");
+    case heap_block : throw_error("Cannot compare blocks!");
   }
 }
 

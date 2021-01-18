@@ -1,14 +1,27 @@
+Define Baz as
+(
+  Let Z;
+  (Do Z);
+);
+
+
+Define Bar as
+(
+  Let Y;
+  Baz (Do Y);
+);
+
 Define Foo as
 (
   Let X;
-  Set X to X;
-  (Print X);
+  ~~Set X to X;
+  Bar (Print X);
 );
+
 
 Foo 'PASS: Implicit block copying';
 Foo 'FAIL: Implicit block copying';
 Drop, Do;
-
 
 
 Let Y be ();

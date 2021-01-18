@@ -90,25 +90,24 @@ int main(int argc, char** argv)
   if unlikely(stack.items.top != stack.items.start)
   {
     word_name = NULL;
-    function_name = NULL;
     throw_error("Program exiting with non-empty stack of length %ti", stack.items.top - stack.items.start);
   }
 }
 
 static cognate_object check_block(cognate_object obj)
 {
-  if unlikely(obj.type==block) obj.block = Block_copy(obj.block);
+  if unlikely(obj.type == block) obj.block = Block_copy(obj.block), obj.type = heap_block;
   return obj;
 }
 
 static void copy_blocks()
 {
-  //printf("Copying %zi blocks", stack.uncopied_blocks);
-  for (cognate_object* obj = stack.items.top; stack.uncopied_blocks > 0; --obj)
+  for (cognate_object* obj = stack.items.top - 1; stack.uncopied_blocks; --obj)
   {
-    if unlikely(obj->type==block)
+    if unlikely(obj->type == block)
     {
       obj->block = Block_copy(obj->block); // Copy block to heap.
+      obj->type = heap_block;
       --stack.uncopied_blocks;
     }
   }

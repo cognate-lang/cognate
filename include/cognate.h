@@ -35,7 +35,7 @@ static const float LIST_GROWTH_FACTOR = 1.5;
 
 // Internal cognate variable.
 #define variable(name, flags) \
-  const cognate_object cognate_variable_ ## name = pop_any(); \
+  const cognate_object cognate_variable_ ## name = check_block(pop_any()); \
   flags cognate_block cognate_function_ ## name = ^{ push_any(cognate_variable_ ## name); };
 
 // Mutate internal variable.
@@ -45,13 +45,9 @@ static const float LIST_GROWTH_FACTOR = 1.5;
 
 #define make_block(docopy, body) \
   ^{ \
-    /* Temp variables causes ~10% performance loss :( */ \
-    const ptrdiff_t temp_blocks = stack.uncopied_blocks; \
-    stack.uncopied_blocks = 0; \
     __attribute__((unused)) char if_status = 2; \
     body \
     copy_blocks(); \
-    stack.uncopied_blocks += temp_blocks; \
   }
 
 #ifdef noGC

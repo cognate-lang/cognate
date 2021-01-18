@@ -144,11 +144,11 @@ static void cognate_function_exceed()         { push(boolean, pop(number) <  pop
 static void cognate_function_equalorpreceed() { push(boolean, pop(number) >= pop(number)); }
 static void cognate_function_equalorexceed()  { push(boolean, pop(number) <= pop(number)); }
 
-static void cognate_function_number_()  { push(boolean, pop_any().type == number);  } // Question marks are converted to underscores.
-static void cognate_function_list_()    { push(boolean, pop_any().type == list);    } // However all other symbols are too.
-static void cognate_function_string_()  { push(boolean, pop_any().type == string);  } // So this is a temporary hack!
-static void cognate_function_block_()   { push(boolean, pop_any().type == block);   }
-static void cognate_function_boolean_() { push(boolean, pop_any().type == boolean); }
+static void cognate_function_number_()  { push(boolean, pop_any().type & number);  } // Question marks are converted to underscores.
+static void cognate_function_list_()    { push(boolean, pop_any().type & list);    } // However all other symbols are too.
+static void cognate_function_string_()  { push(boolean, pop_any().type & string);  } // So this is a temporary hack!
+static void cognate_function_block_()   { push(boolean, pop_any().type & block);   }
+static void cognate_function_boolean_() { push(boolean, pop_any().type & boolean); }
 
 static void cognate_function_discard() {
   // O(n) where n is the number of element being Discarded.
