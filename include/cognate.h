@@ -41,7 +41,7 @@ static const float LIST_GROWTH_FACTOR = 1.5;
 // Mutate internal variable.
 #define mutate_variable(name) \
   const cognate_object cognate_variable_ ## name = check_block(pop_any()); \
-  cognate_function_##name = Block_copy(^{ push_any(cognate_variable_ ## name); }); \
+  cognate_function_##name = Block_copy(^{ push_any(cognate_variable_ ## name); }); // fsanitize=address goes crazy here.
 
 #define make_block(docopy, body) \
   ^{ \
@@ -55,9 +55,12 @@ static const float LIST_GROWTH_FACTOR = 1.5;
   }
 
 #ifdef noGC
+  #define GC_MALLOC_ATOMIC malloc
   #define GC_MALLOC  malloc
   #define GC_REALLOC realloc
-  #define GC_REALLOC_ATOMIC malloc
+  #define GC_STRNDUP strndup
+  #define GC_STRDUP  strdup
+  #define GC_NEW(t)  ((t*) malloc (sizeof(t)))
 #endif
 
 #define unlikely(expr) (__builtin_expect((_Bool)(expr), 0))

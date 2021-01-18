@@ -12,6 +12,7 @@ static cognate_object check_block(cognate_object);
 static void copy_blocks();
 static void check_call_stack();
 
+
 #include "table.c"
 #include "stack.c"
 #include "io.c"
@@ -119,5 +120,4 @@ static void check_call_stack()
     old_stack_size = stack_start - &stack_end;
   }
 }
-
 #endif

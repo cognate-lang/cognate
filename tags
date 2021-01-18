@@ -6,8 +6,15 @@
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
 COGNATE_C	include/cognate.c	2;"	d	file:
 COGNATE_H	include/cognate.h	2;"	d
+DIGITS	include/cognate.h	13;"	d
 ERROR_C	include/error.c	2;"	d	file:
 FUNC_C	include/func.c	2;"	d	file:
+GC_MALLOC	include/cognate.h	59;"	d
+GC_MALLOC_ATOMIC	include/cognate.h	58;"	d
+GC_NEW	include/cognate.h	63;"	d
+GC_REALLOC	include/cognate.h	60;"	d
+GC_STRDUP	include/cognate.h	62;"	d
+GC_STRNDUP	include/cognate.h	61;"	d
 INITIAL_LIST_SIZE	include/cognate.h	/^static const int INITIAL_LIST_SIZE = 16;$/;"	v
 INITIAL_READ_SIZE	include/cognate.h	/^static const int INITIAL_READ_SIZE = 64;$/;"	v
 IO_C	include/io.c	2;"	d	file:
@@ -19,9 +26,9 @@ TYPE_C	include/type.c	2;"	d	file:
 TYPE_H	include/types.h	2;"	d
 _GNU_SOURCE	include/cognate.h	4;"	d
 block	include/types.h	/^    cognate_block block;               \/\/ 64bit block pointer$/;"	m	union:cognate_object::__anon1
-block	include/types.h	/^  block   = 1, $/;"	e	enum:cognate_type
+block	include/types.h	/^  block   = (1 << 0),$/;"	e	enum:cognate_type
 boolean	include/types.h	/^    _Bool boolean;                     \/\/  1bit bool$/;"	m	union:cognate_object::__anon1
-boolean	include/types.h	/^  boolean = 2, $/;"	e	enum:cognate_type
+boolean	include/types.h	/^  boolean = (1 << 1),$/;"	e	enum:cognate_type
 call	include/func.c	9;"	d	file:
 check_block	include/cognate.c	/^static cognate_object check_block(cognate_object obj)$/;"	f	file:
 check_call_stack	include/cognate.c	/^static void check_call_stack()$/;"	f	file:
@@ -41,9 +48,9 @@ cognate_function_do	include/func.c	/^static void cognate_function_do() { pop(blo
 cognate_function_drop	include/func.c	/^static void cognate_function_drop()    { pop_any(); } \/\/ These can be defined within cognate.$/;"	f	file:
 cognate_function_either	include/func.c	/^static void cognate_function_either() { push(boolean, pop(boolean) + pop(boolean)); } \/\/ Use unconventional operators to avoid short-circuits.$/;"	f	file:
 cognate_function_else	include/func.c	/^static void cognate_function_else(char* const if_status)$/;"	f	file:
-cognate_function_else	include/func.c	53;"	d	file:
+cognate_function_else	include/func.c	55;"	d	file:
 cognate_function_elseif	include/func.c	/^static void cognate_function_elseif(char* const if_status)$/;"	f	file:
-cognate_function_elseif	include/func.c	70;"	d	file:
+cognate_function_elseif	include/func.c	72;"	d	file:
 cognate_function_equal	include/func.c	/^static void cognate_function_equal()          { push(boolean,  compare_objects(pop_any(),pop_any())); }$/;"	f	file:
 cognate_function_equalorexceed	include/func.c	/^static void cognate_function_equalorexceed()  { push(boolean, pop(number) <= pop(number)); }$/;"	f	file:
 cognate_function_equalorpreceed	include/func.c	/^static void cognate_function_equalorpreceed() { push(boolean, pop(number) >= pop(number)); }$/;"	f	file:
@@ -53,7 +60,7 @@ cognate_function_false	include/func.c	/^static void cognate_function_false() { p
 cognate_function_floor	include/func.c	/^static void cognate_function_floor() {$/;"	f	file:
 cognate_function_get	include/func.c	/^static void cognate_function_get() {$/;"	f	file:
 cognate_function_if	include/func.c	/^static void cognate_function_if(char* const if_status)$/;"	f	file:
-cognate_function_if	include/func.c	38;"	d	file:
+cognate_function_if	include/func.c	40;"	d	file:
 cognate_function_index	include/func.c	/^static void cognate_function_index() {$/;"	f	file:
 cognate_function_input	include/func.c	/^static void cognate_function_input() {$/;"	f	file:
 cognate_function_insert	include/func.c	/^static void cognate_function_insert() {$/;"	f	file:
@@ -98,14 +105,8 @@ cognate_function_while	include/func.c	/^static void cognate_function_while() {$/
 cognate_function_write	include/func.c	/^static void cognate_function_write() {$/;"	f	file:
 cognate_list	include/types.h	/^struct cognate_list$/;"	s
 cognate_list	include/types.h	/^typedef struct cognate_list   cognate_list;$/;"	t	typeref:struct:cognate_list
-cognate_malloc	include/cognate.h	56;"	d
-cognate_malloc	include/cognate.h	60;"	d
-cognate_malloc_atomic	include/cognate.h	58;"	d
-cognate_malloc_atomic	include/cognate.h	62;"	d
 cognate_object	include/types.h	/^struct cognate_object$/;"	s
 cognate_object	include/types.h	/^typedef struct cognate_object cognate_object;$/;"	t	typeref:struct:cognate_object
-cognate_realloc	include/cognate.h	57;"	d
-cognate_realloc	include/cognate.h	61;"	d
 cognate_stack	include/stack.c	/^struct cognate_stack$/;"	s	file:
 cognate_stack	include/stack.c	/^typedef struct cognate_stack cognate_stack;$/;"	t	typeref:struct:cognate_stack	file:
 cognate_table	include/types.h	/^struct cognate_table$/;"	s
@@ -118,46 +119,48 @@ compare_tables	include/type.c	/^static _Bool compare_tables(const cognate_table 
 confirmation_hash	include/types.h	/^  long unsigned int* confirmation_hash;$/;"	m	struct:cognate_table
 copy_blocks	include/cognate.c	/^static void copy_blocks()$/;"	f	file:
 expand_stack	include/stack.c	/^static void expand_stack()$/;"	f	file:
-function	include/cognate.h	21;"	d
+function	include/cognate.h	23;"	d
 function_name	include/error.c	/^static const char* function_name = NULL;$/;"	v	file:
+functions	examples/fizzbuzz.c	/^Import Builtin functions;$/;"	v
 handle_signal	include/error.c	/^static void handle_signal(int sig)$/;"	f	file:
 hash	include/table.c	/^static unsigned long hash(const char *str)$/;"	f	file:
 if_status	include/cognate.c	/^static __attribute__((unused)) char if_status = 2;$/;"	v	file:
-immutable	include/cognate.h	17;"	d
+immutable	include/cognate.h	19;"	d
 init_stack	include/stack.c	/^static void init_stack()$/;"	f	file:
-items	include/stack.c	/^  cognate_list items;     \/\/ The list holding the stack itself.$/;"	m	struct:cognate_stack	file:
+items	include/stack.c	/^  cognate_list items;   \/\/ The list holding the stack itself.$/;"	m	struct:cognate_stack	file:
 items	include/types.h	/^  struct cognate_list items;$/;"	m	struct:cognate_table	typeref:struct:cognate_table::cognate_list
-likely	include/cognate.h	66;"	d
+likely	include/cognate.h	67;"	d
 list	include/types.h	/^    const struct cognate_list  *list;  \/\/ 64bit list pointer$/;"	m	union:cognate_object::__anon1	typeref:struct:cognate_object::__anon1::cognate_list
-list	include/types.h	/^  list    = 5,$/;"	e	enum:cognate_type
+list	include/types.h	/^  list    = (1 << 4),$/;"	e	enum:cognate_type
 lookup_type	include/type.c	/^static const char* lookup_type(cognate_type type)$/;"	f	file:
 main	include/cognate.c	/^int main(int argc, char** argv)$/;"	f
-make_block	include/cognate.h	44;"	d
+make_block	include/cognate.h	46;"	d
 mbstrlen	include/type.c	/^static size_t mbstrlen(const char* str)$/;"	f	file:
-mutable	include/cognate.h	18;"	d
-mutate_function	include/cognate.h	31;"	d
-mutate_variable	include/cognate.h	40;"	d
+mutable	include/cognate.h	20;"	d
+mutate_function	include/cognate.h	33;"	d
+mutate_variable	include/cognate.h	42;"	d
 number	include/types.h	/^    double number;                     \/\/ 64bit float$/;"	m	union:cognate_object::__anon1
-number	include/types.h	/^  number  = 4, $/;"	e	enum:cognate_type
+number	include/types.h	/^  number  = (1 << 3),$/;"	e	enum:cognate_type
 params	include/func.c	/^static cognate_list params;$/;"	v	file:
 peek	include/stack.c	20;"	d	file:
 peek_any	include/stack.c	/^static cognate_object peek_any()$/;"	f	file:
 pop	include/stack.c	17;"	d	file:
 pop_any	include/stack.c	/^static cognate_object pop_any()$/;"	f	file:
 print_object	include/io.c	/^static void print_object (const cognate_object object, const _Bool quotes)$/;"	f	file:
-program	include/cognate.h	13;"	d
+program	include/cognate.h	15;"	d
 push	include/stack.c	14;"	d	file:
 push_any	include/stack.c	/^static void push_any(cognate_object object)$/;"	f	file:
 run_program	examples/test.c	/^void run_program()$/;"	f
-size	include/stack.c	/^  ptrdiff_t    size;      \/\/ Allocated size of the stack.$/;"	m	struct:cognate_stack	file:
+size	include/stack.c	/^  ptrdiff_t    size;    \/\/ Allocated size of the stack.$/;"	m	struct:cognate_stack	file:
 stack	include/stack.c	/^static cognate_stack stack;$/;"	v	file:
 stack_max	include/cognate.c	/^static struct rlimit stack_max;$/;"	v	typeref:struct:rlimit	file:
 stack_start	include/cognate.c	/^static const char *stack_start;$/;"	v	file:
 start	include/types.h	/^  struct cognate_object* start;$/;"	m	struct:cognate_list	typeref:struct:cognate_list::cognate_object
+step	examples/fizzbuzz.c	/^(FizzBuzz), For each in Range from 1 to 100 with step 1;$/;"	v
 string	include/types.h	/^    const char* string;                \/\/ 64bit string pointer$/;"	m	union:cognate_object::__anon1
-string	include/types.h	/^  string  = 3, $/;"	e	enum:cognate_type
+string	include/types.h	/^  string  = (1 << 2),$/;"	e	enum:cognate_type
 table	include/types.h	/^    const struct cognate_table *table; \/\/ 64bit table pointer$/;"	m	union:cognate_object::__anon1	typeref:struct:cognate_object::__anon1::cognate_table
-table	include/types.h	/^  table   = 6,$/;"	e	enum:cognate_type
+table	include/types.h	/^  table   = (1 << 5)$/;"	e	enum:cognate_type
 table_add	include/table.c	/^static cognate_table table_add(const unsigned long key_hash, const cognate_object value, cognate_table tab)$/;"	f	file:
 table_c	include/table.c	2;"	d	file:
 table_copy	include/table.c	/^static cognate_table table_copy(const cognate_table tab)$/;"	f	file:
@@ -166,8 +169,8 @@ table_get_hash	include/table.c	/^static cognate_object table_get_hash(const unsi
 table_grow	include/table.c	/^static cognate_table table_grow(const cognate_table tab)$/;"	f	file:
 throw_error	include/error.c	/^__attribute__((noreturn)) static void throw_error(const char* const fmt, ...)$/;"	f	file:
 top	include/types.h	/^  struct cognate_object* top;$/;"	m	struct:cognate_list	typeref:struct:cognate_list::cognate_object
-type	include/types.h	/^  cognate_type type : 4;$/;"	m	struct:cognate_object
-uncopied_blocks	include/stack.c	/^  size_t uncopied_blocks; \/\/ Number of cognate_blocks this function has produced that are not on the heap.$/;"	m	struct:cognate_stack	file:
-unlikely	include/cognate.h	65;"	d
-variable	include/cognate.h	35;"	d
+type	include/types.h	/^  cognate_type type : 8;$/;"	m	struct:cognate_object
+uncopied_blocks	include/stack.c	/^  long uncopied_blocks; \/\/ Number of cognate_blocks this function has produced (or consumed).$/;"	m	struct:cognate_stack	file:
+unlikely	include/cognate.h	66;"	d
+variable	include/cognate.h	37;"	d
 word_name	include/error.c	/^static const char* word_name = NULL;$/;"	v	file:
