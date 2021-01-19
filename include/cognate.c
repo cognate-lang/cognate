@@ -102,6 +102,7 @@ static cognate_object check_block(cognate_object obj)
 
 static void copy_blocks()
 {
+  //printf("Copying %li blocks\n", stack.uncopied_blocks);
   for (cognate_object* obj = stack.items.top - 1; stack.uncopied_blocks; --obj)
   {
     if unlikely(obj->type == block)

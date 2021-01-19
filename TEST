@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Config options
+LEAKCHECK=0
+
 # Colour codes for printing
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -29,7 +32,8 @@ do
   # Clear log file
   rm -f $log_file
   # Compile
-  ./cognac $source_file -O0 "$@" > /tmp/cognac.log 2>&1
+  export ASAN_OPTIONS=detect_leaks=$LEAKCHECK # Ignore memory leaks, since Block_copy will leak without block GC.
+  ./cognac $source_file -O0 -fsanitize=address "$@" > /tmp/cognac.log 2>&1
   # Check if file exists (successful compilation)
   if test -f $binary_file; then
     # Run - outputting to logfile
