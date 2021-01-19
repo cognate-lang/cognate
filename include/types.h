@@ -43,7 +43,7 @@ struct cognate_object
     const char* string;                // 64bit string pointer
     _Bool boolean;                     //  1bit bool
     cognate_block block;               // 64bit block pointer
-    cognate_block stack_block;               // 64bit block pointer
+    cognate_block stack_block;         // 64bit block pointer
     double number;                     // 64bit float
     const struct cognate_list  *list;  // 64bit list pointer
     const struct cognate_table *table; // 64bit table pointer

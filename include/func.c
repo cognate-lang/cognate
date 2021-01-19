@@ -134,7 +134,7 @@ static void cognate_function_false() { push(boolean, 0); }
 static void cognate_function_either() { push(boolean, pop(boolean) + pop(boolean)); } // Use unconventional operators to avoid short-circuits.
 static void cognate_function_both()   { push(boolean, pop(boolean) & pop(boolean)); }
 static void cognate_function_one_of() { push(boolean, pop(boolean) ^ pop(boolean)); }
-static void cognate_function_not()    { push(boolean, !pop(boolean)); }
+static void cognate_function_not()    { push(boolean,!pop(boolean)); }
 
 
 static void cognate_function_equal()          { push(boolean,  compare_objects(pop_any(),pop_any())); }
@@ -251,31 +251,6 @@ static void cognate_function_split() {
   push(list, lst);
 }
 
-/*
-static void cognate_function_split_regex() {
-  const char* reg_str = pop(string);
-  const char* str     = pop(string);
-  regmatch_t pmatch[2];
-  regex_t reg;
-  regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE);
-  cognate_list* lst = GC_MALLOC (sizeof(cognate_list));
-  lst->start = GC_MALLOC (sizeof(cognate_object) * strlen(str)); // TODO
-  lst->top = lst->start;
-  while (regexec(&reg, str, 1, pmatch, 0) != REG_NOMATCH)
-  {
-    const size_t match_start = pmatch[0].rm_so;
-    const size_t match_len = pmatch[0].rm_eo - match_start;
-    char* buf = GC_MALLOC(match_start + 1);
-    strncpy(buf, str, match_start);
-    buf[match_start] = '\0';
-    *lst->top++ = (cognate_object) {.type=string, .string=buf};
-    str += match_start + match_len;
-  }
-  *lst->top++ = (cognate_object) {.type=string, .string=str};
-  push(list, lst);
-}
-*/
-
 static void cognate_function_append() {
   // Joins a list to the end of another list.
   // Define Prepend (Swap, Append);
@@ -324,22 +299,21 @@ static void cognate_function_substring() {
   end -= start;
   for (;start != 0; --start)
   {
+    if unlikely(str[str_size] == '\0') throw_error("String is too small to take substring from!"); // TODO Show more info here.
     str += mblen(str, MB_CUR_MAX);
   }
   for (;end != 0; --end)
   {
-    if unlikely(str[str_size] == '\0') throw_error("String is too small (%li characters) to take substring from!", mbstrlen(str));
+    if unlikely(str[str_size] == '\0') throw_error("String is too small to take substring from!");
     str_size += mblen(str+str_size, MB_CUR_MAX);
   }
   if unlikely(str[str_size] == '\0')
   {
     // We don't need to make a new string here.
     push(string, str);
+    return;
   }
-  else
-  {
-    push(string, GC_STRNDUP(str, str_size));
-  }
+  push(string, GC_STRNDUP(str, str_size));
 }
 
 static void cognate_function_push() {
