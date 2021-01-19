@@ -299,7 +299,7 @@ static void cognate_function_substring() {
   end -= start;
   for (;start != 0; --start)
   {
-    if unlikely(str[str_size] == '\0') throw_error("String is too small to take substring from!"); // TODO Show more info here.
+    if unlikely(*str == '\0') throw_error("String is too small to take substring from!"); // TODO Show more info here.
     str += mblen(str, MB_CUR_MAX);
   }
   for (;end != 0; --end)
