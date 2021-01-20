@@ -122,7 +122,6 @@ static void cognate_function_random() {
   if unlikely((high - low) * step < 0 || !step)
   {
     throw_error("Cannot generate random number in range %.14g..%.14g with step %.14g", low, high, step);
-    return;
   }
   else if ((high - low) / step < 1)
   {
