@@ -26,6 +26,24 @@ static cognate_list params;
 #include <gc/gc.h>
 #endif
 
+static void cognate_function_when()
+{
+  // This is like If but simpler, with no internal state.
+  // For some reason it's slower though.
+  const cognate_block cond = pop(block);
+  const cognate_object a = pop_any();
+  const cognate_object b = pop_any();
+  cond();
+  if (pop(boolean))
+  {
+    push_any(a);
+  }
+  else
+  {
+    push_any(b);
+  }
+}
+
 static void cognate_function_if(char* const if_status)
 {
   // TODO: Else and ElseIf should only be allowed directly following an If.
