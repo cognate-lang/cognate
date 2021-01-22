@@ -5,10 +5,10 @@
 
 #include <stddef.h>
 
-#define MAX_TABLE_TRIES = 3;
-#define INITIAL_READ_SIZE = 64;
-#define INITIAL_LIST_SIZE = 16;
-#define LIST_GROWTH_FACTOR = 1.5;
+#define MAX_TABLE_TRIES 3
+#define INITIAL_READ_SIZE 64
+#define INITIAL_LIST_SIZE 16
+#define LIST_GROWTH_FACTOR 1.5
 
 #define DIGITS 14
 
