@@ -62,7 +62,7 @@ static void print_object (const cognate_object object, const _Bool quotes)
     case boolean: fputs(object.boolean ? "True" : "False", stdout); return;
     case block: printf("<Block %p>", (void*)object.block); return;
     case table: printf("<Table %p>", (void*)object.table); return;
-    default: throw_error("Cannot print object of unknown type %li. This may be a compiler bug!", object.type);
+    default: throw_error("Cannot print object of unknown type %i. This may be a compiler bug!", object.type);
   }
 }
 

@@ -535,7 +535,7 @@ static void cognate_function_assert() {
 static void cognate_function_error() {
   word_name = NULL;
   errno = 0;
-  throw_error(pop(string));
+  throw_error("%s", pop(string));
 }
 
 #endif
