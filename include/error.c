@@ -3,8 +3,7 @@
 
 #include "cognate.h"
 
-__attribute__((noreturn)) static void throw_error(const char* const, ...);
-static void debug_printf(__attribute__((unused)) const char*, ...);
+__attribute__((noreturn)) __attribute__((format(printf, 1, 2))) static void throw_error(const char* const, ...);
 static void handle_signal(int);
 
 #include <stdio.h>
@@ -21,7 +20,7 @@ static void handle_signal(int);
 static const char* function_name = NULL;
 static const char* word_name = NULL;
 
-__attribute__((noreturn)) static void throw_error(const char* const fmt, ...)
+__attribute__((noreturn)) __attribute__((format(printf, 1, 2))) static void throw_error(const char* const fmt, ...)
 {
   // TODO: Print top 5 stack elements.
   va_list args;
