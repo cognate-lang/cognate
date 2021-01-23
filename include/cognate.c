@@ -68,6 +68,9 @@ int main(int argc, char** argv)
   }
   srandom(ts.tv_nsec ^ ts.tv_sec); // TODO make random more random.
   // Load parameters
+  (void) argc;
+  (void) argv;
+  /*
   params.start = (cognate_object*) GC_MALLOC (sizeof(cognate_object) * (argc-1));
   params.top = params.start + argc - 1;
   while (argc --> 1)
@@ -75,6 +78,7 @@ int main(int argc, char** argv)
     char* str = argv[argc];
     params.start[argc-1] = (cognate_object){.type=string, .string=str};
   }
+  */ // TODO
   // Bind error signals.
   signal(SIGABRT, handle_signal);
   signal(SIGFPE,  handle_signal);
@@ -87,10 +91,10 @@ int main(int argc, char** argv)
   // Actually run the program.
   run_program();
   // Clean up.
-  if unlikely(stack.items.top != stack.items.start)
+  if unlikely(stack.top != stack.start)
   {
     word_name = NULL;
-    throw_error("Program exiting with non-empty stack of length %ti", stack.items.top - stack.items.start);
+    throw_error("Program exiting with non-empty stack of length %ti", stack.top - stack.start);
   }
 }
 
@@ -103,7 +107,7 @@ static cognate_object check_block(cognate_object obj)
 static void copy_blocks()
 {
   //printf("Copying %li blocks\n", stack.uncopied_blocks);
-  for (cognate_object* obj = stack.items.top - 1; stack.uncopied_blocks; --obj)
+  for (cognate_object* obj = stack.top - 1; stack.uncopied_blocks; --obj)
   {
     if unlikely(obj->type == block)
     {

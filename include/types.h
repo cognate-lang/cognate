@@ -22,18 +22,7 @@ typedef void(^cognate_block)();
 typedef enum cognate_type cognate_type;
 typedef struct cognate_object cognate_object;
 typedef struct cognate_list   cognate_list;
-
-struct cognate_list
-{
-  struct cognate_object* start;
-  struct cognate_object* top;
-};
-
-struct cognate_table
-{
-  struct cognate_list items;
-  long unsigned int* confirmation_hash;
-};
+typedef struct cognate_stack  cognate_stack;
 
 // __attribute__((packed)) could save memory here.
 struct cognate_object
@@ -49,6 +38,27 @@ struct cognate_object
     const struct cognate_table *table; // 64bit table pointer
   };
   cognate_type type : 8;
+};
+
+
+struct cognate_list
+{
+  cognate_list* next;
+  cognate_object object;
+};
+
+struct cognate_table
+{
+  struct cognate_list items; // TODO
+  long unsigned int*  confirmation_hash;
+};
+
+struct cognate_stack
+{
+  cognate_object* start; // Pointer to start.
+  cognate_object* top; // Pointer to top.
+  ptrdiff_t       size; // Allocated size of the stack.
+  size_t          uncopied_blocks; // Number of uncopied cognate_blocks on the stack.
 };
 
 #endif

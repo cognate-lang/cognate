@@ -11,7 +11,7 @@ static _Bool compare_lists(cognate_list, cognate_list);
 static _Bool compare_tables(cognate_table, cognate_table);
 
 #include "error.c"
-#include "table.c"
+//#include "table.c"
 #include <string.h>
 
 static cognate_object check_type(cognate_type expected_type, cognate_object object)
@@ -41,20 +41,16 @@ static const char* lookup_type(cognate_type type)
 
 static _Bool compare_lists(cognate_list lst1, cognate_list lst2)
 {
-  ptrdiff_t len = lst1.top - lst1.start;
-  if (len != lst2.top - lst2.start) return 0; // Not equal if differing length.
-  while (len --> 0)
-  {
-    if (!compare_objects(lst1.start[len], lst2.start[len])) // Compare each list object.
-    {
-      return 0;
-    }
-  }
-  return 1;
+  (void) lst1;
+  (void) lst2;
+  return 0; // TODO
 }
 
 static _Bool compare_tables(const cognate_table tab1, const cognate_table tab2)
 {
+  (void) tab1;
+  (void) tab2;
+  /*
   // We can't just use compare_lists, since tables do not have guaranteed order.
   const long table_size = tab1.items.top - tab1.items.start;
   if (table_size != tab2.items.top - tab2.items.start) return 0; // If tables are different sizes, they're probably different.
@@ -64,7 +60,8 @@ static _Bool compare_tables(const cognate_table tab1, const cognate_table tab2)
     if (tab1.items.start[i].type == NOTHING) continue;
     if (!compare_objects(tab1.items.start[i], table_get_hash(tab1.confirmation_hash[i], tab2))) return 0;
   }
-  return 1;
+  */
+  return 1; // TODO
 }
 
 static _Bool compare_objects(cognate_object ob1, cognate_object ob2)

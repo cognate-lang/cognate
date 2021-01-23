@@ -48,13 +48,15 @@ static void print_object (const cognate_object object, const _Bool quotes)
     }
     case list:
     {
-      const cognate_list lst = *object.list;
       putchar('(');
-      for (cognate_object *i = lst . start; i != lst . top; ++i)
+      FOR_LIST(i, object.list)
       {
-        // Strings within lists ALWAYS printed with quotes.
-        print_object(*i, 1);
-        if (i + 1 != lst . top) fputs(", ", stdout);
+        print_object(i->object, 1);
+        if likely(i->next)
+        {
+          putchar(',');
+          putchar(' ');
+        }
       }
       putchar(')');
       return;

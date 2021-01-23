@@ -62,4 +62,8 @@
 #define unlikely(expr) (__builtin_expect((_Bool)(expr), 0))
 #define likely(expr)   (__builtin_expect((_Bool)(expr), 1))
 
+#define FOR_LIST(i, name) \
+  for (const cognate_list* i = (name) ; i ; i = i->next)
+
+
 #endif

@@ -143,7 +143,7 @@ static void cognate_function_drop()    { pop_any(); } // These can be defined wi
 static void cognate_function_twin()    { push_any(peek_any()); }
 static void cognate_function_triplet() { const cognate_object a = peek_any(); push_any(a); push_any(a); }
 static void cognate_function_swap()    { const cognate_object a = pop_any(); const cognate_object b = pop_any(); push_any(a); push_any(b); }
-static void cognate_function_clear()   { stack.items.top=stack.items.start; }
+static void cognate_function_clear()   { stack.top=stack.start; }
 
 static void cognate_function_true()  { push(boolean, 1); }
 static void cognate_function_false() { push(boolean, 0); }
@@ -171,12 +171,16 @@ static void cognate_function_discard() {
   // O(n) where n is the number of element being Discarded.
   const double num = pop(number);
   const size_t num_discarding = num;
+  long tmp = num_discarding;
   if unlikely(num != num_discarding) throw_error("Number of elements to Discard must be positive integer, not %.14g!", num);
-  const cognate_list obj = *pop(list);
-  if unlikely(num_discarding > (size_t)(obj.top - obj.start)) throw_error("List of length %zu is too small to Discard %zu elements from!", obj.top - obj.start, num_discarding);
-  cognate_list* const lst = GC_NEW(cognate_list);
-  lst->start = obj.start + num_discarding;
-  lst->top = obj.top;
+  if unlikely(!num_discarding) return;
+  const cognate_list* lst;
+  FOR_LIST(i, pop(list))
+  {
+    if (!tmp--) break;
+    lst = i->next;
+  }
+  if unlikely(tmp > 0) throw_error("List of size %li is too small to Discard %li elements from", num_discarding - tmp, num_discarding);
   push(list, lst);
 }
 
@@ -184,29 +188,42 @@ static void cognate_function_take() {
   // O(n) where n is the number of element being Taken.
   const double num = pop(number);
   const size_t num_taking = num;
+  long tmp = num_taking;
   if unlikely(num != num_taking) throw_error("Number of elements to Take must be positive integer, not %.14g!", num);
-  cognate_list obj = *pop(list);
-  if unlikely(num_taking > (size_t)(obj.top - obj.start)) throw_error ("List of length %zu is too small to Take %zu elements from!", obj.top - obj.start, num_taking);
-  cognate_list* const lst = GC_NEW(cognate_list);
-  lst->start = obj.start;
-  lst->top = lst->start + num_taking;
-  push(list, lst);
+  cognate_list* lst = likely(num_taking) ? GC_MALLOC (num_taking * sizeof(cognate_list)) : NULL;
+  FOR_LIST(i, pop(list))
+  {
+    if (!tmp--) break;
+    lst->object = i->object;
+    (lst-1)->next = lst;
+    lst++;
+  }
+  if unlikely(tmp > 0) throw_error("List of size %li is too small to Take %li elements from", num_taking - tmp, num_taking);
+  push(list, lst - num_taking);
 }
 
 static void cognate_function_index() {
   const double d = pop(number);
   const size_t index = d;
+  size_t tmp = index;
   if unlikely(index != d)
     throw_error("List Index must be a positive integer, not %15g!", d);
-  const cognate_list lst = *pop(list);
-  if unlikely(index >= (size_t)(lst.top - lst.start))
-    throw_error("Index %zu is out of bounds! (list is of length %zu)", index, lst.top - lst.start);
-  push_any(lst.start [index]);
+  FOR_LIST(i, pop(list))
+  {
+    if (!tmp--)
+    {
+      push_any(i->object);
+      return;
+    }
+  }
+  throw_error("List of size %li is too small to get Index %li from", index - tmp, index);
 }
 
 static void cognate_function_length() {
+  /*
   const cognate_list lst = *pop(list);
   push(number, (double)(lst.top - lst.start));
+  */ // TODO
 }
 
 static void cognate_function_list() {
@@ -219,20 +236,29 @@ static void cognate_function_list() {
   init_stack();
   // Eval expr
   expr();
-  // Store the resultant list, GC_realloc-ing to fit snugly in memory.
-  cognate_list* const lst = GC_NEW(cognate_list);
-  *lst = stack.items;
-  // Restore the original stack
+  // If stack is empty
+  if unlikely(stack.top == stack.start)
+  {
+    push(list, NULL);
+    return;
+  }
+  // Create a list.
+  cognate_list* lst = GC_MALLOC(sizeof(cognate_list) * (stack.top - stack.start));
+  // Populate the list, backwards.
+  for (; stack.top != stack.start; ++lst)
+  {
+    (lst + 1) -> next = lst;
+    lst->object = pop_any();
+  }
+  // Restore the stack.
   stack = temp_stack;
-  const long lst_len = lst->top - lst->start;
-  lst->start = GC_REALLOC(lst->start, lst_len * sizeof(cognate_object));
-  lst->top = lst->start + lst_len;
   // Push the created list to the stack
-  push(list, lst);
+  push(list, --lst);
 }
 
 static void cognate_function_characters() {
   // Can be rewritten using substring, albeit O(n^2)
+  /*
   const char* str = pop(string);
   size_t length = mbstrlen(str);
   cognate_list* const lst = GC_NEW(cognate_list);
@@ -245,10 +271,12 @@ static void cognate_function_characters() {
     str += char_len;
   }
   push(list, lst);
+  */ // TODO
 }
 
 static void cognate_function_split() {
   // Can be rewritten using Substring.
+  /*
   const char* const delimiter = pop(string);
   const size_t delim_size     = strlen(delimiter);
   if unlikely(!delim_size) throw_error("Cannot Split a string with a zero-length delimiter!");
@@ -266,11 +294,13 @@ static void cognate_function_split() {
   }
   lst->start[i] = (cognate_object) {.type=string, .string=str};
   push(list, lst);
+  */ // TODO
 }
 
 static void cognate_function_append() {
   // Joins a list to the end of another list.
   // Define Prepend (Swap, Append);
+  /*
   const cognate_list lst1 = *pop(list);
   const cognate_list lst2 = *pop(list);
   const size_t list1_len = lst1.top - lst1.start;
@@ -282,6 +312,7 @@ static void cognate_function_append() {
   memmove(new_lst->start, lst2.start, list2_len * sizeof(cognate_object));
   memmove(new_lst->start+list2_len, lst1.start, list1_len * sizeof(cognate_object));
   push(list, new_lst);
+  */ // TODO
 }
 
 static void cognate_function_suffix() {
@@ -334,12 +365,14 @@ static void cognate_function_substring() {
 }
 
 static void cognate_function_push() {
+  /*
   cognate_list lst = *pop(list);
   for (cognate_object* obj = lst.start; obj != lst.top; ++obj)
   {
     // This can probably be optimised.
     push_any(*obj);
   }
+  */ // TODO
 }
 
 static void cognate_function_input() {
@@ -384,6 +417,7 @@ static void cognate_function_path() {
 }
 
 static void cognate_function_stack() {
+  /*
   copy_blocks();
   const size_t len = stack.items.top - stack.items.start;
   const size_t bytes = len * sizeof(cognate_object);
@@ -392,6 +426,7 @@ static void cognate_function_stack() {
   lst->top = lst->start + len;
   memmove(lst->start, stack.items.start, bytes);
   push(list, lst);
+  */ // TODO
 }
 
 static void cognate_function_write() {
@@ -412,6 +447,7 @@ static void cognate_function_stop() {
 }
 
 static void cognate_function_table() {
+  /*
   cognate_function_list();
   const cognate_list init = *pop(list);
   const size_t table_size = ((init.top - init.start) * LIST_GROWTH_FACTOR);
@@ -428,6 +464,7 @@ static void cognate_function_table() {
     *tab = table_add(hash(key), value, *tab);
   }
   push(table, tab);
+  */ // TODO
 }
 
 static void cognate_function_insert() {
@@ -450,6 +487,7 @@ static void cognate_function_values() {
   // O(n)
   // Resulting list is NOT in any order at all.
   // Equivilant tables may give differently ordered lists.
+  /*
   const cognate_table tab = *pop(table);
   cognate_list* const lst = GC_NEW(cognate_list);
   const long table_size = tab.items.top - tab.items.start;
@@ -464,6 +502,7 @@ static void cognate_function_values() {
   }
   lst->top = lst->start + j;
   push(list, lst);
+  */ // TODO
 }
 
 static void cognate_function_match() {
