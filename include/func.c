@@ -30,6 +30,7 @@ static void cognate_function_when()
 {
   // This is like If but simpler, with no internal state.
   // For some reason it's slower though.
+  // TODO: Use this instead of if.
   const cognate_block cond = pop(block);
   const cognate_object a = pop_any();
   const cognate_object b = pop_any();
@@ -167,67 +168,38 @@ static void cognate_function_string_()  { push(boolean, pop_any().type & string)
 static void cognate_function_block_()   { push(boolean, pop_any().type & block);   }
 static void cognate_function_boolean_() { push(boolean, pop_any().type & boolean); }
 
-static void cognate_function_discard() {
-  // O(n) where n is the number of element being Discarded.
-  const double num = pop(number);
-  const size_t num_discarding = num;
-  long tmp = num_discarding;
-  if unlikely(num != num_discarding) throw_error("Number of elements to Discard must be positive integer, not %.14g!", num);
-  if unlikely(!num_discarding) return;
-  const cognate_list* lst;
-  FOR_LIST(i, pop(list))
-  {
-    if (!tmp--) break;
-    lst = i->next;
-  }
-  if unlikely(tmp > 0) throw_error("List of size %li is too small to Discard %li elements from", num_discarding - tmp, num_discarding);
+static void cognate_function_head() {
+  // Returns a list's first element.
+  const cognate_list* lst = pop(list);
+  if unlikely(!lst) throw_error("Cannot return the First element of an empty list!");
+  push_any(lst->object);
+}
+
+static void cognate_function_tail() {
+  // Returns the tail portion of a list.
+  const cognate_list* lst = pop(list);
+  if unlikely(!lst) throw_error("Cannot return the Tail elements of an empty list!");
+  push(list, lst->next);
+}
+
+static void cognate_function_push() {
+  // Pushes an object from the stack onto the list's first element.
+  // TODO: Better name? Inconsistent with List where pushing to the stack adds to the END.
+  cognate_list* lst = GC_NEW (cognate_list);
+  lst->object = pop_any();
+  lst->next   = pop(list);
   push(list, lst);
 }
 
-static void cognate_function_take() {
-  // O(n) where n is the number of element being Taken.
-  const double num = pop(number);
-  const size_t num_taking = num;
-  long tmp = num_taking;
-  if unlikely(num != num_taking) throw_error("Number of elements to Take must be positive integer, not %.14g!", num);
-  cognate_list* lst = likely(num_taking) ? GC_MALLOC (num_taking * sizeof(cognate_list)) : NULL;
-  FOR_LIST(i, pop(list))
-  {
-    if (!tmp--) break;
-    lst->object = i->object;
-    (lst-1)->next = lst;
-    lst++;
-  }
-  if unlikely(tmp > 0) throw_error("List of size %li is too small to Take %li elements from", num_taking - tmp, num_taking);
-  push(list, lst - num_taking);
-}
-
-static void cognate_function_index() {
-  const double d = pop(number);
-  const size_t index = d;
-  size_t tmp = index;
-  if unlikely(index != d)
-    throw_error("List Index must be a positive integer, not %15g!", d);
-  FOR_LIST(i, pop(list))
-  {
-    if (!tmp--)
-    {
-      push_any(i->object);
-      return;
-    }
-  }
-  throw_error("List of size %li is too small to get Index %li from", index - tmp, index);
-}
-
-static void cognate_function_length() {
-  /*
-  const cognate_list lst = *pop(list);
-  push(number, (double)(lst.top - lst.start));
-  */ // TODO
+static void cognate_function_empty_() {
+  // Returns true is a list is empty.
+  push(boolean, pop(list));
 }
 
 static void cognate_function_list() {
-  // I solemnly swear that I will NEVER RETURN THE ADDRESS OF A LOCAL VARIABLE!
+  // TODO: Would this make more sense if it returned the lists reversed?
+  // Or maybe I should just have compiled list literals like this [1 2 3] instead.
+
   // Get the block argument
   const cognate_block expr = pop(block);
   // Move the stack to temporary storage
@@ -237,18 +209,15 @@ static void cognate_function_list() {
   // Eval expr
   expr();
   // If stack is empty
-  if unlikely(stack.top == stack.start)
-  {
-    push(list, NULL);
-    return;
-  }
   // Create a list.
-  cognate_list* lst = GC_MALLOC(sizeof(cognate_list) * (stack.top - stack.start));
+  cognate_list* lst = likely(stack.top != stack.start) ? GC_MALLOC(sizeof(cognate_list) * (stack.top - stack.start)) : NULL;
   // Populate the list, backwards.
-  for (; stack.top != stack.start; ++lst)
+  lst->object = pop_any();
+  lst++->next = NULL;
+  for (; stack.top != stack.start ; ++lst)
   {
-    (lst + 1) -> next = lst;
     lst->object = pop_any();
+    lst->next = lst - 1;
   }
   // Restore the stack.
   stack = temp_stack;
@@ -297,24 +266,6 @@ static void cognate_function_split() {
   */ // TODO
 }
 
-static void cognate_function_append() {
-  // Joins a list to the end of another list.
-  // Define Prepend (Swap, Append);
-  /*
-  const cognate_list lst1 = *pop(list);
-  const cognate_list lst2 = *pop(list);
-  const size_t list1_len = lst1.top - lst1.start;
-  const size_t list2_len = lst2.top - lst2.start;
-  const size_t new_lst_len = list1_len + list2_len;
-  cognate_list* const new_lst = GC_NEW(cognate_list);
-  new_lst->top = new_lst->start = (cognate_object*) GC_MALLOC (sizeof(cognate_object) * new_lst_len);
-  new_lst->top += new_lst_len;
-  memmove(new_lst->start, lst2.start, list2_len * sizeof(cognate_object));
-  memmove(new_lst->start+list2_len, lst1.start, list1_len * sizeof(cognate_object));
-  push(list, new_lst);
-  */ // TODO
-}
-
 static void cognate_function_suffix() {
   // Joins a string to the end of another string.
   // Define Prefix (Swap, Suffix);
@@ -336,6 +287,7 @@ static void cognate_function_string_length() {
 static void cognate_function_substring() {
   // O(end).
   // Only allocates a new string if it has to.
+  // TODO: Would it be better to have a simpler and more minimalist set of string functions, like lists do?
   const double startf = pop(number);
   const double endf   = pop(number);
   size_t start  = startf;
@@ -364,16 +316,6 @@ static void cognate_function_substring() {
   push(string, GC_STRNDUP(str, str_size));
 }
 
-static void cognate_function_push() {
-  /*
-  cognate_list lst = *pop(list);
-  for (cognate_object* obj = lst.start; obj != lst.top; ++obj)
-  {
-    // This can probably be optimised.
-    push_any(*obj);
-  }
-  */ // TODO
-}
 
 static void cognate_function_input() {
   // Read user input to a string.

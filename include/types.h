@@ -43,7 +43,7 @@ struct cognate_object
 
 struct cognate_list
 {
-  cognate_list* next;
+  const cognate_list* next;
   cognate_object object;
 };
 
