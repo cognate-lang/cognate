@@ -103,8 +103,8 @@ static void cognate_function_while() {
 
 static void cognate_function_do() { pop(block)(); }
 
-static void cognate_function_put()   { print_object(pop_any(), 0); fflush(stdout); }
-static void cognate_function_print() { print_object(pop_any(), 0); puts("");       }
+static void cognate_function_put()   { print_object(pop_any(), stdout, 0); fflush(stdout); }
+static void cognate_function_print() { print_object(pop_any(), stdout, 0); puts("");       }
 
 static void cognate_function_sum()      { push(number, pop(number) + pop(number)); }
 static void cognate_function_multiply() { push(number, pop(number) * pop(number)); }
@@ -284,7 +284,10 @@ static void cognate_function_string_length() {
 static void cognate_function_substring() {
   // O(end).
   // Only allocates a new string if it has to.
-  // TODO: Would it be better to have a simpler and more minimalist set of string functions, like lists do?
+  /* TODO: Would it be better to have a simpler and more minimalist set of string functions, like lists do?
+   * The only real difference between NULL terminated strings and linked lists is that appending to strings is harder.
+   * Maybe also a 'Join N Str1 Str2 Str3 ... StrN' function.
+   */
   const double startf = pop(number);
   const double endf   = pop(number);
   size_t start  = startf;
@@ -373,9 +376,10 @@ static void cognate_function_stack() {
 
 static void cognate_function_write() {
   // Write string to end of file, without a newline.
+  // TODO: Allow writing of any writable object.
   FILE* const file = fopen(pop(string), "a");
-  const char* const str = pop(string);
-  fputs(str, file);
+  const cognate_object obj = pop_any();
+  print_object(obj, file, 0);
   fclose(file);
 }
 
