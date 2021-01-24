@@ -4,7 +4,7 @@
 #include "cognate.h"
 #include "types.h"
 
-static cognate_list params;
+static const cognate_list* params;
 
 #define call(name) \
   word_name = #name; \
@@ -384,7 +384,7 @@ static void cognate_function_write() {
 }
 
 static void cognate_function_parameters() {
-  push(list, &params);
+  push(list, params);
 }
 
 static void cognate_function_stop() {

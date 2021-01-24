@@ -68,17 +68,14 @@ int main(int argc, char** argv)
   }
   srandom(ts.tv_nsec ^ ts.tv_sec); // TODO make random more random.
   // Load parameters
-  (void) argc;
-  (void) argv;
-  /*
-  params.start = (cognate_object*) GC_MALLOC (sizeof(cognate_object) * (argc-1));
-  params.top = params.start + argc - 1;
+  params = NULL;
   while (argc --> 1)
   {
-    char* str = argv[argc];
-    params.start[argc-1] = (cognate_object){.type=string, .string=str};
+    cognate_list* tmp = GC_NEW (cognate_list);
+    tmp->object = (cognate_object){.type=string, .string=argv[argc]};
+    tmp->next = params;
+    params = tmp;
   }
-  */ // TODO
   // Bind error signals.
   signal(SIGABRT, handle_signal);
   signal(SIGFPE,  handle_signal);
