@@ -483,7 +483,7 @@ static void cognate_function_ordinal() {
   {
     throw_error("Ordinal requires string of length 1. String '%s' is not of length 1!", str);
   }
-  int chr = '\0';
+  int chr = 0;
   mbtowc(&chr, str, MB_CUR_MAX);
   push(number, chr);
 }
@@ -494,6 +494,7 @@ static void cognate_function_character() {
   if unlikely(i != d) throw_error("Cannot convert %.14g to UTF8 character!", d);
   char* const str = (char* const) GC_MALLOC (MB_CUR_MAX + 1);
   wctomb(str, i);
+  str[mblen(str, MB_CUR_MAX)] = '\0';
   push(string, str);
 }
 

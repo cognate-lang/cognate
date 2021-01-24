@@ -33,7 +33,7 @@ do
   rm -f $log_file
   # Compile
   export ASAN_OPTIONS=detect_leaks=$LEAKCHECK # Ignore memory leaks, since Block_copy will leak without block GC.
-  ./cognac $source_file -O0 -fsanitize=address "$@" > /tmp/cognac.log 2>&1
+  ./cognac $source_file -DnoGC -O0 -fsanitize=address "$@" > /tmp/cognac.log 2>&1
   # Check if file exists (successful compilation)
   if test -f $binary_file; then
     # Run - outputting to logfile
