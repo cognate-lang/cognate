@@ -1,44 +1,64 @@
 Let Foo be List (1,2,3);
-Let Bar be List (4,5,6,7,8);
 
-If (Append Bar to Foo, == List (1,2,3,4,5,6,7,8)) (
-  Print 'PASS: Appending lists'
+If (Foo, == Foo) (
+  Print 'PASS: Comparing equal lists'
 );
 Else (
-  Print 'FAIL: Appending lists'
+  Print 'FAIL: Comparing equal lists'
 );
 
-If (Discard 2 from Bar, == List (6,7,8)) (
-  Print 'PASS: Discarding from lists'
+If (Foo, != List (5,6,7)) (
+  Print 'PASS: Comparing unequal lists'
 );
 Else (
-  Print 'FAIL: Discarding from lists'
+  Print 'FAIL: Comparing unequal lists'
 );
 
-If (Take 2 from Bar, == List (4,5)) (
-  Print 'PASS: Taking from lists'
+If (List (), == List ()) (
+  Print 'PASS: Comparing two empty lists'
 );
 Else (
-  Print 'FAIL: Taking from lists'
+  Print 'FAIL: Comparing two empty lists'
 );
 
-If (Length of Foo, == 3) (
-  Print 'PASS: Length of lists'
+If (List (), != Foo) (
+  Print 'PASS: An empty list to a non-empty list'
 );
 Else (
-  Print 'FAIL: Length of lists'
+  Print 'FAIL: An empty list to a non-empty list'
 );
 
-If (Index 4 of Bar, == 8) (
-  Print 'PASS: Indexing lists'
+If (Push 42 to Foo, == List (42, 1, 2, 3)) (
+  Print 'PASS: Pushing object to list'
 );
 Else (
-  Print 'FAIL: Indexing lists'
+  Print 'FAIL: Pushing object to list'
 );
 
-If (List (Push List(1,2,3,4,5)), == List(1,2,3,4,5)) (
-  Print 'PASS: Deconstructing lists onto the stack';
+If (Head of Foo, == 1) (
+  Print 'PASS: Getting list\'s Head'
 );
 Else (
-  Print 'FAIL: Deconstructing lists onto the stack';
+  Print 'FAIL: Getting list\'s Head'
+);
+
+If (Head of List (1), == 1) (
+  Print 'PASS: Getting Head of single-element list'
+);
+Else (
+  Print 'FAIL: Getting Head of single-element list'
+);
+
+If (Tail of Foo, == List (2, 3)) (
+  Print 'PASS: Getting list\'s Tail'
+);
+Else (
+  Print 'FAIL: Getting list\'s Tail'
+);
+
+If (Tail of List (1), == List ()) (
+  Print 'PASS: Getting Tail of single-element list'
+);
+Else (
+  Print 'FAIL: Getting Tail of single-element list'
 );

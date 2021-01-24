@@ -1,10 +1,11 @@
+~
 If (Characters in 'Hello ☺', == List ('H','e','l','l','o',' ','☺')) (
   Print 'PASS: Extracting characters from strings'
 );
 Else (
   Print 'FAIL: Extracting characters from strings'
 );
-
+~
 If (Suffix ' ☺' to 'Hello world', == 'Hello world ☺') (
   Print 'PASS: Converting list of strings to combined string'
 );
@@ -32,14 +33,14 @@ If (Number '123.4', == 123.4) (
 Else (
   Print 'PASS: Casting strings to numbers'
 );
-
+~
 If ('Hello λ world λ testing', Split on ' λ ', == List('Hello', 'world', 'testing')) (
   Print 'PASS: Splitting a string with a multi-character delimiter';
 );
 Else (
   Print 'FAIL: Splitting a string with a multi-character delimiter';
 );
-
+~
 If (SubString from 1 to 7 of 'Hello ☺ world', == 'ello ☺') (
   Print 'PASS: SubStringing';
 );

@@ -169,21 +169,21 @@ static void cognate_function_block_()   { push(boolean, pop_any().type & block);
 static void cognate_function_boolean_() { push(boolean, pop_any().type & boolean); }
 
 static void cognate_function_head() {
-  // Returns a list's first element.
+  // Returns a list's first element. O(1).
   const cognate_list* lst = pop(list);
   if unlikely(!lst) throw_error("Cannot return the First element of an empty list!");
   push_any(lst->object);
 }
 
 static void cognate_function_tail() {
-  // Returns the tail portion of a list.
+  // Returns the tail portion of a list. O(1).
   const cognate_list* lst = pop(list);
   if unlikely(!lst) throw_error("Cannot return the Tail elements of an empty list!");
   push(list, lst->next);
 }
 
 static void cognate_function_push() {
-  // Pushes an object from the stack onto the list's first element.
+  // Pushes an object from the stack onto the list's first element. O(1).
   // TODO: Better name? Inconsistent with List where pushing to the stack adds to the END.
   cognate_list* lst = GC_NEW (cognate_list);
   lst->object = pop_any();
@@ -192,14 +192,12 @@ static void cognate_function_push() {
 }
 
 static void cognate_function_empty_() {
-  // Returns true is a list is empty.
+  // Returns true is a list is empty. O(1).
+  // Can be used to to write a Length function.
   push(boolean, pop(list));
 }
 
 static void cognate_function_list() {
-  // TODO: Would this make more sense if it returned the lists reversed?
-  // Or maybe I should just have compiled list literals like this [1 2 3] instead.
-
   // Get the block argument
   const cognate_block expr = pop(block);
   // Move the stack to temporary storage
@@ -208,39 +206,38 @@ static void cognate_function_list() {
   init_stack();
   // Eval expr
   expr();
-  // If stack is empty
-  // Create a list.
-  cognate_list* lst = likely(stack.top != stack.start) ? GC_MALLOC(sizeof(cognate_list) * (stack.top - stack.start)) : NULL;
-  // Populate the list, backwards.
-  lst->object = pop_any();
-  lst++->next = NULL;
-  for (; stack.top != stack.start ; ++lst)
+  // Move to a list.
+  const cognate_list* lst = NULL;
+  while (stack.top != stack.start)
   {
-    lst->object = pop_any();
-    lst->next = lst - 1;
+    // TODO: Allocate the list as an array for the sake of memory locality.
+    // This can just be Swap, Push;
+    cognate_list* tmp = GC_NEW (cognate_list);
+    tmp -> object = pop_any();
+    tmp -> next = lst;
+    lst = tmp;
   }
   // Restore the stack.
   stack = temp_stack;
-  // Push the created list to the stack
-  push(list, --lst);
+  push(list, lst);
 }
 
 static void cognate_function_characters() {
   // Can be rewritten using substring, albeit O(n^2)
   /*
   const char* str = pop(string);
-  size_t length = mbstrlen(str);
-  cognate_list* const lst = GC_NEW(cognate_list);
-  lst->top = lst->start = (cognate_object*) GC_MALLOC (sizeof(cognate_object) * length);
-  lst->top += length;
-  for (size_t i = 0; i < length; ++i)
+  const cognate_list* lst = NULL;
+  for (size_t i = 0; *str ; ++i)
   {
     size_t char_len = mblen(str, MB_CUR_MAX);
-    lst->start[i] = (cognate_object) {.type=string, .string=GC_STRNDUP(str, char_len)};
+    cognate_list* tmp = GC_NEW (cognate_list);
+    tmp->object = (cognate_object) {.type=string, .string=GC_STRNDUP(str, char_len)};
+    tmp->next = lst;
+    lst = tmp;
     str += char_len;
   }
   push(list, lst);
-  */ // TODO
+  */ // TODO: Currently returning list backwards.
 }
 
 static void cognate_function_split() {
@@ -359,16 +356,19 @@ static void cognate_function_path() {
 }
 
 static void cognate_function_stack() {
-  /*
   copy_blocks();
-  const size_t len = stack.items.top - stack.items.start;
-  const size_t bytes = len * sizeof(cognate_object);
-  cognate_list* lst = GC_NEW(cognate_list);
-  lst->start = (cognate_object*) GC_MALLOC (bytes);
-  lst->top = lst->start + len;
-  memmove(lst->start, stack.items.start, bytes);
+  const cognate_list* lst = NULL;
+  for (cognate_object* i = stack.top - 1 ; i >= stack.start ; --i)
+  {
+    // TODO: Allocate the list as an array for the sake of memory locality.
+    cognate_list* tmp = GC_NEW (cognate_list);
+    tmp -> object = *i;
+    tmp -> next = lst;
+    lst = tmp;
+  }
+  // Restore the stack.
   push(list, lst);
-  */ // TODO
+
 }
 
 static void cognate_function_write() {
@@ -411,18 +411,22 @@ static void cognate_function_table() {
 
 static void cognate_function_insert() {
   // O(n) :(
+  /*
   const char* const key = pop(string);
   const cognate_object value = pop_any();
   cognate_table* const tab = GC_NEW(cognate_table);
   *tab = table_add(hash(key), value, table_copy(*pop(table)));
   push(table, tab);
+  */
 }
 
 static void cognate_function_get() {
   // O(1) mostly;
+  /*
   const char* const key = pop(string);
   const cognate_table tab = *pop(table);
   push_any(table_get(key, tab));
+  */
 }
 
 static void cognate_function_values() {

@@ -39,3 +39,4 @@ If (Clear, Stack, == List()) (
 Else (
   Print 'FAIL: Clearing the stack'
 );
+

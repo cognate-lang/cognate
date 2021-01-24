@@ -33,8 +33,9 @@ static void init_stack()
 {
   // Allocate dynamic stack memory.
   stack.uncopied_blocks = 0;
+  stack.size = INITIAL_LIST_SIZE;
   stack.top = stack.start =
-    (cognate_object*) GC_MALLOC ((stack.size = INITIAL_LIST_SIZE) * sizeof(cognate_object));
+    (cognate_object*) GC_MALLOC (INITIAL_LIST_SIZE * sizeof(cognate_object));
 }
 
 static void push_any(cognate_object object)

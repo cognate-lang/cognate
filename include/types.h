@@ -18,6 +18,7 @@ enum cognate_type
 };
 
 typedef struct cognate_table cognate_table;
+typedef struct table_bucket table_bucket;
 typedef void(^cognate_block)();
 typedef enum cognate_type cognate_type;
 typedef struct cognate_object cognate_object;
@@ -29,13 +30,13 @@ struct cognate_object
 {
   union
   {
-    const char* string;                // 64bit string pointer
-    _Bool boolean;                     //  1bit bool
-    cognate_block block;               // 64bit block pointer
-    cognate_block stack_block;         // 64bit block pointer
-    double number;                     // 64bit float
-    const struct cognate_list  *list;  // 64bit list pointer
-    const struct cognate_table *table; // 64bit table pointer
+    const char* string;               // 64bit string pointer
+    _Bool boolean;                    //  1bit bool
+    cognate_block block;              // 64bit block pointer
+    cognate_block stack_block;        // 64bit block pointer
+    double number;                    // 64bit float
+    const struct cognate_list  *list; // 64bit list pointer
+    long table;                       // 64bit table-id
   };
   cognate_type type : 8;
 };
@@ -47,10 +48,17 @@ struct cognate_list
   cognate_object object;
 };
 
+struct table_bucket
+{
+  cognate_object object;
+  const char* key; // TODO: Decrease space usage of these - store a second hash or something.
+  const long id;
+};
+
 struct cognate_table
 {
-  struct cognate_list items; // TODO
-  long unsigned int*  confirmation_hash;
+  table_bucket* index;
+  size_t size;
 };
 
 struct cognate_stack

@@ -8,6 +8,7 @@
 #define MAX_TABLE_TRIES 3
 #define INITIAL_READ_SIZE 64
 #define INITIAL_LIST_SIZE 16
+#define INITIAL_TABLE_SIZE 256
 #define LIST_GROWTH_FACTOR 1.5
 
 #define DIGITS 14
@@ -50,6 +51,7 @@
     copy_blocks(); \
   }
 
+// May need to use calloc() in future, if i start relying on GC_MALLOC zeroing memory.
 #ifdef noGC
   #define GC_MALLOC_ATOMIC malloc
   #define GC_MALLOC  malloc
