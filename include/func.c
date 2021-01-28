@@ -22,6 +22,7 @@ static const cognate_list* params;
 #include <math.h>
 #include <string.h>
 #include <limits.h>
+#include <stdlib.h>
 #ifndef noGC
 #include <gc/gc.h>
 #endif
@@ -321,8 +322,8 @@ static void cognate_function_input() {
   // Read user input to a string.
   size_t size = 0;
   char* buf;
-  getline(&buf, &size, stdin);
-  push(string, GC_STRDUP(buf));
+  size_t chars = getline(&buf, &size, stdin);
+  push(string, GC_STRNDUP(buf, chars-1)); // Don't copy trailing newline.
   free(buf);
 }
 
@@ -345,7 +346,13 @@ static void cognate_function_read() {
 static void cognate_function_number() {
   // casts string to number.
   const char* const str = pop(string);
-  push(number, (double)strtof(str, NULL)); // strtof uses floats instead of doubles, prepare for rounding error.
+  char* end;
+  double num = strtod(str, &end);
+  if (end == str || *end != '\0')
+  {
+    throw_error("Cannot parse '%s' to a number!", str);
+  }
+  push(number, num);
 }
 
 static void cognate_function_path() {
