@@ -330,7 +330,7 @@ static void cognate_function_input() {
 static void cognate_function_read() {
   // Read a file to a string.
   const char* const filename = pop(string);
-  FILE *fp = fopen(filename, "r");
+  FILE *fp = fopen(filename, "ro");
   if unlikely(fp == NULL) throw_error("Cannot open file '%s'. It probably doesn't exist.", filename);
   fseek(fp, 0L, SEEK_END);
   size_t file_size = ftell(fp);
@@ -384,10 +384,11 @@ static void cognate_function_stack() {
 static void cognate_function_write() {
   // Write string to end of file, without a newline.
   // TODO: Allow writing of any writable object.
-  FILE* const file = fopen(pop(string), "a");
-  const cognate_object obj = pop_any();
-  print_object(obj, file, 0);
-  fclose(file);
+  const char* const filename = pop(string);
+  FILE* const fp = fopen(filename, "a");
+  if unlikely(fp == NULL) throw_error("Cannot open file '%s'. It probably doesn't exist.", filename);
+  print_object(pop_any(), fp, 0);
+  fclose(fp);
 }
 
 static void cognate_function_parameters() {
