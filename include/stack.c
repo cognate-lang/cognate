@@ -31,6 +31,10 @@ static cognate_stack stack;
 
 static void init_stack()
 {
+  stack.uncopied_blocks = 0;
+  stack.size = INITIAL_LIST_SIZE;
+  stack.top = stack.start =
+    (cognate_object*) GC_MALLOC (INITIAL_LIST_SIZE * sizeof(cognate_object));
 }
 
 static void push_any(cognate_object object)

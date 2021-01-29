@@ -85,10 +85,7 @@ void init(int argc, char** argv)
   signal(SIGTERM, handle_signal);
   signal(SIGSEGV, handle_signal); // Will only sometimes work.
   // Initialize the stack.
-  stack.uncopied_blocks = 0;
-  stack.size = INITIAL_LIST_SIZE;
-  stack.top = stack.start =
-    (cognate_object*) GC_MALLOC (INITIAL_LIST_SIZE * sizeof(cognate_object));
+  init_stack();
 }
 
 static void cleanup()
