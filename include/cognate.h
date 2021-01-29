@@ -14,8 +14,12 @@
 #define DIGITS 14
 
 #define program(body) \
-  static void run_program() \
-    body
+  int main(int argc, char** argv) \
+  { \
+    init(argc, argv); \
+    body \
+    cleanup(); \
+  }
 
 #define immutable const
 #define mutable __block

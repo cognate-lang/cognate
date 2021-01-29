@@ -7,7 +7,8 @@
 static const char *stack_start;
 static __attribute__((unused)) char if_status = 2;
 
-static void run_program();
+static void init(int argc, char** argv);
+static void cleanup();
 static cognate_object check_block(cognate_object);
 static void copy_blocks();
 static void check_call_stack();
@@ -39,7 +40,7 @@ BLOCK_EXPORT void blk_gc_memmove(void* dst, void* src, unsigned long size) { mem
 
 static struct rlimit stack_max;
 
-int main(int argc, char** argv)
+void init(int argc, char** argv)
 {
   // Get return stack limit
   char a;
@@ -83,11 +84,15 @@ int main(int argc, char** argv)
   signal(SIGINT,  handle_signal);
   signal(SIGTERM, handle_signal);
   signal(SIGSEGV, handle_signal); // Will only sometimes work.
-  // Generate a stack.
-  init_stack();
-  // Actually run the program.
-  run_program();
-  // Clean up.
+  // Initialize the stack.
+  stack.uncopied_blocks = 0;
+  stack.size = INITIAL_LIST_SIZE;
+  stack.top = stack.start =
+    (cognate_object*) GC_MALLOC (INITIAL_LIST_SIZE * sizeof(cognate_object));
+}
+
+static void cleanup()
+{
   if unlikely(stack.top != stack.start)
   {
     word_name = NULL;

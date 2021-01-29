@@ -3,6 +3,7 @@
 
 #include <Block.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 enum cognate_type
 {
