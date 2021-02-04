@@ -30,8 +30,6 @@ static const cognate_list* params;
 static void cognate_function_if(cognate_object cond, cognate_object a, cognate_object b)
 {
   check_type(block, cond);
-  check_type(block, a);
-  check_type(block, b);
   cond.block();
   if (pop(boolean))
   {
