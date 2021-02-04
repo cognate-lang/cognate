@@ -7,10 +7,8 @@
 static const cognate_list* params;
 
 #define call(name, ...) \
-({ \
   word_name = #name; \
-  cognate_function_ ## name(__VA_ARGS__); \
-})
+  cognate_function_ ## name(__VA_ARGS__);
 
 // I'm not putting type signatures for every single function here.
 
@@ -29,13 +27,20 @@ static const cognate_list* params;
 #include <gc/gc.h>
 #endif
 
-static cognate_object cognate_function_if(cognate_object cond, cognate_object a, cognate_object b)
+static void cognate_function_if(cognate_object cond, cognate_object a, cognate_object b)
 {
   check_type(block, cond);
   check_type(block, a);
   check_type(block, b);
   cond.block();
-  return pop(boolean) ? a : b;
+  if (pop(boolean))
+  {
+    push_any(a);
+  }
+  else
+  {
+    push_any(b);
+  }
 }
 
 static void cognate_function_while() {
@@ -55,20 +60,20 @@ static void cognate_function_put(cognate_object a)   { print_object(a, stdout, 0
 static void cognate_function_print(cognate_object a) { print_object(a, stdout, 0); puts(""); }
 
 
-static cognate_object cognate_function_sum(cognate_object a, cognate_object b)      { check_type(number, a); a.number += check_type(number, b).number; return a; }
-static cognate_object cognate_function_multiply(cognate_object a, cognate_object b)      { check_type(number, a); a.number *= check_type(number, b).number; return a; }
-static cognate_object cognate_function_subtract(cognate_object a, cognate_object b)      { check_type(number, b); b.number -= check_type(number, a).number; return b;}
-static cognate_object cognate_function_divide(cognate_object a, cognate_object b)      { check_type(number, b); b.number /= check_type(number, a).number; return b; }
+static void cognate_function_sum(cognate_object a, cognate_object b)      { push(number, check_type(number, a).number + check_type(number, b).number); }
+static void cognate_function_multiply(cognate_object a, cognate_object b) { push(number, check_type(number, a).number * check_type(number, b).number); }
+static void cognate_function_divide(cognate_object a, cognate_object b)   { push(number, check_type(number, b).number / check_type(number, a).number); }
+static void cognate_function_subtract(cognate_object a, cognate_object b) { push(number, check_type(number, b).number - check_type(number, a).number); }
 
 //static void cognate_function_sum()      { push(number, pop(number) + pop(number)); }
 //static void cognate_function_multiply() { push(number, pop(number) * pop(number)); }
 //static void cognate_function_divide()   { push(number, (1 / pop(number) * pop(number))); }
 //static void cognate_function_subtract() { push(number, (-pop(number) + pop(number))); }
 
-static cognate_object cognate_function_modulo(cognate_object a, cognate_object b) {
+static void cognate_function_modulo(cognate_object a, cognate_object b) {
   check_type(number, a);
   check_type(number, b);
-  return OBJ(number, fmod(b.number, a.number));
+  push(number, fmod(b.number, a.number));
 }
 
 static void cognate_function_random() {
@@ -107,15 +112,15 @@ static void cognate_function_false() { push(boolean, 0); }
 static void cognate_function_either() { push(boolean, pop(boolean) + pop(boolean)); } // Use unconventional operators to avoid short-circuits.
 static void cognate_function_both()   { push(boolean, pop(boolean) & pop(boolean)); }
 static void cognate_function_one_of() { push(boolean, pop(boolean) ^ pop(boolean)); }
-static cognate_object cognate_function_not(cognate_object a)  { return OBJ(boolean,!check_type(boolean, a).boolean); }
+static void cognate_function_not(cognate_object a)    { push(boolean,!check_type(boolean, a).boolean); }
 
 
-static cognate_object cognate_function_equal(cognate_object a, cognate_object b)   { return OBJ(boolean, check_type(number, a).number == check_type(number, b).number); }
-static cognate_object cognate_function_unequal(cognate_object a, cognate_object b) { return OBJ(boolean, check_type(number, a).number != check_type(number, b).number); }
-static cognate_object cognate_function_exceed(cognate_object a, cognate_object b)  { return OBJ(boolean, check_type(number, a).number < check_type(number, b).number); }
-static cognate_object cognate_function_preceed(cognate_object a, cognate_object b) { return OBJ(boolean, check_type(number, a).number > check_type(number, b).number); }
-static cognate_object cognate_function_equalorpreceed(cognate_object a, cognate_object b) { return OBJ(boolean, check_type(number, a).number >= check_type(number, b).number); }
-static cognate_object cognate_function_equalorexceed(cognate_object a, cognate_object b)  { return OBJ(boolean, check_type(number, a).number <= check_type(number, b).number); }
+static void cognate_function_equal(cognate_object a, cognate_object b)      { push(boolean, check_type(number, a).number == check_type(number, b).number); }
+static void cognate_function_unequal(cognate_object a, cognate_object b)      { push(boolean, check_type(number, a).number != check_type(number, b).number); }
+static void cognate_function_exceed(cognate_object a, cognate_object b)      { push(boolean, check_type(number, a).number < check_type(number, b).number); }
+static void cognate_function_preceed(cognate_object a, cognate_object b)      { push(boolean, check_type(number, a).number > check_type(number, b).number); }
+static void cognate_function_equalorpreceed(cognate_object a, cognate_object b)      { push(boolean, check_type(number, a).number >= check_type(number, b).number); }
+static void cognate_function_equalorexceed(cognate_object a, cognate_object b)      { push(boolean, check_type(number, a).number <= check_type(number, b).number); }
 
 static void cognate_function_number_()  { push(boolean, pop_any().type & number);  } // Question marks are converted to underscores.
 static void cognate_function_list_()    { push(boolean, pop_any().type & list);    } // However all other symbols are too.
@@ -123,18 +128,18 @@ static void cognate_function_string_()  { push(boolean, pop_any().type & string)
 static void cognate_function_block_()   { push(boolean, pop_any().type & block);   }
 static void cognate_function_boolean_() { push(boolean, pop_any().type & boolean); }
 
-static cognate_object cognate_function_head(cognate_object a) {
+static void cognate_function_head(cognate_object a) {
   // Returns a list's first element. O(1).
   const cognate_list* lst = check_type(list, a).list;
   if unlikely(!lst) throw_error("Cannot return the First element of an empty list!");
-  return (lst->object);
+  push_any(lst->object);
 }
 
-static cognate_object cognate_function_tail(cognate_object a) {
+static void cognate_function_tail(cognate_object a) {
   // Returns the tail portion of a list. O(1).
   const cognate_list* lst = check_type(list, a).list;
   if unlikely(!lst) throw_error("Cannot return the Tail elements of an empty list!");
-  return OBJ(list, lst->next);
+  push(list, lst->next);
 }
 
 static void cognate_function_push() {
@@ -152,7 +157,7 @@ static void cognate_function_empty_() {
   push(boolean, !pop(list));
 }
 
-static cognate_object cognate_function_list(cognate_object a) {
+static void cognate_function_list(cognate_object a) {
   // Get the block argument
   const cognate_block expr = check_type(block, a).block;
   // Move the stack to temporary storage
@@ -174,7 +179,7 @@ static cognate_object cognate_function_list(cognate_object a) {
   }
   // Restore the stack.
   stack = temp_stack;
-  return OBJ(list, lst);
+  push(list, lst);
 }
 
 static void cognate_function_characters() {
@@ -484,10 +489,10 @@ static void cognate_function_assert() {
   }
 }
 
-static void cognate_function_error(cognate_object a) {
+static void cognate_function_error() {
   word_name = NULL;
   errno = 0;
-  throw_error("%s", check_type(string,a).string);
+  throw_error("%s", pop(string));
 }
 
 #endif

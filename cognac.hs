@@ -311,70 +311,6 @@ num_args "assert" = 2
 num_args "error" = 1
 num_args _ = 0
 
-returns_val "if" = True
-returns_val "while" = False
-returns_val "do" = False
-returns_val "put" = False
-returns_val "print" = False
-returns_val "sum" = True
-returns_val "multiply" = True
-returns_val "divide" = True
-returns_val "subtract" = True
-returns_val "modulo" = True
-returns_val "random" = True
-returns_val "drop" = False
-returns_val "twin" = False
-returns_val "triplet" = True
-returns_val "swap" = True
-returns_val "clear" = False
-returns_val "true" = True
-returns_val "false" = True
-returns_val "either" = True
-returns_val "both" = True
-returns_val "one_of" = True
-returns_val "not" = True
-returns_val "equal" = True
-returns_val "unequal" = True
-returns_val "preceed" = True
-returns_val "exceed" = True
-returns_val "equalorexceed" = True
-returns_val "number_" = True
-returns_val "list_" = True
-returns_val "string_" = True
-returns_val "block_" = True
-returns_val "boolean_" = True
-returns_val "head" = True
-returns_val "tail" = True
-returns_val "push" = True
-returns_val "empty" = True
-returns_val "list" = True
-returns_val "suffix" = True
-returns_val "string_length" = True
-returns_val "substring" = True
-returns_val "input" = True
-returns_val "read" = True
-returns_val "number" = True
-returns_val "path" = True
-returns_val "stack" = True
-returns_val "write" = False
-returns_val "parameters" = True
-returns_val "stop" = False
-returns_val "table" = True
-returns_val "insert" = True
-returns_val "values" = True
-returns_val "match" = True
-returns_val "ordinal" = True
-returns_val "character" = True
-returns_val "floor" = True
-returns_val "round" = True
-returns_val "ceiling" = True
-returns_val "assert" = False
-returns_val "error" = False
-returns_val _ = False
-
-
-
-
 (Node body : Leaf name : Leaf "Define" : xs) `doesCall` func
   | xs `doesCall` name = xs `doesCall` func || body `doesCall` func
   | otherwise = xs `doesCall` func
@@ -492,14 +428,13 @@ compile [] = ""
 -}
 
 make_obj :: Tree -> String
-make_obj a = if (literal_type a) == "any" then print_literal a else "OBJ(" ++ literal_type a ++ "," ++ print_literal a ++ ")"
+make_obj a = "OBJ(" ++ literal_type a ++ "," ++ print_literal a ++ ")"
 
 literal_type :: Tree -> String
 
 literal_type (Leaf token)
   | all (`elem` ('.':'-':['0'..'9'])) token = "number"
   | head token == '\"' = "string"
-  | otherwise = "any"
 
 literal_type (Node token) = "block"
 
@@ -509,7 +444,7 @@ print_literal (Node blk) = "make_block(0, {" ++ compile blk [] ++ "})"
 
 stack_push :: Tree -> String
 
-stack_push a = "push_any(" ++ make_obj a ++ ");"
+stack_push a = "push(" ++ literal_type a ++ ", " ++ print_literal a ++ ");"
 
 is_literal :: String -> Bool
 is_literal str = not $ head str `elem` upperletters
@@ -522,16 +457,8 @@ compile (Leaf str : Leaf "Let" : xs) (value:buf) = "variable(" ++ lc str ++ "," 
 compile (Leaf str : Leaf "Let" : xs) buf = "variable(" ++ lc str ++ "," ++ (if xs `doesMutate` str then "mutable" else "immutable") ++ ", pop_any());{" ++ compile xs buf ++"}"
 compile (Leaf str:xs) buf
   | is_literal str = compile xs (Leaf str:buf)
-  | returns_val (lc str) = compile xs (Leaf (if length buf > args then "({"++call++"})" else call) : [])
-  | otherwise = call ++ ";"++ compile xs []
-  where args = (num_args $ lc str)
-        call = (intercalate " " $ map stack_push (reverse (drop args buf)))
-                ++ "call("
-                ++ lc str
-                ++ (if args > 0 then "," else "")
-                ++ (intercalate "," $ (map make_obj $ take args buf) ++ (if (length buf < args) then (take (args - length buf) $ cycle ["pop_any()"]) else []))
-                ++ ")"
-
+  | otherwise = (intercalate " " $ map stack_push (reverse (drop args buf))) ++ "call(" ++ lc str ++ (if args > 0 then "," else "") ++ (intercalate "," $ (map make_obj $ take args buf) ++ (if (length buf < args) then (take (args - length buf) $ cycle ["pop_any()"]) else [])) ++ ");" ++ (compile xs [])
+  where args = num_args $ lc str
 
 
 compile [] buf = intercalate " " $ map stack_push $ reverse buf
@@ -560,9 +487,9 @@ main =
   do
     args <- getArgs
     let compilerFlagsLinux =
-          words "-fblocks -lBlocksRuntime -l:libgc.so -Ofast -I include -Wall -Wextra -Werror -Wno-unused -pedantic-errors -std=c11 -lm -g0 -rdynamic -fuse-ld=lld -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-statement-expression"
+          words "-fblocks -lBlocksRuntime -l:libgc.so -Ofast -I include -Wall -Wextra -Werror -Wno-unused -pedantic-errors -std=c11 -lm -g0 -rdynamic -fuse-ld=lld -Wno-gnu-zero-variadic-macro-arguments"
     let compilerFlagsMac =
-          words "-fblocks -lgc -Ofast -I include -Wall -Wextra -Werror -pedantic-errors -Wno-unused -std=c11 -lm -g0 -rdynamic -fuse-ld=lld -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-statement-expression"
+          words "-fblocks -lgc -Ofast -I include -Wall -Wextra -Werror -pedantic-errors -Wno-unused -std=c11 -lm -g0 -rdynamic -fuse-ld=lld -Wno-gnu-zero-variadic-macro-arguments"
     let compilerFlags = if System.Info.os == "linux" then compilerFlagsLinux else compilerFlagsMac
     let in_file = head args
     let out_file = head (splitOn "." in_file) ++ ".c"
