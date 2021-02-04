@@ -444,7 +444,7 @@ print_literal (Node blk) = "make_block(0, {" ++ compile blk [] ++ "})"
 
 stack_push :: Tree -> String
 
-stack_push a = "push(" ++ literal_type a ++ ", " ++ print_literal a ++ ");"
+stack_push a = "push_any(" ++ make_obj a ++ ");"
 
 is_literal :: String -> Bool
 is_literal str = not $ head str `elem` upperletters
