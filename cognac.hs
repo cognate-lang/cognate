@@ -457,7 +457,7 @@ compile (Leaf str : Leaf "Let" : xs) (value:buf) = "variable(" ++ lc str ++ "," 
 compile (Leaf str : Leaf "Let" : xs) buf = "variable(" ++ lc str ++ "," ++ (if xs `doesMutate` str then "mutable" else "immutable") ++ ", pop_any());{" ++ compile xs buf ++"}"
 compile (Leaf str:xs) buf
   | is_literal str = compile xs (Leaf str:buf)
-  | otherwise = (intercalate " " $ map stack_push (reverse (drop args buf))) ++ "call(" ++ lc str ++ (if args > 0 then "," else "") ++ (intercalate "," $ (map make_obj $ take args buf) ++ (if (length buf < args) then (take (args - length buf) $ cycle ["pop_any()"]) else [])) ++ ");" ++ (compile xs [])
+  | otherwise = (intercalate " " $ map stack_push (reverse (drop args buf))) ++ "call(" ++ lc str ++ ",(" ++ (intercalate "," $ (map make_obj $ take args buf) ++ (if (length buf < args) then (take (args - length buf) $ cycle ["pop_any()"]) else [])) ++ "));" ++ (compile xs [])
   where args = num_args $ lc str
 
 
