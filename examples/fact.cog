@@ -2,10 +2,9 @@ Import Builtin;
 
 Define Factorial
 ( Let X;
-  If (X, == 0) (
+  Do If (X, == 0) (
     1
-  );
-  Else (
+  ) else (
     Subtract 1 from X;
     find the Factorial;
     Multiply by X;

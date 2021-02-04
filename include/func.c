@@ -27,7 +27,7 @@ static const cognate_list* params;
 #include <gc/gc.h>
 #endif
 
-static void cognate_function_when()
+static void cognate_function_if()
 {
   // This is like If but simpler, with no internal state.
   // For some reason it's slower though.
@@ -45,51 +45,6 @@ static void cognate_function_when()
     push_any(b);
   }
 }
-
-static void cognate_function_if(char* const if_status, cognate_object cond, cognate_object expr)
-{
-  // TODO: Else and ElseIf should only be allowed directly following an If.
-  check_type(block, cond);
-  check_type(block, expr);
-  cond.block(); \
-  if ((*if_status = pop(boolean)))
-  {
-    expr.block();
-  }
-}
-#define cognate_function_if(...) cognate_function_if(&if_status, __VA_ARGS__)
-
-static void cognate_function_else(char* const if_status, cognate_object expr)
-{
-  check_type(block, expr);
-  if (!*if_status)
-  {
-    expr.block();
-  }
-  else if unlikely(*if_status == 2)
-  {
-    throw_error("Else statement encountered before [Else]If statement!");
-  }
-  *if_status = 2;
-}
-#define cognate_function_else(...) cognate_function_else(&if_status, __VA_ARGS__)
-
-static void cognate_function_elseif(char* const if_status)
-{
-  const cognate_block cond = pop(block);
-  const cognate_block expr = pop(block);
-  cond();
-  if unlikely(*if_status == 2)
-  {
-    throw_error("ElseIf statement encountered before [Else]If statement!");
-  }
-  else if (pop(boolean) && !*if_status)
-  {
-    expr();
-    *if_status = 1;
-  }
-}
-#define cognate_function_elseif(...) cognate_function_elseif(&if_status __VA_ARGS__)
 
 static void cognate_function_while() {
   cognate_block cond = pop(block);

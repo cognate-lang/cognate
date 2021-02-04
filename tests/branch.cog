@@ -1,41 +1,9 @@
-If (True) (
-  Print 'PASS: If True';
-);
-Else
-(
-  Print 'FAIL: If True';
-);
+Print If (True)
+  'PASS: If True'
+else
+  'FAIL: If True';
 
-If (False) (
-  Print 'FAIL: If False';
-);
-Else
-(
-  Print 'PASS: If False';
-);
-
-If (False) ();
-ElseIf (True) (
-  Print 'PASS: ElseIf True, previous If False'; 
-);
-Else (
-  Print 'FAIL: ElseIf True, previous If False';
-);
-
-If (True) ();
-ElseIf (True) (
-  Print 'FAIL: ElseIf True, previous If True'; 
-);
-
-If (False) ();
-ElseIf (False) (
-  Print 'FAIL: ElseIf False, previous If False';
-);
-Else (
-  Print 'PASS: ElseIf False, previous If False';
-);
-
-If (True) ();
-ElseIf (False) (
-  Print 'FAIL: ElseIf False, previous If True';
-);
+Print If (False)
+  'FAIL: If False'
+else
+  'PASS: If False';

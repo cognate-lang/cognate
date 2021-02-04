@@ -1,27 +1,21 @@
 ~~ This simple regex matches hexadecimal integers.
 ~~ ^ and $ are needed else it will only match part of the string.
 Let Regex be '^[0-9A-Fa-f]*$';
-If (Both Match Regex '12EFab' and Not Match Regex 'foo123') (
-  Print 'PASS: Simple regex to identify hex integers'
-);
-Else (
-  Print 'FAIL: Simple regex to identify hex integers'
-);
+Print If (Both Match Regex '12EFab' and Not Match Regex 'foo123')
+  'PASS: Simple regex to identify hex integers'
+else
+  'FAIL: Simple regex to identify hex integers';
 
 ~~ Same regex as before, but with POSIX character classes
 Let Regex be '^[[:xdigit:]]*$';
-If (Both Match Regex '12EFab' and Not Match Regex 'foo123') (
-  Print 'PASS: Regex to identify hex integers (character class)'
-);
-Else (
-  Print 'FAIL: Regex to identify hex integers (character class)'
-);
+Print If (Both Match Regex '12EFab' and Not Match Regex 'foo123')
+  'PASS: Regex to identify hex integers (character class)'
+else
+  'FAIL: Regex to identify hex integers (character class)';
 
 ~~ This regex matches decimal numbers (d.p can be dot or comma)
 Let Regex be '^(-)?([0-9]+)((,|.)([0-9]+))?$';
-If (Both Match Regex '1.234' and Not Match Regex 'Hello world') (
-  Print 'PASS: Extended regex to identify decimal numbers'
-);
-Else (
-  Print 'FAIL: Extended regex to identify decimal numbers'
-);
+Print If (Both Match Regex '1.234' and Not Match Regex 'Hello world')
+  'PASS: Extended regex to identify decimal numbers'
+else
+  'FAIL: Extended regex to identify decimal numbers';

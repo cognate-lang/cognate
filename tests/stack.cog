@@ -1,42 +1,32 @@
-If (2, 3, Drop, == 2) (
-  Print 'PASS: Drop'
-);
-Else (
-  Print 'FAIL: Drop'
-);
+Print If (2, 3, Drop, == 2)
+  'PASS: Drop'
+else
+  'FAIL: Drop';
 
-If (5, 6, Swap, == 5) (
-  Print 'PASS: Swap'
-);
-Else (
-  Print 'FAIL: Swap'
-); Drop;
+Print If (5, 6, Swap, == 5)
+  'PASS: Swap'
+else
+  'FAIL: Swap';
 
-If (4, Twin, Drop, == 4) (
-  Print 'PASS: Twin'
-);
-Else (
-  Print 'FAIL: Twin'
-);
+Drop;
 
-If (7, Triplet, Drop, Drop, == 7) (
-  Print 'PASS: Triplet'
-);
-Else (
-  Print 'FAIL: Triplet'
-);
+Print If (4, Twin, Drop, == 4)
+  'PASS: Twin'
+else
+  'FAIL: Twin';
 
-If (1,2,3, Stack, == List (1,2,3)) (
-  Print 'PASS: Stack as list'
-);
-Else (
-  Print 'FAIL: Stack as list'
-);
+Print If (7, Triplet, Drop, Drop, == 7)
+  'PASS: Triplet'
+else
+  'FAIL: Triplet';
 
-If (Clear, Stack, == List()) (
-  Print 'PASS: Clearing the stack'
-);
-Else (
-  Print 'FAIL: Clearing the stack'
-);
+Print If (1,2,3, Stack, == List (1,2,3))
+  'PASS: Stack as list'
+else
+  'FAIL: Stack as list';
+
+Print If (Clear, Stack, == List())
+  'PASS: Clearing the stack'
+else
+  'FAIL: Clearing the stack';
 

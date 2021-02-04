@@ -1,64 +1,46 @@
 Let Foo be List (1,2,3);
 
-If (Foo, == Foo) (
-  Print 'PASS: Comparing equal lists'
-);
-Else (
-  Print 'FAIL: Comparing equal lists'
-);
+Print If (Foo, == Foo)
+  'PASS: Comparing equal lists'
+else
+  'FAIL: Comparing equal lists';
 
-If (Foo, != List (5,6,7)) (
-  Print 'PASS: Comparing unequal lists'
-);
-Else (
-  Print 'FAIL: Comparing unequal lists'
-);
+Print If (Foo, != List (5,6,7))
+  'PASS: Comparing unequal lists'
+else
+  'FAIL: Comparing unequal lists';
 
-If (List (), == List ()) (
-  Print 'PASS: Comparing two empty lists'
-);
-Else (
-  Print 'FAIL: Comparing two empty lists'
-);
+Print If (List (), == List ())
+  'PASS: Comparing two empty lists'
+else
+  'FAIL: Comparing two empty lists';
 
-If (List (), != Foo) (
-  Print 'PASS: An empty list to a non-empty list'
-);
-Else (
-  Print 'FAIL: An empty list to a non-empty list'
-);
+Print If (List (), != Foo)
+  'PASS: An empty list to a non-empty list'
+else
+  'FAIL: An empty list to a non-empty list';
 
-If (Push 42 to Foo, == List (42, 1, 2, 3)) (
-  Print 'PASS: Pushing object to list'
-);
-Else (
-  Print 'FAIL: Pushing object to list'
-);
+Print If (Push 42 to Foo, == List (42, 1, 2, 3))
+  'PASS: Pushing object to list'
+else
+  'FAIL: Pushing object to list';
 
-If (Head of Foo, == 1) (
-  Print 'PASS: Getting list\'s Head'
-);
-Else (
-  Print 'FAIL: Getting list\'s Head'
-);
+Print If (Head of Foo, == 1)
+  'PASS: Getting list\'s Head'
+else
+  'FAIL: Getting list\'s Head';
 
-If (Head of List (1), == 1) (
-  Print 'PASS: Getting Head of single-element list'
-);
-Else (
-  Print 'FAIL: Getting Head of single-element list'
-);
+Print If (Head of List (1), == 1)
+  'PASS: Getting Head of single-element list'
+else
+  'FAIL: Getting Head of single-element list';
 
-If (Tail of Foo, == List (2, 3)) (
-  Print 'PASS: Getting list\'s Tail'
-);
-Else (
-  Print 'FAIL: Getting list\'s Tail'
-);
+Print If (Tail of Foo, == List (2, 3))
+  'PASS: Getting list\'s Tail'
+else
+  'FAIL: Getting list\'s Tail';
 
-If (Tail of List (1), == List ()) (
-  Print 'PASS: Getting Tail of single-element list'
-);
-Else (
-  Print 'FAIL: Getting Tail of single-element list'
-);
+Print If (Tail of List (1), == List ())
+  'PASS: Getting Tail of single-element list'
+else
+  'FAIL: Getting Tail of single-element list';

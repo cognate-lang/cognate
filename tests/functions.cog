@@ -3,12 +3,10 @@ Define Foo as
   Sum with 1;
 );
 
-If (Foo 4, == 5) (
-  Print 'PASS: Function call and return'
-);
-Else (
-  Print 'FAIL: Function call and return'
-);
+Print If (Foo 4, == 5)
+  'PASS: Function call and return'
+else
+  'FAIL: Function call and return';
 
 Do (
   Define Foo as
@@ -16,38 +14,31 @@ Do (
     Sum with 2;
   );
 
-  If (Foo 5, == 7) (
-    Print 'PASS: Function shadowing'
-  );
-  Else (
-    Print 'FAIL: Function shadowing'
-  );
+  Print If (Foo 5, == 7)
+    'PASS: Function shadowing'
+  else
+    'FAIL: Function shadowing';
 );
 
-If (Foo 7, == 8) (
-  Print 'PASS: Function shadowing in block'
-);
-Else (
-  Print 'FAIL: Function shadowing in block'
-);
+Print If (Foo 7, == 8)
+  'PASS: Function shadowing in block'
+else
+  'FAIL: Function shadowing in block';
 
 Let Recurred be False;
 Define Bar as
 (
-  If (== 0) (
+  Do If (== 0) (
     Set Recurred to True;
-  );
-  Else (
+  ) else (
     Bar with 0;
-  ); 
+  );
 );
 
 call Bar with 10;
-If (Recurred) (
-  Print 'PASS: Recursion'
-);
-Else (
-  Print 'FAIL: Recursion'
-);
+Print If (Recurred)
+  'PASS: Recursion'
+else
+  'FAIL: Recursion';
 
 ~~ Put binary recursion test here when I implement binary recursion.

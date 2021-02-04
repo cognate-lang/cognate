@@ -13,13 +13,13 @@ Define Empty?
 
 Define For as
 ( Let Lst, Let Body;
-  If (Lst, is Not Empty?)
+  Do If (Lst, is Not Empty?)
   (
     push First element in Lst;
     Do evaluate Body;
     For each in Tail of Lst
       Body;
-  );
+  ) else ();
 );
 
 Define Range as
@@ -29,11 +29,11 @@ Define Range as
     Define Count as
     (
       Let X;
-      If (X, < B)
+      Do If (X, < B)
       (
         return X;
         Count from + X S;
-      );
+      ) else ();
     );
     Count from A;
   );
@@ -59,8 +59,8 @@ Define Integer?
 
 Define Reverse
 ( Let Lst;
-  If (Lst, is Empty?) (Lst);
-  Else (
+  Do If (Lst, is Empty?) (Lst)
+  else (
     Reverse Tail of Lst;
     Append List(First element of Lst);
   );
@@ -74,10 +74,10 @@ Define Filter
     For each in Lst
     (
       Let X, push X;
-      If Cond
+      Do If Cond
       (
-        X;
-      )
+        X
+      ) else ()
     )
   )
 );

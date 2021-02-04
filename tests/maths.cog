@@ -1,55 +1,39 @@
-If (Sum 5 with 6, == 11) (
-  Print 'PASS: Addition'
-);
-Else (
-  Print 'FAIL: Addition'
-);
+Print If (Sum 5 with 6, == 11)
+  'PASS: Addition'
+else
+  'FAIL: Addition';
 
-If (Subtract 10 from 19, == 9) (
-  Print 'PASS: Subtraction'
-);
-Else (
-  Print 'FAIL: Subtraction'
-);
+Print If (Subtract 10 from 19, == 9)
+  'PASS: Subtraction'
+else
+  'FAIL: Subtraction';
 
-If (Multiply 9 by 8, == 72) (
-  Print 'PASS: Multiplication'
-);
-Else (
-  Print 'FAIL: Multiplication'
-);
+Print If (Multiply 9 by 8, == 72)
+  'PASS: Multiplication'
+else
+  'FAIL: Multiplication';
 
-If (Divide by 7 of 42, == 6) (
-  Print 'PASS: Division'
-);
-Else (
-  Print 'FAIL: Division'
-);
+Print If (Divide by 7 of 42, == 6)
+  'PASS: Division'
+else
+  'FAIL: Division';
 
-If (Modulo by 3 of 10, == 1) (
-  Print 'PASS: Modulus'
-);
-Else (
-  Print 'FAIL: Modulus'
-);
+Print If (Modulo by 3 of 10, == 1)
+  'PASS: Modulus'
+else
+  'FAIL: Modulus';
 
-If (Floor 4.7, == 4) (
-  Print 'PASS: Floor'
-);
-Else (
-  Print 'FAIL: Floor'
-);
+Print If (Floor 4.7, == 4)
+  'PASS: Floor'
+else
+  'FAIL: Floor';
 
-If (Ceiling 4.3, == 5) (
-  Print 'PASS: Ceiling'
-);
-Else (
-  Print 'FAIL: Ceiling'
-);
+Print If (Ceiling 4.3, == 5)
+  'PASS: Ceiling'
+else
+  'FAIL: Ceiling';
 
-If (Round 4.7, == 5) (
-  Print 'PASS: Round'
-);
-Else (
-  Print 'FAIL: Round'
-);
+Print If (Round 4.7, == 5)
+  'PASS: Round'
+else
+  'FAIL: Round';

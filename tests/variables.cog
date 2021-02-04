@@ -1,41 +1,31 @@
 Let X be 1;
-If (X, == 1) (
-  Print 'PASS: Variable assignment'
-);
-Else (
-  Print 'FAIL: Variable assignment'
-);
+Print If (X, == 1)
+  'PASS: Variable assignment'
+else
+  'FAIL: Variable assignment';
 
 Do (
   Let X be 2;
-  If (X, == 2) (
-    Print 'PASS: Variable shadowing'
-  );
-  Else (
-    Print 'FAIL: Variable shadowing'
-  );
+  Print If (X, == 2)
+    'PASS: Variable shadowing'
+  else
+    'FAIL: Variable shadowing';
 );
 
-If (X, == 1) (
-  Print 'PASS: Variable shadowing in block'
-);
-Else (
-  Print 'FAIL: Variable shadowing in block'
-);
+Print If (X, == 1)
+  'PASS: Variable shadowing in block'
+else
+  'FAIL: Variable shadowing in block';
 
 Do (
   Set X to 3;
-  If (X, == 3) (
-    Print 'PASS: Variable modification'
-  );
-  Else (
-    Print 'FAIL: Variable modification'
-  );
+  Print If (X, == 3)
+    'PASS: Variable modification'
+  else
+    'FAIL: Variable modification';
 );
 
-If (X, == 3) (
-  Print 'PASS: Variable modification in block'
-);
-Else (
-  Print 'FAIL: Variable modification in block'
-);
+Print If (X, == 3)
+  'PASS: Variable modification in block'
+else
+  'FAIL: Variable modification in block';
