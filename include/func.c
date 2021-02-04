@@ -6,9 +6,9 @@
 
 static const cognate_list* params;
 
-#define call(name) \
+#define call(name, ...) \
   word_name = #name; \
-  cognate_function_ ## name();
+  cognate_function_ ## name(__VA_ARGS__);
 
 // I'm not putting type signatures for every single function here.
 
@@ -46,25 +46,25 @@ static void cognate_function_when()
   }
 }
 
-static void cognate_function_if(char* const if_status)
+static void cognate_function_if(char* const if_status, cognate_object cond, cognate_object expr)
 {
   // TODO: Else and ElseIf should only be allowed directly following an If.
-  const cognate_block cond = pop(block);
-  const cognate_block expr = pop(block);
-  cond(); \
+  check_type(block, cond);
+  check_type(block, expr);
+  cond.block(); \
   if ((*if_status = pop(boolean)))
   {
-    expr();
+    expr.block();
   }
 }
-#define cognate_function_if() cognate_function_if(&if_status)
+#define cognate_function_if(...) cognate_function_if(&if_status, __VA_ARGS__)
 
-static void cognate_function_else(char* const if_status)
+static void cognate_function_else(char* const if_status, cognate_object expr)
 {
-  const cognate_block expr = pop(block);
+  check_type(block, expr);
   if (!*if_status)
   {
-    expr();
+    expr.block();
   }
   else if unlikely(*if_status == 2)
   {
@@ -72,7 +72,7 @@ static void cognate_function_else(char* const if_status)
   }
   *if_status = 2;
 }
-#define cognate_function_else() cognate_function_else(&if_status)
+#define cognate_function_else(...) cognate_function_else(&if_status, __VA_ARGS__)
 
 static void cognate_function_elseif(char* const if_status)
 {
@@ -89,7 +89,7 @@ static void cognate_function_elseif(char* const if_status)
     *if_status = 1;
   }
 }
-#define cognate_function_elseif() cognate_function_elseif(&if_status)
+#define cognate_function_elseif(...) cognate_function_elseif(&if_status __VA_ARGS__)
 
 static void cognate_function_while() {
   cognate_block cond = pop(block);

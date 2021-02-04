@@ -11,6 +11,8 @@
 #define INITIAL_TABLE_SIZE 256
 #define LIST_GROWTH_FACTOR 1.5
 
+#define OBJ(objtype, objvalue) ((cognate_object){.type=objtype, .objtype=objvalue})
+
 #define DIGITS 14
 
 #define program(body) \

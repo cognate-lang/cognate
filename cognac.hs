@@ -249,6 +249,70 @@ compile :: [Tree] -> String
 
 doesCall :: [Tree] -> String -> Bool
 
+num_args "when" = 3
+num_args "if" = 2
+num_args "else" = 1
+num_args "elseif" = 2
+num_args "while" = 2
+num_args "do" = 1
+num_args "put" = 1
+num_args "print" = 1
+num_args "sum" = 2
+num_args "multiply" = 2
+num_args "divide" = 2
+num_args "subtract" = 2
+num_args "modulo" = 2
+num_args "random" = 3
+num_args "drop" = 3
+num_args "twin" = 3
+num_args "triplet" = 3
+num_args "swap" = 3
+num_args "clear" = 0
+num_args "true" = 0
+num_args "false" = 0
+num_args "either" = 2
+num_args "both" = 2
+num_args "one_of" = 2
+num_args "not" = 1
+num_args "equal" = 2
+num_args "unequal" = 2
+num_args "preceed" = 2
+num_args "exceed" = 2
+num_args "equalorexceed" = 2
+num_args "number_" = 1
+num_args "list_" = 1
+num_args "string_" = 1
+num_args "block_" = 1
+num_args "boolean_" = 1
+num_args "head" = 1
+num_args "tail" = 1
+num_args "push" = 2
+num_args "empty" = 1
+num_args "list" = 1
+num_args "suffix" = 2
+num_args "string_length" = 1
+num_args "substring" = 3
+num_args "input" = 0
+num_args "read" = 1
+num_args "number" = 1
+num_args "path" = 0
+num_args "stack" = 0
+num_args "write" = 2
+num_args "parameters" = 0
+num_args "stop" = 0
+num_args "table" = 1
+num_args "insert" = 2
+num_args "values" = 1
+num_args "match" = 2
+num_args "ordinal" = 1
+num_args "character" = 1
+num_args "floor" = 1
+num_args "round" = 1
+num_args "ceiling" = 1
+num_args "assert" = 2
+num_args "error" = 1
+num_args _ = 0
+
 (Node body : Leaf name : Leaf "Define" : xs) `doesCall` func
   | xs `doesCall` name = xs `doesCall` func || body `doesCall` func
   | otherwise = xs `doesCall` func
@@ -385,9 +449,9 @@ main =
   do
     args <- getArgs
     let compilerFlagsLinux =
-          words "-fblocks -lBlocksRuntime -l:libgc.so -Ofast -I include -Wall -Wextra -Werror -Wno-unused -pedantic-errors -std=c11 -lm -g0 -rdynamic -fuse-ld=lld"
+          words "-fblocks -lBlocksRuntime -l:libgc.so -Ofast -I include -Wall -Wextra -Werror -Wno-unused -pedantic-errors -std=c11 -lm -g0 -rdynamic -fuse-ld=lld -Wno-gnu-zero-variadic-macro-arguments"
     let compilerFlagsMac =
-          words "-fblocks -lgc -Ofast -I include -Wall -Wextra -Werror -pedantic-errors -Wno-unused -std=c11 -lm -g0 -rdynamic -fuse-ld=lld"
+          words "-fblocks -lgc -Ofast -I include -Wall -Wextra -Werror -pedantic-errors -Wno-unused -std=c11 -lm -g0 -rdynamic -fuse-ld=lld -Wno-gnu-zero-variadic-macro-arguments"
     let compilerFlags = if System.Info.os == "linux" then compilerFlagsLinux else compilerFlagsMac
     let in_file = head args
     let out_file = head (splitOn "." in_file) ++ ".c"
