@@ -1,21 +1,13 @@
-Define Tail as (Discard 1);
-Define First as (Index 0);
-Define Last as  (Let L, Index - 1 Length L of L);
 Define Tuple be (Let X, Let Y, List (X, Y));
 
 Define Prepend (Swap, Append);
 Define Prefix  (Swap, Suffix);
 
-Define Empty?
-(
-  Length, == 0
-);
-
 Define For as
 ( Let Lst, Let Body;
   Do If (Lst, is Not Empty?)
   (
-    push First element in Lst;
+    push Head element in Lst;
     Do evaluate Body;
     For each in Tail of Lst
       Body;
@@ -45,7 +37,7 @@ Define Zip as
   (
     For each in List2
     (
-      push First element in List1;
+      push Head element in List1;
       Set List1 to Tail of List1;
       make Tuple;
     );
@@ -62,7 +54,7 @@ Define Reverse
   Do If (Lst, is Empty?) (Lst)
   else (
     Reverse Tail of Lst;
-    Append List(First element of Lst);
+    Append List(Head element of Lst);
   );
 );
 

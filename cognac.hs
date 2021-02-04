@@ -453,14 +453,15 @@ compile (Node blk:xs) buf = compile xs (Node blk:buf)
 compile (Leaf "" : xs) buf =compile xs buf
 compile (Leaf "StringLiteral":xs) (Node str:xss) = compile xs (Leaf ("\"" ++ constructStr str ++ "\"") : xss)
 compile (Leaf str : Leaf "Define" : xs) (Node blk : xss) = if xs `doesCall` str then "function(" ++ lc str ++ (if blk `doesCall` str then ",mutable," else ",immutable,") ++ "0,{" ++ compile blk [] ++ "}); {" ++ compile xs xss ++ "}" else compile xs xss
-compile (Leaf str : Leaf "Let" : xs) buf = "variable(" ++ lc str ++ "," ++ (if xs `doesMutate` str then "mutable" else "immutable") ++ ");{" ++ compile xs buf ++"}"
+compile (Leaf str : Leaf "Let" : xs) (value:buf) = "variable(" ++ lc str ++ "," ++ (if xs `doesMutate` str then "mutable" else "immutable") ++ ", " ++ make_obj value ++ ");{" ++ compile xs buf ++"}"
+compile (Leaf str : Leaf "Let" : xs) buf = "variable(" ++ lc str ++ "," ++ (if xs `doesMutate` str then "mutable" else "immutable") ++ ", pop_any());{" ++ compile xs buf ++"}"
 compile (Leaf str:xs) buf
   | is_literal str = compile xs (Leaf str:buf)
-  | otherwise = (intercalate " " $ map stack_push (drop args buf)) ++ "call(" ++ lc str ++ (if args > 0 then "," else "") ++ (intercalate "," $ (map make_obj $ take args buf) ++ (if (length buf < args) then (take (args - length buf) $ cycle ["pop_any()"]) else [])) ++ ");" ++ (compile xs [])
+  | otherwise = (intercalate " " $ map stack_push (reverse (drop args buf))) ++ "call(" ++ lc str ++ (if args > 0 then "," else "") ++ (intercalate "," $ (map make_obj $ take args buf) ++ (if (length buf < args) then (take (args - length buf) $ cycle ["pop_any()"]) else [])) ++ ");" ++ (compile xs [])
   where args = num_args $ lc str
 
 
-compile [] buf = intercalate " " $ map stack_push buf
+compile [] buf = intercalate " " $ map stack_push $ reverse buf
 
 
 compiler = "clang"

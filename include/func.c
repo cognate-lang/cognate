@@ -70,9 +70,10 @@ static void cognate_function_subtract(cognate_object a, cognate_object b) { push
 //static void cognate_function_divide()   { push(number, (1 / pop(number) * pop(number))); }
 //static void cognate_function_subtract() { push(number, (-pop(number) + pop(number))); }
 
-static void cognate_function_modulo() {
-  const double n = pop(number);
-  push(number, fmod(pop(number), n));
+static void cognate_function_modulo(cognate_object a, cognate_object b) {
+  check_type(number, a);
+  check_type(number, b);
+  push(number, fmod(b.number, a.number));
 }
 
 static void cognate_function_random() {
@@ -111,17 +112,15 @@ static void cognate_function_false() { push(boolean, 0); }
 static void cognate_function_either() { push(boolean, pop(boolean) + pop(boolean)); } // Use unconventional operators to avoid short-circuits.
 static void cognate_function_both()   { push(boolean, pop(boolean) & pop(boolean)); }
 static void cognate_function_one_of() { push(boolean, pop(boolean) ^ pop(boolean)); }
-static void cognate_function_not()    { push(boolean,!pop(boolean)); }
+static void cognate_function_not(cognate_object a)    { push(boolean,!check_type(boolean, a).boolean); }
 
 
-static void cognate_function_equal()          { push(boolean,  compare_objects(pop_any(),pop_any())); }
-static void cognate_function_unequal()        { push(boolean, !compare_objects(pop_any(),pop_any())); }
-//static void cognate_function_preceed()        { push(boolean, pop(number) >  pop(number)); }
-//static void cognate_function_exceed()         { push(boolean, pop(number) <  pop(number)); }
+static void cognate_function_equal(cognate_object a, cognate_object b)      { push(boolean, check_type(number, a).number == check_type(number, b).number); }
+static void cognate_function_unequal(cognate_object a, cognate_object b)      { push(boolean, check_type(number, a).number != check_type(number, b).number); }
 static void cognate_function_exceed(cognate_object a, cognate_object b)      { push(boolean, check_type(number, a).number < check_type(number, b).number); }
 static void cognate_function_preceed(cognate_object a, cognate_object b)      { push(boolean, check_type(number, a).number > check_type(number, b).number); }
-static void cognate_function_equalorpreceed() { push(boolean, pop(number) >= pop(number)); }
-static void cognate_function_equalorexceed()  { push(boolean, pop(number) <= pop(number)); }
+static void cognate_function_equalorpreceed(cognate_object a, cognate_object b)      { push(boolean, check_type(number, a).number >= check_type(number, b).number); }
+static void cognate_function_equalorexceed(cognate_object a, cognate_object b)      { push(boolean, check_type(number, a).number <= check_type(number, b).number); }
 
 static void cognate_function_number_()  { push(boolean, pop_any().type & number);  } // Question marks are converted to underscores.
 static void cognate_function_list_()    { push(boolean, pop_any().type & list);    } // However all other symbols are too.
@@ -129,16 +128,16 @@ static void cognate_function_string_()  { push(boolean, pop_any().type & string)
 static void cognate_function_block_()   { push(boolean, pop_any().type & block);   }
 static void cognate_function_boolean_() { push(boolean, pop_any().type & boolean); }
 
-static void cognate_function_head() {
+static void cognate_function_head(cognate_object a) {
   // Returns a list's first element. O(1).
-  const cognate_list* lst = pop(list);
+  const cognate_list* lst = check_type(list, a).list;
   if unlikely(!lst) throw_error("Cannot return the First element of an empty list!");
   push_any(lst->object);
 }
 
-static void cognate_function_tail() {
+static void cognate_function_tail(cognate_object a) {
   // Returns the tail portion of a list. O(1).
-  const cognate_list* lst = pop(list);
+  const cognate_list* lst = check_type(list, a).list;
   if unlikely(!lst) throw_error("Cannot return the Tail elements of an empty list!");
   push(list, lst->next);
 }
@@ -155,12 +154,12 @@ static void cognate_function_push() {
 static void cognate_function_empty_() {
   // Returns true is a list is empty. O(1).
   // Can be used to to write a Length function.
-  push(boolean, pop(list));
+  push(boolean, !pop(list));
 }
 
-static void cognate_function_list() {
+static void cognate_function_list(cognate_object a) {
   // Get the block argument
-  const cognate_block expr = pop(block);
+  const cognate_block expr = check_type(block, a).block;
   // Move the stack to temporary storage
   const cognate_stack temp_stack = stack;
   // Allocate a list as the stack

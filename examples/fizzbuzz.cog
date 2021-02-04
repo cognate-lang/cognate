@@ -3,9 +3,9 @@ Import Builtin functions;
 ~~ See www.wikipedia.org/wiki/Fizz_buzz
 Define FizzBuzz
 ( Let N be a number;
-  Do If (N, Modulo 15, == 0) then (Print 'FizzBuzz');
-     If (N, Modulo 3,  == 0) then (Print 'Fizz');
-     If (N, Modulo 5,  == 0) then (Print 'Buzz');
+  Do If (N, Modulo 15, == 0) then (Print 'FizzBuzz')
+     If (N, Modulo 3,  == 0) then (Print 'Fizz')
+     If (N, Modulo 5,  == 0) then (Print 'Buzz')
      else                    then (Print N);
 );
 
