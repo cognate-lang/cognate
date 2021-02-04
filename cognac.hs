@@ -449,6 +449,13 @@ stack_push a = "push_any(" ++ make_obj a ++ ");"
 is_literal :: String -> Bool
 is_literal str = not $ head str `elem` upperletters
 
+-- TODO:
+-- Simple type inference so we can pass arguments as values instead of complete cognate_objects.
+-- Inlining stack pushes as function returns seemed to hurt performance (probably because sizeof(cognate_object) > 8), but it could help with type inference where we can pass smaller values.
+-- Inline arguments to user definied functions where Let expressions are at the start [remember not to break error messages].
+-- Peephole optimizations, such as eliminating Drop expressions.
+-- Rewrite the entire parser in Cognate ASAP.
+
 compile (Node blk:xs) buf = compile xs (Node blk:buf)
 compile (Leaf "" : xs) buf =compile xs buf
 compile (Leaf "StringLiteral":xs) (Node str:xss) = compile xs (Leaf ("\"" ++ constructStr str ++ "\"") : xss)

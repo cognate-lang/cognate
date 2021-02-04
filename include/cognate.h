@@ -13,8 +13,6 @@
 
 #define OBJ(objtype, objvalue) ((cognate_object){.type=objtype, .objtype=objvalue})
 
-#define DIGITS 14
-
 #define program(body) \
   int main(int argc, char** argv) \
   { \
