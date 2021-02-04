@@ -14,6 +14,7 @@
 
 {-# LANGUAGE LambdaCase #-}
 
+
 import System.Process
 import System.Environment
 import System.Info
@@ -245,14 +246,11 @@ parseImports path (x:xs) imported =
 
 parseImports _ [] _ = return []
 
-compile :: [Tree] -> String
+compile :: [Tree] -> [Tree] -> String
 
 doesCall :: [Tree] -> String -> Bool
 
-num_args "when" = 3
-num_args "if" = 2
-num_args "else" = 1
-num_args "elseif" = 2
+num_args "if" = 3
 num_args "while" = 2
 num_args "do" = 1
 num_args "put" = 1
@@ -263,10 +261,10 @@ num_args "divide" = 2
 num_args "subtract" = 2
 num_args "modulo" = 2
 num_args "random" = 3
-num_args "drop" = 3
-num_args "twin" = 3
-num_args "triplet" = 3
-num_args "swap" = 3
+num_args "drop" = 1
+num_args "twin" = 1
+num_args "triplet" = 1
+num_args "swap" = 2
 num_args "clear" = 0
 num_args "true" = 0
 num_args "false" = 0
@@ -355,6 +353,7 @@ constructStr str =
         | otherwise = replace "\"" "\\\"" $ replace "¸" "'" str
 
 
+{-
 compile (Leaf "" : xs) = "" ++ compile xs
 
 
@@ -426,6 +425,44 @@ compile (Leaf token : xs)
 
 compile [] = ""
 
+-}
+
+make_obj :: Tree -> String
+make_obj a = "OBJ(" ++ literal_type a ++ "," ++ print_literal a ++ ")"
+
+literal_type :: Tree -> String
+
+literal_type (Leaf token)
+  | all (`elem` ('.':'-':['0'..'9'])) token = "number"
+  | head token == '\"' = "string"
+
+literal_type (Node token) = "block"
+
+print_literal :: Tree -> String
+print_literal (Leaf str) = str
+print_literal (Node blk) = "make_block(0, {" ++ compile blk [] ++ "})"
+
+stack_push :: Tree -> String
+
+stack_push a = "push(" ++ literal_type a ++ ", " ++ print_literal a ++ ");"
+
+is_literal :: String -> Bool
+is_literal str = not $ head str `elem` upperletters
+
+compile (Node blk:xs) buf = compile xs (Node blk:buf)
+compile (Leaf "" : xs) buf =compile xs buf
+compile (Leaf "StringLiteral":xs) (Node str:xss) = compile xs (Leaf ("\"" ++ constructStr str ++ "\"") : xss)
+compile (Leaf str : Leaf "Define" : xs) (Node blk : xss) = if xs `doesCall` str then "function(" ++ lc str ++ (if blk `doesCall` str then ",mutable," else ",immutable,") ++ "0,{" ++ compile blk [] ++ "}); {" ++ compile xs xss ++ "}" else compile xs xss
+compile (Leaf str : Leaf "Let" : xs) buf = "variable(" ++ lc str ++ "," ++ (if xs `doesMutate` str then "mutable" else "immutable") ++ ");{" ++ compile xs buf ++"}"
+compile (Leaf str:xs) buf
+  | is_literal str = compile xs (Leaf str:buf)
+  | otherwise = (intercalate " " $ map stack_push (drop args buf)) ++ "call(" ++ lc str ++ (if args > 0 then "," else "") ++ (intercalate "," $ (map make_obj $ take args buf) ++ (if (length buf < args) then (take (args - length buf) $ cycle ["pop_any()"]) else [])) ++ ");" ++ (compile xs [])
+  where args = num_args $ lc str
+
+
+compile [] buf = intercalate " " $ map stack_push buf
+
+
 compiler = "clang"
 
 isLeaf (Leaf _) = True
@@ -463,7 +500,7 @@ main =
       putStrLn $ "Compiling " ++ in_file ++ " to " ++ out_file ++ "... "
       source <- readFile in_file
       thing <- parseImports in_file (parsefile source) [head $ splitOn "." (last (splitOn "/" in_file))]
-      writeFile out_file $ header in_file ++ "#include\"cognate.c\"\nprogram({" ++ compile thing ++ "})\n"
+      writeFile out_file $ header in_file ++ "#include\"cognate.c\"\nprogram({" ++ compile thing [] ++ "})\n"
       rawSystem formatter (formatFlags ++ [out_file])
       putStrLn $ "Compiling " ++ out_file ++ " to " ++ stripExtension in_file ++ "... "
       rawSystem compiler ([out_file, "-o", stripExtension in_file] ++ compilerFlags ++ compiler_args)

@@ -1,6 +1,6 @@
 Define Fib ~~ Calculate the Nth fibonacci number.
 ( Let N;
-  Do If (2, > N) (
+  Do If (N, < 2) (
     return 1
   ) else (
     Sum

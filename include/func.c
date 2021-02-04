@@ -27,15 +27,12 @@ static const cognate_list* params;
 #include <gc/gc.h>
 #endif
 
-static void cognate_function_if()
+static void cognate_function_if(cognate_object cond, cognate_object a, cognate_object b)
 {
-  // This is like If but simpler, with no internal state.
-  // For some reason it's slower though.
-  // TODO: Use this instead of if.
-  const cognate_block cond = pop(block);
-  const cognate_object a = pop_any();
-  const cognate_object b = pop_any();
-  cond();
+  check_type(block, cond);
+  check_type(block, a);
+  check_type(block, b);
+  cond.block();
   if (pop(boolean))
   {
     push_any(a);
@@ -57,15 +54,21 @@ static void cognate_function_while() {
   }
 }
 
-static void cognate_function_do() { pop(block)(); }
+static void cognate_function_do(cognate_object blk) { check_type(block, blk).block(); }
 
-static void cognate_function_put()   { print_object(pop_any(), stdout, 0); fflush(stdout); }
-static void cognate_function_print() { print_object(pop_any(), stdout, 0); puts("");       }
+static void cognate_function_put(cognate_object a)   { print_object(a, stdout, 0); fflush(stdout); }
+static void cognate_function_print(cognate_object a) { print_object(a, stdout, 0); puts(""); }
 
-static void cognate_function_sum()      { push(number, pop(number) + pop(number)); }
-static void cognate_function_multiply() { push(number, pop(number) * pop(number)); }
-static void cognate_function_divide()   { push(number, (1 / pop(number) * pop(number))); }
-static void cognate_function_subtract() { push(number, (-pop(number) + pop(number))); }
+
+static void cognate_function_sum(cognate_object a, cognate_object b)      { push(number, check_type(number, a).number + check_type(number, b).number); }
+static void cognate_function_multiply(cognate_object a, cognate_object b) { push(number, check_type(number, a).number * check_type(number, b).number); }
+static void cognate_function_divide(cognate_object a, cognate_object b)   { push(number, check_type(number, b).number / check_type(number, a).number); }
+static void cognate_function_subtract(cognate_object a, cognate_object b) { push(number, check_type(number, b).number - check_type(number, a).number); }
+
+//static void cognate_function_sum()      { push(number, pop(number) + pop(number)); }
+//static void cognate_function_multiply() { push(number, pop(number) * pop(number)); }
+//static void cognate_function_divide()   { push(number, (1 / pop(number) * pop(number))); }
+//static void cognate_function_subtract() { push(number, (-pop(number) + pop(number))); }
 
 static void cognate_function_modulo() {
   const double n = pop(number);
@@ -113,8 +116,10 @@ static void cognate_function_not()    { push(boolean,!pop(boolean)); }
 
 static void cognate_function_equal()          { push(boolean,  compare_objects(pop_any(),pop_any())); }
 static void cognate_function_unequal()        { push(boolean, !compare_objects(pop_any(),pop_any())); }
-static void cognate_function_preceed()        { push(boolean, pop(number) >  pop(number)); }
-static void cognate_function_exceed()         { push(boolean, pop(number) <  pop(number)); }
+//static void cognate_function_preceed()        { push(boolean, pop(number) >  pop(number)); }
+//static void cognate_function_exceed()         { push(boolean, pop(number) <  pop(number)); }
+static void cognate_function_exceed(cognate_object a, cognate_object b)      { push(boolean, check_type(number, a).number < check_type(number, b).number); }
+static void cognate_function_preceed(cognate_object a, cognate_object b)      { push(boolean, check_type(number, a).number > check_type(number, b).number); }
 static void cognate_function_equalorpreceed() { push(boolean, pop(number) >= pop(number)); }
 static void cognate_function_equalorexceed()  { push(boolean, pop(number) <= pop(number)); }
 
