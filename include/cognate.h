@@ -52,7 +52,6 @@
 
 #define make_block(docopy, body) \
   ^{ \
-    __attribute__((unused)) char if_status = 2; \
     body \
     copy_blocks(); \
   }
