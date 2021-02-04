@@ -528,9 +528,9 @@ compile (Leaf str:xs) buf
         call = (intercalate " " $ map stack_push (reverse (drop args buf)))
                 ++ "call("
                 ++ lc str
-                ++ (if args > 0 then "," else "")
+                ++ ",("
                 ++ (intercalate "," $ (map make_obj $ take args buf) ++ (if (length buf < args) then (take (args - length buf) $ cycle ["pop_any()"]) else []))
-                ++ ")"
+                ++ "))"
 
 
 

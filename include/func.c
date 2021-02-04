@@ -6,10 +6,10 @@
 
 static const cognate_list* params;
 
-#define call(name, ...) \
+#define call(name, args) \
 ({ \
   word_name = #name; \
-  cognate_function_ ## name(__VA_ARGS__); \
+  cognate_function_ ## name args; \
 })
 
 // I'm not putting type signatures for every single function here.
