@@ -494,9 +494,9 @@ main =
   do
     args <- getArgs
     let compilerFlagsLinux =
-          words "-fblocks -lBlocksRuntime -l:libgc.so -Ofast -I include -Wall -Wextra -Werror -Wno-unused -pedantic-errors -std=c11 -lm -g0 -rdynamic -fuse-ld=lld -Wno-gnu-zero-variadic-macro-arguments"
+          words "-fblocks -lBlocksRuntime -l:libgc.so -Ofast -I include -Wall -Wextra -Werror -Wno-unused -pedantic-errors -std=c11 -lm -g0 -rdynamic -fuse-ld=lld"
     let compilerFlagsMac =
-          words "-fblocks -lgc -Ofast -I include -Wall -Wextra -Werror -pedantic-errors -Wno-unused -std=c11 -lm -g0 -rdynamic -fuse-ld=lld -Wno-gnu-zero-variadic-macro-arguments"
+          words "-fblocks -lgc -Ofast -I include -Wall -Wextra -Werror -pedantic-errors -Wno-unused -std=c11 -lm -g0 -rdynamic -fuse-ld=lld"
     let compilerFlags = if System.Info.os == "linux" then compilerFlagsLinux else compilerFlagsMac
     let in_file = head args
     let out_file = head (splitOn "." in_file) ++ ".c"
