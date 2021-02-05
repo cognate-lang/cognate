@@ -246,25 +246,25 @@ parseImports path (x:xs) imported =
 
 parseImports _ [] _ = return []
 
-compile :: [Tree] -> [Tree] -> String
+compile :: [Tree] -> [Tree] -> [String] -> String
 
 doesCall :: [Tree] -> String -> Bool
 
-args "if" = ["block", "any", "any"]
+args "if" = ["block", "", ""]
 args "while" = ["block", "block"]
 args "do" = ["block"]
-args "put" = ["any"]
-args "print" = ["any"]
+args "put" = [""]
+args "print" = [""]
 args "sum" = ["number", "number"]
 args "multiply" = ["number", "number"]
 args "divide" = ["number", "number"]
 args "subtract" = ["number", "number"]
 args "modulo" = ["number", "number"]
 args "random" = ["number", "number", "number"]
-args "drop" = ["any"]
-args "twin" = ["any"]
-args "triplet" = ["any"]
-args "swap" = ["any", "any"]
+args "drop" = [""]
+args "twin" = [""]
+args "triplet" = [""]
+args "swap" = ["", ""]
 args "clear" = []
 args "true" = []
 args "false" = []
@@ -272,20 +272,20 @@ args "either" = ["boolean", "boolean"]
 args "both" = ["boolean", "boolean"]
 args "one_of" = ["boolean", "boolean"]
 args "not" = ["boolean"]
-args "equal" = ["any", "any"]
-args "unequal" = ["any", "any"]
+args "equal" = ["", ""]
+args "unequal" = ["", ""]
 args "preceed" = ["number", "number"]
 args "exceed" = ["number", "number"]
 args "equalorexceed" = ["number", "number"]
-args "number_" = ["any"]
-args "list_" = ["any"]
-args "string_" = ["any"]
-args "block_" = ["any"]
-args "boolean_" = ["any"]
+args "number_" = [""]
+args "list_" = [""]
+args "string_" = [""]
+args "block_" = [""]
+args "boolean_" = [""]
 args "head" = ["list"]
 args "tail" = ["list"]
-args "push" = ["any", "list"]
-args "empty" = ["list"]
+args "push" = ["", "list"]
+args "empty_" = ["list"]
 args "list" = ["block"]
 args "suffix" = ["string"]
 args "string_length" = ["string"]
@@ -295,11 +295,11 @@ args "read" = ["string"]
 args "number" = ["string"]
 args "path" = []
 args "stack" = []
-args "write" = ["string", "any"]
+args "write" = ["string", ""]
 args "parameters" = []
 args "stop" = []
 args "table" = ["block"]
-args "insert" = ["string", "any", "block"]
+args "insert" = ["string", "", "block"]
 args "values" = ["table"]
 args "match" = ["string", "string"]
 args "ordinal" = ["string"]
@@ -310,6 +310,69 @@ args "ceiling" = ["number"]
 args "assert" = ["string", "boolean"]
 args "error" = ["string"]
 args _ = []
+
+ret "if" = "" -- Functions returning objects should use the stack, it's actually faster.
+ret "while" = ""
+ret "do" = ""
+ret "put" = ""
+ret "print" = ""
+ret "sum" = "number"
+ret "multiply" = "number"
+ret "divide" = "number"
+ret "subtract" = "number"
+ret "modulo" = "number"
+ret "random" = "number"
+ret "drop" = ""
+ret "twin" = ""
+ret "triplet" = ""
+ret "swap" = ""
+ret "clear" = ""
+ret "true" = "boolean"
+ret "false" = "boolean"
+ret "either" = "boolean"
+ret "both" = "boolean"
+ret "one_of" = "boolean"
+ret "not" = "boolean"
+ret "equal" = "boolean"
+ret "unequal" = "boolean"
+ret "preceed" = "boolean"
+ret "exceed" = "boolean"
+ret "equalorexceed" = "boolean"
+ret "number_" = "boolean"
+ret "list_" = "boolean"
+ret "string_" = "boolean"
+ret "block_" = "boolean"
+ret "boolean_" = "boolean"
+ret "head" = ""
+ret "tail" = "list"
+ret "push" = "list"
+ret "empty_" = "boolean"
+ret "list" = "list"
+ret "suffix" = "string"
+ret "string_length" = "number"
+ret "substring" = "string"
+ret "input" = "string"
+ret "read" = "string"
+ret "number" = "number"
+ret "path" = "string"
+ret "stack" = "list"
+ret "write" = ""
+ret "parameters" = "list"
+ret "stop" = ""
+ret "table" = "table"
+ret "insert" = "table"
+ret "values" = "list"
+ret "match" = "boolean"
+ret "ordinal" = "number"
+ret "character" = "string"
+ret "floor" = "number"
+ret "round" = "number"
+ret "ceiling" = "number"
+ret "assert" = ""
+ret "error" = ""
+ret _ = ""
+
+
 
 (Node body : Leaf name : Leaf "Define" : xs) `doesCall` func
   | xs `doesCall` name = xs `doesCall` func || body `doesCall` func
@@ -429,37 +492,36 @@ compile [] = ""
 
 generate_cast :: String -> String
 
-generate_cast "any" = "pop_any()"
+generate_cast "" = "pop_any()"
 generate_cast typ = "pop(" ++ typ ++ ")"
 
-handle_type_thing :: (Tree, String) -> String
-
-handle_type_thing (obj, typ) = chk_type typ obj
-
-chk_type :: String -> Tree -> String
-chk_type typ obj
-  | (literal_type obj) == typ = print_literal obj
-  | typ == "any" = make_obj obj
+chk_type :: (Tree, String) -> [String] -> String
+chk_type (obj, typ) vars
+  | (literal_type obj) == typ = print_literal obj vars
+  | typ == "" = make_obj obj vars
+  | literal_type obj == "" = "(check_type(" ++ typ ++ "," ++ print_literal obj vars ++ ")." ++ typ ++ ")"
   | otherwise = error $ "Type error is guaranteed on execution. Expected type " ++ typ ++ " but got type " ++ literal_type obj
 
-make_obj :: Tree -> String
-make_obj a = "OBJ(" ++ literal_type a ++ "," ++ print_literal a ++ ")"
+make_obj :: Tree -> [String] -> String
+make_obj a vars = "OBJ(" ++ literal_type a ++ "," ++ print_literal a vars ++ ")"
 
 literal_type :: Tree -> String
 
 literal_type (Leaf token)
   | all (`elem` ('.':'-':['0'..'9'])) token = "number"
   | head token == '\"' = "string"
+  | "var(" `isPrefixOf` token = ""
+  | "call(" `isPrefixOf` token = ret (takeWhile (/= ',') (drop 5 token))
 
 literal_type (Node token) = "block"
 
-print_literal :: Tree -> String
-print_literal (Leaf str) = str
-print_literal (Node blk) = "make_block(0, {" ++ compile blk [] ++ "})"
+print_literal :: Tree -> [String] -> String
+print_literal (Leaf str) _ = str
+print_literal (Node blk) vars = "make_block(0, {" ++ compile blk [] vars ++ "})"
 
-stack_push :: Tree -> String
+stack_push :: Tree -> [String] -> String
 
-stack_push a = "push_any(" ++ make_obj a ++ ");"
+stack_push a vars = "push_any(" ++ make_obj a vars ++ ");"
 
 is_literal :: String -> Bool
 is_literal str = not $ head str `elem` upperletters
@@ -471,19 +533,23 @@ is_literal str = not $ head str `elem` upperletters
 -- Peephole optimizations, such as eliminating Drop expressions.
 -- Rewrite the entire parser in Cognate ASAP.
 
-compile (Node blk:xs) buf = compile xs (Node blk:buf)
-compile (Leaf "" : xs) buf =compile xs buf
-compile (Leaf "StringLiteral":xs) (Node str:xss) = compile xs (Leaf ("\"" ++ constructStr str ++ "\"") : xss)
-compile (Leaf str : Leaf "Define" : xs) (Node blk : xss) = if xs `doesCall` str then "function(" ++ lc str ++ (if blk `doesCall` str then ",mutable," else ",immutable,") ++ "0,{" ++ compile blk [] ++ "}); {" ++ compile xs xss ++ "}" else compile xs xss
-compile (Leaf str : Leaf "Let" : xs) (value:buf) = "variable(" ++ lc str ++ "," ++ (if xs `doesMutate` str then "mutable" else "immutable") ++ ", " ++ make_obj value ++ ");{" ++ compile xs buf ++"}"
-compile (Leaf str : Leaf "Let" : xs) buf = "variable(" ++ lc str ++ "," ++ (if xs `doesMutate` str then "mutable" else "immutable") ++ ", pop_any());{" ++ compile xs buf ++"}"
-compile (Leaf str:xs) buf
-  | is_literal str = compile xs (Leaf str:buf)
-  | otherwise = (intercalate " " $ map stack_push (reverse (drop num_args buf))) ++ "call(" ++ lc str ++ ",(" ++ (intercalate "," $ (map handle_type_thing (zip (take num_args buf) $ args (lc str))) ++ (if (length buf < num_args) then (take (num_args - length buf) $ (map generate_cast $ drop (length buf) $ args (lc str))) else [])) ++ "));" ++ (compile xs [])
+compile (Node blk:xs) buf vars = compile xs (Node blk:buf) vars
+compile (Leaf "" : xs) buf vars = compile xs buf vars
+compile (Leaf "StringLiteral":xs) (Node str:xss) vars = compile xs (Leaf ("\"" ++ constructStr str ++ "\"") : xss) vars
+compile (Leaf str : Leaf "Define" : xs) (Node blk : xss) vars = if xs `doesCall` str then "function(" ++ lc str ++ (if blk `doesCall` str then ",mutable," else ",immutable,") ++ "0,{" ++ compile blk [] vars ++ "}); {" ++ compile xs xss vars ++ "}" else compile xs xss vars -- TODO remove from vars
+compile (Leaf str : Leaf "Let" : xs) (value:buf) vars = "variable(" ++ lc str ++ "," ++ (if xs `doesMutate` str then "mutable" else "immutable") ++ ", " ++ make_obj value vars ++ ");{" ++ compile xs buf (lc str : vars) ++"}"
+compile (Leaf str : Leaf "Let" : xs) buf vars = "variable(" ++ lc str ++ "," ++ (if xs `doesMutate` str then "mutable" else "immutable") ++ ", pop_any());{" ++ compile xs buf (lc str : vars) ++"}"
+compile (Leaf str:xs) buf vars
+  | is_literal str = compile xs (Leaf str:buf) vars
+  | lc str `elem` vars = compile xs (Leaf ("var(" ++ lc str ++ ")") : buf) vars
+  | ret (lc str) /= "" = excess ++ compile xs [Leaf call] vars
+  | otherwise = excess ++ call ++ ";" ++ compile xs [] vars
   where num_args = length $ args $ lc str
+        call = "call(" ++ lc str ++ ",(" ++ (intercalate "," $ (map (\x -> chk_type x vars) (zip (take num_args buf) (args (lc str)))) ++ (if (length buf < num_args) then (take (num_args - length buf) $ (map generate_cast $ drop (length buf) $ args (lc str))) else [])) ++ "))"
+        excess = intercalate "" $ map (\z -> stack_push z vars) (reverse (drop num_args buf))
 
 
-compile [] buf = intercalate " " $ map stack_push $ reverse buf
+compile [] buf vars = intercalate " " $ map (\x -> stack_push x vars) $ reverse buf
 
 
 compiler = "clang"
@@ -509,9 +575,9 @@ main =
   do
     args <- getArgs
     let compilerFlagsLinux =
-          words "-fblocks -lBlocksRuntime -l:libgc.so -Ofast -I include -Wall -Wextra -Werror -Wno-unused -pedantic-errors -std=c11 -lm -g0 -rdynamic -fuse-ld=lld"
+          words "-fblocks -lBlocksRuntime -l:libgc.so -Ofast -I include -Wall -Wextra -Werror -Wno-unused -pedantic-errors -std=c11 -lm -g0 -rdynamic -fuse-ld=lld -Wno-gnu-statement-expression"
     let compilerFlagsMac =
-          words "-fblocks -lgc -Ofast -I include -Wall -Wextra -Werror -pedantic-errors -Wno-unused -std=c11 -lm -g0 -rdynamic -fuse-ld=lld"
+          words "-fblocks -lgc -Ofast -I include -Wall -Wextra -Werror -pedantic-errors -Wno-unused -std=c11 -lm -g0 -rdynamic -fuse-ld=lld -Wno-gnu-statement-expression"
     let compilerFlags = if System.Info.os == "linux" then compilerFlagsLinux else compilerFlagsMac
     let in_file = head args
     let out_file = head (splitOn "." in_file) ++ ".c"
@@ -523,7 +589,7 @@ main =
       putStrLn $ "Compiling " ++ in_file ++ " to " ++ out_file ++ "... "
       source <- readFile in_file
       thing <- parseImports in_file (parsefile source) [head $ splitOn "." (last (splitOn "/" in_file))]
-      writeFile out_file $ header in_file ++ "#include\"cognate.c\"\nprogram({" ++ compile thing [] ++ "})\n"
+      writeFile out_file $ header in_file ++ "#include\"cognate.c\"\nprogram({" ++ compile thing [] [] ++ "})\n"
       rawSystem formatter (formatFlags ++ [out_file])
       putStrLn $ "Compiling " ++ out_file ++ " to " ++ stripExtension in_file ++ "... "
       rawSystem compiler ([out_file, "-o", stripExtension in_file] ++ compilerFlags ++ compiler_args)

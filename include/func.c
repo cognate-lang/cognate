@@ -7,8 +7,10 @@
 static const cognate_list* params;
 
 #define call(name, args) \
+({ \
   word_name = #name; \
-  cognate_function_ ## name args;
+  cognate_function_ ## name args; \
+})
 
 // I'm not putting type signatures for every single function here.
 
@@ -57,21 +59,21 @@ static void cognate_function_put(cognate_object a)   { print_object(a, stdout, 0
 static void cognate_function_print(cognate_object a) { print_object(a, stdout, 0); puts(""); }
 
 
-static void cognate_function_sum(double a, double b)      { push(number, a+b); }
-static void cognate_function_multiply(double a, double b) { push(number, a*b); }
-static void cognate_function_divide(double a, double b)   { push(number, b/a); }
-static void cognate_function_subtract(double a, double b) { push(number, b-a); }
+static double cognate_function_sum(double a, double b)      { return (number, a+b); }
+static double cognate_function_multiply(double a, double b) { return (number, a*b); }
+static double cognate_function_divide(double a, double b)   { return (number, b/a); }
+static double cognate_function_subtract(double a, double b) { return (number, b-a); }
 
 //static void cognate_function_sum()      { push(number, pop(number) + pop(number)); }
 //static void cognate_function_multiply() { push(number, pop(number) * pop(number)); }
 //static void cognate_function_divide()   { push(number, (1 / pop(number) * pop(number))); }
 //static void cognate_function_subtract() { push(number, (-pop(number) + pop(number))); }
 
-static void cognate_function_modulo(double a, double b) {
-  push(number, fmod(b, a));
+static double cognate_function_modulo(double a, double b) {
+  return fmod(b, a);
 }
 
-static void cognate_function_random() {
+static double cognate_function_random() {
   const double low  = pop(number);
   const double high = pop(number);
   const double step = pop(number);
@@ -81,8 +83,7 @@ static void cognate_function_random() {
   }
   else if ((high - low) / step < 1)
   {
-    push(number, low);
-    return;
+    return low;
   }
   // This is not cryptographically secure btw.
   // Since RAND_MAX may only be 2^15, we need to do this:
@@ -92,7 +93,7 @@ static void cognate_function_random() {
     | ((long)(short)random() << 30)
     | ((long)(short)random() << 45)
     | ((long)       random() << 60);
-  push(number, low + (double)(num % (unsigned long)((high - low) / step)) * step);
+  return low + (double)(num % (unsigned long)((high - low) / step)) * step;
 }
 
 static void cognate_function_drop()    { pop_any(); } // These can be defined within cognate.
@@ -107,15 +108,15 @@ static void cognate_function_false() { push(boolean, 0); }
 static void cognate_function_either() { push(boolean, pop(boolean) + pop(boolean)); } // Use unconventional operators to avoid short-circuits.
 static void cognate_function_both()   { push(boolean, pop(boolean) & pop(boolean)); }
 static void cognate_function_one_of() { push(boolean, pop(boolean) ^ pop(boolean)); }
-static void cognate_function_not(_Bool a)    { push(boolean,!a); }
+static _Bool cognate_function_not(_Bool a)    { return !a; }
 
 
-static void cognate_function_equal(cognate_object a, cognate_object b)      { push(boolean, compare_objects(a,b)); }
-static void cognate_function_unequal(cognate_object a, cognate_object b)      { push(boolean, !compare_objects(a,b)); }
-static void cognate_function_exceed(double a, double b)      { push(boolean, a < b); }
-static void cognate_function_preceed(double a, double b)      { push(boolean, a > b); }
-static void cognate_function_equalorpreceed(double a, double b)      { push(boolean, a >= b); }
-static void cognate_function_equalorexceed(double a, double b)      { push(boolean, a <= b); }
+static _Bool cognate_function_equal(cognate_object a, cognate_object b)      { return compare_objects(a,b); }
+static _Bool cognate_function_unequal(cognate_object a, cognate_object b)      { return !compare_objects(a,b); }
+static _Bool cognate_function_exceed(double a, double b)      { return a < b; }
+static _Bool cognate_function_preceed(double a, double b)      { return a > b; }
+static _Bool cognate_function_equalorpreceed(double a, double b)      { return a >= b; }
+static _Bool cognate_function_equalorexceed(double a, double b)      { return a <= b; }
 
 static void cognate_function_number_()  { push(boolean, pop_any().type & number);  } // Question marks are converted to underscores.
 static void cognate_function_list_()    { push(boolean, pop_any().type & list);    } // However all other symbols are too.
@@ -129,10 +130,10 @@ static void cognate_function_head(const cognate_list *lst) {
   push_any(lst->object);
 }
 
-static void cognate_function_tail(const cognate_list *lst) {
+static const cognate_list* cognate_function_tail(const cognate_list *lst) {
   // Returns the tail portion of a list. O(1).
   if unlikely(!lst) throw_error("Cannot return the Tail elements of an empty list!");
-  push(list, lst->next);
+  return lst->next;
 }
 
 static void cognate_function_push() {
@@ -144,13 +145,13 @@ static void cognate_function_push() {
   push(list, lst);
 }
 
-static void cognate_function_empty_() {
+static _Bool cognate_function_empty_(const cognate_list* lst) {
   // Returns true is a list is empty. O(1).
   // Can be used to to write a Length function.
-  push(boolean, !pop(list));
+  return !lst;
 }
 
-static void cognate_function_list(cognate_block expr) {
+static const cognate_list* cognate_function_list(cognate_block expr) {
   // Move the stack to temporary storage
   const cognate_stack temp_stack = stack;
   // Allocate a list as the stack
@@ -170,7 +171,7 @@ static void cognate_function_list(cognate_block expr) {
   }
   // Restore the stack.
   stack = temp_stack;
-  push(list, lst);
+  return lst;
 }
 
 static void cognate_function_characters() {

@@ -12,6 +12,7 @@
 #define LIST_GROWTH_FACTOR 1.5
 
 #define OBJ(objtype, objvalue) ((cognate_object){.type=objtype, .objtype=objvalue})
+#define var(name) cognate_variable_##name
 
 #define program(body) \
   int main(int argc, char** argv) \
@@ -41,7 +42,6 @@
 // Internal cognate variable.
 #define variable(name, flags, val) \
   const cognate_object cognate_variable_ ## name = check_block(val); \
-  flags cognate_block cognate_function_ ## name = ^{ push_any(cognate_variable_ ## name); };
 
 // Mutate internal variable.
 #define mutate_variable(name) \

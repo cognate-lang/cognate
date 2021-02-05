@@ -6,3 +6,4 @@
 -Wno-unused
 -pedantic-errors
 -std=c11
+-Wno-gnu-statement-expression
