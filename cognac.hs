@@ -250,66 +250,66 @@ compile :: [Tree] -> [Tree] -> String
 
 doesCall :: [Tree] -> String -> Bool
 
-num_args "if" = 3
-num_args "while" = 2
-num_args "do" = 1
-num_args "put" = 1
-num_args "print" = 1
-num_args "sum" = 2
-num_args "multiply" = 2
-num_args "divide" = 2
-num_args "subtract" = 2
-num_args "modulo" = 2
-num_args "random" = 3
-num_args "drop" = 1
-num_args "twin" = 1
-num_args "triplet" = 1
-num_args "swap" = 2
-num_args "clear" = 0
-num_args "true" = 0
-num_args "false" = 0
-num_args "either" = 2
-num_args "both" = 2
-num_args "one_of" = 2
-num_args "not" = 1
-num_args "equal" = 2
-num_args "unequal" = 2
-num_args "preceed" = 2
-num_args "exceed" = 2
-num_args "equalorexceed" = 2
-num_args "number_" = 1
-num_args "list_" = 1
-num_args "string_" = 1
-num_args "block_" = 1
-num_args "boolean_" = 1
-num_args "head" = 1
-num_args "tail" = 1
-num_args "push" = 2
-num_args "empty" = 1
-num_args "list" = 1
-num_args "suffix" = 2
-num_args "string_length" = 1
-num_args "substring" = 3
-num_args "input" = 0
-num_args "read" = 1
-num_args "number" = 1
-num_args "path" = 0
-num_args "stack" = 0
-num_args "write" = 2
-num_args "parameters" = 0
-num_args "stop" = 0
-num_args "table" = 1
-num_args "insert" = 2
-num_args "values" = 1
-num_args "match" = 2
-num_args "ordinal" = 1
-num_args "character" = 1
-num_args "floor" = 1
-num_args "round" = 1
-num_args "ceiling" = 1
-num_args "assert" = 2
-num_args "error" = 1
-num_args _ = 0
+args "if" = ["block", "any", "any"]
+args "while" = ["block", "block"]
+args "do" = ["block"]
+args "put" = ["any"]
+args "print" = ["any"]
+args "sum" = ["number", "number"]
+args "multiply" = ["number", "number"]
+args "divide" = ["number", "number"]
+args "subtract" = ["number", "number"]
+args "modulo" = ["number", "number"]
+args "random" = ["number", "number", "number"]
+args "drop" = ["any"]
+args "twin" = ["any"]
+args "triplet" = ["any"]
+args "swap" = ["any", "any"]
+args "clear" = []
+args "true" = []
+args "false" = []
+args "either" = ["boolean", "boolean"]
+args "both" = ["boolean", "boolean"]
+args "one_of" = ["boolean", "boolean"]
+args "not" = ["boolean"]
+args "equal" = ["any", "any"]
+args "unequal" = ["any", "any"]
+args "preceed" = ["number", "number"]
+args "exceed" = ["number", "number"]
+args "equalorexceed" = ["number", "number"]
+args "number_" = ["any"]
+args "list_" = ["any"]
+args "string_" = ["any"]
+args "block_" = ["any"]
+args "boolean_" = ["any"]
+args "head" = ["list"]
+args "tail" = ["list"]
+args "push" = ["any", "list"]
+args "empty" = ["list"]
+args "list" = ["block"]
+args "suffix" = ["string"]
+args "string_length" = ["string"]
+args "substring" = ["number", "number", "string"]
+args "input" = []
+args "read" = ["string"]
+args "number" = ["string"]
+args "path" = []
+args "stack" = []
+args "write" = ["string", "any"]
+args "parameters" = []
+args "stop" = []
+args "table" = ["block"]
+args "insert" = ["string", "any", "block"]
+args "values" = ["table"]
+args "match" = ["string", "string"]
+args "ordinal" = ["string"]
+args "character" = ["number"]
+args "floor" = ["number"]
+args "round" = ["number"]
+args "ceiling" = ["number"]
+args "assert" = ["string", "boolean"]
+args "error" = ["string"]
+args _ = []
 
 (Node body : Leaf name : Leaf "Define" : xs) `doesCall` func
   | xs `doesCall` name = xs `doesCall` func || body `doesCall` func
@@ -427,6 +427,21 @@ compile [] = ""
 
 -}
 
+generate_cast :: String -> String
+
+generate_cast "any" = "pop_any()"
+generate_cast typ = "pop(" ++ typ ++ ")"
+
+handle_type_thing :: (Tree, String) -> String
+
+handle_type_thing (obj, typ) = chk_type typ obj
+
+chk_type :: String -> Tree -> String
+chk_type typ obj
+  | (literal_type obj) == typ = print_literal obj
+  | typ == "any" = make_obj obj
+  | otherwise = error $ "Type error is guaranteed on execution. Expected type " ++ typ ++ " but got type " ++ literal_type obj
+
 make_obj :: Tree -> String
 make_obj a = "OBJ(" ++ literal_type a ++ "," ++ print_literal a ++ ")"
 
@@ -464,8 +479,8 @@ compile (Leaf str : Leaf "Let" : xs) (value:buf) = "variable(" ++ lc str ++ "," 
 compile (Leaf str : Leaf "Let" : xs) buf = "variable(" ++ lc str ++ "," ++ (if xs `doesMutate` str then "mutable" else "immutable") ++ ", pop_any());{" ++ compile xs buf ++"}"
 compile (Leaf str:xs) buf
   | is_literal str = compile xs (Leaf str:buf)
-  | otherwise = (intercalate " " $ map stack_push (reverse (drop args buf))) ++ "call(" ++ lc str ++ ",(" ++ (intercalate "," $ (map make_obj $ take args buf) ++ (if (length buf < args) then (take (args - length buf) $ cycle ["pop_any()"]) else [])) ++ "));" ++ (compile xs [])
-  where args = num_args $ lc str
+  | otherwise = (intercalate " " $ map stack_push (reverse (drop num_args buf))) ++ "call(" ++ lc str ++ ",(" ++ (intercalate "," $ (map handle_type_thing (zip (take num_args buf) $ args (lc str))) ++ (if (length buf < num_args) then (take (num_args - length buf) $ (map generate_cast $ drop (length buf) $ args (lc str))) else [])) ++ "));" ++ (compile xs [])
+  where num_args = length $ args $ lc str
 
 
 compile [] buf = intercalate " " $ map stack_push $ reverse buf
