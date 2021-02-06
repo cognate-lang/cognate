@@ -12,9 +12,10 @@
 #define LIST_GROWTH_FACTOR 1.5
 
 #define OBJ(objtype, objvalue) ((cognate_object){.type=objtype, .objtype=objvalue})
-#define var(name) cognate_variable_##name
+#define VAR(name) ___##name
+#define CHECK(typ, obj) (check_type(typ, obj) . typ)
 
-#define program(body) \
+#define PROGRAM(body) \
   int main(int argc, char** argv) \
   { \
     init(argc, argv); \
@@ -26,29 +27,28 @@
 #define mutable __block
 
 // Global-local variable swapping is causing performance losses. :(
-#define function(name, flags, docopy, body) \
-  flags cognate_block cognate_function_ ## name = make_block(docopy, \
-  { \
+#define DEFINE(flags, name, body) \
+  flags cognate_block ___##name = \
+  BLOCK( \
     const char* const temp_func_name = function_name; \
     function_name = #name; \
     check_call_stack(); \
     body \
     function_name = temp_func_name; \
-  });
+  );
 
 #define mutate_function(name, docopy, body) \
-  cognate_function_ ## name = make_block(docopy, body);
+  cognate_def_ ## name = BLOCK(docopy, body);
 
 // Internal cognate variable.
-#define variable(name, flags, val) \
-  const cognate_object cognate_variable_ ## name = check_block(val); \
+#define LET(flags, name, val) \
+  flags cognate_object ___ ## name = check_block(val); \
 
 // Mutate internal variable.
-#define mutate_variable(name) \
-  const cognate_object cognate_variable_ ## name = check_block(pop_any()); \
-  cognate_function_##name = Block_copy(^{ push_any(cognate_variable_ ## name); }); // fsanitize=address goes crazy here.
+#define SET(name, val) \
+  ___##name = check_block(val); // fsanitize=address goes crazy here.
 
-#define make_block(docopy, body) \
+#define BLOCK(body) \
   ^{ \
     body \
     copy_blocks(); \

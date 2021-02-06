@@ -287,7 +287,7 @@ args "tail" = ["list"]
 args "push" = ["", "list"]
 args "empty_" = ["list"]
 args "list" = ["block"]
-args "suffix" = ["string"]
+args "suffix" = ["string", "string"]
 args "string_length" = ["string"]
 args "substring" = ["number", "number", "string"]
 args "input" = []
@@ -499,25 +499,27 @@ chk_type :: (Tree, String) -> [String] -> String
 chk_type (obj, typ) vars
   | (literal_type obj) == typ = print_literal obj vars
   | typ == "" = make_obj obj vars
-  | literal_type obj == "" = "(check_type(" ++ typ ++ "," ++ print_literal obj vars ++ ")." ++ typ ++ ")"
+  | literal_type obj == "" = "CHECK(" ++ typ ++ "," ++ print_literal obj vars ++ ")"
   | otherwise = error $ "Type error is guaranteed on execution. Expected type " ++ typ ++ " but got type " ++ literal_type obj
 
 make_obj :: Tree -> [String] -> String
-make_obj a vars = "OBJ(" ++ literal_type a ++ "," ++ print_literal a vars ++ ")"
+make_obj a vars
+  | literal_type a == "" = print_literal a vars
+  | otherwise = "OBJ(" ++ literal_type a ++ "," ++ print_literal a vars ++ ")"
 
 literal_type :: Tree -> String
 
 literal_type (Leaf token)
   | all (`elem` ('.':'-':['0'..'9'])) token = "number"
   | head token == '\"' = "string"
-  | "var(" `isPrefixOf` token = ""
-  | "call(" `isPrefixOf` token = ret (takeWhile (/= ',') (drop 5 token))
+  | "VAR(" `isPrefixOf` token = ""
+  | "CALL(" `isPrefixOf` token = ret (takeWhile (/= ',') (drop 5 token))
 
 literal_type (Node token) = "block"
 
 print_literal :: Tree -> [String] -> String
 print_literal (Leaf str) _ = str
-print_literal (Node blk) vars = "make_block(0, {" ++ compile blk [] vars ++ "})"
+print_literal (Node blk) vars = "BLOCK(" ++ compile blk [] vars ++ ")"
 
 stack_push :: Tree -> [String] -> String
 
@@ -536,16 +538,18 @@ is_literal str = not $ head str `elem` upperletters
 compile (Node blk:xs) buf vars = compile xs (Node blk:buf) vars
 compile (Leaf "" : xs) buf vars = compile xs buf vars
 compile (Leaf "StringLiteral":xs) (Node str:xss) vars = compile xs (Leaf ("\"" ++ constructStr str ++ "\"") : xss) vars
-compile (Leaf str : Leaf "Define" : xs) (Node blk : xss) vars = if xs `doesCall` str then "function(" ++ lc str ++ (if blk `doesCall` str then ",mutable," else ",immutable,") ++ "0,{" ++ compile blk [] vars ++ "}); {" ++ compile xs xss vars ++ "}" else compile xs xss vars -- TODO remove from vars
-compile (Leaf str : Leaf "Let" : xs) (value:buf) vars = "variable(" ++ lc str ++ "," ++ (if xs `doesMutate` str then "mutable" else "immutable") ++ ", " ++ make_obj value vars ++ ");{" ++ compile xs buf (lc str : vars) ++"}"
-compile (Leaf str : Leaf "Let" : xs) buf vars = "variable(" ++ lc str ++ "," ++ (if xs `doesMutate` str then "mutable" else "immutable") ++ ", pop_any());{" ++ compile xs buf (lc str : vars) ++"}"
+compile (Leaf str : Leaf "Define" : xs) (Node blk : xss) vars = if xs `doesCall` str then "DEFINE(" ++ (if blk `doesCall` str then "mutable," else "immutable,") ++ lc str ++ ",{" ++ compile blk [] vars ++ "}); {" ++ compile xs xss vars ++ "}" else compile xs xss vars -- TODO remove from vars
+compile (Leaf str : Leaf "Let" : xs) (value:buf) vars = "LET(" ++ (if xs `doesMutate` str then "mutable" else "immutable") ++ "," ++ lc str ++ "," ++ make_obj value vars ++ ");{" ++ compile xs buf (lc str : vars) ++"}"
+compile (Leaf str : Leaf "Let" : xs) buf vars = "LET(" ++ (if xs `doesMutate` str then "mutable" else "immutable") ++ "," ++ lc str ++ ",pop_any());{" ++ compile xs buf (lc str : vars) ++"}"
+compile (Leaf str : Leaf "Set" : xs) (value:buf) vars = "SET(" ++ lc str ++ "," ++ make_obj value vars ++ ");" ++ compile xs buf vars
+compile (Leaf str : Leaf "Set" : xs) buf vars = "SET(" ++ lc str ++ ",pop_any());" ++ compile xs buf vars
 compile (Leaf str:xs) buf vars
   | is_literal str = compile xs (Leaf str:buf) vars
-  | lc str `elem` vars = compile xs (Leaf ("var(" ++ lc str ++ ")") : buf) vars
+  | lc str `elem` vars = compile xs (Leaf ("VAR(" ++ lc str ++ ")") : buf) vars
   | ret (lc str) /= "" = excess ++ compile xs [Leaf call] vars
   | otherwise = excess ++ call ++ ";" ++ compile xs [] vars
   where num_args = length $ args $ lc str
-        call = "call(" ++ lc str ++ ",(" ++ (intercalate "," $ (map (\x -> chk_type x vars) (zip (take num_args buf) (args (lc str)))) ++ (if (length buf < num_args) then (take (num_args - length buf) $ (map generate_cast $ drop (length buf) $ args (lc str))) else [])) ++ "))"
+        call = "CALL(" ++ lc str ++ ",(" ++ (intercalate "," $ (map (\x -> chk_type x vars) (zip (take num_args buf) (args (lc str)))) ++ (if (length buf < num_args) then (take (num_args - length buf) $ (map generate_cast $ drop (length buf) $ args (lc str))) else [])) ++ "))"
         excess = intercalate "" $ map (\z -> stack_push z vars) (reverse (drop num_args buf))
 
 
@@ -589,8 +593,8 @@ main =
       putStrLn $ "Compiling " ++ in_file ++ " to " ++ out_file ++ "... "
       source <- readFile in_file
       thing <- parseImports in_file (parsefile source) [head $ splitOn "." (last (splitOn "/" in_file))]
-      writeFile out_file $ header in_file ++ "#include\"cognate.c\"\nprogram({" ++ compile thing [] [] ++ "})\n"
-      rawSystem formatter (formatFlags ++ [out_file])
+      writeFile out_file $ header in_file ++ "#include\"cognate.c\"\nPROGRAM(" ++ compile thing [] [] ++ ")\n"
+      --rawSystem formatter (formatFlags ++ [out_file])
       putStrLn $ "Compiling " ++ out_file ++ " to " ++ stripExtension in_file ++ "... "
       rawSystem compiler ([out_file, "-o", stripExtension in_file] ++ compilerFlags ++ compiler_args)
       putStrLn "Done!"
