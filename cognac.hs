@@ -372,6 +372,8 @@ ret "assert" = ""
 ret "error" = ""
 ret _ = ""
 
+-- FIXME: Functions shadowing these built in functions WILL BREAK.
+
 
 
 (Node body : Leaf name : Leaf "Define" : xs) `doesCall` func
