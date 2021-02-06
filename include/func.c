@@ -62,11 +62,6 @@ static double ___multiply(double a, double b) { return (number, a*b); }
 static double ___divide(double a, double b)   { return (number, b/a); }
 static double ___subtract(double a, double b) { return (number, b-a); }
 
-//static void ___sum()      { push(number, pop(number) + pop(number)); }
-//static void ___multiply() { push(number, pop(number) * pop(number)); }
-//static void ___divide()   { push(number, (1 / pop(number) * pop(number))); }
-//static void ___subtract() { push(number, (-pop(number) + pop(number))); }
-
 static double ___modulo(double a, double b) {
   return fmod(b, a);
 }
@@ -106,12 +101,12 @@ static _Bool ___one_of(_Bool a, _Bool b) { return(a ^ b); }
 static _Bool ___not   (_Bool a)          { return !a; }
 
 
-static _Bool ___equal(cognate_object a, cognate_object b)      { return compare_objects(a,b); }
-static _Bool ___unequal(cognate_object a, cognate_object b)      { return !compare_objects(a,b); }
-static _Bool ___exceed(double a, double b)      { return a < b; }
-static _Bool ___preceed(double a, double b)      { return a > b; }
-static _Bool ___equalorpreceed(double a, double b)      { return a >= b; }
-static _Bool ___equalorexceed(double a, double b)      { return a <= b; }
+static _Bool ___equal(cognate_object a, cognate_object b)   { return compare_objects(a,b); }
+static _Bool ___unequal(cognate_object a, cognate_object b) { return !compare_objects(a,b); }
+static _Bool ___exceed(double a, double b)  { return a < b; }
+static _Bool ___preceed(double a, double b) { return a > b; }
+static _Bool ___equalorpreceed(double a, double b) { return a >= b; }
+static _Bool ___equalorexceed(double a, double b)  { return a <= b; }
 
 static _Bool ___number_(cognate_object a)  { return a.type&number; } // Question marks are converted to underscores.
 static _Bool ___list_(cognate_object a)    { return a.type&number; } // However all other symbols are too.
@@ -301,7 +296,6 @@ static char* ___path() {
     throw_error("Cannot get executable path!");
   }
   char* ret = GC_STRDUP(buf);
-  free(buf);
   return ret;
 }
 
