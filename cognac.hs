@@ -538,7 +538,7 @@ is_literal str = not $ head str `elem` upperletters
 compile (Node blk:xs) buf vars = compile xs (Node blk:buf) vars
 compile (Leaf "" : xs) buf vars = compile xs buf vars
 compile (Leaf "StringLiteral":xs) (Node str:xss) vars = compile xs (Leaf ("\"" ++ constructStr str ++ "\"") : xss) vars
-compile (Leaf str : Leaf "Define" : xs) (Node blk : xss) vars = if xs `doesCall` str then "DEFINE(" ++ (if blk `doesCall` str then "mutable," else "immutable,") ++ lc str ++ ",{" ++ compile blk [] vars ++ "}); {" ++ compile xs xss vars ++ "}" else compile xs xss vars -- TODO remove from vars
+compile (Leaf str : Leaf "Define" : xs) (Node blk : xss) vars = if xs `doesCall` str then "DEFINE(" ++ (if blk `doesCall` str then "mutable," else "immutable,") ++ lc str ++ ",{" ++ compile blk [] (filter (/= lc str) vars) ++ "}); {" ++ compile xs xss (filter (/= lc str) vars) ++ "}" else compile xs xss vars -- TODO remove from vars
 compile (Leaf str : Leaf "Let" : xs) (value:buf) vars = "LET(" ++ (if xs `doesMutate` str then "mutable" else "immutable") ++ "," ++ lc str ++ "," ++ make_obj value vars ++ ");{" ++ compile xs buf (lc str : vars) ++"}"
 compile (Leaf str : Leaf "Let" : xs) buf vars = "LET(" ++ (if xs `doesMutate` str then "mutable" else "immutable") ++ "," ++ lc str ++ ",pop());{" ++ compile xs buf (lc str : vars) ++"}"
 compile (Leaf str : Leaf "Set" : xs) (value:buf) vars = "SET(" ++ lc str ++ "," ++ make_obj value vars ++ ");" ++ compile xs buf vars
@@ -546,7 +546,7 @@ compile (Leaf str : Leaf "Set" : xs) buf vars = "SET(" ++ lc str ++ ",pop());" +
 compile (Leaf str:xs) buf vars
   | is_literal str = compile xs (Leaf str:buf) vars
   | lc str `elem` vars = compile xs (Leaf ("VAR(" ++ lc str ++ ")") : buf) vars
-  | ret (lc str) /= "" = excess ++ compile xs [Leaf call] vars
+  | ret (lc str) /= "" = compile xs (Leaf call : drop num_args buf) vars -- FIXME If an IO function returns a value, then this will mess with order of IO. Fix is to empty buff and prepend excess but that degrades performance.
   | otherwise = excess ++ call ++ ";" ++ compile xs [] vars
   where num_args = length $ args $ lc str
         call = "CALL(" ++ lc str ++ ",(" ++ (intercalate "," $ (map (\x -> chk_type x vars) (zip (take num_args buf) (args (lc str)))) ++ (if (length buf < num_args) then (take (num_args - length buf) $ (map generate_cast $ drop (length buf) $ args (lc str))) else [])) ++ "))"
