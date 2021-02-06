@@ -492,8 +492,8 @@ compile [] = ""
 
 generate_cast :: String -> String
 
-generate_cast "" = "pop_any()"
-generate_cast typ = "pop(" ++ typ ++ ")"
+generate_cast "" = "pop()"
+generate_cast typ = "CHECK(" ++ typ ++ ",pop())"
 
 chk_type :: (Tree, String) -> [String] -> String
 chk_type (obj, typ) vars
@@ -523,7 +523,7 @@ print_literal (Node blk) vars = "BLOCK(" ++ compile blk [] vars ++ ")"
 
 stack_push :: Tree -> [String] -> String
 
-stack_push a vars = "push_any(" ++ make_obj a vars ++ ");"
+stack_push a vars = "push(" ++ make_obj a vars ++ ");"
 
 is_literal :: String -> Bool
 is_literal str = not $ head str `elem` upperletters
@@ -540,9 +540,9 @@ compile (Leaf "" : xs) buf vars = compile xs buf vars
 compile (Leaf "StringLiteral":xs) (Node str:xss) vars = compile xs (Leaf ("\"" ++ constructStr str ++ "\"") : xss) vars
 compile (Leaf str : Leaf "Define" : xs) (Node blk : xss) vars = if xs `doesCall` str then "DEFINE(" ++ (if blk `doesCall` str then "mutable," else "immutable,") ++ lc str ++ ",{" ++ compile blk [] vars ++ "}); {" ++ compile xs xss vars ++ "}" else compile xs xss vars -- TODO remove from vars
 compile (Leaf str : Leaf "Let" : xs) (value:buf) vars = "LET(" ++ (if xs `doesMutate` str then "mutable" else "immutable") ++ "," ++ lc str ++ "," ++ make_obj value vars ++ ");{" ++ compile xs buf (lc str : vars) ++"}"
-compile (Leaf str : Leaf "Let" : xs) buf vars = "LET(" ++ (if xs `doesMutate` str then "mutable" else "immutable") ++ "," ++ lc str ++ ",pop_any());{" ++ compile xs buf (lc str : vars) ++"}"
+compile (Leaf str : Leaf "Let" : xs) buf vars = "LET(" ++ (if xs `doesMutate` str then "mutable" else "immutable") ++ "," ++ lc str ++ ",pop());{" ++ compile xs buf (lc str : vars) ++"}"
 compile (Leaf str : Leaf "Set" : xs) (value:buf) vars = "SET(" ++ lc str ++ "," ++ make_obj value vars ++ ");" ++ compile xs buf vars
-compile (Leaf str : Leaf "Set" : xs) buf vars = "SET(" ++ lc str ++ ",pop_any());" ++ compile xs buf vars
+compile (Leaf str : Leaf "Set" : xs) buf vars = "SET(" ++ lc str ++ ",pop());" ++ compile xs buf vars
 compile (Leaf str:xs) buf vars
   | is_literal str = compile xs (Leaf str:buf) vars
   | lc str `elem` vars = compile xs (Leaf ("VAR(" ++ lc str ++ ")") : buf) vars

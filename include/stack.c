@@ -5,20 +5,10 @@
 #include "types.h"
 
 static void init_stack();
-static void push_any(const cognate_object);
-static cognate_object pop_any();
-static cognate_object peek_any();
+static void push(const cognate_object);
+static cognate_object pop();
+static cognate_object peek();
 static void expand_stack();
-
-// TODO: We can optimise block-checking at compile time here.
-#define push(object_type, object) \
-  push_any((cognate_object){.object_type=object, .type=object_type});
-
-#define pop(object_type) \
-  (check_type(object_type, pop_any()) . object_type)
-
-#define peek(object_type) \
-  (check_type(object_type, peek_any()) . object_type)
 
 #include "error.c"
 
@@ -37,7 +27,7 @@ static void init_stack()
     (cognate_object*) GC_MALLOC (INITIAL_LIST_SIZE * sizeof(cognate_object));
 }
 
-static void push_any(cognate_object object)
+static void push(cognate_object object)
 {
   // Profiles says that this function is The Problem.
   // builtin_expect optimises because the stack hardly ever needs to expand.
@@ -47,7 +37,7 @@ static void push_any(cognate_object object)
   *stack.top++ = object;
 }
 
-static cognate_object pop_any()
+static cognate_object pop()
 {
   if unlikely(stack.top == stack.start)
     throw_error("Stack underflow!");
@@ -56,7 +46,7 @@ static cognate_object pop_any()
   return object;
 }
 
-static cognate_object peek_any()
+static cognate_object peek()
 {
   if unlikely(stack.top == stack.start)
     throw_error("Stack underflow!");

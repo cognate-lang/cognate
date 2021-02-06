@@ -32,19 +32,19 @@ static const cognate_list* params;
 static void ___if(cognate_block cond, cognate_object a, cognate_object b)
 {
   cond();
-  if (pop(boolean))
+  if (CHECK(boolean, pop()))
   {
-    push_any(a);
+    push(a);
   }
   else
   {
-    push_any(b);
+    push(b);
   }
 }
 
 static void ___while(cognate_block cond, cognate_block body) {
   cond();
-  while (pop(boolean))
+  while (CHECK(boolean, pop()))
   {
     body();
     cond();
@@ -71,10 +71,7 @@ static double ___modulo(double a, double b) {
   return fmod(b, a);
 }
 
-static double ___random() {
-  const double low  = pop(number);
-  const double high = pop(number);
-  const double step = pop(number);
+static double ___random(double low, double high, double step) {
   if unlikely((high - low) * step < 0 || !step)
   {
     throw_error("Cannot generate random number in range %.14g..%.14g with step %.14g", low, high, step);
@@ -95,9 +92,9 @@ static double ___random() {
 }
 
 static void ___drop(cognate_object a)    { (void)a; } // These can be defined within cognate.
-static void ___twin(cognate_object a)    { push_any(a); push_any(a); }
-static void ___triplet(cognate_object a) { push_any(a); push_any(a); push_any(a); }
-static void ___swap(cognate_object a, cognate_object b)    { push_any(a); push_any(b); }
+static void ___twin(cognate_object a)    { push(a); push(a); }
+static void ___triplet(cognate_object a) { push(a); push(a); push(a); }
+static void ___swap(cognate_object a, cognate_object b)    { push(a); push(b); }
 static void ___clear()   { stack.top=stack.start; }
 
 static _Bool ___true()  { return 1; }
@@ -125,7 +122,7 @@ static _Bool ___boolean_(cognate_object a) { return a.type&boolean;}
 static void ___head(const cognate_list *lst) {
   // Returns a list's first element. O(1).
   if unlikely(!lst) throw_error("Cannot return the First element of an empty list!");
-  push_any(lst->object);
+  push(lst->object);
 }
 
 static const cognate_list* ___tail(const cognate_list *lst) {
@@ -163,7 +160,7 @@ static const cognate_list* ___list(cognate_block expr) {
     // TODO: Allocate the list as an array for the sake of memory locality.
     // This can just be Swap, Push;
     cognate_list* tmp = GC_NEW (cognate_list);
-    tmp -> object = pop_any();
+    tmp -> object = pop();
     tmp -> next = lst;
     lst = tmp;
   }
@@ -377,7 +374,7 @@ static void ___get(char* key, const cognate_table* tab) {
   /*
   const char* const key = pop(string);
   const cognate_table tab = *pop(table);
-  push_any(table_get(key, tab));
+  push(table_get(key, tab));
   */
   (void)key;
   (void)tab;
