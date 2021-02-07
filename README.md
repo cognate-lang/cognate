@@ -9,7 +9,7 @@ As the above program shows, words starting with lower-case letters are ignored b
 ### Cognate is (relatively) fast
 CognaC compiles Cognate directly to C. This produces very efficient binaries and allows Cognate to run much faster than many interpreted languages such as Python. However, it is easily outpaced by other compiled languages like Haskell and C++ that optimise more aggressively. However, Cognate has a huge potential for optimisation. In future, I will be able to implement many of these optimisations and make Cognate even faster. It is also worth noting that CognaC produces very small binaries. This could make Cognate a candidate for a scripting language in embedded environments.
 
-|                 | Python 3 | Ruby  | CognaC | Haskell (GHC) | Lisp (SBCL) | C++ (G++) | C (GCC) | Golang |
+|                 | Python 3 | Ruby  | CognaC | Haskell (GHC) | Lisp (SBCL) | C++ (G++) | C (GCC) | Go     |
 |-----------------|----------|-------|--------|---------------|-------------|-----------|---------|--------|
 | fib(35) runtime | 3.15s    | 1.32s | 0.50s  | 0.15s         | 0.19s       | 0.04s     | 0.04s   | 0.08s  |
 | fib binary size | N/A      | N/A   | 24k    | 896k          | N/A         | 24k       | 20k     | 2M     |
