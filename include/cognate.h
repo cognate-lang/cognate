@@ -37,8 +37,8 @@
     function_name = temp_func_name; \
   );
 
-#define mutate_function(name, docopy, body) \
-  cognate_def_ ## name = BLOCK(docopy, body);
+#define mutate_function(name, body) \
+  ___##name = Block_copy(BLOCK(docopy, body));
 
 // Internal cognate variable.
 #define LET(flags, name, val) \
