@@ -20,6 +20,8 @@ static void handle_signal(int);
 static const char* function_name = NULL;
 static const char* word_name = NULL;
 
+static void set_word_name(char* name) { word_name=name; } // Need this to avoid unsequenced evaluation error.
+
 _Noreturn __attribute__((format(printf, 1, 2))) static void throw_error(const char* const fmt, ...)
 {
   // TODO: Print top 5 stack elements.
