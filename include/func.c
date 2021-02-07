@@ -299,7 +299,8 @@ static char* ___path() {
   return ret;
 }
 
-static const cognate_list* ___stack() {
+static void ___stack() {
+  // We can't return the list or this function is inlined and it breaks.
   copy_blocks();
   const cognate_list* lst = NULL;
   for (cognate_object* i = stack.top - 1 ; i >= stack.start ; --i)
@@ -310,7 +311,7 @@ static const cognate_list* ___stack() {
     tmp -> next = lst;
     lst = tmp;
   }
-  return lst;
+  push(OBJ(list, lst));
 }
 
 static void ___write(char* filename, cognate_object obj) {
