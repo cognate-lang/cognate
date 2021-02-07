@@ -49,7 +49,7 @@ static void print_object (const cognate_object object, FILE* out, const _Bool qu
     case list:
     {
       fputc('(', out);
-      FOR_LIST(i, object.list)
+      for (cognate_list i = object.list; i ; i = i->next)
       {
         print_object(i->object, out, 1);
         if likely(i->next)

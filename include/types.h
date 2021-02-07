@@ -18,34 +18,38 @@ enum cognate_type
   heap_block = (1 << 5) | (1 << 6)
 };
 
-typedef struct cognate_table cognate_table;
-typedef struct table_bucket table_bucket;
 typedef void(^cognate_block)();
+typedef _Bool cognate_boolean;
+typedef double cognate_number;
+typedef const char* cognate_string;
+typedef const struct cognate_list_node* cognate_list;
+typedef struct cognate_table cognate_table;
+
 typedef enum cognate_type cognate_type;
 typedef struct cognate_object cognate_object;
-typedef struct cognate_list   cognate_list;
 typedef struct cognate_stack  cognate_stack;
+typedef struct cognate_list_node cognate_list_node;
 
 // __attribute__((packed)) could save memory here.
 struct cognate_object
 {
   union
   {
-    const char* string;               // 64bit string pointer
-    _Bool boolean;                    //  1bit bool
-    cognate_block block;              // 64bit block pointer
-    cognate_block stack_block;        // 64bit block pointer
-    double number;                    // 64bit float
-    const struct cognate_list  *list; // 64bit list pointer
-    long table;                       // 64bit table-id
+    cognate_boolean boolean;   //  1bit bool
+    cognate_block block;       // 64bit block pointer
+    cognate_block stack_block; // 64bit block pointer
+    cognate_number number;     // 64bit float
+    cognate_string string;     // 64bit string pointer
+    cognate_list list;    // 64bit list pointer
+    const cognate_table* table;  // 64bit table-id
   };
   cognate_type type : 8;
 };
 
 
-struct cognate_list
+struct cognate_list_node
 {
-  const cognate_list* next;
+  cognate_list next;
   cognate_object object;
 };
 
@@ -58,8 +62,7 @@ struct table_bucket
 
 struct cognate_table
 {
-  table_bucket* index;
-  size_t size;
+  _Bool todo;
 };
 
 struct cognate_stack

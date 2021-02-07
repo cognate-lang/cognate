@@ -69,10 +69,9 @@ void init(int argc, char** argv)
   }
   srandom(ts.tv_nsec ^ ts.tv_sec); // TODO make random more random.
   // Load parameters
-  params = NULL;
   while (argc --> 1)
   {
-    cognate_list* tmp = GC_NEW (cognate_list);
+    cognate_list_node* tmp = GC_NEW (cognate_list_node);
     tmp->object = (cognate_object){.type=string, .string=argv[argc]};
     tmp->next = params;
     params = tmp;

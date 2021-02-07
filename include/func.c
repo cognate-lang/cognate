@@ -4,7 +4,7 @@
 #include "cognate.h"
 #include "types.h"
 
-static const cognate_list* params;
+static cognate_list params = NULL;
 
 #define CALL(name, args) \
 ({ \
@@ -57,16 +57,16 @@ static void ___put(cognate_object a)   { print_object(a, stdout, 0); fflush(stdo
 static void ___print(cognate_object a) { print_object(a, stdout, 0); puts(""); }
 
 
-static double ___sum(double a, double b)      { return (number, a+b); }
-static double ___multiply(double a, double b) { return (number, a*b); }
-static double ___divide(double a, double b)   { return (number, b/a); }
-static double ___subtract(double a, double b) { return (number, b-a); }
+static cognate_number ___sum(cognate_number a, cognate_number b)      { return (number, a+b); }
+static cognate_number ___multiply(cognate_number a, cognate_number b) { return (number, a*b); }
+static cognate_number ___divide(cognate_number a, cognate_number b)   { return (number, b/a); }
+static cognate_number ___subtract(cognate_number a, cognate_number b) { return (number, b-a); }
 
-static double ___modulo(double a, double b) {
+static cognate_number ___modulo(cognate_number a, cognate_number b) {
   return fmod(b, a);
 }
 
-static double ___random(double low, double high, double step) {
+static cognate_number ___random(cognate_number low, cognate_number high, cognate_number step) {
   if unlikely((high - low) * step < 0 || !step)
   {
     throw_error("Cannot generate random number in range %.14g..%.14g with step %.14g", low, high, step);
@@ -83,7 +83,7 @@ static double ___random(double low, double high, double step) {
     | ((long)(short)random() << 30)
     | ((long)(short)random() << 45)
     | ((long)       random() << 60);
-  return low + (double)(num % (unsigned long)((high - low) / step)) * step;
+  return low + (cognate_number)(num % (unsigned long)((high - low) / step)) * step;
 }
 
 static void ___drop(cognate_object a)    { (void)a; } // These can be defined within cognate.
@@ -92,56 +92,56 @@ static void ___triplet(cognate_object a) { push(a); push(a); push(a); }
 static void ___swap(cognate_object a, cognate_object b)    { push(a); push(b); }
 static void ___clear()   { stack.top=stack.start; }
 
-static _Bool ___true()  { return 1; }
-static _Bool ___false() { return 0; }
+static cognate_boolean ___true()  { return 1; }
+static cognate_boolean ___false() { return 0; }
 
-static _Bool ___either(_Bool a, _Bool b) { return(a || b); } // Use unconventional operators to avoid short-circuits.
-static _Bool ___both  (_Bool a, _Bool b) { return(a && b); }
-static _Bool ___one_of(_Bool a, _Bool b) { return(a ^ b); }
-static _Bool ___not   (_Bool a)          { return !a; }
+static cognate_boolean ___either(cognate_boolean a, cognate_boolean b) { return(a || b); } // Use unconventional operators to avoid short-circuits.
+static cognate_boolean ___both  (cognate_boolean a, cognate_boolean b) { return(a && b); }
+static cognate_boolean ___one_of(cognate_boolean a, cognate_boolean b) { return(a ^ b); }
+static cognate_boolean ___not   (cognate_boolean a)          { return !a; }
 
 
-static _Bool ___equal(cognate_object a, cognate_object b)   { return compare_objects(a,b); }
-static _Bool ___unequal(cognate_object a, cognate_object b) { return !compare_objects(a,b); }
-static _Bool ___exceed(double a, double b)  { return a < b; }
-static _Bool ___preceed(double a, double b) { return a > b; }
-static _Bool ___equalorpreceed(double a, double b) { return a >= b; }
-static _Bool ___equalorexceed(double a, double b)  { return a <= b; }
+static cognate_boolean ___equal(cognate_object a, cognate_object b)   { return compare_objects(a,b); }
+static cognate_boolean ___unequal(cognate_object a, cognate_object b) { return !compare_objects(a,b); }
+static cognate_boolean ___exceed(cognate_number a, cognate_number b)  { return a < b; }
+static cognate_boolean ___preceed(cognate_number a, cognate_number b) { return a > b; }
+static cognate_boolean ___equalorpreceed(cognate_number a, cognate_number b) { return a >= b; }
+static cognate_boolean ___equalorexceed(cognate_number a, cognate_number b)  { return a <= b; }
 
-static _Bool ___number_(cognate_object a)  { return a.type&number; } // Question marks are converted to underscores.
-static _Bool ___list_(cognate_object a)    { return a.type&number; } // However all other symbols are too.
-static _Bool ___string_(cognate_object a)  { return a.type&string; } // So this is a temporary hack!
-static _Bool ___block_(cognate_object a)   { return a.type&block;  }
-static _Bool ___boolean_(cognate_object a) { return a.type&boolean;}
+static cognate_boolean ___number_(cognate_object a)  { return a.type&number; } // Question marks are converted to underscores.
+static cognate_boolean ___list_(cognate_object a)    { return a.type&number; } // However all other symbols are too.
+static cognate_boolean ___string_(cognate_object a)  { return a.type&string; } // So this is a temporary hack!
+static cognate_boolean ___block_(cognate_object a)   { return a.type&block;  }
+static cognate_boolean ___boolean_(cognate_object a) { return a.type&boolean;}
 
-static void ___head(const cognate_list *lst) {
+static void ___head(cognate_list lst) {
   // Returns a list's first element. O(1).
   if unlikely(!lst) throw_error("Cannot return the First element of an empty list!");
   push(lst->object);
 }
 
-static const cognate_list* ___tail(const cognate_list *lst) {
+static cognate_list ___tail(cognate_list lst) {
   // Returns the tail portion of a list. O(1).
   if unlikely(!lst) throw_error("Cannot return the Tail elements of an empty list!");
   return lst->next;
 }
 
-static const cognate_list* ___push(cognate_object a, const cognate_list* b) {
+static cognate_list ___push(cognate_object a, cognate_list b) {
   // Pushes an object from the stack onto the list's first element. O(1).
   // TODO: Better name? Inconsistent with List where pushing to the stack adds to the END.
-  cognate_list* lst = GC_NEW (cognate_list);
+  cognate_list_node* lst = GC_NEW (cognate_list_node);
   lst->object = a;
   lst->next   = b;
   return lst;
 }
 
-static _Bool ___empty_(const cognate_list* lst) {
+static cognate_boolean ___empty_(cognate_list lst) {
   // Returns true is a list is empty. O(1).
   // Can be used to to write a Length function.
   return !lst;
 }
 
-static const cognate_list* ___list(cognate_block expr) {
+static cognate_list ___list(cognate_block expr) {
   // Move the stack to temporary storage
   const cognate_stack temp_stack = stack;
   // Allocate a list as the stack
@@ -149,12 +149,12 @@ static const cognate_list* ___list(cognate_block expr) {
   // Eval expr
   expr();
   // Move to a list.
-  const cognate_list* lst = NULL;
+  cognate_list lst = NULL;
   while (stack.top != stack.start)
   {
     // TODO: Allocate the list as an array for the sake of memory locality.
     // This can just be Swap, Push;
-    cognate_list* tmp = GC_NEW (cognate_list);
+    cognate_list_node* tmp = GC_NEW (cognate_list_node);
     tmp -> object = pop();
     tmp -> next = lst;
     lst = tmp;
@@ -205,23 +205,23 @@ static void ___split() {
   */ // TODO
 }
 
-static const char* ___suffix(const char* str1, const char* str2) {
+static cognate_string ___suffix(cognate_string str1, cognate_string str2) {
   // Joins a string to the end of another string.
   // Define Prefix (Swap, Suffix);
   const size_t str1_size = strlen(str1);
   const size_t str2_size = strlen(str2);
   const size_t new_string_size = str1_size + str2_size;
-  char* const new_str = (char* const) GC_MALLOC (new_string_size);
+  char* new_str = GC_MALLOC (new_string_size);
   memmove(new_str, str2, str2_size);
   memmove(new_str+str2_size, str1, str1_size);
   return new_str;
 }
 
-static double ___string_length(char* str) {
+static cognate_number ___string_length(cognate_string str) {
   return mbstrlen(str);
 }
 
-static char* ___substring(double startf, double endf, char* str) {
+static cognate_string ___substring(cognate_number startf, cognate_number endf, cognate_string str) {
   // O(end).
   // Only allocates a new string if it has to.
   /* TODO: Would it be better to have a simpler and more minimalist set of string functions, like lists do?
@@ -253,7 +253,7 @@ static char* ___substring(double startf, double endf, char* str) {
 }
 
 
-static char* ___input() {
+static cognate_string ___input() {
   // Read user input to a string.
   size_t size = 0;
   char* buf;
@@ -263,14 +263,14 @@ static char* ___input() {
   return ret;
 }
 
-static char* ___read(char* filename) {
+static cognate_string ___read(cognate_string filename) {
   // Read a file to a string.
   FILE *fp = fopen(filename, "ro");
   if unlikely(fp == NULL) throw_error("Cannot open file '%s'. It probably doesn't exist.", filename);
   fseek(fp, 0L, SEEK_END);
   size_t file_size = ftell(fp);
   rewind(fp);
-  char *text = (char*) GC_MALLOC (file_size);
+  char* text = GC_MALLOC (file_size);
   fread(text, sizeof(char), file_size, fp);
   fclose(fp);
   text[file_size-1] = '\0'; // Remove trailing eof.
@@ -278,10 +278,10 @@ static char* ___read(char* filename) {
   // TODO: single line (or delimited) file read function for better IO performance?
 }
 
-static double ___number(char* str) {
+static cognate_number ___number(cognate_string str) {
   // casts string to number.
   char* end;
-  double num = strtod(str, &end);
+  cognate_number num = strtod(str, &end);
   if (end == str || *end != '\0')
   {
     throw_error("Cannot parse '%s' to a number!", str);
@@ -289,7 +289,7 @@ static double ___number(char* str) {
   return num;
 }
 
-static char* ___path() {
+static cognate_string ___path() {
   char buf[FILENAME_MAX];
   if (!getcwd(buf, FILENAME_MAX))
   {
@@ -302,11 +302,11 @@ static char* ___path() {
 static void ___stack() {
   // We can't return the list or this function is inlined and it breaks.
   copy_blocks();
-  const cognate_list* lst = NULL;
+  cognate_list lst = NULL;
   for (cognate_object* i = stack.top - 1 ; i >= stack.start ; --i)
   {
     // TODO: Allocate the list as an array for the sake of memory locality.
-    cognate_list* tmp = GC_NEW (cognate_list);
+    cognate_list_node* tmp = GC_NEW (cognate_list_node);
     tmp -> object = *i;
     tmp -> next = lst;
     lst = tmp;
@@ -314,7 +314,7 @@ static void ___stack() {
   push(OBJ(list, lst));
 }
 
-static void ___write(char* filename, cognate_object obj) {
+static void ___write(cognate_string filename, cognate_object obj) {
   // Write string to end of file, without a newline.
   // TODO: Allow writing of any writable object.
   FILE* const fp = fopen(filename, "a");
@@ -323,7 +323,7 @@ static void ___write(char* filename, cognate_object obj) {
   fclose(fp);
 }
 
-static const cognate_list* ___parameters() {
+static cognate_list ___parameters() {
   return params;
 }
 
@@ -354,7 +354,7 @@ static const cognate_table* ___table() {
   return NULL;
 }
 
-static const cognate_table* ___insert(char* key, cognate_object value, const cognate_table* tab) {
+static const cognate_table* ___insert(cognate_string key, cognate_object value, cognate_table tab) {
   // O(n) :(
   //*tab = table_add(hash(key), value, table_copy(*pop(table)));
   //push(table, tab);
@@ -364,7 +364,7 @@ static const cognate_table* ___insert(char* key, cognate_object value, const cog
   return NULL;
 }
 
-static void ___get(char* key, const cognate_table* tab) {
+static void ___get(cognate_string key, cognate_table tab) {
   // O(1) mostly;
   /*
   const char* const key = pop(string);
@@ -375,7 +375,7 @@ static void ___get(char* key, const cognate_table* tab) {
   (void)tab;
 }
 
-static const cognate_list* ___values(const cognate_table* tab) {
+static cognate_list ___values(cognate_table tab) {
   (void)tab;
   // O(n)
   // Resulting list is NOT in any order at all.
@@ -399,9 +399,9 @@ static const cognate_list* ___values(const cognate_table* tab) {
   return NULL;
 }
 
-static _Bool ___match(const char* reg_str, const char* str) {
+static cognate_boolean ___match(cognate_string reg_str, cognate_string str) {
   // Returns true if string matches regex.
-  static const char *old_str = NULL;
+  static const char* old_str = NULL;
   static regex_t reg;
   if (old_str == NULL || strcmp(reg_str, old_str) != 0)
   {
@@ -424,7 +424,7 @@ static _Bool ___match(const char* reg_str, const char* str) {
   return !found;
 }
 
-static double ___ordinal(char* str) {
+static cognate_number ___ordinal(cognate_string str) {
   if unlikely(mbstrlen(str) != 1)
   {
     throw_error("Ordinal requires string of length 1. String '%s' is not of length 1!", str);
@@ -434,35 +434,35 @@ static double ___ordinal(char* str) {
   return chr;
 }
 
-static char* ___character(double d) {
+static cognate_string ___character(cognate_number d) {
   const int i = d;
   if unlikely(i != d) throw_error("Cannot convert %.14g to UTF8 character!", d);
-  char* const str = (char* const) GC_MALLOC (MB_CUR_MAX + 1);
+  char* str = GC_MALLOC (MB_CUR_MAX + 1);
   wctomb(str, i);
   str[mblen(str, MB_CUR_MAX)] = '\0';
   return str;
 }
 
-static double ___floor(double a) {
+static cognate_number ___floor(cognate_number a) {
   return floor(a);
 }
 
-static double ___round(double a) {
+static cognate_number ___round(cognate_number a) {
   return round(a);
 }
 
-static double ___ceiling(double a) {
+static cognate_number ___ceiling(cognate_number a) {
   return ceil(a);
 }
 
-static void ___assert(char* name, _Bool result) {
+static void ___assert(cognate_string name, cognate_boolean result) {
   if unlikely(!result)
   {
     throw_error("Assertion '%s' has failed!", name);
   }
 }
 
-static void ___error(char* str) {
+static void ___error(cognate_string str) {
   word_name = NULL;
   errno = 0;
   throw_error("%s", str);
