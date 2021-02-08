@@ -6,9 +6,6 @@
 
 static cognate_list params = NULL;
 
-#define CALL(name, args) \
-  (set_word_name(#name), ___##name args)
-
 // I'm not putting type signatures for every single function here.
 
 #include "type.c"

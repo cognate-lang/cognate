@@ -15,6 +15,27 @@
 #define VAR(name) ___##name
 #define CHECK(typ, obj) (check_type(typ, obj) . typ)
 
+#ifdef LIB_FILE
+#define CALL(name, args) (___##name args)
+#define DEFINE(flags, name, body) \
+  flags cognate_block ___##name = \
+  BLOCK( \
+    check_call_stack(); \
+    body \
+  );
+#else
+#define CALL(name, args) (set_word_name(#name), ___##name args)
+#define DEFINE(flags, name, body) \
+  flags cognate_block ___##name = \
+  BLOCK( \
+    const char* const temp_func_name = function_name; \
+    function_name = #name; \
+    check_call_stack(); \
+    body \
+    function_name = temp_func_name; \
+  );
+#endif
+
 #define PROGRAM(body) \
   int main(int argc, char** argv) \
   { \
@@ -27,16 +48,6 @@
 #define mutable __block
 
 // Global-local variable swapping is causing performance losses. :(
-#define DEFINE(flags, name, body) \
-  flags cognate_block ___##name = \
-  BLOCK( \
-    const char* const temp_func_name = function_name; \
-    function_name = #name; \
-    check_call_stack(); \
-    body \
-    function_name = temp_func_name; \
-  );
-
 #define mutate_function(name, body) \
   ___##name = Block_copy(BLOCK(docopy, body));
 
