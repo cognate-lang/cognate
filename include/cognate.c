@@ -124,8 +124,9 @@ static void check_call_stack()
     function_calls = 1024;
     static ptrdiff_t old_stack_size = 0;
     const char stack_end;
+    const size_t stack_size = stack_start - &stack_end;
     // if (how much stack left < stack change between checks)
-    if unlikely(stack_max.rlim_cur + &stack_end - stack_start < stack_start - &stack_end - old_stack_size)
+    if unlikely((stack_size - old_stack_size) << 1 > stack_max.rlim_cur - stack_size)
     {
       throw_error("Call stack overflow - too much recursion! (call stack is %ti bytes)", stack_start - &stack_end);
     }
