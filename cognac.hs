@@ -356,7 +356,7 @@ ret _ = ""
   | xs `doesCall` name = xs `doesCall` func || body `doesCall` func
   | otherwise = xs `doesCall` func
 (Leaf str:xs) `doesCall` func
-  | str == func = True
+  | lc str == lc func = True
   | otherwise = xs `doesCall` func
 (Node x:xs) `doesCall` func = xs `doesCall` func || x `doesCall` func
 _ `doesCall` _ = False
@@ -365,9 +365,10 @@ callCount :: [Tree] -> String -> Int
 expr `callCount` func = length $ func `elemIndices` flatten expr
 
 doesMutate :: [Tree] -> String -> Bool
-(Leaf var:Leaf "Set":xs) `doesMutate` var' = var == var' || xs `doesMutate` var'
+(Leaf var:Leaf "Set":xs) `doesMutate` var' = lc var == lc var' || xs `doesMutate` var'
 (Node func:Leaf "Set":xs) `doesMutate` func' =
-  last func == Leaf func' || xs `doesMutate` func'
+  (case last func of Leaf a -> (Leaf $ lc a)
+                     Node a -> (Node a)) == Leaf (lc func') || xs `doesMutate` func'
 (Node blk:xs) `doesMutate` var' = blk `doesMutate` var' || xs `doesMutate` var'
 (_:xs) `doesMutate` var' = xs `doesMutate` var'
 _ `doesMutate` _ = False
@@ -501,6 +502,9 @@ stack_push a vars = "push(" ++ make_obj a vars ++ ");"
 is_literal :: String -> Bool
 is_literal str = not $ head str `elem` upperletters
 
+check_shadow :: String -> String
+check_shadow str = if (ret (lc str) /= "" || args (lc str) /= []) then error "Cannot shadow/mutate builtin functions yet!" else str
+
 -- TODO:
 -- Simple type inference so we can pass arguments as values instead of complete cognate_objects.
 -- Inlining stack pushes as function returns seemed to hurt performance (probably because sizeof(cognate_object) > 8), but it could help with type inference where we can pass smaller values.
@@ -512,9 +516,9 @@ compile (Leaf "":xs) buf vars = compile xs buf vars
 compile (Leaf "StringLiteral":xs) (Node str:xss) vars =
   compile xs (Leaf ("\"" ++ constructStr str ++ "\"") : xss) vars
 compile (Leaf str:Leaf "Define":xs) (Node blk:xss) vars =
-  if xs `doesCall` str
+  if xs `doesCall` (lc str)
     then "DEFINE(" ++
-         (if blk `doesCall` str
+         (if blk `doesCall` check_shadow (lc str)
             then "mutable,"
             else "immutable,") ++
          lc str ++
@@ -524,22 +528,22 @@ compile (Leaf str:Leaf "Define":xs) (Node blk:xss) vars =
     else compile xs xss vars -- TODO remove from vars
 compile (Leaf str:Leaf "Let":xs) (value:buf) vars =
   "LET(" ++
-  (if xs `doesMutate` str
+  (if xs `doesMutate` lc str
      then "mutable"
      else "immutable") ++
   "," ++
-  lc str ++
+  check_shadow (lc str) ++
   "," ++ make_obj value vars ++ ");{" ++ compile xs buf (lc str : vars) ++ "}"
 compile (Leaf str:Leaf "Let":xs) buf vars =
   "LET(" ++
-  (if xs `doesMutate` str
+  (if xs `doesMutate` (lc str)
      then "mutable"
      else "immutable") ++
-  "," ++ lc str ++ ",pop());{" ++ compile xs buf (lc str : vars) ++ "}"
+  "," ++ check_shadow (lc str) ++ ",pop());{" ++ compile xs buf (lc str : vars) ++ "}"
 compile (Leaf str:Leaf "Set":xs) (value:buf) vars =
-  "SET(" ++ lc str ++ "," ++ make_obj value vars ++ ");" ++ compile xs buf vars
+  "SET(" ++ check_shadow (lc str) ++ "," ++ make_obj value vars ++ ");" ++ compile xs buf vars
 compile (Leaf str:Leaf "Set":xs) buf vars =
-  "SET(" ++ lc str ++ ",pop());" ++ compile xs buf vars
+  "SET(" ++ check_shadow (lc str) ++ ",pop());" ++ compile xs buf vars
 compile (Leaf str:xs) buf vars
   | is_literal str = compile xs (Leaf str : buf) vars
   | lc str `elem` vars = compile xs (Leaf ("VAR(" ++ lc str ++ ")") : buf) vars
