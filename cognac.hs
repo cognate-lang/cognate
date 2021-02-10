@@ -41,9 +41,7 @@ parsefile -- Parsefile takes a string (the file text) as an argument and returns
   replacesymbols .
   padtokens . -- Space out special characters.
   -- unwords $ parsecharacters $ splitOn "\'" $ -- Convert characters to ASCII value integers
-  filterAscii .
-  parseblockcomments .
-  parselinecomments . parsestrings -- Convert strings to lists of characters
+  filterAscii . parseblockcomments . parselinecomments . parsestrings
 
 filterAscii :: String -> String
 filterAscii str
@@ -365,10 +363,14 @@ callCount :: [Tree] -> String -> Int
 expr `callCount` func = length $ func `elemIndices` flatten expr
 
 doesMutate :: [Tree] -> String -> Bool
-(Leaf var:Leaf "Set":xs) `doesMutate` var' = lc var == lc var' || xs `doesMutate` var'
+(Leaf var:Leaf "Set":xs) `doesMutate` var' =
+  lc var == lc var' || xs `doesMutate` var'
 (Node func:Leaf "Set":xs) `doesMutate` func' =
-  (case last func of Leaf a -> (Leaf $ lc a)
-                     Node a -> (Node a)) == Leaf (lc func') || xs `doesMutate` func'
+  (case last func of
+     Leaf a -> (Leaf $ lc a)
+     Node a -> (Node a)) ==
+  Leaf (lc func') ||
+  xs `doesMutate` func'
 (Node blk:xs) `doesMutate` var' = blk `doesMutate` var' || xs `doesMutate` var'
 (_:xs) `doesMutate` var' = xs `doesMutate` var'
 _ `doesMutate` _ = False
@@ -503,7 +505,10 @@ is_literal :: String -> Bool
 is_literal str = not $ head str `elem` upperletters
 
 check_shadow :: String -> String
-check_shadow str = if (ret (lc str) /= "" || args (lc str) /= []) then error "Cannot shadow/mutate builtin functions yet!" else str
+check_shadow str =
+  if (ret (lc str) /= "" || args (lc str) /= [])
+    then error "Cannot shadow/mutate builtin functions yet!"
+    else str
 
 -- TODO:
 -- Simple type inference so we can pass arguments as values instead of complete cognate_objects.
@@ -539,9 +544,12 @@ compile (Leaf str:Leaf "Let":xs) buf vars =
   (if xs `doesMutate` (lc str)
      then "mutable"
      else "immutable") ++
-  "," ++ check_shadow (lc str) ++ ",pop());{" ++ compile xs buf (lc str : vars) ++ "}"
+  "," ++
+  check_shadow (lc str) ++ ",pop());{" ++ compile xs buf (lc str : vars) ++ "}"
 compile (Leaf str:Leaf "Set":xs) (value:buf) vars =
-  "SET(" ++ check_shadow (lc str) ++ "," ++ make_obj value vars ++ ");" ++ compile xs buf vars
+  "SET(" ++
+  check_shadow (lc str) ++
+  "," ++ make_obj value vars ++ ");" ++ compile xs buf vars
 compile (Leaf str:Leaf "Set":xs) buf vars =
   "SET(" ++ check_shadow (lc str) ++ ",pop());" ++ compile xs buf vars
 compile (Leaf str:xs) buf vars
