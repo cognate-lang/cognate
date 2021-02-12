@@ -48,7 +48,7 @@
 #define mutable __block
 
 // Global-local variable swapping is causing performance losses. :(
-#define mutate_function(name, body) \
+#define REDEFINE(name, body) \
   ___##name = Block_copy(BLOCK(docopy, body));
 
 // Internal cognate variable.
