@@ -18,22 +18,22 @@ Print If (Number '123.4', == 123.4)
 else
   'PASS: Casting strings to numbers';
 
-Print If (First character in 'Hello', == 'H')
-  'PASS: Getting First character in string'
+Print If (Head of 'Hello', == 'H')
+  'PASS: Getting Head of string'
 else
-  'FAIL: Getting First character in string';
+  'FAIL: Getting Head of string';
 
-Print If (First character in 'e', == 'e')
-  'PASS: Getting First character in single-character string'
+Print If (Head of 'e', == 'e')
+  'PASS: Getting Head of single-character string'
 else
-  'FAIL: Getting First character in single-character string';
+  'FAIL: Getting Head of single-character string';
 
-Print If (Rest of 'Hello', == 'ello')
-  'PASS: Getting Rest of string'
+Print If (Tail of 'Hello', == 'ello')
+  'PASS: Getting Tail of string'
 else
-  'FAIL: Getting Rest of string';
+  'FAIL: Getting Tail of string';
 
-Print If (Rest of 'e', == '')
-  'PASS: Getting Rest of single-character string'
+Print If (Tail of 'e', == '')
+  'PASS: Getting Tail of single-character string'
 else
-  'FAIL: Getting Rest of single-character string';
+  'FAIL: Getting Tail of single-character string';
