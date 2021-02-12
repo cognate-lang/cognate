@@ -7,9 +7,9 @@ Define For as
 ( Let Lst, Let Body;
   Do If (Lst, is Not Empty?)
   (
-    push Head element in Lst;
+    push First element in Lst;
     Do evaluate Body;
-    For each in Tail of Lst
+    For each in Rest of Lst
       Body;
   ) else ();
 );
@@ -37,8 +37,8 @@ Define Zip as
   (
     For each in List2
     (
-      push Head element in List1;
-      Set List1 to Tail of List1;
+      push First element in List1;
+      Set List1 to Rest of List1;
       make Tuple;
     );
   );
@@ -53,8 +53,8 @@ Define Reverse
 ( Let Lst;
   Do If (Lst, is Empty?) (Lst)
   else (
-    Reverse Tail of Lst;
-    Append List(Head element of Lst);
+    Reverse Rest of Lst;
+    Append List(First element of Lst);
   );
 );
 

@@ -25,22 +25,22 @@ Print If (Push 42 to Foo, == List (42, 1, 2, 3))
 else
   'FAIL: Pushing object to list';
 
-Print If (Head of Foo, == 1)
-  'PASS: Getting list\'s Head'
+Print If (First element in Foo, == 1)
+  'PASS: Getting First element in list'
 else
-  'FAIL: Getting list\'s Head';
+  'FAIL: Getting First element in list';
 
-Print If (Head of List (1), == 1)
-  'PASS: Getting Head of single-element list'
+Print If (First element in List (1), == 1)
+  'PASS: Getting First element in single-element list'
 else
-  'FAIL: Getting Head of single-element list';
+  'FAIL: Getting First element in single-element list';
 
-Print If (Tail of Foo, == List (2, 3))
-  'PASS: Getting list\'s Tail'
+Print If (Rest of Foo, == List (2, 3))
+  'PASS: Getting Rest of list'
 else
-  'FAIL: Getting list\'s Tail';
+  'FAIL: Getting Rest of list';
 
-Print If (Tail of List (1), == List ())
-  'PASS: Getting Tail of single-element list'
+Print If (Rest of List (1), == List ())
+  'PASS: Getting Rest of single-element list'
 else
-  'FAIL: Getting Tail of single-element list';
+  'FAIL: Getting Rest of single-element list';

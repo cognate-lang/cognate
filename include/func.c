@@ -108,16 +108,36 @@ static cognate_boolean ___string_(cognate_object a)  { return a.type&string; } /
 static cognate_boolean ___block_(cognate_object a)   { return a.type&block;  }
 static cognate_boolean ___boolean_(cognate_object a) { return a.type&boolean;}
 
-static void ___head(cognate_list lst) {
-  // Returns a list's first element. O(1).
-  if unlikely(!lst) throw_error("Cannot return the First element of an empty list!");
-  push(lst->object);
+static void ___first(cognate_object obj) {
+  // Returns the first element of a list or string. O(1).
+  if (check_type(list | string, obj).type == list)
+  {
+    cognate_list lst = obj.list;
+    if unlikely(!lst) throw_error("Cannot return the First element of an empty list!");
+    push(lst->object);
+  }
+  else
+  {
+    cognate_string str = obj.string;
+    if unlikely(!*str) throw_error("Cannot return the First character of an empty string!");
+    push(OBJ(string, GC_STRNDUP(str, mblen(str, MB_CUR_MAX))));
+  }
 }
 
-static cognate_list ___tail(cognate_list lst) {
-  // Returns the tail portion of a list. O(1).
-  if unlikely(!lst) throw_error("Cannot return the Tail elements of an empty list!");
-  return lst->next;
+static void ___rest(cognate_object obj) {
+  // Returns the tail portion of a list or string. O(1).
+  if (check_type(list | string, obj).type == list)
+  {
+    cognate_list lst = obj.list;
+    if unlikely(!lst) throw_error("Cannot return the Tail elements of an empty list!");
+    push(OBJ(list, lst->next));
+  }
+  else
+  {
+    cognate_string str = obj.string;
+    if unlikely(!*str) throw_error("Cannot return the Tail characters of an empty string!");
+    push(OBJ(string, str + mblen(str, MB_CUR_MAX)));
+  }
 }
 
 static cognate_list ___push(cognate_object a, cognate_list b) {
@@ -129,10 +149,10 @@ static cognate_list ___push(cognate_object a, cognate_list b) {
   return lst;
 }
 
-static cognate_boolean ___empty_(cognate_list lst) {
-  // Returns true is a list is empty. O(1).
+static cognate_boolean ___empty_(cognate_object container) {
+  // Returns true is a list or string is empty. O(1).
   // Can be used to to write a Length function.
-  return !lst;
+  return check_type(list | string, container).type == list ? !container.list : *container.string == '\0';
 }
 
 static cognate_list ___list(cognate_block expr) {

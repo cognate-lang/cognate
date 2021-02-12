@@ -3,6 +3,7 @@
 
 #include "cognate.h"
 #include "types.h"
+#include <gc.h>
 
 static cognate_object check_type(cognate_type, cognate_object);
 static const char* lookup_type(cognate_type);
@@ -26,17 +27,15 @@ static const char* lookup_type(cognate_type type)
 {
   //const char* const types = "NOTHING\0Block\0\0\0Boolean\0String\0\0Number\0\0List\0\0\0\0Table\0";
   //return types+(type << 3);
-  switch(type)
-  {
-    case NOTHING    : return "NOTHING";
-    case boolean    : return "Boolean";
-    case string     : return "String";
-    case number     : return "Number";
-    case list       : return "List";
-    case table      : return "Table";
-    case block      : return "Block";
-    case heap_block : return "Block";
-  }
+  char str[54] = {0};
+  if (!type) return "NOTHING";
+  if (type & boolean) strcat(str, "/Boolean");
+  if (type & string)  strcat(str, "/String");
+  if (type & number)  strcat(str, "/Number");
+  if (type & list)    strcat(str, "/List");
+  if (type & table)   strcat(str, "/Table");
+  if (type & (block | heap_block)) strcat(str, "/Block");
+  return GC_STRDUP(str + 1);
 }
 
 static _Bool compare_lists(cognate_list lst1, cognate_list lst2)
