@@ -47,14 +47,14 @@ static void ___put(cognate_object a)   { print_object(a, stdout, 0); fflush(stdo
 static void ___print(cognate_object a) { print_object(a, stdout, 0); puts(""); }
 
 
-static cognate_number ___sum(cognate_number a, cognate_number b)      { return (number, a+b); }
-static cognate_number ___multiply(cognate_number a, cognate_number b) { return (number, a*b); }
-static cognate_number ___divide(cognate_number a, cognate_number b)   { if (!a) throw_error("Division of %.14g by zero", b); return (number, b/a); }
-static cognate_number ___subtract(cognate_number a, cognate_number b) { return (number, b-a); }
+static cognate_number ___sum(cognate_number a, cognate_number b)      { return a + b; }
+static cognate_number ___multiply(cognate_number a, cognate_number b) { return a * b; }
+static cognate_number ___subtract(cognate_number a, cognate_number b) { return b - a; }
+static cognate_number ___divide(cognate_number a, cognate_number b)   { if likely(a) return b / a; throw_error("Division of %.14g by zero", b); }
 
 static cognate_number ___modulo(cognate_number a, cognate_number b) {
-  if (!a) throw_error("Modulo of %.14g by zero", b);
-  return fmod(b, a);
+  if likely(a) return fmod(b, a);
+  throw_error("Modulo of %.14g by zero", b);
 }
 
 static cognate_number ___random(cognate_number low, cognate_number high, cognate_number step) {
@@ -77,11 +77,11 @@ static cognate_number ___random(cognate_number low, cognate_number high, cognate
   return low + (cognate_number)(num % (unsigned long)((high - low) / step)) * step;
 }
 
-static void ___drop(cognate_object a)    { (void)a; } // These can be defined within cognate.
-static void ___twin(cognate_object a)    { push(a); push(a); }
-static void ___triplet(cognate_object a) { push(a); push(a); push(a); }
-static void ___swap(cognate_object a, cognate_object b)    { push(a); push(b); }
-static void ___clear()   { stack.top=stack.start; }
+static void ___drop(cognate_object a)                   { (void)a; } // These can be defined within cognate.
+static void ___twin(cognate_object a)                   { push(a); push(a); }
+static void ___triplet(cognate_object a)                { push(a); push(a); push(a); }
+static void ___swap(cognate_object a, cognate_object b) { push(a); push(b); }
+static void ___clear()                                  { stack.top=stack.start; }
 
 static cognate_boolean ___true()  { return 1; }
 static cognate_boolean ___false() { return 0; }
@@ -89,7 +89,7 @@ static cognate_boolean ___false() { return 0; }
 static cognate_boolean ___either(cognate_boolean a, cognate_boolean b) { return(a || b); } // Use unconventional operators to avoid short-circuits.
 static cognate_boolean ___both  (cognate_boolean a, cognate_boolean b) { return(a && b); }
 static cognate_boolean ___one_of(cognate_boolean a, cognate_boolean b) { return(a ^ b); }
-static cognate_boolean ___not   (cognate_boolean a)          { return !a; }
+static cognate_boolean ___not   (cognate_boolean a)                    { return !a; }
 
 
 static cognate_boolean ___equal(cognate_object a, cognate_object b)   { return compare_objects(a,b); }
