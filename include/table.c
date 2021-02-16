@@ -20,6 +20,12 @@ static cognate_table table_copy(const cognate_table);
 #include <gc/gc.h>
 #endif
 
+// TODO:
+// Tables need to be implemented better than last time
+// That means no realloc-ing on insertion.
+// Tables must also be immutable.
+// This means that an overwrite insertion does not remove the previous value.
+
 static unsigned long hash(const char *str)
 {
   // http://www.cse.yorku.ca/~oz/hash.html
