@@ -3,7 +3,7 @@
 Put 'Enter an email: ';
 Let Email be Input;
 
-Print If (Email, does Match '^[[:graph:]]+@[[:graph:]]+\\.[[:graph:]]+$') (
+Print If (Email, does Match '^[[:graph:]]+@[[:graph:]]+\\.[[:graph:]]+$')
   'This is a valid email!'
 else
   'This is an invalid email!';

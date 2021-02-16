@@ -118,7 +118,7 @@ parseAfterDecimal (x:xs)
 parseAfterDecimal _ = ""
 
 parsestrings :: String -> String
-parsestrings =
+parsestrings = -- FIXME: string '\\' breaks here
   createStrings . splitOn "'" . replace "\\'" "¸" -- Another string substitution bodge.
   where
     createStrings :: [String] -> String
@@ -496,6 +496,7 @@ literal_type (Leaf token)
   | head token == '\"' = "string"
   | "VAR(" `isPrefixOf` token = ""
   | "CALL(" `isPrefixOf` token = ret (takeWhile (/= ',') (drop 5 token))
+  | otherwise = error ("Cannot match '" ++ token ++ "'")
 literal_type (Node token) = "block"
 
 print_literal :: Tree -> [String] -> String
@@ -602,10 +603,10 @@ main = do
   args <- getArgs
   let compilerFlagsLinux =
         words
-          "-fblocks -lBlocksRuntime -l:libgc.so -Ofast -I include -Wall -Wextra -Werror -Wno-unused -pedantic-errors -std=c11 -lm -g0 -rdynamic -fuse-ld=lld"
+          "-fblocks -lBlocksRuntime -l:libgc.so -Ofast -I include -Wall -Wextra -Werror -Wno-unused -pedantic-errors -std=c11 -lm -g0 -fuse-ld=lld"
   let compilerFlagsMac =
         words
-          "-fblocks -lgc -Ofast -I include -Wall -Wextra -Werror -pedantic-errors -Wno-unused -std=c11 -lm -g0 -rdynamic"
+          "-fblocks -lgc -Ofast -I include -Wall -Wextra -Werror -pedantic-errors -Wno-unused -std=c11 -lm -g0"
   let compilerFlags =
         if System.Info.os == "linux"
           then compilerFlagsLinux

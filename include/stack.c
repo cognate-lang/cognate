@@ -13,6 +13,7 @@ static void expand_stack();
 #include "error.c"
 
 #include <stdio.h>
+#include <stdlib.h>
 #ifndef noGC
 #include <gc/gc.h>
 #endif

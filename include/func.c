@@ -27,13 +27,9 @@ static void ___if(cognate_block cond, cognate_object a, cognate_object b)
 {
   cond();
   if (CHECK(boolean, pop()))
-  {
     push(a);
-  }
   else
-  {
     push(b);
-  }
 }
 
 static void ___while(cognate_block cond, cognate_block body) {
@@ -53,17 +49,18 @@ static void ___print(cognate_object a) { print_object(a, stdout, 0); puts(""); }
 
 static cognate_number ___sum(cognate_number a, cognate_number b)      { return (number, a+b); }
 static cognate_number ___multiply(cognate_number a, cognate_number b) { return (number, a*b); }
-static cognate_number ___divide(cognate_number a, cognate_number b)   { return (number, b/a); }
+static cognate_number ___divide(cognate_number a, cognate_number b)   { if (!a) throw_error("Division of %.14g by zero", b); return (number, b/a); }
 static cognate_number ___subtract(cognate_number a, cognate_number b) { return (number, b-a); }
 
 static cognate_number ___modulo(cognate_number a, cognate_number b) {
+  if (!a) throw_error("Modulo of %.14g by zero", b);
   return fmod(b, a);
 }
 
 static cognate_number ___random(cognate_number low, cognate_number high, cognate_number step) {
   if unlikely((high - low) * step < 0 || !step)
   {
-    throw_error("Cannot generate random number in range %.14g..%.14g with step %.14g", low, high, step);
+    throw_error("Invalid range %.14g..%.14g with step %.14g", low, high, step);
   }
   else if ((high - low) / step < 1)
   {
@@ -110,25 +107,25 @@ static cognate_boolean ___boolean_(cognate_object a) { return a.type&boolean;}
 
 static void ___first(cognate_list lst) {
   // Returns the first element of a list. O(1).
-  if unlikely(!lst) throw_error("Cannot return the First element of an empty list!");
+  if unlikely(!lst) throw_error("Empty list is invalid");
   push(lst->object);
 }
 
 static cognate_list ___rest(cognate_list lst) {
   // Returns the tail portion of a list. O(1).
-  if unlikely(!lst) throw_error("Cannot return the Rest of an empty list!");
+  if unlikely(!lst) throw_error("Empty list is invalid");
   return lst->next;
 }
 
 static cognate_string ___head(cognate_string str)
 {
-  if unlikely(!*str) throw_error("Cannot return the First character of an empty string!");
+  if unlikely(!*str) throw_error("Empty string is invalid");
   return GC_STRNDUP(str, mblen(str, MB_CUR_MAX));
 }
 
 static cognate_string ___tail(cognate_string str)
 {
-  if unlikely(!*str) throw_error("Cannot return the Tail characters of an empty string!");
+  if unlikely(!*str) throw_error("Empty string is invalid");
   return str + mblen(str, MB_CUR_MAX);
 }
 
@@ -228,6 +225,7 @@ static cognate_number ___string_length(cognate_string str) {
 }
 
 static cognate_string ___substring(cognate_number startf, cognate_number endf, cognate_string str) {
+  const char* str_start = str;
   // O(end).
   // Only allocates a new string if it has to.
   /* TODO: Would it be better to have a simpler and more minimalist set of string functions, like lists do?
@@ -237,17 +235,17 @@ static cognate_string ___substring(cognate_number startf, cognate_number endf, c
   size_t start  = startf;
   size_t end    = endf;
   if unlikely(start != startf || end != endf || start > end)
-    throw_error("Cannot substring with character range %.14g...%.14g!", startf, endf);
+    throw_error("Invalid range %.14g..%.14g for string %.64s", startf, endf, str_start);
   size_t str_size = 0;
   end -= start;
   for (;start != 0; --start)
   {
-    if unlikely(*str == '\0') throw_error("String is too small to take substring from!"); // TODO Show more info here.
+    if unlikely(!*str) throw_error("String %.64s is too small (%li characters)", str_start, mbstrlen(str_start)); // TODO Show more info here.
     str += mblen(str, MB_CUR_MAX);
   }
   for (;end != 0; --end)
   {
-    if unlikely(str[str_size] == '\0') throw_error("String is too small to take substring from!");
+    if unlikely(str[str_size] == '\0') throw_error("String %.64s is too small (%li characters)", str_start, mbstrlen(str_start));
     str_size += mblen(str+str_size, MB_CUR_MAX);
   }
   if unlikely(str[str_size] == '\0')
@@ -290,7 +288,7 @@ static cognate_number ___number(cognate_string str) {
   cognate_number num = strtod(str, &end);
   if (end == str || *end != '\0')
   {
-    throw_error("Cannot parse '%s' to a number!", str);
+    throw_error("Cannot parse '%.64s' to a number", str);
   }
   return num;
 }
@@ -299,7 +297,7 @@ static cognate_string ___path() {
   char buf[FILENAME_MAX];
   if (!getcwd(buf, FILENAME_MAX))
   {
-    throw_error("Cannot get executable path!");
+    throw_error("Cannot get file path");
   }
   char* ret = GC_STRDUP(buf);
   return ret;
@@ -414,9 +412,13 @@ static cognate_boolean ___match(cognate_string reg_str, cognate_string str) {
     // Technically, the last regex to be used in the program will leak memory.
     // However, this is minor, since only a limited amount of memory can be leaked.
     regfree(&reg); // Apparently freeing an unallocated regex is fine.
-    if unlikely(*reg_str == '\0' || regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE | REG_NOSUB))
+    if unlikely(!*reg_str) throw_error("Cannot compile empty string as regex");
+    const int status = regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE | REG_NOSUB);
+    if unlikely(status)
     {
-      throw_error("Cannot compile invalid regular expression! ('%s')", reg_str);
+      char reg_err[256];
+      regerror(status, &reg, reg_err, 256);
+      throw_error("Regex compile error: %s in regex '%.32s'", reg_err, reg_str);
     }
     old_str = reg_str; /* This should probably be strcpy, but I trust that reg_str is either
                           allocated with the garbage collector, or read only in the data segment. */
@@ -424,7 +426,8 @@ static cognate_boolean ___match(cognate_string reg_str, cognate_string str) {
   const int found = regexec(&reg, str, 0, NULL, 0);
   if unlikely(found != 0 && found != REG_NOMATCH)
   {
-    throw_error("Regex match error! (%s)", reg_str);
+
+    throw_error("Regex match error on string '%.64s' with regex '%.64s'", str, reg_str);
     // If this error ever actually appears, use regerror to get the full text.
   }
   return !found;
@@ -433,7 +436,7 @@ static cognate_boolean ___match(cognate_string reg_str, cognate_string str) {
 static cognate_number ___ordinal(cognate_string str) {
   if unlikely(mbstrlen(str) != 1)
   {
-    throw_error("Ordinal requires string of length 1. String '%s' is not of length 1!", str);
+    throw_error("Invalid string '%.64s' (should be length 1)", str);
   }
   int chr = 0;
   mbtowc(&chr, str, MB_CUR_MAX);
@@ -442,7 +445,7 @@ static cognate_number ___ordinal(cognate_string str) {
 
 static cognate_string ___character(cognate_number d) {
   const int i = d;
-  if unlikely(i != d) throw_error("Cannot convert %.14g to UTF8 character!", d);
+  if unlikely(i != d) throw_error("Cannot convert %.14g to UTF8 character", d);
   char* str = GC_MALLOC (MB_CUR_MAX + 1);
   wctomb(str, i);
   str[mblen(str, MB_CUR_MAX)] = '\0';
@@ -464,7 +467,7 @@ static cognate_number ___ceiling(cognate_number a) {
 static void ___assert(cognate_string name, cognate_boolean result) {
   if unlikely(!result)
   {
-    throw_error("Assertion '%s' has failed!", name);
+    throw_error("Assertion '%s' has failed", name);
   }
 }
 
