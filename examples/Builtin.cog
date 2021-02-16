@@ -1,7 +1,6 @@
 Define Tuple be (Let X, Let Y, List (X, Y));
 
 Define Prepend (Swap, Append);
-Define Prefix  (Swap, Suffix);
 
 Define For as
 ( Let Lst, Let Body;
@@ -31,7 +30,7 @@ Define Range as
   );
 );
 
-Define Zip as
+Define Splice as
 ( Let List1; Let List2;
   List
   (
@@ -49,15 +48,6 @@ Define Integer?
   X, == Floor X;
 );
 
-Define Reverse
-( Let Lst;
-  Do If (Lst, is Empty?) (Lst)
-  else (
-    Reverse Rest of Lst;
-    Append List(First element of Lst);
-  );
-);
-
 
 Define Filter
 ( Let Cond; Let Lst;
@@ -65,11 +55,11 @@ Define Filter
   (
     For each in Lst
     (
-      Let X, push X;
-      Do If Cond
+      Twin;
+      Do If (Do Cond, Not)
       (
-        X
-      ) else ()
+        Drop;
+      ) else ();
     )
   )
 );
@@ -77,9 +67,4 @@ Define Filter
 Define Map
 ( Let Expr; Let Lst;
   List ( For each in Lst do Expr );
-);
-
-Define Join
-( Let Lst;
-  For each in Lst (add Suffix) starting from '';
 );

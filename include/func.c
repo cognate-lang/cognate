@@ -207,16 +207,26 @@ static void ___split() {
   */ // TODO
 }
 
-static cognate_string ___suffix(cognate_string str1, cognate_string str2) {
+static cognate_string ___join(cognate_number n) {
   // Joins a string to the end of another string.
   // Define Prefix (Swap, Suffix);
-  const size_t str1_size = strlen(str1);
-  const size_t str2_size = strlen(str2);
-  const size_t new_string_size = str1_size + str2_size;
-  char* new_str = GC_MALLOC (new_string_size);
-  memmove(new_str, str2, str2_size);
-  memmove(new_str+str2_size, str1, str1_size);
-  return new_str;
+  size_t n1 = n;
+  if (n != n1) throw_error("Cannot join %.14g strings", n);
+  const char* strings[n1];
+  size_t result_size = 1;
+  for (size_t i = 0; i < n1; ++i)
+  {
+    const char* str = check_type(string, pop()).string;
+    strings[i] = str;
+    result_size += strlen(str);
+  }
+  char* result = GC_MALLOC(result_size);
+  result[0] = '\0';
+  for (size_t i = 0; i < n1; ++i)
+  {
+    strcat(result, strings[i]);
+  }
+  return result;
 }
 
 static cognate_number ___string_length(cognate_string str) {
