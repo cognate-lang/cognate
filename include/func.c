@@ -155,7 +155,6 @@ static cognate_list ___list(cognate_block expr) {
   cognate_list lst = NULL;
   while (stack.top != stack.start)
   {
-    // TODO: Allocate the list as an array for the sake of memory locality.
     // This can just be Swap, Push;
     cognate_list_node* tmp = GC_NEW (cognate_list_node);
     tmp -> object = pop();
@@ -319,8 +318,7 @@ static void ___stack() {
 }
 
 static void ___write(cognate_string filename, cognate_object obj) {
-  // Write string to end of file, without a newline.
-  // TODO: Allow writing of any writable object.
+  // Write object to end of file, without a newline.
   FILE* const fp = fopen(filename, "a");
   if unlikely(fp == NULL) throw_error("Cannot open file '%s'. It probably doesn't exist.", filename);
   print_object(obj, fp, 0);

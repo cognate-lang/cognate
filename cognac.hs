@@ -516,8 +516,6 @@ check_shadow str =
     else str
 
 -- TODO:
--- Simple type inference so we can pass arguments as values instead of complete cognate_objects.
--- Inlining stack pushes as function returns seemed to hurt performance (probably because sizeof(cognate_object) > 8), but it could help with type inference where we can pass smaller values.
 -- Inline arguments to user definied functions where Let expressions are at the start [remember not to break error messages].
 -- Peephole optimizations, such as eliminating Drop expressions.
 -- Rewrite the entire parser in Cognate ASAP.
