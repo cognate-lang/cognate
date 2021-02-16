@@ -523,7 +523,7 @@ compile (Node blk:xs) buf vars = compile xs (Node blk : buf) vars
 compile (Leaf "":xs) buf vars = compile xs buf vars
 compile (Leaf "StringLiteral":xs) (Node str:xss) vars =
   compile xs (Leaf ("\"" ++ constructStr str ++ "\"") : xss) vars
-compile (Leaf str:Leaf "Define":xs) (Node blk:xss) vars =
+compile (Leaf str:Leaf "Define":xs) (Node blk:xss) vars = -- TODO: Nondeterministic function definitions are very easily doable here.
   if xs `doesCall` (lc str)
     then "DEFINE(" ++
          (if blk `doesCall` check_shadow (lc str)
@@ -533,7 +533,7 @@ compile (Leaf str:Leaf "Define":xs) (Node blk:xss) vars =
          ",{" ++
          compile blk [] (filter (/= lc str) vars) ++
          "}); {" ++ compile xs xss (filter (/= lc str) vars) ++ "}"
-    else compile xs xss vars -- TODO remove from vars
+    else compile xs xss vars
 compile (Leaf str:Leaf "Let":xs) (value:buf) vars =
   "LET(" ++
   (if xs `doesMutate` lc str
