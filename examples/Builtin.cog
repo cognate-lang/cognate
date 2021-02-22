@@ -56,10 +56,7 @@ Define Filter
     For each in Lst
     (
       Twin;
-      Do If (Do Cond, Not)
-      (
-        Drop;
-      ) else ();
+      Do If Cond then () else (Drop);
     )
   )
 );
