@@ -62,6 +62,7 @@ static void print_object (const cognate_object object, FILE* out, const _Bool qu
     }
     case boolean: fputs(object.boolean ? "True" : "False", out); return;
     case block: fprintf(out, "<Block %p>", (void*)object.block); return;
+    case block | heap_block: fprintf(out, "<Block %p>", (void*)object.block); return;
     case table: fprintf(out, "<Table %p>", (void*)object.table); return;
     default: throw_error("Cannot print object of unknown type %i. This may be a compiler bug!", object.type);
   }

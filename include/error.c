@@ -64,7 +64,7 @@ _Noreturn __attribute__((format(printf, 1, 2))) static void throw_error(const ch
   if (stack.top != stack.start)
   {
     fputs("\n\033[37;2mHere is the top of the stack:\n", stderr);
-    for (unsigned char i = 0; i < 5 && stack.top != stack.start; ++i)
+    for (unsigned char i = 0; i < 5 && (stack.top != stack.start); ++i)
     { // FIXME: Inlining of stack operations may cause inaccuracies here.
       const cognate_object obj = pop();
       fprintf(stderr, "[%s]: ", lookup_type(obj.type));

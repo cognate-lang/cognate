@@ -1,0 +1,4 @@
+Import Builtin functions;
+
+Define Square as (Multiply by Twin);
+Map (Square) over the Range from 1 to 100 step 1, Print;

@@ -1,0 +1,4 @@
+Import Builtin;
+
+Define Even? (Modulo 2, == 0);
+Filter (Even?) Range from 0 to 100 with step 1, Print;
