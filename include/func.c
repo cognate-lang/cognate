@@ -442,7 +442,7 @@ static cognate_boolean ___match(cognate_string reg_str, cognate_string str) {
 }
 
 static cognate_number ___ordinal(cognate_string str) {
-  if unlikely(mbstrlen(str) != 1)
+  if unlikely(str[0] && !str[1])
   {
     throw_error("Invalid string '%.64s' (should be length 1)", str);
   }

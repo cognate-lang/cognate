@@ -29,6 +29,10 @@ static void check_call_stack();
 #include <gc/gc.h>
 #endif
 
+#if __has_include(<Block_private.h>)
+#define blockGC
+#endif
+
 #ifdef blockGC
 #include <Block_private.h>
 BLOCK_EXPORT void* blk_alloc(const unsigned long size, __attribute__((unused)) const _Bool _, __attribute__((unused)) const _Bool __) { return GC_MALLOC(size); }
@@ -72,7 +76,7 @@ void init(int argc, char** argv)
   while (argc --> 1)
   {
     cognate_list_node* tmp = GC_NEW (cognate_list_node);
-    tmp->object = (cognate_object){.type=string, .string=argv[argc]};
+    tmp->object = OBJ(string, argv[argc]);
     tmp->next = params;
     params = tmp;
   }
