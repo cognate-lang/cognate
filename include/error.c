@@ -44,26 +44,17 @@ _Noreturn __attribute__((format(printf, 1, 2))) static void throw_error(const ch
          "Details are below...\n", stderr);
   // Print the function name, if inside a function.
   if (function_name || word_name) fputs("\n", stderr);
-  if (function_name) fprintf(stderr, "In function '\033[0;1m%c%s\033[0m'\n", toupper(*function_name), function_name+1);
-  if (word_name != function_name && word_name) fprintf(stderr, "While evaluating '\033[0;1m%c%s\033[0m'\n", toupper(*word_name), word_name+1);
+  if (function_name) fprintf(stderr, "In function '\033[0;1m%c%s\033[0m'", toupper(*function_name), function_name+1);
+  if (word_name != function_name && word_name) fprintf(stderr, "\nWhile evaluating '\033[0;1m%c%s\033[0m'", toupper(*word_name), word_name+1);
   // Actually print the error message now.
-  fprintf(stderr, "\n\033[31;1m");
+  fprintf(stderr, "\n\n\033[31;1m");
   vfprintf(stderr, fmt, args);
   va_end(args);
-  if (tmp_errno) fprintf(stderr, "\n\033[0m\033[37;2m%s", strerror(tmp_errno));
-  fputs("\033[0m\n", stderr);
-  // Print a backtrace.
-  /*
-  void *trace[5];
-  size_t size = backtrace(trace, 5);
-  fputs("\033[37;2mHere is a backtrace:\n", stderr);
-  backtrace_symbols_fd(trace, size, STDERR_FILENO);
-  fputs("\033[0m", stderr);
-  */
+  if (tmp_errno) fprintf(stderr, "\n\033[0;2m%s", strerror(tmp_errno));
   // Print the top 5 stack items.
   if (stack.top != stack.start)
   {
-    fputs("\n\033[37;2mHere is the top of the stack:\n", stderr);
+    fputs("\n\n\033[0;2mHere is the top of the stack:\n", stderr);
     for (unsigned char i = 0; i < 5 && (stack.top != stack.start); ++i)
     { // FIXME: Inlining of stack operations may cause inaccuracies here.
       const cognate_object obj = pop();
@@ -71,8 +62,10 @@ _Noreturn __attribute__((format(printf, 1, 2))) static void throw_error(const ch
       print_object(obj, stderr, 1); // FIXME: large objects will print in their entirety here.
       fputc('\n', stderr);
     }
-    if (stack.top != stack.start) printf("and %li more...\n", stack.top - stack.start);
+    if (stack.top != stack.start) fprintf(stderr, "and %li more...\n", stack.top - stack.start);
   }
+  else fputc('\n', stderr);
+  fputs("\033[0m", stderr);
   // Print the bottom row thing.
   for (unsigned char i = 0; i < term.ws_col; ++i) fputs("\342\224\200", stderr);
   // Exit, with error.
