@@ -37,7 +37,7 @@ struct cognate_object
   {
     cognate_boolean boolean;   //  1bit bool
     cognate_block block;       // 64bit block pointer
-    cognate_block stack_block; // 64bit block pointer
+    cognate_block heap_block; // 64bit block pointer
     cognate_number number;     // 64bit float
     cognate_string string;     // 64bit string pointer
     cognate_list list;    // 64bit list pointer

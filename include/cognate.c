@@ -106,7 +106,7 @@ static void cleanup()
 
 static cognate_object check_block(cognate_object obj)
 {
-  if unlikely(obj.type == block) obj.block = Block_copy(obj.block), obj.type = heap_block;
+  if unlikely(obj.type == block) obj = OBJ(heap_block, Block_copy(obj.block));
   return obj;
 }
 
@@ -117,7 +117,7 @@ static void copy_blocks()
   {
     if unlikely(obj->type == block)
     {
-      *obj = (cognate_object) {.type=heap_block, .block=Block_copy(obj->block)};
+      *obj = OBJ(heap_block, Block_copy(obj->block));
       --stack.uncopied_blocks;
     }
   }
