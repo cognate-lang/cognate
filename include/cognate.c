@@ -143,7 +143,7 @@ static void check_call_stack()
     {
       throw_error("Call stack overflow - too much recursion! (call stack is %tikB out of maximum %tikB)", (stack_start - &stack_end) >> 10, stack_max.rlim_cur >> 10);
     }
-    old_stack_size = stack_start - &stack_end;
+    old_stack_size = stack_size;
   }
 }
 #endif
