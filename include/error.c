@@ -74,6 +74,8 @@ _Noreturn __attribute__((format(printf, 1, 2))) static void throw_error(const ch
 
 static void handle_signal(int sig)
 {
+  // Segfaults are a special case, since they are likely just a recusion depth error.
+  if (sig == SIGSEGV) throw_error("Recursion depth error - too much recursion");
   throw_error("Recieved signal %i (%s), exiting.", sig, strsignal(sig));
 }
 
