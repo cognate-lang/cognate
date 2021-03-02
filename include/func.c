@@ -480,8 +480,8 @@ static void ___assert(cognate_string name, cognate_boolean result) {
 }
 
 static void ___error(cognate_string str) {
-  //word_name = NULL;
-  //errno = 0;
+  word_name = NULL;
+  errno = 0;
   throw_error("%s", str);
 }
 

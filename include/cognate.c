@@ -4,14 +4,10 @@
 #include "cognate.h"
 #include "types.h"
 
-static const char *stack_start;
-static __attribute__((unused)) char if_status = 2;
-
 static void init(int argc, char** argv);
 static void cleanup();
 static cognate_object check_block(cognate_object);
 static void copy_blocks();
-static void check_call_stack();
 
 #include "table.c"
 #include "stack.c"
@@ -20,8 +16,8 @@ static void check_call_stack();
 #include "type.c"
 #include "func.c"
 
-#include <time.h>
 #include <sys/resource.h>
+#include <time.h>
 #include <libgen.h>
 #include <Block.h>
 #include <locale.h>
@@ -42,19 +38,13 @@ BLOCK_EXPORT void blk_gc_assign_weak(const void* src, void* dst) { *(void**)dst 
 BLOCK_EXPORT void blk_gc_memmove(void* dst, void* src, unsigned long size) { memmove(dst, src, size); }
 #endif
 
-static struct rlimit stack_max;
+static char sig_stack[SIGSTKSZ * 2];
 
 void init(int argc, char** argv)
 {
   // Get return stack limit
-  char a;
-  stack_start = &a;
-
-  if unlikely(getrlimit(RLIMIT_STACK, &stack_max) == -1)
-  {
-    throw_error("Cannot get return stack limit!");
-  }
 #ifdef CALL_STACK_KB
+  struct rlimit stack_max;
   stack_max.rlim_cur = CALL_STACK_KB << 10;
   setrlimit(RLIMIT_STACK, &stack_max);
 #endif
@@ -90,12 +80,16 @@ void init(int argc, char** argv)
     params = tmp;
   }
   // Bind error signals.
-  signal(SIGABRT, handle_signal);
-  signal(SIGFPE,  handle_signal);
-  signal(SIGILL,  handle_signal);
-  signal(SIGINT,  handle_signal);
-  signal(SIGTERM, handle_signal);
-  signal(SIGSEGV, handle_signal); // Will only sometimes work.
+  stack_t sig_stk = {.ss_sp=sig_stack, .ss_size=SIGSTKSZ * 2};
+  struct sigaction action = {.sa_handler=handle_signal, .sa_flags=SA_ONSTACK};
+  sigaltstack(&sig_stk, NULL);
+  sigemptyset(&action.sa_mask);
+  sigaction(SIGABRT, &action, NULL);
+  sigaction(SIGFPE,  &action, NULL);
+  sigaction(SIGILL,  &action, NULL);
+  sigaction(SIGINT,  &action, NULL);
+  sigaction(SIGTERM, &action, NULL);
+  sigaction(SIGSEGV, &action, NULL);
   // Initialize the stack.
   init_stack();
 }
@@ -128,22 +122,4 @@ static void copy_blocks()
   }
 }
 
-static void check_call_stack()
-{
-  // Performance here is not great.
-  static unsigned short function_calls = 1024;
-  if unlikely(!--function_calls)
-  {
-    function_calls = 1024;
-    static ptrdiff_t old_stack_size = 0;
-    const char stack_end;
-    const long stack_size = stack_start - &stack_end;
-    // if (how much stack left < stack change between checks)
-    if unlikely((stack_size - old_stack_size) << 1 > (long)stack_max.rlim_cur - stack_size)
-    {
-      throw_error("Call stack overflow - too much recursion! (call stack is %tikB out of maximum %tikB)", (stack_start - &stack_end) >> 10, stack_max.rlim_cur >> 10);
-    }
-    old_stack_size = stack_size;
-  }
-}
 #endif

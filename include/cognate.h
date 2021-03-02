@@ -20,7 +20,6 @@
 #define DEFINE(flags, name, body) \
   flags cognate_block ___##name = \
   BLOCK( \
-    check_call_stack(); \
     body \
   );
 #else
@@ -30,7 +29,6 @@
   BLOCK( \
     const char* const temp_func_name = function_name; \
     function_name = #name; \
-    check_call_stack(); \
     body \
     function_name = temp_func_name; \
   );
