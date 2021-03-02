@@ -25,15 +25,15 @@ static void check_call_stack();
 #include <libgen.h>
 #include <Block.h>
 #include <locale.h>
-#ifndef noGC
+#ifndef NO_GC
 #include <gc/gc.h>
 #endif
 
 #if __has_include(<Block_private.h>)
-#define blockGC
+#define BLOCK_GC
 #endif
 
-#ifdef blockGC
+#ifdef BLOCK_GC
 #include <Block_private.h>
 BLOCK_EXPORT void* blk_alloc(const unsigned long size, __attribute__((unused)) const _Bool _, __attribute__((unused)) const _Bool __) { return GC_MALLOC(size); }
 BLOCK_EXPORT void blk_setHasRefcount(__attribute__((unused)) const void* _, __attribute__((unused)) const _Bool __) {}
@@ -49,19 +49,24 @@ void init(int argc, char** argv)
   // Get return stack limit
   char a;
   stack_start = &a;
+
   if unlikely(getrlimit(RLIMIT_STACK, &stack_max) == -1)
   {
     throw_error("Cannot get return stack limit!");
   }
+#ifdef CALL_STACK_KB
+  stack_max.rlim_cur = CALL_STACK_KB << 10;
+  setrlimit(RLIMIT_STACK, &stack_max);
+#endif
   // Set locale for strings.
   if unlikely(setlocale(LC_ALL, "") == NULL)
   {
     throw_error("Cannot set locale!");
   }
   // Init GC
-#ifndef noGC
+#ifndef NO_GC
   GC_INIT();
-#ifdef blockGC
+#ifdef BLOCK_GC
   _Block_use_GC(blk_alloc, blk_setHasRefcount, blk_gc_assign_strong, blk_gc_assign_weak, blk_gc_memmove);
 #else
   #pragma message "Cannot find header <Block_private.h>. Blocks cannot use garbage collection and may leak memory!"
@@ -136,7 +141,7 @@ static void check_call_stack()
     // if (how much stack left < stack change between checks)
     if unlikely((stack_size - old_stack_size) << 1 > (long)stack_max.rlim_cur - stack_size)
     {
-      throw_error("Call stack overflow - too much recursion! (call stack is %ti bytes)", stack_start - &stack_end);
+      throw_error("Call stack overflow - too much recursion! (call stack is %tikB out of maximum %tikB)", (stack_start - &stack_end) >> 10, stack_max.rlim_cur >> 10);
     }
     old_stack_size = stack_start - &stack_end;
   }
