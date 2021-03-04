@@ -88,8 +88,7 @@ static void cleanup()
 
 static cognate_object check_block(cognate_object obj)
 {
-  if unlikely(obj.type == block) obj = OBJ(heap_block, Block_copy(obj.block));
-  return obj;
+  return unlikely(obj.type == block) ? OBJ(heap_block, Block_copy(obj.block)) : obj;
 }
 
 static void copy_blocks()

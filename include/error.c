@@ -27,7 +27,7 @@ static const char* word_name = NULL;
 
 static sigjmp_buf signal_jmp;
 
-static void set_word_name(char* name) { word_name=name; } // Need this to avoid unsequenced evaluation error.
+static void set_word_name(const char* const name) { word_name=name; } // Need this to avoid unsequenced evaluation error.
 
 _Noreturn __attribute__((format(printf, 1, 2))) static void throw_error(const char* const fmt, ...)
 {
@@ -54,11 +54,11 @@ _Noreturn __attribute__((format(printf, 1, 2))) static void throw_error(const ch
   va_start(args, fmt);
   vfprintf(stderr, fmt, args);
   va_end(args);
-  if (tmp_errno) fprintf(stderr, "\n\033[0;2m%s", strerror(tmp_errno));
+  fprintf(stderr, "\n\033[0;2m%s\n", tmp_errno ? strerror(tmp_errno) : "");
   // Print the top 5 stack items.
   if (stack.top != stack.start)
   {
-    fputs("\n\n\033[0;2mHere is the top of the stack:\n", stderr);
+    fputs("\n\033[0;2mHere is the top of the stack:\n", stderr);
     for (unsigned char i = 0; i < 5 && (stack.top != stack.start); ++i)
     { // FIXME: Inlining of stack operations may cause inaccuracies here.
       const cognate_object obj = pop();
@@ -68,7 +68,6 @@ _Noreturn __attribute__((format(printf, 1, 2))) static void throw_error(const ch
     }
     if (stack.top != stack.start) fprintf(stderr, "and %li more...\n", stack.top - stack.start);
   }
-  else fputc('\n', stderr);
   fputs("\033[0m", stderr);
   // Print the bottom row thing.
   for (unsigned short i = 0; i < term.ws_col; ++i) fputs("\342\224\200", stderr);
@@ -79,22 +78,23 @@ _Noreturn __attribute__((format(printf, 1, 2))) static void throw_error(const ch
 _Noreturn static void redirect_signal(int sig)
 {
   // Can't print a fancy error message here, since we are using a resrticted stack.
-  siglongjmp(signal_jmp, sig);
+  longjmp(signal_jmp, sig);
 }
 
 static void bind_signals()
 {
-  char sig_stack_start[MINSIGSTKSZ];
-  const stack_t signal_stack = {.ss_sp=sig_stack_start, .ss_size=MINSIGSTKSZ};
+  char sig_stack_start; // Use the old stack as the signal stack - this is probably undefined.
+  // static char sig_stack_start[MINSIGSTKSZ]; // Use this line if the above line breaks.
+  const stack_t signal_stack = {.ss_sp=&sig_stack_start, .ss_size=MINSIGSTKSZ};
   const struct sigaction signal_action = {.sa_handler=redirect_signal, .sa_flags=SA_ONSTACK, .sa_mask={0}};
   sigaltstack(&signal_stack, NULL);
-  sigaction(SIGHUP, &signal_action, NULL);
-  sigaction(SIGINT, &signal_action, NULL);
+  sigaction(SIGHUP,  &signal_action, NULL);
+  sigaction(SIGINT,  &signal_action, NULL);
   sigaction(SIGQUIT, &signal_action, NULL);
-  sigaction(SIGILL, &signal_action, NULL);
+  sigaction(SIGILL,  &signal_action, NULL);
   sigaction(SIGABRT, &signal_action, NULL);
-  sigaction(SIGBUS, &signal_action, NULL);
-  sigaction(SIGFPE, &signal_action, NULL);
+  sigaction(SIGBUS,  &signal_action, NULL);
+  sigaction(SIGFPE,  &signal_action, NULL);
   sigaction(SIGSEGV, &signal_action, NULL);
   sigaction(SIGPIPE, &signal_action, NULL);
   sigaction(SIGTERM, &signal_action, NULL);

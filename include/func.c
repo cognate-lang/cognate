@@ -138,10 +138,10 @@ static cognate_list ___push(cognate_object a, cognate_list b) {
   return lst;
 }
 
-static cognate_boolean ___empty_(cognate_object container) {
+static cognate_boolean ___empty_(cognate_list lst) {
   // Returns true is a list or string is empty. O(1).
   // Can be used to to write a Length function.
-  return check_type(list | string, container).type == list ? !container.list : *container.string == '\0';
+  return !lst;
 }
 
 static cognate_list ___list(cognate_block expr) {
@@ -336,7 +336,7 @@ static void ___write(cognate_string filename, cognate_object obj) {
 }
 
 static cognate_list ___parameters() {
-  return params;
+  return params; // TODO should be a variable, and allow mutation and stuff
 }
 
 static void ___stop() {
