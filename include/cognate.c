@@ -36,8 +36,6 @@ BLOCK_EXPORT void blk_gc_assign_weak(const void* src, void* dst) { *(void**)dst 
 BLOCK_EXPORT void blk_gc_memmove(void* dst, void* src, unsigned long size) { memmove(dst, src, size); }
 #endif
 
-static char sig_stack[SIGSTKSZ];
-
 void init(int argc, char** argv)
 {
   // Set locale for strings.

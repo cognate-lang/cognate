@@ -27,21 +27,17 @@ static void print_object (const cognate_object object, FILE* out, const _Bool qu
         return;
       }
       fputc('\'', out);
-      for (const char* c = object.string; *c != '\0'; ++c)
+      char c;
+      for (const char* ptr = object.string; (c = *ptr) != '\0'; ++ptr)
       {
-        switch (*c)
+        if (c >= '\a' && c <= '\r')
         {
-          case '\a': fputs("\\a", out); break;
-          case '\b': fputs("\\b", out); break;
-          case '\t': fputs("\\t", out); break;
-          case '\n': fputs("\\n", out); break;
-          case '\v': fputs("\\v", out); break;
-          case '\f': fputs("\\f", out); break;
-          case '\r': fputs("\\r", out); break;
-          case '\'': fputs("\\'", out); break;
-          case '\\': fputs("\\\\",out); break;
-          default: fprintf(out, "%c", *c);
+          fputc('\\', out);
+          fputc("abtnvfr"[c-'\a'], out);
         }
+        else if (c == '\\') fputs("\\\\", out);
+        else if (c == '\'') fputs("\\\'", out);
+        else fputc(c, out);
       }
       fputc('\'', out);
       return;
