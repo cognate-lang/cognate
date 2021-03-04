@@ -94,17 +94,8 @@ static void bind_signals()
   const stack_t signal_stack = {.ss_sp=sig_stack_start, .ss_size=SIGSTKSZ};
   const struct sigaction signal_action = {.sa_handler=handle_signal, .sa_flags=SA_ONSTACK, .sa_mask={0}};
   sigaltstack(&signal_stack, NULL);
-  sigaction(SIGHUP,  &signal_action, NULL);
-  sigaction(SIGINT,  &signal_action, NULL);
-  sigaction(SIGQUIT, &signal_action, NULL);
-  sigaction(SIGILL,  &signal_action, NULL);
-  sigaction(SIGABRT, &signal_action, NULL);
-  sigaction(SIGBUS,  &signal_action, NULL);
-  sigaction(SIGFPE,  &signal_action, NULL);
-  sigaction(SIGSEGV, &signal_action, NULL);
-  sigaction(SIGPIPE, &signal_action, NULL);
-  sigaction(SIGTERM, &signal_action, NULL);
-  sigaction(SIGCHLD, &signal_action, NULL);
+  char actions[] = {SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGABRT, SIGBUS, SIGFPE, SIGSEGV, SIGPIPE, SIGTERM, SIGCHLD};
+  for (size_t i = 0; i < sizeof(actions); ++i) sigaction(actions[i], &signal_action, NULL);
 }
 
 #endif
