@@ -44,7 +44,7 @@ static void ___while(cognate_block cond, cognate_block body) {
 static void ___do(cognate_block blk) { blk(); }
 
 static void ___put(cognate_object a)   { print_object(a, stdout, 0); fflush(stdout); }
-static void ___print(cognate_object a) { print_object(a, stdout, 0); puts(""); }
+static void ___print(cognate_object a) { print_object(a, stdout, 0); putc('\n', stdout); }
 
 
 static cognate_number ___sum(cognate_number a, cognate_number b)      { return a + b; }
@@ -86,10 +86,10 @@ static void ___clear()                                  { stack.top=stack.start;
 static cognate_boolean ___true()  { return 1; }
 static cognate_boolean ___false() { return 0; }
 
-static cognate_boolean ___either(cognate_boolean a, cognate_boolean b) { return(a || b); } // Use unconventional operators to avoid short-circuits.
-static cognate_boolean ___both  (cognate_boolean a, cognate_boolean b) { return(a && b); }
-static cognate_boolean ___one_of(cognate_boolean a, cognate_boolean b) { return(a ^ b); }
-static cognate_boolean ___not   (cognate_boolean a)                    { return !a; }
+static cognate_boolean ___either(cognate_boolean a, cognate_boolean b) { return a || b; }
+static cognate_boolean ___both  (cognate_boolean a, cognate_boolean b) { return a && b; }
+static cognate_boolean ___one_of(cognate_boolean a, cognate_boolean b) { return a ^ b;  }
+static cognate_boolean ___not   (cognate_boolean a)                    { return !a;     }
 
 
 static cognate_boolean ___equal(cognate_object a, cognate_object b)   { return compare_objects(a,b); }
@@ -314,6 +314,7 @@ static cognate_string ___path() {
 
 static void ___stack() {
   // We can't return the list or this function is inlined and it breaks.
+  extern void copy_blocks();
   copy_blocks();
   cognate_list lst = NULL;
   for (cognate_object* i = stack.top - 1 ; i >= stack.start ; --i)
