@@ -4,7 +4,7 @@
 #include "cognate.h"
 
 _Noreturn __attribute__((format(printf, 1, 2))) static void throw_error(const char* const, ...);
-_Noreturn static void redirect_signal(int);
+_Noreturn static void handle_signal(int);
 static void bind_signals();
 
 #include "stack.c"
@@ -20,12 +20,9 @@ static void bind_signals();
 #include <signal.h>
 #include <string.h>
 #include <errno.h>
-#include <setjmp.h>
 
 static const char* function_name = NULL;
 static const char* word_name = NULL;
-
-static sigjmp_buf signal_jmp;
 
 static void set_word_name(const char* const name) { word_name=name; } // Need this to avoid unsequenced evaluation error.
 
@@ -75,10 +72,11 @@ _Noreturn __attribute__((format(printf, 1, 2))) static void throw_error(const ch
   exit(EXIT_FAILURE);
 }
 
-_Noreturn static void redirect_signal(int sig)
+_Noreturn static void handle_signal(int sig)
 {
   // Can't print a fancy error message here, since we are using a resrticted stack.
-  longjmp(signal_jmp, sig);
+  if (sig == SIGSEGV) throw_error("Call stack overflow - too much recursion");
+  throw_error("Recieved signal %i (%s), exiting.", sig, strsignal(sig));
 }
 
 static void bind_signals()
@@ -86,7 +84,7 @@ static void bind_signals()
   char sig_stack_start; // Use the old stack as the signal stack - this is probably undefined.
   // static char sig_stack_start[MINSIGSTKSZ]; // Use this line if the above line breaks.
   const stack_t signal_stack = {.ss_sp=&sig_stack_start, .ss_size=MINSIGSTKSZ};
-  const struct sigaction signal_action = {.sa_handler=redirect_signal, .sa_flags=SA_ONSTACK, .sa_mask={0}};
+  const struct sigaction signal_action = {.sa_handler=handle_signal, .sa_flags=SA_ONSTACK, .sa_mask={0}};
   sigaltstack(&signal_stack, NULL);
   sigaction(SIGHUP,  &signal_action, NULL);
   sigaction(SIGINT,  &signal_action, NULL);
@@ -99,13 +97,6 @@ static void bind_signals()
   sigaction(SIGPIPE, &signal_action, NULL);
   sigaction(SIGTERM, &signal_action, NULL);
   sigaction(SIGCHLD, &signal_action, NULL);
-  int sig = sigsetjmp(signal_jmp, 0);
-  switch (sig)
-  {
-    case SIGSEGV: throw_error("Call stack overflow - too much recursion");
-    case 0: return;
-    default: throw_error("Recieved signal %i (%s), exiting.", sig, strsignal(sig));
-  }
 }
 
 #endif
