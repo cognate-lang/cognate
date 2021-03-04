@@ -16,9 +16,7 @@ static void copy_blocks();
 #include "type.c"
 #include "func.c"
 
-#include <sys/resource.h>
 #include <time.h>
-#include <libgen.h>
 #include <Block.h>
 #include <locale.h>
 #ifndef NO_GC
@@ -38,16 +36,10 @@ BLOCK_EXPORT void blk_gc_assign_weak(const void* src, void* dst) { *(void**)dst 
 BLOCK_EXPORT void blk_gc_memmove(void* dst, void* src, unsigned long size) { memmove(dst, src, size); }
 #endif
 
-static char sig_stack[SIGSTKSZ * 2];
+static char sig_stack[SIGSTKSZ];
 
 void init(int argc, char** argv)
 {
-  // Get return stack limit
-#ifdef CALL_STACK_KB
-  struct rlimit stack_max;
-  stack_max.rlim_cur = CALL_STACK_KB << 10;
-  setrlimit(RLIMIT_STACK, &stack_max);
-#endif
   // Set locale for strings.
   if unlikely(setlocale(LC_ALL, "") == NULL)
   {
@@ -80,16 +72,7 @@ void init(int argc, char** argv)
     params = tmp;
   }
   // Bind error signals.
-  stack_t sig_stk = {.ss_sp=sig_stack, .ss_size=SIGSTKSZ * 2};
-  struct sigaction action = {.sa_handler=handle_signal, .sa_flags=SA_ONSTACK};
-  sigaltstack(&sig_stk, NULL);
-  sigemptyset(&action.sa_mask);
-  sigaction(SIGABRT, &action, NULL);
-  sigaction(SIGFPE,  &action, NULL);
-  sigaction(SIGILL,  &action, NULL);
-  sigaction(SIGINT,  &action, NULL);
-  sigaction(SIGTERM, &action, NULL);
-  sigaction(SIGSEGV, &action, NULL);
+  bind_signals();
   // Initialize the stack.
   init_stack();
 }

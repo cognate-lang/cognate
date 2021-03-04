@@ -4,7 +4,8 @@
 #include "cognate.h"
 
 _Noreturn __attribute__((format(printf, 1, 2))) static void throw_error(const char* const, ...);
-static void handle_signal(int);
+_Noreturn static void redirect_signal(int);
+static void bind_signals();
 
 #include "stack.c"
 #include "io.c"
@@ -16,29 +17,29 @@ static void handle_signal(int);
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <execinfo.h>
 #include <signal.h>
 #include <string.h>
 #include <errno.h>
+#include <setjmp.h>
 
 static const char* function_name = NULL;
 static const char* word_name = NULL;
+
+static sigjmp_buf signal_jmp;
 
 static void set_word_name(char* name) { word_name=name; } // Need this to avoid unsequenced evaluation error.
 
 _Noreturn __attribute__((format(printf, 1, 2))) static void throw_error(const char* const fmt, ...)
 {
-  va_list args;
-  va_start(args, fmt);
   struct winsize term;
   // If we cannot determine the terminal size (redirected to file or something), assume width is 80.
   const char tmp_errno = errno;
   if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &term) == -1) term.ws_col = 80;
-  fputs("\n", stderr);
+  fputc('\n', stderr);
   // Print the title bar.
-  for (unsigned char i = 0; i < (term.ws_col - 18) / 2; ++i) fputs("\342\224\200", stderr);
+  for (unsigned short i = 0; i < (term.ws_col - 18) / 2; ++i) fputs("\342\224\200", stderr);
   fputs("\342\224\244 \033[0;1mCognate Error!\033[0m \342\224\234", stderr);
-  for (unsigned char i = 0; i < (term.ws_col - 17) / 2; ++i) fputs("\342\224\200", stderr);
+  for (unsigned short i = 0; i < (term.ws_col - 17) / 2; ++i) fputs("\342\224\200", stderr);
   // Print generic error header.
   fputs("\nCognate has encountered an unrecoverable error.\n"
          "Details are below...\n", stderr);
@@ -48,6 +49,9 @@ _Noreturn __attribute__((format(printf, 1, 2))) static void throw_error(const ch
   if ((word_name != function_name) && word_name) fprintf(stderr, "While evaluating '\033[0;1m%c%s\033[0m'\n", toupper(*word_name), word_name+1);
   // Actually print the error message now.
   fprintf(stderr, "\n\033[31;1m");
+  (void)fmt;
+  va_list args;
+  va_start(args, fmt);
   vfprintf(stderr, fmt, args);
   va_end(args);
   if (tmp_errno) fprintf(stderr, "\n\033[0;2m%s", strerror(tmp_errno));
@@ -67,16 +71,41 @@ _Noreturn __attribute__((format(printf, 1, 2))) static void throw_error(const ch
   else fputc('\n', stderr);
   fputs("\033[0m", stderr);
   // Print the bottom row thing.
-  for (unsigned char i = 0; i < term.ws_col; ++i) fputs("\342\224\200", stderr);
+  for (unsigned short i = 0; i < term.ws_col; ++i) fputs("\342\224\200", stderr);
   // Exit, with error.
-  exit(-1);
+  exit(EXIT_FAILURE);
 }
 
-static void handle_signal(int sig)
+_Noreturn static void redirect_signal(int sig)
 {
-  // Segfaults are a special case, since they are likely just a recusion depth error.
-  if (sig == SIGSEGV) throw_error("Recursion depth error - too much recursion");
-  throw_error("Recieved signal %i (%s), exiting.", sig, strsignal(sig));
+  // Can't print a fancy error message here, since we are using a resrticted stack.
+  siglongjmp(signal_jmp, sig);
+}
+
+static void bind_signals()
+{
+  char sig_stack_start[MINSIGSTKSZ];
+  const stack_t signal_stack = {.ss_sp=sig_stack_start, .ss_size=MINSIGSTKSZ};
+  const struct sigaction signal_action = {.sa_handler=redirect_signal, .sa_flags=SA_ONSTACK, .sa_mask={0}};
+  sigaltstack(&signal_stack, NULL);
+  sigaction(SIGHUP, &signal_action, NULL);
+  sigaction(SIGINT, &signal_action, NULL);
+  sigaction(SIGQUIT, &signal_action, NULL);
+  sigaction(SIGILL, &signal_action, NULL);
+  sigaction(SIGABRT, &signal_action, NULL);
+  sigaction(SIGBUS, &signal_action, NULL);
+  sigaction(SIGFPE, &signal_action, NULL);
+  sigaction(SIGSEGV, &signal_action, NULL);
+  sigaction(SIGPIPE, &signal_action, NULL);
+  sigaction(SIGTERM, &signal_action, NULL);
+  sigaction(SIGCHLD, &signal_action, NULL);
+  int sig = sigsetjmp(signal_jmp, 0);
+  switch (sig)
+  {
+    case SIGSEGV: throw_error("Call stack overflow - too much recursion");
+    case 0: return;
+    default: throw_error("Recieved signal %i (%s), exiting.", sig, strsignal(sig));
+  }
 }
 
 #endif
