@@ -342,7 +342,7 @@ static cognate_list ___parameters() {
 
 static void ___stop() {
   // Don't check stack length, because it probably wont be empty.
-  exit(0);
+  exit(EXIT_SUCCESS);
 }
 
 static const cognate_table* ___table() {
