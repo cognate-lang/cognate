@@ -8,6 +8,8 @@ static void init(int argc, char** argv);
 static void cleanup();
 static cognate_object check_block(cognate_object);
 static void copy_blocks();
+static const char* stack_start;
+static const char* stack_top;
 
 #include "table.c"
 #include "stack.c"
@@ -19,6 +21,7 @@ static void copy_blocks();
 #include <time.h>
 #include <Block.h>
 #include <locale.h>
+#include <sys/resource.h>
 #ifndef NO_GC
 #include <gc/gc.h>
 #endif
@@ -38,6 +41,15 @@ BLOCK_EXPORT void blk_gc_memmove(void* dst, void* src, unsigned long size) { mem
 
 void init(int argc, char** argv)
 {
+  // Get return stack limit
+  char a;
+  stack_start = &a;
+  struct rlimit stack_limit;
+  if unlikely(getrlimit(RLIMIT_STACK, &stack_limit) == -1)
+  {
+    throw_error("Cannot get return stack limit!");
+  }
+  stack_top = stack_start - stack_limit.rlim_cur;
   // Set locale for strings.
   if unlikely(setlocale(LC_ALL, "") == NULL)
   {
@@ -70,7 +82,8 @@ void init(int argc, char** argv)
     params = tmp;
   }
   // Bind error signals.
-  bind_signals();
+  char signals[] = {SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGABRT, SIGBUS, SIGFPE, SIGSEGV, SIGPIPE, SIGTERM, SIGCHLD};
+  for (size_t i = 0; i < sizeof(signals); ++i) signal(signals[i], handle_signal);
   // Initialize the stack.
   init_stack();
 }
@@ -100,6 +113,14 @@ static void copy_blocks()
       --stack.uncopied_blocks;
     }
   }
+}
+
+static void check_call_stack()
+{
+  // Performance here is not great.
+  char sp;
+  if unlikely(&sp - stack_top < STACK_MARGIN_KB * 1024)
+    throw_error("Call stack overflow - too much recursion! (call stack is %tikB out of maximum %tikB)", (stack_start - &sp) >> 10, (stack_start - stack_top) >> 10);
 }
 
 #endif

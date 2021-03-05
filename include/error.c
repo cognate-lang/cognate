@@ -20,7 +20,6 @@ static void bind_signals();
 #include <signal.h>
 #include <string.h>
 #include <errno.h>
-#include <setjmp.h>
 
 static const char* function_name = NULL;
 static const char* word_name = NULL;
@@ -76,26 +75,7 @@ _Noreturn __attribute__((format(printf, 1, 2))) static void throw_error(const ch
 
 static void handle_signal(int sig)
 {
-  // Magic to gat a bigger stack.
-  static sigjmp_buf signal_jmp;
-  if (sig) siglongjmp(signal_jmp, sig);
-  switch (sig = sigsetjmp(signal_jmp, 0))
-  { // Now we actually handle the signal.
-    case 0: return;
-    case SIGSEGV: throw_error("Call stack overflow - too much recursion");
-    default: throw_error("Recieved signal %i (%s), exiting.", sig, strsignal(sig));
-  }
-}
-
-static void bind_signals()
-{
-  handle_signal(0); // Initialize jump buffers.
-  static char sig_stack_start[SIGSTKSZ];
-  const stack_t signal_stack = {.ss_sp=sig_stack_start, .ss_size=SIGSTKSZ};
-  const struct sigaction signal_action = {.sa_handler=handle_signal, .sa_flags=SA_ONSTACK, .sa_mask={0}};
-  sigaltstack(&signal_stack, NULL);
-  char actions[] = {SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGABRT, SIGBUS, SIGFPE, SIGSEGV, SIGPIPE, SIGTERM, SIGCHLD};
-  for (size_t i = 0; i < sizeof(actions); ++i) sigaction(actions[i], &signal_action, NULL);
+  throw_error("Recieved signal %i (%s), exiting.", sig, strsignal(sig));
 }
 
 #endif

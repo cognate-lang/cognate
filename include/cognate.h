@@ -10,6 +10,7 @@
 #define INITIAL_LIST_SIZE 16
 #define INITIAL_TABLE_SIZE 256
 #define LIST_GROWTH_FACTOR 1.5
+#define STACK_MARGIN_KB 50
 
 #define OBJ(objtype, objvalue) ((cognate_object){.type=objtype, .objtype=objvalue})
 #define VAR(name) ___##name
@@ -20,6 +21,7 @@
 #define DEFINE(flags, name, body) \
   flags cognate_block ___##name = \
   BLOCK( \
+    check_call_stack(); \
     body \
   );
 #else
@@ -29,6 +31,7 @@
   BLOCK( \
     const char* const temp_func_name = function_name; \
     function_name = #name; \
+    check_call_stack(); \
     body \
     function_name = temp_func_name; \
   );
