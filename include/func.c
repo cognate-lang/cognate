@@ -346,69 +346,23 @@ static void ___stop() {
 }
 
 static const cognate_table* ___table() {
-  /*
-  ___list();
-  const cognate_list init = *pop(list);
-  const size_t table_size = ((init.top - init.start) * LIST_GROWTH_FACTOR);
-  cognate_table* const tab = GC_NEW(cognate_table); // Need to allocate list here.
-  tab->items.start = (cognate_object*) GC_MALLOC (sizeof(cognate_object) * table_size);
-  tab->items.top = tab->items.start + table_size;
-  tab->confirmation_hash = (unsigned long*) GC_MALLOC (sizeof(unsigned long) * table_size);
-  const char *key;
-  cognate_object value;
-  for (const cognate_object *i = init.start + 1; i < init.top; i += 2)
-  {
-    key = check_type(string, *i).string;
-    value = *(i-1);
-    *tab = table_add(hash(key), value, *tab);
-  }
-  push(table, tab);
-  */ // TODO
-  return NULL;
+  return NULL; // TODO
 }
 
 static const cognate_table* ___insert(cognate_string key, cognate_object value, cognate_table tab) {
-  // O(n) :(
-  //*tab = table_add(hash(key), value, table_copy(*pop(table)));
-  //push(table, tab);
   (void)key;
   (void)value;
   (void)tab;
-  return NULL;
+  return NULL; // TODO
 }
 
 static void ___get(cognate_string key, cognate_table tab) {
-  // O(1) mostly;
-  /*
-  const char* const key = pop(string);
-  const cognate_table tab = *pop(table);
-  push(table_get(key, tab));
-  */
   (void)key;
-  (void)tab;
+  (void)tab; // TODO
 }
 
 static cognate_list ___values(cognate_table tab) {
-  (void)tab;
-  // O(n)
-  // Resulting list is NOT in any order at all.
-  // Equivilant tables may give differently ordered lists.
-  /*
-  const cognate_table tab = *pop(table);
-  cognate_list* const lst = GC_NEW(cognate_list);
-  const long table_size = tab.items.top - tab.items.start;
-  lst->start = (cognate_object*) GC_MALLOC (sizeof(cognate_object) * table_size);
-  int j = 0;
-  for (int i = 0; i < table_size; ++i)
-  {
-    if (tab.items.start[i].type != NOTHING)
-    {
-      lst->start[j++] = tab.items.start[i];
-    }
-  }
-  lst->top = lst->start + j;
-  push(list, lst);
-  */ // TODO
+  (void)tab; // TODO
   return NULL;
 }
 

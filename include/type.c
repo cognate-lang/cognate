@@ -11,7 +11,6 @@ static _Bool compare_lists(cognate_list, cognate_list);
 static _Bool compare_tables(cognate_table, cognate_table);
 
 #include "error.c"
-//#include "table.c"
 #include <string.h>
 #include <stdlib.h>
 
@@ -25,8 +24,6 @@ static cognate_object check_type(cognate_type expected_type, cognate_object obje
 
 static const char* lookup_type(cognate_type type)
 {
-  //const char* const types = "NOTHING\0Block\0\0\0Boolean\0String\0\0Number\0\0List\0\0\0\0Table\0";
-  //return types+(type << 3);
   char str[54] = {0};
   if (!type) return "NOTHING";
   if (type & boolean) strcat(str, "/Boolean");
@@ -56,17 +53,6 @@ static _Bool compare_tables(const cognate_table tab1, const cognate_table tab2)
 {
   (void) tab1;
   (void) tab2;
-  /*
-  // We can't just use compare_lists, since tables do not have guaranteed order.
-  const long table_size = tab1.items.top - tab1.items.start;
-  if (table_size != tab2.items.top - tab2.items.start) return 0; // If tables are different sizes, they're probably different.
-  for (long i = 0; i < table_size; ++i)
-  {
-    // Iterate over each key in tab1, finding the corresponding one in tab2
-    if (tab1.items.start[i].type == NOTHING) continue;
-    if (!compare_objects(tab1.items.start[i], table_get_hash(tab1.confirmation_hash[i], tab2))) return 0;
-  }
-  */
   return 1; // TODO
 }
 
@@ -97,16 +83,5 @@ static size_t mbstrlen(const char* str)
   for (; *str ; str += mblen(str, MB_CUR_MAX), ++len);
   return len;
 }
-
-/*
-static size_t fast_strlen(const char* str)
-{
-  // It's only O(n) once.
-  static const char* buf = NULL;
-  static size_t len = 0;
-  if (str == buf) return len;
-  return (len = strlen((buf = str)));
-}
-*/
 
 #endif

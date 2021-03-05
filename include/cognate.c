@@ -8,8 +8,7 @@ static void init(int argc, char** argv);
 static void cleanup();
 static cognate_object check_block(cognate_object);
 static void copy_blocks();
-static const char* stack_start;
-static const char* stack_top;
+static void check_call_stack();
 
 #include "table.c"
 #include "stack.c"
@@ -38,6 +37,9 @@ BLOCK_EXPORT void blk_gc_assign_strong(void* src, void** dst) { *dst = src; }
 BLOCK_EXPORT void blk_gc_assign_weak(const void* src, void* dst) { *(void**)dst = (void*)src; }
 BLOCK_EXPORT void blk_gc_memmove(void* dst, void* src, unsigned long size) { memmove(dst, src, size); }
 #endif
+
+static const char* stack_start;
+static const char* stack_top;
 
 void init(int argc, char** argv)
 {
@@ -117,7 +119,6 @@ static void copy_blocks()
 
 static void check_call_stack()
 {
-  // Performance here is not great.
   char sp;
   if unlikely(&sp - stack_top < STACK_MARGIN_KB * 1024)
     throw_error("Call stack overflow - too much recursion! (call stack is %tikB out of maximum %tikB)", (stack_start - &sp) >> 10, (stack_start - stack_top) >> 10);
