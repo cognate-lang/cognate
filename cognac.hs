@@ -538,7 +538,7 @@ check_shadow str =
 -- Rewrite the entire parser in Cognate ASAP.
 compile (Leaf "StringLiteral":xs) (Node str:xss) vars =
   compile xs (Leaf ("\"" ++ constructStr str ++ "\"") : xss) vars
-compile (Node a : Node b : Node cond : Leaf "If" : Leaf "Do" : xs) buf vars = "DOIF({" ++ compile cond [] vars ++ "},{" ++ compile b [] vars ++ "},{" ++ compile a [] vars ++ "})"
+compile (Node a : Node b : Node cond : Leaf "If" : Leaf "Do" : xs) buf vars = "DOIF({" ++ compile cond buf vars ++ "},{" ++ compile b [] vars ++ "},{" ++ compile a [] vars ++ "})"
 compile (Node blk : Leaf "Do" : xs) buf vars = "{" ++ compile blk [] vars ++ "}" ++ compile xs buf vars -- Primitive do inlining
 compile (Node blk:xs) buf vars = compile xs (Node blk : buf) vars
 compile (Leaf "":xs) buf vars = compile xs buf vars
