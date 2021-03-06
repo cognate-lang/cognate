@@ -52,7 +52,7 @@ static void ___while(cognate_block cond, cognate_block body) {
   }
 }
 
-static void ___do(cognate_block blk) { extern void check_call_stack(); check_call_stack(); blk(); }
+static void ___do(cognate_block blk) { blk(); }
 
 static void ___put(cognate_object a)   { print_object(a, stdout, 0); fflush(stdout); }
 static void ___print(cognate_object a) { print_object(a, stdout, 0); putc('\n', stdout); }
