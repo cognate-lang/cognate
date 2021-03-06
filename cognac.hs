@@ -23,6 +23,8 @@ version = "0.0.1"
 
 replace from to = intercalate to . splitOn from
 
+data CogType = CogBoolean | CogString | CogNumber | CogBlock | CogTable | CogList | None | Any deriving Eq
+
 data Tree
   = Leaf String
   | Node [Tree]
@@ -227,134 +229,134 @@ parseImports _ [] _ = return []
 
 compile :: [Tree] -> [Tree] -> [String] -> String
 doesCall :: [Tree] -> String -> Bool
-args "doif" = ["block", "block", "block"]
-args "if" = ["block", "", ""]
-args "while" = ["block", "block"]
-args "do" = ["block"]
-args "put" = [""]
-args "print" = [""]
-args "sum" = ["number", "number"]
-args "multiply" = ["number", "number"]
-args "divide" = ["number", "number"]
-args "subtract" = ["number", "number"]
-args "modulo" = ["number", "number"]
-args "random" = ["number", "number", "number"]
-args "drop" = [""]
-args "twin" = [""]
-args "triplet" = [""]
-args "swap" = ["", ""]
+args "doif" = [CogBlock, CogBlock, CogBlock]
+args "if" = [CogBlock, Any, Any]
+args "while" = [CogBlock, CogBlock]
+args "do" = [CogBlock]
+args "put" = [Any]
+args "print" = [Any]
+args "sum" = [CogNumber, CogNumber]
+args "multiply" = [CogNumber, CogNumber]
+args "divide" = [CogNumber, CogNumber]
+args "subtract" = [CogNumber, CogNumber]
+args "modulo" = [CogNumber, CogNumber]
+args "random" = [CogNumber, CogNumber, CogNumber]
+args "drop" = [Any]
+args "twin" = [Any]
+args "triplet" = [Any]
+args "swap" = [Any, Any]
 args "clear" = []
 args "true" = []
 args "false" = []
-args "either" = ["boolean", "boolean"]
-args "both" = ["boolean", "boolean"]
-args "one_of" = ["boolean", "boolean"]
-args "not" = ["boolean"]
-args "equal" = ["", ""]
-args "unequal" = ["", ""]
-args "preceed" = ["number", "number"]
-args "exceed" = ["number", "number"]
-args "equalorexceed" = ["number", "number"]
-args "number_" = [""]
-args "list_" = [""]
-args "string_" = [""]
-args "block_" = [""]
-args "boolean_" = [""]
-args "first" = ["list"]
-args "rest" = ["list"]
-args "head" = ["string"]
-args "tail" = ["string"]
-args "push" = ["", "list"]
-args "empty_" = ["list"]
-args "list" = ["block"]
-args "join" = ["number"]
-args "string_length" = ["string"]
-args "substring" = ["number", "number", "string"]
+args "either" = [CogBoolean, CogBoolean]
+args "both" = [CogBoolean, CogBoolean]
+args "one_of" = [CogBoolean, CogBoolean]
+args "not" = [CogBoolean]
+args "equal" = [Any, Any]
+args "unequal" = [Any, Any]
+args "preceed" = [CogNumber, CogNumber]
+args "exceed" = [CogNumber, CogNumber]
+args "equalorexceed" = [CogNumber, CogNumber]
+args "number_" = [Any]
+args "list_" = [Any]
+args "string_" = [Any]
+args "block_" = [Any]
+args "boolean_" = [Any]
+args "first" = [CogList]
+args "rest" = [CogList]
+args "head" = [CogString]
+args "tail" = [CogString]
+args "push" = [Any, CogList]
+args "empty_" = [CogList]
+args "list" = [CogBlock]
+args "join" = [CogNumber]
+args "string_length" = [CogString]
+args "substring" = [CogNumber, CogNumber, CogString]
 args "input" = []
-args "read" = ["string"]
-args "number" = ["string"]
+args "read" = [CogString]
+args "number" = [CogString]
 args "path" = []
 args "stack" = []
-args "write" = ["string", ""]
+args "write" = [CogString, Any]
 args "parameters" = []
 args "stop" = []
-args "table" = ["block"]
-args "insert" = ["string", "", "block"]
-args "values" = ["table"]
-args "match" = ["string", "string"]
-args "ordinal" = ["string"]
-args "character" = ["number"]
-args "floor" = ["number"]
-args "round" = ["number"]
-args "ceiling" = ["number"]
-args "assert" = ["string", "boolean"]
-args "error" = ["string"]
+args "table" = [CogBlock]
+args "insert" = [CogString, Any, CogBlock]
+args "values" = [CogTable]
+args "match" = [CogString, CogString]
+args "ordinal" = [CogString]
+args "character" = [CogNumber]
+args "floor" = [CogNumber]
+args "round" = [CogNumber]
+args "ceiling" = [CogNumber]
+args "assert" = [CogString, CogString]
+args "error" = [CogString]
 args _ = []
 
-ret "when" = ""
-ret "if" = "" -- Functions returning objects should use the stack, it's actually faster.
-ret "doif" = ""
-ret "while" = ""
-ret "do" = ""
-ret "put" = ""
-ret "print" = ""
-ret "sum" = "number"
-ret "multiply" = "number"
-ret "divide" = "number"
-ret "subtract" = "number"
-ret "modulo" = "number"
-ret "random" = "number"
-ret "drop" = ""
-ret "twin" = ""
-ret "triplet" = ""
-ret "swap" = ""
-ret "clear" = ""
-ret "true" = "boolean"
-ret "false" = "boolean"
-ret "either" = "boolean"
-ret "both" = "boolean"
-ret "one_of" = "boolean"
-ret "not" = "boolean"
-ret "equal" = "boolean"
-ret "unequal" = "boolean"
-ret "preceed" = "boolean"
-ret "exceed" = "boolean"
-ret "equalorexceed" = "boolean"
-ret "number_" = "boolean"
-ret "list_" = "boolean"
-ret "string_" = "boolean"
-ret "block_" = "boolean"
-ret "boolean_" = "boolean"
-ret "first" = ""
-ret "rest" = "list"
-ret "head" = "string"
-ret "tail" = "string"
-ret "push" = "list"
-ret "empty_" = "boolean"
-ret "list" = "list"
-ret "join" = "string"
-ret "string_length" = "number"
-ret "substring" = "string"
-ret "input" = "string"
-ret "read" = "string"
-ret "number" = "number"
-ret "path" = "string"
-ret "stack" = ""
-ret "write" = ""
-ret "parameters" = "list"
-ret "stop" = ""
-ret "table" = "table"
-ret "insert" = "table"
-ret "values" = "list"
-ret "match" = "boolean"
-ret "ordinal" = "number"
-ret "character" = "string"
-ret "floor" = "number"
-ret "round" = "number"
-ret "ceiling" = "number"
-ret "assert" = ""
-ret "error" = ""
-ret _ = ""
+ret "when" = None
+ret "if" = None -- Functions returning objects should use the stack, it's actually faster.
+ret "doif" = None
+ret "while" = None
+ret "do" = None
+ret "put" = None
+ret "print" = None
+ret "sum" = CogNumber
+ret "multiply" = CogNumber
+ret "divide" = CogNumber
+ret "subtract" = CogNumber
+ret "modulo" = CogNumber
+ret "random" = CogNumber
+ret "drop" = None
+ret "twin" = None
+ret "triplet" = None
+ret "swap" = None
+ret "clear" = None
+ret "true" = CogBoolean
+ret "false" = CogBoolean
+ret "either" = CogBoolean
+ret "both" = CogBoolean
+ret "one_of" = CogBoolean
+ret "not" = CogBoolean
+ret "equal" = CogBoolean
+ret "unequal" = CogBoolean
+ret "preceed" = CogBoolean
+ret "exceed" = CogBoolean
+ret "equalorexceed" = CogBoolean
+ret "number_" = CogBoolean
+ret "list_" = CogBoolean
+ret "string_" = CogBoolean
+ret "block_" = CogBoolean
+ret "boolean_" = CogBoolean
+ret "first" = None
+ret "rest" = CogList
+ret "head" = CogString
+ret "tail" = CogString
+ret "push" = CogList
+ret "empty_" = CogBoolean
+ret "list" = CogList
+ret "join" = CogString
+ret "string_length" = CogNumber
+ret "substring" = CogString
+ret "input" = CogString
+ret "read" = CogString
+ret "number" = CogNumber
+ret "path" = CogString
+ret "stack" = None
+ret "write" = None
+ret "parameters" = CogList
+ret "stop" = None
+ret "table" = CogTable
+ret "insert" = CogTable
+ret "values" = CogList
+ret "match" = CogBoolean
+ret "ordinal" = CogNumber
+ret "character" = CogString
+ret "floor" = CogNumber
+ret "round" = CogNumber
+ret "ceiling" = CogNumber
+ret "assert" = None
+ret "error" = None
+ret _ = None
 
 -- FIXME: Functions shadowing these built in functions WILL BREAK.
 (Node body:Leaf name:Leaf "Define":xs) `doesCall` func
@@ -473,34 +475,46 @@ compile (Leaf token : xs)
 compile [] = ""
 
 -}
-generate_cast :: String -> String
-generate_cast "" = "pop()"
-generate_cast typ = "CHECK(" ++ typ ++ ",pop())"
 
-chk_type :: (Tree, String) -> [String] -> String
+
+generate_cast :: CogType -> String
+generate_cast Any = "pop()"
+generate_cast typ = "CHECK(" ++ print_type typ ++ ",pop())"
+
+print_type :: CogType -> String
+print_type Any = "any"
+print_type None = "none"
+print_type CogString = "string"
+print_type CogBlock = "block"
+print_type CogNumber = "number"
+print_type CogList = "list"
+print_type CogTable = "table"
+print_type CogBoolean = "boolean"
+
+chk_type :: (Tree, CogType) -> [String] -> String
 chk_type (obj, typ) vars
   | (literal_type obj) == typ = print_literal obj vars
-  | typ == "" = make_obj obj vars
-  | literal_type obj == "" =
-    "CHECK(" ++ typ ++ "," ++ print_literal obj vars ++ ")"
+  | typ == Any = make_obj obj vars
+  | literal_type obj == Any =
+    "CHECK(" ++ print_type typ ++ "," ++ print_literal obj vars ++ ")"
   | otherwise =
     error $
     "Type error is guaranteed on execution. Expected type " ++
-    typ ++ " but got type " ++ literal_type obj
+    print_type typ ++ " but got type " ++ (print_type $ literal_type obj)
 
 make_obj :: Tree -> [String] -> String
 make_obj a vars
-  | literal_type a == "" = print_literal a vars
-  | otherwise = "OBJ(" ++ literal_type a ++ "," ++ print_literal a vars ++ ")"
+  | literal_type a == Any = print_literal a vars
+  | otherwise = "OBJ(" ++ print_type (literal_type a) ++ "," ++ print_literal a vars ++ ")"
 
-literal_type :: Tree -> String
+literal_type :: Tree -> CogType
 literal_type (Leaf token)
-  | all (`elem` ('.' : '-' : ['0' .. '9'])) token = "number"
-  | head token == '\"' = "string"
-  | "VAR(" `isPrefixOf` token = ""
+  | all (`elem` ('.' : '-' : ['0' .. '9'])) token = CogNumber
+  | head token == '\"' = CogString
+  | "VAR(" `isPrefixOf` token = Any
   | "CALL(" `isPrefixOf` token = ret (takeWhile (/= ',') (drop 5 token))
   | otherwise = error ("Cannot match '" ++ token ++ "'")
-literal_type (Node token) = "block"
+literal_type (Node token) = CogBlock
 
 print_literal :: Tree -> [String] -> String
 print_literal (Leaf str) _ = str
@@ -514,7 +528,7 @@ is_literal str = not $ head str `elem` upperletters
 
 check_shadow :: String -> String
 check_shadow str =
-  if (ret (lc str) /= "" || args (lc str) /= [])
+  if (ret (lc str) /= None || args (lc str) /= [])
     then error "Cannot shadow/mutate builtin functions yet!"
     else str
 
@@ -563,7 +577,7 @@ compile (Leaf str:Leaf "Set":xs) buf vars =
 compile (Leaf str:xs) buf vars
   | is_literal str = compile xs (Leaf str : buf) vars
   | lc str `elem` vars = compile xs (Leaf ("VAR(" ++ lc str ++ ")") : buf) vars
-  | ret (lc str) /= "" = compile xs (Leaf call : drop num_args buf) vars -- FIXME If an IO function returns a value, then this will mess with order of IO. Fix is to empty buff and prepend excess but that degrades performance.
+  | ret (lc str) /= None = compile xs (Leaf call : drop num_args buf) vars -- FIXME If an IO function returns a value, then this will mess with order of IO. Fix is to empty buff and prepend excess but that degrades performance.
   | otherwise = excess ++ call ++ ";" ++ compile xs [] vars
   where
     num_args = length $ args $ lc str
