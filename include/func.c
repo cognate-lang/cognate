@@ -23,12 +23,6 @@ static cognate_list params = NULL;
 #include <gc/gc.h>
 #endif
 
-#define IF(cond, a, b) \
-  cond;\
-  if (CHECK(booleam, pop())) push(a); \
-  else push(b);
-
-
 #define DOIF(cond, a, b) \
   cond; \
   if (CHECK(boolean, pop())) a \
