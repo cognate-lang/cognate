@@ -23,6 +23,15 @@ static cognate_list params = NULL;
 #include <gc/gc.h>
 #endif
 
+static void ___doif(cognate_block cond, cognate_block a, cognate_block b)
+{
+  cond();
+  if (CHECK(boolean, pop()))
+    a();
+  else
+    b();
+}
+
 static void ___if(cognate_block cond, cognate_object a, cognate_object b)
 {
   cond();

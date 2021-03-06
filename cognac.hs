@@ -227,6 +227,7 @@ parseImports _ [] _ = return []
 
 compile :: [Tree] -> [Tree] -> [String] -> String
 doesCall :: [Tree] -> String -> Bool
+args "doif" = ["block", "block", "block"]
 args "if" = ["block", "", ""]
 args "while" = ["block", "block"]
 args "do" = ["block"]
@@ -290,7 +291,9 @@ args "assert" = ["string", "boolean"]
 args "error" = ["string"]
 args _ = []
 
+ret "when" = ""
 ret "if" = "" -- Functions returning objects should use the stack, it's actually faster.
+ret "doif" = ""
 ret "while" = ""
 ret "do" = ""
 ret "put" = ""
@@ -519,6 +522,8 @@ check_shadow str =
 -- Inline arguments to user definied functions where Let expressions are at the start [remember not to break error messages].
 -- Peephole optimizations, such as eliminating Drop expressions.
 -- Rewrite the entire parser in Cognate ASAP.
+compile (Node a : Node b : Node cond : Leaf "If" : Leaf "Do" : xs) buf vars = compile (Node a : Node b: Node cond : Leaf "Doif" : xs) buf vars -- Simple optimization for common Do If statement
+compile (Node blk : Leaf "Do" : xs) buf vars = "{" ++ compile blk [] vars ++ "}" ++ compile xs buf vars -- Primitive do inlining
 compile (Node blk:xs) buf vars = compile xs (Node blk : buf) vars
 compile (Leaf "":xs) buf vars = compile xs buf vars
 compile (Leaf "StringLiteral":xs) (Node str:xss) vars =
