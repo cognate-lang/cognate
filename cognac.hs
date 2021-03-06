@@ -536,7 +536,7 @@ check_shadow str =
 -- Inline arguments to user definied functions where Let expressions are at the start [remember not to break error messages].
 -- Peephole optimizations, such as eliminating Drop expressions.
 -- Rewrite the entire parser in Cognate ASAP.
-compile (Node a : Node b : Node cond : Leaf "If" : Leaf "Do" : xs) buf vars = compile (Node a : Node b: Node cond : Leaf "Doif" : xs) buf vars -- Simple optimization for common Do If statement
+compile (Node a : Node b : Node cond : Leaf "If" : Leaf "Do" : xs) buf vars = "DOIF({" ++ compile cond [] vars ++ "},{" ++ compile b [] vars ++ "},{" ++ compile a [] vars ++ "})"
 compile (Node blk : Leaf "Do" : xs) buf vars = "{" ++ compile blk [] vars ++ "}" ++ compile xs buf vars -- Primitive do inlining
 compile (Node blk:xs) buf vars = compile xs (Node blk : buf) vars
 compile (Leaf "":xs) buf vars = compile xs buf vars
