@@ -227,7 +227,7 @@ parseImports path (x:xs) imported = do
   return $ x : xs'
 parseImports _ [] _ = return []
 
-compile :: [Tree] -> [Tree] -> [String] -> String
+compile :: [Tree] -> [Tree] -> [String] -> Int -> String
 doesCall :: [Tree] -> String -> Bool
 args "doif" = [CogBlock, CogBlock, CogBlock]
 args "if" = [CogBlock, Any, Any]
@@ -477,9 +477,9 @@ compile [] = ""
 -}
 
 
-generate_cast :: CogType -> String
-generate_cast Any = "pop()"
-generate_cast typ = "CHECK(" ++ print_type typ ++ ",pop())"
+generate_cast :: CogType -> Int -> String
+generate_cast Any acc = "r" ++ show acc
+generate_cast typ acc = "CHECK(" ++ print_type typ ++ ",r" ++ show acc ++ ")"
 
 print_type :: CogType -> String
 print_type Any = "any"
@@ -518,7 +518,7 @@ literal_type (Node token) = CogBlock
 
 print_literal :: Tree -> [String] -> String
 print_literal (Leaf str) _ = str
-print_literal (Node blk) vars = "BLOCK(" ++ compile blk [] vars ++ ")"
+print_literal (Node blk) vars = "BLOCK(" ++ compile blk [] vars 0 ++ ")"
 
 stack_push :: Tree -> [String] -> String
 stack_push a vars = "push(" ++ make_obj a vars ++ ");"
@@ -536,13 +536,13 @@ check_shadow str =
 -- Inline arguments to user definied functions where Let expressions are at the start [remember not to break error messages].
 -- Peephole optimizations, such as eliminating Drop expressions.
 -- Rewrite the entire parser in Cognate ASAP.
-compile (Leaf "StringLiteral":xs) (Node str:xss) vars =
-  compile xs (Leaf ("\"" ++ constructStr str ++ "\"") : xss) vars
-compile (Node a : Node b : Node cond : Leaf "If" : Leaf "Do" : xs) buf vars = "DOIF({" ++ compile cond buf vars ++ "},{" ++ compile b [] vars ++ "},{" ++ compile a [] vars ++ "})"
-compile (Node blk : Leaf "Do" : xs) buf vars = "{" ++ compile blk [] vars ++ "}" ++ compile xs buf vars -- Primitive do inlining
-compile (Node blk:xs) buf vars = compile xs (Node blk : buf) vars
-compile (Leaf "":xs) buf vars = compile xs buf vars
-compile (Leaf str:Leaf "Define":xs) (Node blk:xss) vars = -- TODO: Nondeterministic function definitions are very easily doable here.
+compile (Leaf "StringLiteral":xs) (Node str:xss) vars r =
+  compile xs (Leaf ("\"" ++ constructStr str ++ "\"") : xss) vars r
+compile (Node a : Node b : Node cond : Leaf "If" : Leaf "Do" : xs) buf vars r = "DOIF({" ++ compile cond buf vars 0 ++ "},{" ++ compile b [] vars 0 ++ "},{" ++ compile a [] vars 0 ++ "})"
+compile (Node blk : Leaf "Do" : xs) buf vars r = "{" ++ compile blk [] vars 0 ++ "}" ++ compile xs buf vars r -- Primitive do inlining
+compile (Node blk:xs) buf vars r = compile xs (Node blk : buf) vars r
+compile (Leaf "":xs) buf vars r = compile xs buf vars r
+compile (Leaf str:Leaf "Define":xs) (Node blk:xss) vars r = -- TODO: Nondeterministic function definitions are very easily doable here.
   if xs `doesCall` (lc str)
     then "DEFINE(" ++
          (if blk `doesCall` check_shadow (lc str)
@@ -550,35 +550,37 @@ compile (Leaf str:Leaf "Define":xs) (Node blk:xss) vars = -- TODO: Nondeterminis
             else "immutable,") ++
          lc str ++
          ",{" ++
-         compile blk [] (filter (/= lc str) vars) ++
-         "}); {" ++ compile xs xss (filter (/= lc str) vars) ++ "}"
-    else compile xs xss vars
-compile (Leaf str:Leaf "Let":xs) (value:buf) vars =
+         compile blk [] (filter (/= lc str) vars) 0 ++
+         "}); {" ++ compile xs xss (filter (/= lc str) vars) 0 ++ "}"
+    else compile xs xss vars r
+compile (Leaf str:Leaf "Let":xs) (value:buf) vars _ =
   "LET(" ++
   (if xs `doesMutate` lc str
      then "mutable"
      else "immutable") ++
   "," ++
   check_shadow (lc str) ++
-  "," ++ make_obj value vars ++ ");{" ++ compile xs buf (lc str : vars) ++ "}"
-compile (Leaf str:Leaf "Let":xs) buf vars =
+  "," ++ make_obj value vars ++ ");{" ++ compile xs buf (lc str : vars) 0 ++ "}"
+compile (Leaf str:Leaf "Let":xs) buf vars _ =
   "LET(" ++
   (if xs `doesMutate` (lc str)
      then "mutable"
      else "immutable") ++
   "," ++
-  check_shadow (lc str) ++ ",pop());{" ++ compile xs buf (lc str : vars) ++ "}"
-compile (Leaf str:Leaf "Set":xs) (value:buf) vars =
-  "SET(" ++
-  check_shadow (lc str) ++
-  "," ++ make_obj value vars ++ ");" ++ compile xs buf vars
-compile (Leaf str:Leaf "Set":xs) buf vars =
-  "SET(" ++ check_shadow (lc str) ++ ",pop());" ++ compile xs buf vars
-compile (Leaf str:xs) buf vars
-  | is_literal str = compile xs (Leaf str : buf) vars
-  | lc str `elem` vars = compile xs (Leaf ("VAR(" ++ lc str ++ ")") : buf) vars
-  | ret (lc str) /= None = compile xs (Leaf call : drop num_args buf) vars -- FIXME If an IO function returns a value, then this will mess with order of IO. Fix is to empty buff and prepend excess but that degrades performance.
-  | otherwise = excess ++ call ++ ";" ++ compile xs [] vars
+  check_shadow (lc str) ++ ",pop());{" ++ compile xs buf (lc str : vars) 0 ++ "}"
+compile (Leaf str:Leaf "Set":xs) (value:buf) vars r =
+  if ((lc str) `elem` vars) then
+    "SET(" ++
+    check_shadow (lc str) ++
+    "," ++ make_obj value vars ++ ");" ++ compile xs buf vars r
+  else error "Attempt to mutate undefined variable!"
+compile (Leaf str:Leaf "Set":xs) buf vars r =
+  if (lc str `elem` vars) then "SET(" ++ check_shadow (lc str) ++ ",pop());" ++ compile xs buf vars r else error "Attempt to mutate undefined variable!"
+compile (Leaf str:xs) buf vars r
+  | is_literal str = compile xs (Leaf str : buf) vars r
+  | lc str `elem` vars = compile xs (Leaf ("VAR(" ++ lc str ++ ")") : buf) vars r
+  | ret (lc str) /= None = registers r (num_args - length buf) ++ compile xs (Leaf call : drop num_args buf) vars (r + max 0 (num_args - length buf))-- FIXME If an IO function returns a value, then this will mess with order of IO. Fix is to empty buff and prepend excess but that degrades performance.
+  | otherwise = excess ++ registers r (num_args - length buf) ++ call ++ ";" ++ compile xs [] vars (r + max 0 (num_args - length buf))
   where
     num_args = length $ args $ lc str
     call =
@@ -589,13 +591,19 @@ compile (Leaf str:xs) buf vars
        (map (\x -> chk_type x vars) (zip (take num_args buf) (args (lc str)))) ++
        (if (length buf < num_args)
           then (take (num_args - length buf) $
-                (map generate_cast $ drop (length buf) $ args (lc str)))
+                (map (\(a,b) -> generate_cast b a) $ zip [r..] (drop (length buf) $ args (lc str))))
           else [])) ++
       "))"
     excess =
       intercalate "" $
       map (\z -> stack_push z vars) (reverse (drop num_args buf))
-compile [] buf vars =
+    registers start num =
+      intercalate "" $
+        map generate_register [start..start+num-1]
+          where
+            generate_register a = "const cognate_object r" ++ show a ++ " = pop();"
+
+compile [] buf vars _ =
   intercalate " " $ map (\x -> stack_push x vars) $ reverse buf
 
 compiler = "clang"
@@ -646,7 +654,7 @@ main = do
           [head $ splitOn "." (last (splitOn "/" in_file))]
       writeFile out_file $
         header in_file ++
-        "#include\"cognate.c\"\nPROGRAM(" ++ compile thing [] [] ++ ")\n"
+        "#include\"cognate.c\"\nPROGRAM(" ++ compile thing [] [] 0 ++ ")\n"
       --rawSystem formatter (formatFlags ++ [out_file])
       putStrLn $
         "Compiling " ++ out_file ++ " to " ++ stripExtension in_file ++ "... "
