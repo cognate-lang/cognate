@@ -212,7 +212,7 @@ static void ___split() {
   */ // TODO
 }
 
-static cognate_string ___join(cognate_number n) {
+static void ___join(cognate_number n) {
   // Joins a string to the end of another string.
   // Define Prefix (Swap, Suffix);
   size_t n1 = n;
@@ -231,7 +231,7 @@ static cognate_string ___join(cognate_number n) {
   {
     strcat(result, strings[i]);
   }
-  return result;
+  push(OBJ(string, result));
 }
 
 static cognate_number ___string_length(cognate_string str) {
