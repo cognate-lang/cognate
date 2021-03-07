@@ -198,7 +198,7 @@ parseImports :: String -> [Tree] -> [String] -> IO [Tree]
 parseImports path (Leaf filename:Leaf "Import":xs) imported
     -- Don't import if its already been imported.
  =
-  if (case findIndex (== filename) imported of
+  if (case elemIndex filename imported of
         Just x -> True
         Nothing -> False)
     then parseImports path xs imported
@@ -206,8 +206,8 @@ parseImports path (Leaf filename:Leaf "Import":xs) imported
       putStrLn $ "Importing " ++ filename ++ " from " ++ filename ++ ".cog"
       importedFile <-
         readFile
-          ((join "/" $ init $ splitOn "/" path) ++
-           (if (length (splitOn "/" path) > 1)
+          (join "/" (init $ splitOn "/" path) ++
+           (if length (splitOn "/" path) > 1
               then "/"
               else "") ++
            filename ++ ".cog")
@@ -376,8 +376,8 @@ doesMutate :: [Tree] -> String -> Bool
   lc var == lc var' || xs `doesMutate` var'
 (Node func:Leaf "Set":xs) `doesMutate` func' =
   (case last func of
-     Leaf a -> (Leaf $ lc a)
-     Node a -> (Node a)) ==
+     Leaf a -> Leaf $ lc a
+     Node a -> Node a) ==
   Leaf (lc func') ||
   xs `doesMutate` func'
 (Node blk:xs) `doesMutate` var' = blk `doesMutate` var' || xs `doesMutate` var'
@@ -491,16 +491,16 @@ print_type CogList = "list"
 print_type CogTable = "table"
 print_type CogBoolean = "boolean"
 
-chk_type :: (Tree, CogType) -> [String] -> String
-chk_type (obj, typ) vars
-  | (literal_type obj) == typ = print_literal obj vars
+chk_type :: Tree -> CogType -> [String] -> String
+chk_type obj typ vars
+  | literal_type obj == typ = print_literal obj vars
   | typ == Any = make_obj obj vars
   | literal_type obj == Any =
     "CHECK(" ++ print_type typ ++ "," ++ print_literal obj vars ++ ")"
   | otherwise =
     error $
     "Type error is guaranteed on execution. Expected type " ++
-    print_type typ ++ " but got type " ++ (print_type $ literal_type obj)
+    print_type typ ++ " but got type " ++ print_type (literal_type obj)
 
 make_obj :: Tree -> [String] -> String
 make_obj a vars
@@ -524,17 +524,16 @@ stack_push :: Tree -> [String] -> String
 stack_push a vars = "push(" ++ make_obj a vars ++ ");"
 
 is_literal :: String -> Bool
-is_literal str = not $ head str `elem` upperletters
+is_literal str = head str `notElem` upperletters
 
 check_shadow :: String -> String
 check_shadow str =
-  if (ret (lc str) /= None || args (lc str) /= [])
+  if ret (lc str) /= None || args (lc str) /= []
     then error "Cannot shadow/mutate builtin functions yet!"
     else str
 
 -- TODO:
--- Inline arguments to user definied functions where Let expressions are at the start [remember not to break error messages].
--- Peephole optimizations, such as eliminating Drop expressions.
+-- Any non-literal function arguments (and literals if that makes it easier) should use temporary registers in order to mitigate undefined argument evaluation order.
 -- Rewrite the entire parser in Cognate ASAP.
 compile (Leaf "StringLiteral":xs) (Node str:xss) vars r =
   compile xs (Leaf ("\"" ++ constructStr str ++ "\"") : xss) vars r
@@ -543,7 +542,7 @@ compile (Node blk : Leaf "Do" : xs) buf vars r = "{" ++ compile blk [] vars 0 ++
 compile (Node blk:xs) buf vars r = compile xs (Node blk : buf) vars r
 compile (Leaf "":xs) buf vars r = compile xs buf vars r
 compile (Leaf str:Leaf "Define":xs) (Node blk:xss) vars r = -- TODO: Nondeterministic function definitions are very easily doable here.
-  if xs `doesCall` (lc str)
+  if xs `doesCall` lc str
     then "DEFINE(" ++
          (if blk `doesCall` check_shadow (lc str)
             then "mutable,"
@@ -563,19 +562,19 @@ compile (Leaf str:Leaf "Let":xs) (value:buf) vars _ =
   "," ++ make_obj value vars ++ ");{" ++ compile xs buf (lc str : vars) 0 ++ "}"
 compile (Leaf str:Leaf "Let":xs) buf vars _ =
   "LET(" ++
-  (if xs `doesMutate` (lc str)
+  (if xs `doesMutate` lc str
      then "mutable"
      else "immutable") ++
   "," ++
   check_shadow (lc str) ++ ",pop());{" ++ compile xs buf (lc str : vars) 0 ++ "}"
 compile (Leaf str:Leaf "Set":xs) (value:buf) vars r =
-  if ((lc str) `elem` vars) then
+  if lc str `elem` vars then
     "SET(" ++
     check_shadow (lc str) ++
     "," ++ make_obj value vars ++ ");" ++ compile xs buf vars r
   else error "Attempt to mutate undefined variable!"
 compile (Leaf str:Leaf "Set":xs) buf vars r =
-  if (lc str `elem` vars) then "SET(" ++ check_shadow (lc str) ++ ",pop());" ++ compile xs buf vars r else error "Attempt to mutate undefined variable!"
+  if lc str `elem` vars then "SET(" ++ check_shadow (lc str) ++ ",pop());" ++ compile xs buf vars r else error "Attempt to mutate undefined variable!"
 compile (Leaf str:xs) buf vars r
   | is_literal str = compile xs (Leaf str : buf) vars r
   | lc str `elem` vars = compile xs (Leaf ("VAR(" ++ lc str ++ ")") : buf) vars r
@@ -587,16 +586,16 @@ compile (Leaf str:xs) buf vars r
       "CALL(" ++
       lc str ++
       ",(" ++
-      (intercalate "," $
-       (map (\x -> chk_type x vars) (zip (take num_args buf) (args (lc str)))) ++
-       (if (length buf < num_args)
-          then (take (num_args - length buf) $
-                (map (\(a,b) -> generate_cast b a) $ zip [r..] (drop (length buf) $ args (lc str))))
+      intercalate ","
+       (zipWith (\x y -> chk_type x y vars) (take num_args buf) (args (lc str)) ++
+       (if length buf < num_args
+          then take (num_args - length buf)
+                (zipWith generate_cast (drop (length buf) $ args $ lc str) [r..] )
           else [])) ++
       "))"
     excess =
       intercalate "" $
-      map (\z -> stack_push z vars) (reverse (drop num_args buf))
+      map (`stack_push` vars) (reverse (drop num_args buf))
     registers start num =
       intercalate "" $
         map generate_register [start..start+num-1]
@@ -604,7 +603,7 @@ compile (Leaf str:xs) buf vars r
             generate_register a = "const cognate_object r" ++ show a ++ " = pop();"
 
 compile [] buf vars _ =
-  intercalate " " $ map (\x -> stack_push x vars) $ reverse buf
+  unwords $ map (`stack_push` vars) $ reverse buf
 
 compiler = "clang"
 
