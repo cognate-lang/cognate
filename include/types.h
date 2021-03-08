@@ -67,8 +67,8 @@ struct cognate_table
 
 struct cognate_stack
 {
-  cognate_object* start; // Pointer to start.
-  cognate_object* top; // Pointer to top.
+  cognate_object* restrict start; // Pointer to start.
+  cognate_object* restrict top; // Pointer to top.
   ptrdiff_t       size; // Allocated size of the stack.
   size_t          uncopied_blocks; // Number of uncopied cognate_blocks on the stack.
 };

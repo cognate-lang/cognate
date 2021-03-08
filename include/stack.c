@@ -25,7 +25,7 @@ static void init_stack()
   stack.uncopied_blocks = 0;
   stack.size = INITIAL_LIST_SIZE;
   stack.top = stack.start =
-    (cognate_object*) GC_MALLOC (INITIAL_LIST_SIZE * sizeof(cognate_object));
+    (cognate_object*) GC_MALLOC_ATOMIC (INITIAL_LIST_SIZE * sizeof(cognate_object));
 }
 
 static void push(cognate_object object)
