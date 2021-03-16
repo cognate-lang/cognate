@@ -1,7 +1,5 @@
 Define Tuple be (Let X, Let Y, List (X, Y));
 
-Define Prepend (Swap, Append);
-
 Define For as
 ( Let Lst, Let Body;
   Do If (Empty? Lst) then ()
@@ -64,3 +62,27 @@ Define Map
     Push Result to that list;
   );
 );
+
+Define Prepend
+( Let L1 be the first list;
+  Let L2 be the second list;
+  Do If (L1, is Empty?) then (return L2)
+  else
+  (
+    Prepend the Rest of L1 to L2;
+    Push the First element in L1 to the resulting list;
+  )
+);
+
+Define Append (Swap, Prepend);
+
+Define Concat
+( Let N be the number of lists to concatenate;
+  List();
+  For each in Range from 0 to N step 1 (Drop the index, Prepend);
+)
+
+Define Length
+( Let L be a list;
+  Do If (L, is Empty?) (return 0) else (return Length of Rest of L, + 1);
+)

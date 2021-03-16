@@ -1,0 +1,25 @@
+Import Builtin functions;
+
+Define Quicksort
+( Let L be the input list;
+  Do If (Length of L, < 2) (return L)
+  else
+  ( Let the Pivot be the First element in L;
+    Let LessThan be Quicksort Filter (< Pivot) Rest of L;
+    Let MoreThan be Quicksort Filter (>= Pivot) Rest of L;
+    Concat the 3 lists LessThan and List(Pivot) and MoreThan;
+  )
+);
+
+List();
+
+For each in Range from 0 to 100 step 1
+(
+  Drop the index;
+  Push a Random number from 0 to 100 step 1;
+);
+
+Twin;
+Print;
+Quicksort;
+Print;

@@ -39,14 +39,13 @@
   int main(int argc, char** argv) \
   { \
     init(argc, argv); \
-    body \
+    body;             \
     cleanup(); \
   }
 
 #define immutable const
 #define mutable __block
 
-// Global-local variable swapping is causing performance losses. :(
 #define REDEFINE(name, body) \
   ___##name = Block_copy(BLOCK(docopy, body));
 
@@ -67,7 +66,6 @@
 
 // May need to use calloc() in future, if i start relying on GC_MALLOC zeroing memory.
 #ifdef noGC
-  #define GC_MALLOC_ATOMIC malloc
   #define GC_MALLOC  malloc
   #define GC_REALLOC realloc
   #define GC_STRNDUP strndup

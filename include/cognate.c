@@ -78,7 +78,7 @@ void init(int argc, char** argv)
   // Load parameters
   while (argc --> 1)
   {
-    cognate_list_node* tmp = GC_NEW (cognate_list_node);
+    cognate_list_node* const tmp = GC_NEW (cognate_list_node);
     tmp->object = OBJ(string, argv[argc]);
     tmp->next = params;
     params = tmp;

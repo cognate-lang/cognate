@@ -43,7 +43,7 @@ struct cognate_object
     cognate_list list;    // 64bit list pointer
     const cognate_table* table;  // 64bit table-id
   };
-  cognate_type type : 8;
+  cognate_type type;
 };
 
 

@@ -10,6 +10,8 @@ static cognate_object pop();
 static cognate_object peek();
 static void expand_stack();
 
+static cognate_stack stack;
+
 #include "error.c"
 
 #include <stdio.h>
@@ -18,14 +20,12 @@ static void expand_stack();
 #include <gc/gc.h>
 #endif
 
-static cognate_stack stack;
-
 static void init_stack()
 {
   stack.uncopied_blocks = 0;
   stack.size = INITIAL_LIST_SIZE;
   stack.top = stack.start =
-    (cognate_object*) GC_MALLOC_ATOMIC (INITIAL_LIST_SIZE * sizeof(cognate_object));
+    (cognate_object*) GC_MALLOC (INITIAL_LIST_SIZE * sizeof(cognate_object));
 }
 
 static void push(cognate_object object)
