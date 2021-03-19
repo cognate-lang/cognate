@@ -1,32 +1,5 @@
-#ifndef FUNC_C
-#define FUNC_C
-
-#include "cognate.h"
-#include "types.h"
-
-static cognate_list params = NULL;
-
-// I'm not putting type signatures for every single function here.
-
-#include "type.c"
-#include "stack.c"
-#include "table.c"
-#include "io.c"
-
-#include <unistd.h>
 #include <regex.h>
 #include <math.h>
-#include <string.h>
-#include <limits.h>
-#include <stdlib.h>
-#ifndef noGC
-#include <gc/gc.h>
-#endif
-
-#define DOIF(cond, a, b) \
-  cond; \
-  if (CHECK(boolean, pop())) a \
-  else b
 
 static void ___if(cognate_block cond, cognate_object a, cognate_object b)
 {
@@ -319,8 +292,7 @@ static cognate_string ___path() {
 
 static void ___stack() {
   // We can't return the list or this function is inlined and it breaks.
-  extern void copy_blocks();
-  copy_blocks();
+  copy_stack_blocks();
   cognate_list lst = NULL;
   for (cognate_object* i = stack.top - 1 ; i >= stack.start ; --i)
   {
@@ -342,7 +314,7 @@ static void ___write(cognate_string filename, cognate_object obj) {
 }
 
 static cognate_list ___parameters() {
-  return params; // TODO should be a variable, and allow mutation and stuff
+  return cmdline_parameters; // TODO should be a variable, and allow mutation and stuff
 }
 
 static void ___stop() {
@@ -440,9 +412,7 @@ static void ___assert(cognate_string name, cognate_boolean result) {
 }
 
 static void ___error(cognate_string str) {
-  word_name = NULL;
+  current_word_name = NULL;
   errno = 0;
   throw_error("%s", str);
 }
-
-#endif
