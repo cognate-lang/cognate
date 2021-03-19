@@ -1,4 +1,4 @@
-#include "runtime.h"
+#include "cognate.h"
 
 #include <Block.h>
 #include <ctype.h>
@@ -21,52 +21,26 @@
 
 #ifdef BLOCK_GC
 #include <Block_private.h>
-static void* blk_alloc(const unsigned long size, __attribute__((unused)) const _Bool _, __attribute__((unused)) const _Bool __) { return GC_MALLOC(size); }
-static void blk_setHasRefcount(__attribute__((unused)) const void* _, __attribute__((unused)) const _Bool __) {}
-static void blk_gc_assign_strong(void* src, void** dst) { *dst = src; }
-static void blk_gc_assign_weak(const void* src, void* dst) { *(void**)dst = (void*)src; }
-static void blk_gc_memmove(void* dst, void* src, unsigned long size) { memmove(dst, src, size); }
+void* blk_alloc(const unsigned long size, __attribute__((unused)) const _Bool _, __attribute__((unused)) const _Bool __) { return GC_MALLOC(size); }
+void blk_setHasRefcount(__attribute__((unused)) const void* _, __attribute__((unused)) const _Bool __) {}
+void blk_gc_assign_strong(void* src, void** dst) { *dst = src; }
+void blk_gc_assign_weak(const void* src, void* dst) { *(void**)dst = (void*)src; }
+void blk_gc_memmove(void* dst, void* src, unsigned long size) { memmove(dst, src, size); }
 #endif
 
-static void init(int, char**);
-static void cleanup();
-
-static cognate_object check_type(cognate_type, cognate_object);
 static const char *lookup_type(cognate_type);
-
-static _Bool compare_objects(cognate_object, cognate_object);
 static _Bool compare_lists(cognate_list, cognate_list);
 static _Bool compare_tables(cognate_table, cognate_table);
-
-static void _Noreturn __attribute__((format(printf, 1, 2))) throw_error(const char *const, ...);
 static void handle_error_signal(int);
 static void bind_error_signals();
 
-static void init_stack();
-static void expand_stack();
-static void push(cognate_object);
-static cognate_object pop();
-static cognate_object peek();
+cognate_stack stack;
+cognate_list cmdline_parameters = NULL;
+const char *current_function_name = NULL;
+const char *current_word_name = NULL;
 
-static void print_object(const cognate_object object, FILE*, const _Bool);
-
-static cognate_stack stack;
-static const char* function_stack_start;
-static const char* function_stack_top;
-static cognate_list cmdline_parameters = NULL;
-static const char* current_function_name = NULL;
-static const char *current_word_name = NULL;
-
-static cognate_object copy_if_block(cognate_object obj);
-static void copy_stack_blocks();
-
-static void check_function_stack_size();
-
-static void set_current_word_name(const char *const);
-
-static size_t mbstrlen(const char* str);
-
-#include "functions.c"
+static const char *function_stack_start;
+static const char *function_stack_top;
 
 void init(int argc, char** argv)
 {
@@ -126,12 +100,12 @@ void cleanup()
   }
 }
 
-static cognate_object copy_if_block(cognate_object obj)
+cognate_object copy_if_block(cognate_object obj)
 {
   return unlikely(obj.type == block) ? OBJ(heap_block, Block_copy(obj.block)) : obj;
 }
 
-static void copy_stack_blocks()
+void copy_stack_blocks()
 {
   for (cognate_object* obj = stack.top - 1; stack.uncopied_blocks; --obj)
   {
@@ -143,16 +117,16 @@ static void copy_stack_blocks()
   }
 }
 
-static void check_function_stack()
+void check_function_stack_size()
 {
   char sp;
   if unlikely(&sp - function_stack_top < STACK_MARGIN_KB * 1024)
     throw_error("Call stack overflow - too much recursion! (call stack is %tikB out of maximum %tikB)", (function_stack_start - &sp) >> 10, (function_stack_start - function_stack_top) >> 10);
 }
 
-static void set_current_word_name(const char* const name) { current_word_name=name; } // Need this to avoid unsequenced evaluation error.
+void set_current_word_name(const char* const name) { current_word_name=name; } // Need this to avoid unsequenced evaluation error.
 
-static _Noreturn __attribute__((format(printf, 1, 2))) void throw_error(const char* const fmt, ...)
+_Noreturn __attribute__((format(printf, 1, 2))) void throw_error(const char* const fmt, ...)
 {
   struct winsize term;
   // If we cannot determine the terminal size (redirected to file or something), assume width is 80.
@@ -200,17 +174,12 @@ static _Noreturn __attribute__((format(printf, 1, 2))) void throw_error(const ch
   exit(EXIT_FAILURE);
 }
 
-static void handle_error_signal(int sig)
+void handle_error_signal(int sig)
 {
   throw_error("Recieved signal %i (%s), exiting.", sig, strsignal(sig));
 }
 
-#define DOIF(cond, a, b) \
-  cond; \
-  if (CHECK(boolean, pop())) a \
-  else b
-
-static void print_object (const cognate_object object, FILE* out, const _Bool quotes)
+void print_object (const cognate_object object, FILE* out, const _Bool quotes)
 {
   // TODO I want to be able to print_object to a string, so that i can have a Show function.
   switch (object.type)
@@ -264,7 +233,7 @@ static void print_object (const cognate_object object, FILE* out, const _Bool qu
   }
 }
 
-static void init_stack()
+void init_stack()
 {
   stack.uncopied_blocks = 0;
   stack.size = INITIAL_LIST_SIZE;
@@ -272,7 +241,7 @@ static void init_stack()
     (cognate_object*) GC_MALLOC (INITIAL_LIST_SIZE * sizeof(cognate_object));
 }
 
-static void push(cognate_object object)
+void push(cognate_object object)
 {
   if unlikely(stack.start + stack.size == stack.top)
     expand_stack();
@@ -280,7 +249,7 @@ static void push(cognate_object object)
   *stack.top++ = object;
 }
 
-static cognate_object pop()
+cognate_object pop()
 {
   if unlikely(stack.top == stack.start)
     throw_error("Stack underflow!");
@@ -289,14 +258,14 @@ static cognate_object pop()
   return object;
 }
 
-static cognate_object peek()
+cognate_object peek()
 {
   if unlikely(stack.top == stack.start)
     throw_error("Stack underflow!");
   return *(stack.top - 1);
 }
 
-static void expand_stack()
+void expand_stack()
 {
   // Assumes that stack is currently of length stack.size.
   stack.start = (cognate_object*) GC_REALLOC (stack.start, stack.size * LIST_GROWTH_FACTOR * sizeof(cognate_object));
@@ -304,7 +273,7 @@ static void expand_stack()
   stack.size *= LIST_GROWTH_FACTOR;
 }
 
-static unsigned long hash(const char *str)
+unsigned long hash(const char *str)
 {
   // http://www.cse.yorku.ca/~oz/hash.html
   unsigned long hash = 0;
@@ -314,7 +283,7 @@ static unsigned long hash(const char *str)
   return hash;
 }
 
-static cognate_object check_type(cognate_type expected_type, cognate_object object)
+cognate_object check_type(cognate_type expected_type, cognate_object object)
 {
   if likely(object.type & expected_type)
     return object;
@@ -322,7 +291,7 @@ static cognate_object check_type(cognate_type expected_type, cognate_object obje
   throw_error("Type Error! Expected type '%s' but recieved type '%s'", lookup_type(expected_type), lookup_type(object.type));
 }
 
-static const char* lookup_type(cognate_type type)
+const char* lookup_type(cognate_type type)
 {
   char str[54] = {0};
   if (!type) return "NOTHING";
@@ -335,7 +304,7 @@ static const char* lookup_type(cognate_type type)
   return GC_STRDUP(str + 1);
 }
 
-static _Bool compare_lists(cognate_list lst1, cognate_list lst2)
+_Bool compare_lists(cognate_list lst1, cognate_list lst2)
 {
   if (!lst1) return !lst2;
   if (!lst2) return 0;
@@ -349,14 +318,14 @@ static _Bool compare_lists(cognate_list lst1, cognate_list lst2)
   return 0;
 }
 
-static _Bool compare_tables(const cognate_table tab1, const cognate_table tab2)
+_Bool compare_tables(const cognate_table tab1, const cognate_table tab2)
 {
   (void) tab1;
   (void) tab2;
   return 1; // TODO
 }
 
-static _Bool compare_objects(cognate_object ob1, cognate_object ob2)
+_Bool compare_objects(cognate_object ob1, cognate_object ob2)
 {
   if (!(ob1.type & ob2.type))
   {
@@ -375,11 +344,4 @@ static _Bool compare_objects(cognate_object ob1, cognate_object ob2)
   }
 }
 
-static size_t mbstrlen(const char* str)
-{
-  // Get the number of characters in a multibyte string.
-  // Normal strlen() gets number of bytes for some reason.
-  size_t len = 0;
-  for (; *str ; str += mblen(str, MB_CUR_MAX), ++len);
-  return len;
-}
+

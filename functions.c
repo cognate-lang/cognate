@@ -1,5 +1,20 @@
-#include <regex.h>
+#include "cognate.h"
+
+#include <errno.h>
 #include <math.h>
+#include <regex.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#ifndef NO_GC
+#include <gc/gc.h>
+#endif
+
+// This file is #included directy into the compiled source.
+// This is why all these functions are static, and they have no prototypes.
+
+static size_t mbstrlen(const char* str);
 
 static void ___if(cognate_block cond, cognate_object a, cognate_object b)
 {
@@ -25,12 +40,12 @@ static void ___put(cognate_object a)   { print_object(a, stdout, 0); fflush(stdo
 static void ___print(cognate_object a) { print_object(a, stdout, 0); putc('\n', stdout); }
 
 
-static cognate_number ___sum(cognate_number a, cognate_number b)      { return a + b; }
-static cognate_number ___multiply(cognate_number a, cognate_number b) { return a * b; }
-static cognate_number ___subtract(cognate_number a, cognate_number b) { return b - a; }
-static cognate_number ___divide(cognate_number a, cognate_number b)   { if likely(a) return b / a; throw_error("Division of %.14g by zero", b); }
+cognate_number ___sum(cognate_number a, cognate_number b)      { return a + b; }
+cognate_number ___multiply(cognate_number a, cognate_number b) { return a * b; }
+cognate_number ___subtract(cognate_number a, cognate_number b) { return b - a; }
+cognate_number ___divide(cognate_number a, cognate_number b)   { if likely(a) return b / a; throw_error("Division of %.14g by zero", b); }
 
-static cognate_number ___modulo(cognate_number a, cognate_number b) {
+cognate_number ___modulo(cognate_number a, cognate_number b) {
   if likely(a) return fmod(b, a);
   throw_error("Modulo of %.14g by zero", b);
 }
@@ -47,11 +62,11 @@ static cognate_number ___random(cognate_number low, cognate_number high, cognate
   // This is not cryptographically secure btw.
   // Since RAND_MAX may only be 2^15, we need to do this:
   const long num
-    = ((long)(short)random())
-    | ((long)(short)random() << 15)
-    | ((long)(short)random() << 30)
-    | ((long)(short)random() << 45)
-    | ((long)       random() << 60);
+    = ((long)(short)rand())
+    | ((long)(short)rand() << 15)
+    | ((long)(short)rand() << 30)
+    | ((long)(short)rand() << 45)
+    | ((long)       rand() << 60);
   return low + (cognate_number)(num % (unsigned long)((high - low) / step)) * step;
 }
 
@@ -415,4 +430,13 @@ static void ___error(cognate_string str) {
   current_word_name = NULL;
   errno = 0;
   throw_error("%s", str);
+}
+
+static size_t mbstrlen(const char* str)
+{
+  // Get the number of characters in a multibyte string.
+  // Normal strlen() gets number of bytes for some reason.
+  size_t len = 0;
+  for (; *str ; str += mblen(str, MB_CUR_MAX), ++len);
+  return len;
 }

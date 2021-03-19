@@ -1,9 +1,9 @@
+#pragma once
+
 #define _GNU_SOURCE
 
-#ifndef COGNATE_RUNTIME_H
-#define COGNATE_RUNTIME_H
-
 #include <stddef.h>
+#include <stdio.h>
 
 #define MAX_TABLE_TRIES    3
 #define INITIAL_READ_SIZE  64
@@ -84,6 +84,32 @@ struct cognate_stack
   size_t          uncopied_blocks; // Number of uncopied cognate_blocks on the stack.
 };
 
+// Global variables
+extern cognate_stack stack;
+extern cognate_list cmdline_parameters;
+extern const char *current_function_name;
+extern const char *current_word_name;
+
+// Functions needed by compiled source file.
+void init(int, char**);
+void cleanup();
+cognate_object check_type(cognate_type, cognate_object);
+void push(cognate_object);
+cognate_object pop();
+cognate_object peek();
+
+// Functions needed by functions.c
+void init_stack();
+void expand_stack();
+void print_object(const cognate_object object, FILE*, const _Bool);
+cognate_object copy_if_block(cognate_object obj);
+void copy_stack_blocks();
+void check_function_stack_size();
+void set_current_word_name(const char *const);
+void _Noreturn __attribute__((format(printf, 1, 2))) throw_error(const char *const, ...);
+_Bool compare_objects(cognate_object, cognate_object);
+
+// Macros
 #define immutable const
 #define mutable __block
 
@@ -117,7 +143,7 @@ struct cognate_stack
 
 #define BLOCK(body) \
   ^{ \
-    check_function_stack(); \
+    check_function_stack_size(); \
     body \
     copy_stack_blocks(); \
   }
@@ -133,4 +159,7 @@ struct cognate_stack
 #define unlikely(expr) (__builtin_expect((_Bool)(expr), 0))
 #define likely(expr)   (__builtin_expect((_Bool)(expr), 1))
 
-#endif
+#define DOIF(cond, a, b) \
+  cond; \
+  if (CHECK(boolean, pop())) \
+  a else b
