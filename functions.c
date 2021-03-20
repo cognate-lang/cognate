@@ -13,9 +13,6 @@
 #include <gc/gc.h>
 #endif
 
-// This file is #included directy into the compiled source.
-// This is why all these functions are static, and they have no prototypes.
-
 static size_t mbstrlen(const char* str);
 
 void ___if(cognate_block cond, cognate_object a, cognate_object b)
