@@ -627,10 +627,10 @@ main = do
   args <- getArgs
   let compilerFlagsLinux =
         words
-          "-I. runtime.c -fblocks -lBlocksRuntime -l:libgc.so -Ofast -Wall -Wextra -Werror -Wno-unused -pedantic-errors -std=c11 -lm -g0 -fuse-ld=lld -flto=full"
+          "-I. runtime.c functions.c -fblocks -lBlocksRuntime -l:libgc.so -Ofast -Wall -Wextra -Werror -Wno-unused -pedantic-errors -std=c11 -lm -g0 -fuse-ld=lld -flto=full"
   let compilerFlagsMac =
         words
-          "-I. runtime.c -fblocks -lgc -Ofast -I include -Wall -Wextra -Werror -pedantic-errors -Wno-unused -std=c11 -lm -g0 -flto=full"
+          "-I. runtime.c functions.c -fblocks -lgc -Ofast -I include -Wall -Wextra -Werror -pedantic-errors -Wno-unused -std=c11 -lm -g0 -flto=full"
   let compilerFlags =
         if System.Info.os == "linux"
           then compilerFlagsLinux
@@ -653,7 +653,7 @@ main = do
           [head $ splitOn "." (last (splitOn "/" in_file))]
       writeFile out_file $
         header in_file ++
-        "#include<cognate.h>\n#include<functions.c>\nPROGRAM(" ++ compile thing [] [] 0 ++ ")\n"
+        "#include\"cognate.h\"\nPROGRAM(" ++ compile thing [] [] 0 ++ ")\n"
       --rawSystem formatter (formatFlags ++ [out_file])
       putStrLn $
         "Compiling " ++ out_file ++ " to " ++ stripExtension in_file ++ "... "

@@ -84,31 +84,6 @@ struct cognate_stack
   size_t          uncopied_blocks; // Number of uncopied cognate_blocks on the stack.
 };
 
-// Global variables
-extern cognate_stack stack;
-extern cognate_list cmdline_parameters;
-extern const char *current_function_name;
-extern const char *current_word_name;
-
-// Functions needed by compiled source file.
-void init(int, char**);
-void cleanup();
-cognate_object check_type(cognate_type, cognate_object);
-void push(cognate_object);
-cognate_object pop();
-cognate_object peek();
-
-// Functions needed by functions.c
-void init_stack();
-void expand_stack();
-void print_object(const cognate_object object, FILE*, const _Bool);
-cognate_object copy_if_block(cognate_object obj);
-void copy_stack_blocks();
-void check_function_stack_size();
-void set_current_word_name(const char *const);
-void _Noreturn __attribute__((format(printf, 1, 2))) throw_error(const char *const, ...);
-_Bool compare_objects(cognate_object, cognate_object);
-
 // Macros
 #define immutable const
 #define mutable __block
@@ -163,3 +138,95 @@ _Bool compare_objects(cognate_object, cognate_object);
   cond; \
   if (CHECK(boolean, pop())) \
   a else b
+
+// Global variables
+extern cognate_stack stack;
+extern cognate_list cmdline_parameters;
+extern const char *current_function_name;
+extern const char *current_word_name;
+
+// Variables and  needed by functions.c defined in runtime.c
+void init_stack();
+void expand_stack();
+void print_object(const cognate_object object, FILE *, const _Bool);
+void _Noreturn __attribute__((format(printf, 1, 2))) throw_error(const char *const, ...);
+_Bool compare_objects(cognate_object, cognate_object);
+
+// Variables and functions needed by compiled source file defined in runtime.c
+void init(int, char **);
+void cleanup();
+cognate_object check_type(cognate_type, cognate_object);
+void push(cognate_object);
+cognate_object pop();
+cognate_object peek();
+void check_function_stack_size();
+void copy_stack_blocks();
+void set_current_word_name(const char *const);
+cognate_object copy_if_block(cognate_object obj);
+
+// Builtin functions needed by compiled source file defined in functions.c
+void ___if(cognate_block, cognate_object, cognate_object);
+void ___while(cognate_block, cognate_block);
+void ___do(cognate_block);
+void ___put(cognate_object);
+void ___print(cognate_object);
+cognate_number ___sum(cognate_number, cognate_number);
+cognate_number ___multiply(cognate_number, cognate_number);
+cognate_number ___subtract(cognate_number, cognate_number);
+cognate_number ___divide(cognate_number, cognate_number);
+cognate_number ___modulo(cognate_number, cognate_number);
+cognate_number ___random(cognate_number, cognate_number, cognate_number);
+void ___drop(cognate_object);
+void ___twin(cognate_object);
+void ___triplet(cognate_object);
+void ___swap(cognate_object, cognate_object);
+void ___clear();
+cognate_boolean ___true();
+cognate_boolean ___false();
+cognate_boolean ___either(cognate_boolean, cognate_boolean);
+cognate_boolean ___both  (cognate_boolean, cognate_boolean);
+cognate_boolean ___one_of(cognate_boolean, cognate_boolean);
+cognate_boolean ___not   (cognate_boolean);
+cognate_boolean ___equal(cognate_object, cognate_object);
+cognate_boolean ___unequal(cognate_object, cognate_object);
+cognate_boolean ___exceed(cognate_number, cognate_number);
+cognate_boolean ___preceed(cognate_number, cognate_number);
+cognate_boolean ___equalorpreceed(cognate_number, cognate_number);
+cognate_boolean ___equalorexceed(cognate_number, cognate_number);
+cognate_boolean ___number_(cognate_object);
+cognate_boolean ___list_(cognate_object);
+cognate_boolean ___string_(cognate_object);
+cognate_boolean ___block_(cognate_object);
+cognate_boolean ___boolean_(cognate_object);
+void ___first(cognate_list);
+cognate_list ___rest(cognate_list);
+cognate_string ___head(cognate_string);
+cognate_string ___tail(cognate_string);
+cognate_list ___push(cognate_object, cognate_list);
+cognate_boolean ___empty_(cognate_list);
+cognate_list ___list(cognate_block);
+void ___characters();
+void ___split();
+void ___join(cognate_number);
+cognate_number ___string_length(cognate_string);
+cognate_string ___substring(cognate_number, cognate_number, cognate_string);
+cognate_string ___input();
+cognate_string ___read(cognate_string);
+cognate_number ___number(cognate_string);
+cognate_string ___path();
+void ___stack();
+void ___write(cognate_string, cognate_object);
+cognate_list ___parameters();
+void ___stop();
+cognate_table ___table();
+cognate_table ___insert(cognate_string, cognate_object, cognate_table);
+void ___get(cognate_string, cognate_table);
+cognate_list ___values(cognate_table);
+cognate_boolean ___match(cognate_string, cognate_string);
+cognate_number ___ordinal(cognate_string);
+cognate_string ___character(cognate_number);
+cognate_number ___floor(cognate_number);
+cognate_number ___round(cognate_number);
+cognate_number ___ceiling(cognate_number);
+void ___assert(cognate_string, cognate_boolean);
+void ___error(cognate_string);

@@ -35,9 +35,9 @@ static void handle_error_signal(int);
 static void bind_error_signals();
 
 cognate_stack stack;
-cognate_list cmdline_parameters = NULL;
+cognate_list cmdline_parameters   = NULL;
 const char *current_function_name = NULL;
-const char *current_word_name = NULL;
+const char *current_word_name     = NULL;
 
 static const char *function_stack_start;
 static const char *function_stack_top;
@@ -273,6 +273,7 @@ void expand_stack()
   stack.size *= LIST_GROWTH_FACTOR;
 }
 
+/*
 unsigned long hash(const char *str)
 {
   // http://www.cse.yorku.ca/~oz/hash.html
@@ -282,6 +283,7 @@ unsigned long hash(const char *str)
     hash = c + (hash << 6) + (hash << 16) - hash;
   return hash;
 }
+*/
 
 cognate_object check_type(cognate_type expected_type, cognate_object object)
 {
@@ -293,7 +295,7 @@ cognate_object check_type(cognate_type expected_type, cognate_object object)
 
 const char* lookup_type(cognate_type type)
 {
-  char str[54] = {0};
+  char str[] = "\0oolean/String/Number/List/Table/Block";
   if (!type) return "NOTHING";
   if (type & boolean) strcat(str, "/Boolean");
   if (type & string)  strcat(str, "/String");
