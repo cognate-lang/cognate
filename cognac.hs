@@ -18,6 +18,7 @@ import Data.Ratio
 import System.Environment
 import System.Info
 import System.Process
+import System.FilePath
 
 version = "0.0.1"
 
@@ -229,6 +230,7 @@ parseImports _ [] _ = return []
 
 compile :: [Tree] -> [Tree] -> [String] -> Int -> String
 doesCall :: [Tree] -> String -> Bool
+args :: String -> [CogType]
 args "doif" = [CogBlock, CogBlock, CogBlock]
 args "if" = [CogBlock, Any, Any]
 args "while" = [CogBlock, CogBlock]
@@ -293,6 +295,7 @@ args "assert" = [CogString, CogString]
 args "error" = [CogString]
 args _ = []
 
+ret :: String -> CogType
 ret "when" = None
 ret "if" = None -- Functions returning objects should use the stack, it's actually faster.
 ret "doif" = None
@@ -368,8 +371,10 @@ ret _ = None
 (Node x:xs) `doesCall` func = xs `doesCall` func || x `doesCall` func
 _ `doesCall` _ = False
 
+{-
 callCount :: [Tree] -> String -> Int
 expr `callCount` func = length $ func `elemIndices` flatten expr
+-}
 
 doesMutate :: [Tree] -> String -> Bool
 (Leaf var:Leaf "Set":xs) `doesMutate` var' =
@@ -384,10 +389,12 @@ doesMutate :: [Tree] -> String -> Bool
 (_:xs) `doesMutate` var' = xs `doesMutate` var'
 _ `doesMutate` _ = False
 
+{-
 flatten :: [Tree] -> [String]
 flatten (Node x:xs) = flatten x ++ flatten xs
 flatten (Leaf x:xs) = x : flatten xs
 flatten [] = []
+-}
 
 constructStr :: [Tree] -> String
 constructStr str = sanitise (map (chr . readNumber) str)
@@ -396,11 +403,11 @@ constructStr str = sanitise (map (chr . readNumber) str)
     readNumber (Leaf num) = read num
     readNumber (Node _) =
       error "Parse Error: Cannot parse malformed string literal!"
-    sanitise str
-      | "\\?" `isInfixOf` str = error "Invalid Escape Character \\?"
-      | "\\\"" `isInfixOf` str = error "Invalid Escape Character \\\""
-      | "\\0" `isInfixOf` str = error "Invalid Escape Character \\0"
-      | otherwise = replace "\"" "\\\"" $ replace "¸" "'" str
+    sanitise s
+      | "\\?" `isInfixOf` s = error "Invalid Escape Character \\?"
+      | "\\\"" `isInfixOf` s = error "Invalid Escape Character \\\""
+      | "\\0" `isInfixOf` s = error "Invalid Escape Character \\0"
+      | otherwise = replace "\"" "\\\"" $ replace "¸" "'" s
 
 {-
 compile (Leaf "" : xs) = "" ++ compile xs
@@ -514,7 +521,7 @@ literal_type (Leaf token)
   | "VAR(" `isPrefixOf` token = Any
   | "CALL(" `isPrefixOf` token = ret (takeWhile (/= ',') (drop 5 token))
   | otherwise = error ("Cannot match '" ++ token ++ "'")
-literal_type (Node token) = CogBlock
+literal_type (Node _) = CogBlock
 
 print_literal :: Tree -> [String] -> String
 print_literal (Leaf str) _ = str
@@ -537,7 +544,7 @@ check_shadow str =
 -- Rewrite the entire parser in Cognate ASAP.
 compile (Leaf "StringLiteral":xs) (Node str:xss) vars r =
   compile xs (Leaf ("\"" ++ constructStr str ++ "\"") : xss) vars r
-compile (Node a : Node b : Node cond : Leaf "If" : Leaf "Do" : xs) buf vars r = "DOIF({" ++ compile cond buf vars 0 ++ "},{" ++ compile b [] vars 0 ++ "},{" ++ compile a [] vars 0 ++ "})"
+compile (Node a : Node b : Node cond : Leaf "If" : Leaf "Do" : xs) buf vars r = "DOIF({" ++ compile cond buf vars 0 ++ "},{" ++ compile b [] vars 0 ++ "},{" ++ compile a [] vars 0 ++ "})" ++ compile xs [] vars r
 compile (Node blk : Leaf "Do" : xs) buf vars r = "{" ++ compile blk [] vars 0 ++ "}" ++ compile xs buf vars r -- Primitive do inlining
 compile (Node blk:xs) buf vars r = compile xs (Node blk : buf) vars r
 compile (Leaf "":xs) buf vars r = compile xs buf vars r
@@ -605,26 +612,26 @@ compile (Leaf str:xs) buf vars r
 compile [] buf vars _ =
   unwords $ map (`stack_push` vars) $ reverse buf
 
+compiler :: String
 compiler = "clang"
 
+{-
+isLeaf :: Tree -> Bool
 isLeaf (Leaf _) = True
 isLeaf (Node _) = False
 
+isNode :: Tree -> Bool
 isNode (Node _) = True
 isNode (Leaf _) = False
+-}
 
-formatFlags = ["-i"]
-
-formatter = "clang-format"
-
-getPath = intercalate "/" . init . splitOn "/" <$> getExecutablePath
-
+header :: String -> String
 header in_file =
   "// Compiled from " ++ in_file ++ " by CognaC version " ++ version ++ "\n"
 
 main :: IO ()
 main = do
-  args <- getArgs
+  cmdargs <- getArgs
   let compilerFlagsLinux =
         words
           "-I. runtime.c functions.c -fblocks -lBlocksRuntime -l:libgc.so -Ofast -Wall -Wextra -Werror -Wno-unused -pedantic-errors -std=c11 -lm -g0 -fuse-ld=lld -flto=full"
@@ -635,10 +642,10 @@ main = do
         if System.Info.os == "linux"
           then compilerFlagsLinux
           else compilerFlagsMac
-  let in_file = head args
-  let out_file = head (splitOn "." in_file) ++ ".c"
-  let compiler_args = tail args
-  if not (".cog" `isSuffixOf` in_file)
+  let in_file = head cmdargs
+  let out_file = replaceBaseName in_file ('.' : takeBaseName in_file) -<.> "c"
+  let compiler_args = tail cmdargs
+  if takeExtension in_file /= ".cog"
     then error "Parse Error: Source file must end with .cog file extension"
     else do
       putStrLn
@@ -656,14 +663,13 @@ main = do
         "#include\"cognate.h\"\nPROGRAM(" ++ compile thing [] [] 0 ++ ")\n"
       --rawSystem formatter (formatFlags ++ [out_file])
       putStrLn $
-        "Compiling " ++ out_file ++ " to " ++ stripExtension in_file ++ "... "
-      rawSystem
+        "Compiling " ++ out_file ++ " to " ++ dropExtension in_file ++ "... "
+      _ <- rawSystem
         compiler
-        ([out_file, "-o", stripExtension in_file] ++
+        ([out_file, "-o", dropExtension in_file] ++
          compilerFlags ++ compiler_args)
       putStrLn "Done!"
       return ()
 
-stripExtension = head . splitOn "."
-
+lc :: [Char] -> [Char]
 lc = map toLower
