@@ -230,7 +230,7 @@ parseImports _ [] _ = return []
 
 compile :: [Tree] -> [Tree] -> [String] -> Int -> String
 doesCall :: [Tree] -> String -> Bool
-ret :: String -> [CogType]
+args :: String -> [CogType]
 args "doif" = [CogBlock, CogBlock, CogBlock]
 args "if" = [CogBlock, Any, Any]
 args "while" = [CogBlock, CogBlock]
