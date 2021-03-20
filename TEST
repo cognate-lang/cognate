@@ -14,8 +14,7 @@ failed=0
 passed=0
 
 if [ ! -f cognac ]; then
-  echo "Cannot find compiler!"
-  exit 1
+  ghc cognac
 fi
 
 # Iterate over files to test
