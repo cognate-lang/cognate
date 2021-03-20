@@ -44,11 +44,11 @@ enum cognate_type
   // NOTHING is currently only used for unused hashtable buckets.
   NOTHING = 0, // Must be zero because of calloc()
   boolean = (1 << 0),
-  string = (1 << 1),
-  number = (1 << 2),
-  list = (1 << 3),
-  table = (1 << 4),
-  block = (1 << 5),
+  string  = (1 << 1),
+  number  = (1 << 2),
+  list    = (1 << 3),
+  table   = (1 << 4),
+  block   = (1 << 5),
   heap_block = (1 << 5) | (1 << 6)
 };
 

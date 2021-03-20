@@ -97,13 +97,15 @@ cognate_boolean ___string_(cognate_object a)  { return a.type&string; } // So th
 cognate_boolean ___block_(cognate_object a)   { return a.type&block;  }
 cognate_boolean ___boolean_(cognate_object a) { return a.type&boolean;}
 
-void ___first(cognate_list lst) {
+void ___first(cognate_list lst)
+{
   // Returns the first element of a list. O(1).
   if unlikely(!lst) throw_error("Empty list is invalid");
   push(lst->object);
 }
 
-cognate_list ___rest(cognate_list lst) {
+cognate_list ___rest(cognate_list lst)
+{
   // Returns the tail portion of a list. O(1).
   if unlikely(!lst) throw_error("Empty list is invalid");
   return lst->next;

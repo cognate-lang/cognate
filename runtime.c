@@ -147,7 +147,6 @@ _Noreturn __attribute__((format(printf, 1, 2))) void throw_error(const char* con
     fprintf(stderr, "During (or immediately after) evaluation of '\033[0;1m%c%s\033[0m'\n", toupper(*current_word_name), current_word_name+1);
   // Actually print the error message now.
   fprintf(stderr, "\n\033[31;1m");
-  (void)fmt;
   va_list args;
   va_start(args, fmt);
   vfprintf(stderr, fmt, args);
