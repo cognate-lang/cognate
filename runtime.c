@@ -86,7 +86,7 @@ void init(int argc, char** argv)
   }
   // Bind error signals.
   char signals[] = {SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGABRT, SIGBUS, SIGFPE, SIGSEGV, SIGPIPE, SIGTERM, SIGCHLD};
-  for (size_t i = 0; i < sizeof(signals); ++i) signal(signals[i], handle_error_signal);
+  for (size_t i = 0; i < sizeof(signals)/sizeof(signals[0]); ++i) signal(signals[i], handle_error_signal);
   // Initialize the stack.
   init_stack();
 }
