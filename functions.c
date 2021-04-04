@@ -15,7 +15,7 @@
 
 static size_t mbstrlen(const char* str);
 
-void ___if(cognate_block cond, cognate_object a, cognate_object b)
+void ___if(BLOCK cond, cognate_object a, cognate_object b)
 {
   cond();
   if (CHECK(boolean, pop()))
@@ -24,7 +24,7 @@ void ___if(cognate_block cond, cognate_object a, cognate_object b)
     push(b);
 }
 
-void ___while(cognate_block cond, cognate_block body) {
+void ___while(BLOCK cond, BLOCK body) {
   cond();
   while (CHECK(boolean, pop()))
   {
@@ -33,23 +33,23 @@ void ___while(cognate_block cond, cognate_block body) {
   }
 }
 
-void ___do(cognate_block blk) { blk(); }
+void ___do(BLOCK blk) { blk(); }
 
 void ___put(cognate_object a)   { print_object(a, stdout, 0); fflush(stdout); }
 void ___print(cognate_object a) { print_object(a, stdout, 0); putc('\n', stdout); }
 
 
-cognate_number ___sum(cognate_number a, cognate_number b)      { return a + b; }
-cognate_number ___multiply(cognate_number a, cognate_number b) { return a * b; }
-cognate_number ___subtract(cognate_number a, cognate_number b) { return b - a; }
-cognate_number ___divide(cognate_number a, cognate_number b)   { if likely(a) return b / a; throw_error("Division of %.14g by zero", b); }
+NUMBER ___sum(NUMBER a, NUMBER b)      { return a + b; }
+NUMBER ___multiply(NUMBER a, NUMBER b) { return a * b; }
+NUMBER ___subtract(NUMBER a, NUMBER b) { return b - a; }
+NUMBER ___divide(NUMBER a, NUMBER b)   { if likely(a) return b / a; throw_error("Division of %.14g by zero", b); }
 
-cognate_number ___modulo(cognate_number a, cognate_number b) {
+NUMBER ___modulo(NUMBER a, NUMBER b) {
   if likely(a) return fmod(b, a);
   throw_error("Modulo of %.14g by zero", b);
 }
 
-cognate_number ___random(cognate_number low, cognate_number high, cognate_number step) {
+NUMBER ___random(NUMBER low, NUMBER high, NUMBER step) {
   if unlikely((high - low) * step < 0 || !step)
   {
     throw_error("Invalid range %.14g..%.14g with step %.14g", low, high, step);
@@ -66,7 +66,7 @@ cognate_number ___random(cognate_number low, cognate_number high, cognate_number
     | ((long)(short)rand() << 30)
     | ((long)(short)rand() << 45)
     | ((long)       rand() << 60);
-  return low + (cognate_number)(num % (unsigned long)((high - low) / step)) * step;
+  return low + (NUMBER)(num % (unsigned long)((high - low) / step)) * step;
 }
 
 void ___drop(cognate_object a)                   { (void)a; } // These can be defined within cognate.
@@ -75,70 +75,70 @@ void ___triplet(cognate_object a)                { push(a); push(a); push(a); }
 void ___swap(cognate_object a, cognate_object b) { push(a); push(b); }
 void ___clear()                                  { stack.top=stack.start; }
 
-cognate_boolean ___true()  { return 1; }
-cognate_boolean ___false() { return 0; }
+BOOLEAN ___true()  { return 1; }
+BOOLEAN ___false() { return 0; }
 
-cognate_boolean ___either(cognate_boolean a, cognate_boolean b) { return a || b; }
-cognate_boolean ___both  (cognate_boolean a, cognate_boolean b) { return a && b; }
-cognate_boolean ___one_of(cognate_boolean a, cognate_boolean b) { return a ^ b;  }
-cognate_boolean ___not   (cognate_boolean a)                    { return !a;     }
+BOOLEAN ___either(BOOLEAN a, BOOLEAN b) { return a || b; }
+BOOLEAN ___both  (BOOLEAN a, BOOLEAN b) { return a && b; }
+BOOLEAN ___one_of(BOOLEAN a, BOOLEAN b) { return a ^ b;  }
+BOOLEAN ___not   (BOOLEAN a)                    { return !a;     }
 
 
-cognate_boolean ___equal(cognate_object a, cognate_object b)   { return compare_objects(a,b); }
-cognate_boolean ___unequal(cognate_object a, cognate_object b) { return !compare_objects(a,b); }
-cognate_boolean ___exceed(cognate_number a, cognate_number b)  { return a < b; }
-cognate_boolean ___preceed(cognate_number a, cognate_number b) { return a > b; }
-cognate_boolean ___equalorpreceed(cognate_number a, cognate_number b) { return a >= b; }
-cognate_boolean ___equalorexceed(cognate_number a, cognate_number b)  { return a <= b; }
+BOOLEAN ___equal(cognate_object a, cognate_object b)   { return compare_objects(a,b); }
+BOOLEAN ___unequal(cognate_object a, cognate_object b) { return !compare_objects(a,b); }
+BOOLEAN ___exceed(NUMBER a, NUMBER b)  { return a < b; }
+BOOLEAN ___preceed(NUMBER a, NUMBER b) { return a > b; }
+BOOLEAN ___equalorpreceed(NUMBER a, NUMBER b) { return a >= b; }
+BOOLEAN ___equalorexceed(NUMBER a, NUMBER b)  { return a <= b; }
 
-cognate_boolean ___number_(cognate_object a)  { return a.type&number; } // Question marks are converted to underscores.
-cognate_boolean ___list_(cognate_object a)    { return a.type&number; } // However all other symbols are too.
-cognate_boolean ___string_(cognate_object a)  { return a.type&string; } // So this is a temporary hack!
-cognate_boolean ___block_(cognate_object a)   { return a.type&block;  }
-cognate_boolean ___boolean_(cognate_object a) { return a.type&boolean;}
+BOOLEAN ___number_(cognate_object a)  { return a.type&number; } // Question marks are converted to underscores.
+BOOLEAN ___list_(cognate_object a)    { return a.type&number; } // However all other symbols are too.
+BOOLEAN ___string_(cognate_object a)  { return a.type&string; } // So this is a temporary hack!
+BOOLEAN ___block_(cognate_object a)   { return a.type&block;  }
+BOOLEAN ___boolean_(cognate_object a) { return a.type&boolean;}
 
-void ___first(cognate_list lst)
+void ___first(LIST lst)
 {
   // Returns the first element of a list. O(1).
   if unlikely(!lst) throw_error("Empty list is invalid");
   push(lst->object);
 }
 
-cognate_list ___rest(cognate_list lst)
+LIST ___rest(LIST lst)
 {
   // Returns the tail portion of a list. O(1).
   if unlikely(!lst) throw_error("Empty list is invalid");
   return lst->next;
 }
 
-cognate_string ___head(cognate_string str)
+STRING ___head(STRING str)
 {
   if unlikely(!*str) throw_error("Empty string is invalid");
   return GC_STRNDUP(str, mblen(str, MB_CUR_MAX));
 }
 
-cognate_string ___tail(cognate_string str)
+STRING ___tail(STRING str)
 {
   if unlikely(!*str) throw_error("Empty string is invalid");
   return str + mblen(str, MB_CUR_MAX);
 }
 
-cognate_list ___push(cognate_object a, cognate_list b) {
+LIST ___push(cognate_object a, LIST b) {
   // Pushes an object from the stack onto the list's first element. O(1).
   // TODO: Better name? Inconsistent with List where pushing to the stack adds to the END.
-  cognate_list_node* lst = GC_NEW (cognate_list_node);
+  cognate_list* lst = GC_NEW (cognate_list);
   lst->object = a;
   lst->next   = b;
   return lst;
 }
 
-cognate_boolean ___empty_(cognate_list lst) {
+BOOLEAN ___empty_(LIST lst) {
   // Returns true is a list or string is empty. O(1).
   // Can be used to to write a Length function.
   return !lst;
 }
 
-cognate_list ___list(cognate_block expr) {
+LIST ___list(BLOCK expr) {
   // Move the stack to temporary storage
   const cognate_stack temp_stack = stack;
   // Allocate a list as the stack
@@ -146,11 +146,11 @@ cognate_list ___list(cognate_block expr) {
   // Eval expr
   expr();
   // Move to a list.
-  cognate_list lst = NULL;
+  LIST lst = NULL;
   while (stack.top != stack.start)
   {
     // This can just be Swap, Push;
-    cognate_list_node* tmp = GC_NEW (cognate_list_node);
+    cognate_list* tmp = GC_NEW (cognate_list);
     tmp -> object = pop();
     tmp -> next = lst;
     lst = tmp;
@@ -164,11 +164,11 @@ void ___characters() {
   // Can be rewritten using substring, albeit O(n^2)
   /*
   const char* str = pop(string);
-  const cognate_list* lst = NULL;
+  const LIST* lst = NULL;
   for (size_t i = 0; *str ; ++i)
   {
     size_t char_len = mblen(str, MB_CUR_MAX);
-    cognate_list* tmp = GC_NEW (cognate_list);
+    LIST* tmp = GC_NEW (LIST);
     tmp->object = (cognate_object) {.type=string, .string=GC_STRNDUP(str, char_len)};
     tmp->next = lst;
     lst = tmp;
@@ -187,7 +187,7 @@ void ___split() {
   const char* str = pop(string);
   size_t length = 1;
     for (const char* temp = str; (temp = strstr(temp, delimiter) + delim_size) - delim_size; ++length);
-  cognate_list* const lst = GC_NEW(cognate_list);
+  LIST* const lst = GC_NEW(LIST);
   lst->top = lst->start   = (cognate_object*) GC_MALLOC (sizeof(cognate_object) * length);
   lst->top += length;
   size_t i = 0;
@@ -201,7 +201,7 @@ void ___split() {
   */ // TODO
 }
 
-void ___join(cognate_number n) {
+void ___join(NUMBER n) {
   // Joins a string to the end of another string.
   // Define Prefix (Swap, Suffix);
   size_t n1 = n;
@@ -223,11 +223,11 @@ void ___join(cognate_number n) {
   push(OBJ(string, result));
 }
 
-cognate_number ___string_length(cognate_string str) {
+NUMBER ___string_length(STRING str) {
   return mbstrlen(str);
 }
 
-cognate_string ___substring(cognate_number startf, cognate_number endf, cognate_string str) {
+STRING ___substring(NUMBER startf, NUMBER endf, STRING str) {
   const char* str_start = str;
   // O(end).
   // Only allocates a new string if it has to.
@@ -260,7 +260,7 @@ cognate_string ___substring(cognate_number startf, cognate_number endf, cognate_
 }
 
 
-cognate_string ___input() {
+STRING ___input() {
   // Read user input to a string.
   size_t size = 0;
   char* buf;
@@ -270,7 +270,7 @@ cognate_string ___input() {
   return ret;
 }
 
-cognate_string ___read(cognate_string filename) {
+STRING ___read(STRING filename) {
   // Read a file to a string.
   FILE *fp = fopen(filename, "ro");
   if unlikely(fp == NULL) throw_error("Cannot open file '%s'. It probably doesn't exist.", filename);
@@ -284,10 +284,10 @@ cognate_string ___read(cognate_string filename) {
   // TODO: single line (or delimited) file read function for better IO performance?
 }
 
-cognate_number ___number(cognate_string str) {
+NUMBER ___number(STRING str) {
   // casts string to number.
   char* end;
-  cognate_number num = strtod(str, &end);
+  NUMBER num = strtod(str, &end);
   if (end == str || *end != '\0')
   {
     throw_error("Cannot parse '%.64s' to a number", str);
@@ -295,7 +295,7 @@ cognate_number ___number(cognate_string str) {
   return num;
 }
 
-cognate_string ___path() {
+STRING ___path() {
   char buf[FILENAME_MAX];
   if (!getcwd(buf, FILENAME_MAX))
   {
@@ -308,11 +308,11 @@ cognate_string ___path() {
 void ___stack() {
   // We can't return the list or this function is inlined and it breaks.
   copy_stack_blocks();
-  cognate_list lst = NULL;
+  LIST lst = NULL;
   for (cognate_object* i = stack.top - 1 ; i >= stack.start ; --i)
   {
     // TODO: Allocate the list as an array for the sake of memory locality.
-    cognate_list_node* tmp = GC_NEW (cognate_list_node);
+    cognate_list* tmp = GC_NEW (cognate_list);
     tmp -> object = *i;
     tmp -> next = lst;
     lst = tmp;
@@ -320,7 +320,7 @@ void ___stack() {
   push(OBJ(list, lst));
 }
 
-void ___write(cognate_string filename, cognate_object obj) {
+void ___write(STRING filename, cognate_object obj) {
   // Write object to end of file, without a newline.
   FILE* const fp = fopen(filename, "a");
   if unlikely(fp == NULL) throw_error("Cannot open file '%s'. It probably doesn't exist.", filename);
@@ -328,7 +328,7 @@ void ___write(cognate_string filename, cognate_object obj) {
   fclose(fp);
 }
 
-cognate_list ___parameters() {
+LIST ___parameters() {
   return cmdline_parameters; // TODO should be a variable, and allow mutation and stuff
 }
 
@@ -337,28 +337,28 @@ void ___stop() {
   exit(EXIT_SUCCESS);
 }
 
-cognate_table ___table() {
+TABLE ___table() {
   return NULL; // TODO
 }
 
-cognate_table ___insert(cognate_string key, cognate_object value, cognate_table tab) {
+TABLE ___insert(STRING key, cognate_object value, TABLE tab) {
   (void)key;
   (void)value;
   (void)tab;
   return NULL; // TODO
 }
 
-void ___get(cognate_string key, cognate_table tab) {
+void ___get(STRING key, TABLE tab) {
   (void)key;
   (void)tab; // TODO
 }
 
-cognate_list ___values(cognate_table tab) {
+LIST ___values(TABLE tab) {
   (void)tab; // TODO
   return NULL;
 }
 
-cognate_boolean ___match(cognate_string reg_str, cognate_string str) {
+BOOLEAN ___match(STRING reg_str, STRING str) {
   // Returns true if string matches regex.
   static const char* old_str = NULL;
   static regex_t reg;
@@ -388,7 +388,7 @@ cognate_boolean ___match(cognate_string reg_str, cognate_string str) {
   return !found;
 }
 
-cognate_number ___ordinal(cognate_string str) {
+NUMBER ___ordinal(STRING str) {
   if unlikely(str[0] && !str[1])
   {
     throw_error("Invalid string '%.64s' (should be length 1)", str);
@@ -398,7 +398,7 @@ cognate_number ___ordinal(cognate_string str) {
   return chr;
 }
 
-cognate_string ___character(cognate_number d) {
+STRING ___character(NUMBER d) {
   const wchar_t i = d;
   if unlikely(i != d) throw_error("Cannot convert %.14g to UTF8 character", d);
   char* str = GC_MALLOC (MB_CUR_MAX + 1);
@@ -407,26 +407,26 @@ cognate_string ___character(cognate_number d) {
   return str;
 }
 
-cognate_number ___floor(cognate_number a) {
+NUMBER ___floor(NUMBER a) {
   return floor(a);
 }
 
-cognate_number ___round(cognate_number a) {
+NUMBER ___round(NUMBER a) {
   return round(a);
 }
 
-cognate_number ___ceiling(cognate_number a) {
+NUMBER ___ceiling(NUMBER a) {
   return ceil(a);
 }
 
-void ___assert(cognate_string name, cognate_boolean result) {
+void ___assert(STRING name, BOOLEAN result) {
   if unlikely(!result)
   {
     throw_error("Assertion '%s' has failed", name);
   }
 }
 
-void ___error(cognate_string str) {
+void ___error(STRING str) {
   current_word_name = NULL;
   errno = 0;
   throw_error("%s", str);

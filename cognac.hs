@@ -525,7 +525,7 @@ literal_type (Node _) = CogBlock
 
 print_literal :: Tree -> [String] -> String
 print_literal (Leaf str) _ = str
-print_literal (Node blk) vars = "BLOCK(" ++ compile blk [] vars 0 ++ ")"
+print_literal (Node blk) vars = "MAKE_BLOCK(" ++ compile blk [] vars 0 ++ ")"
 
 stack_push :: Tree -> [String] -> String
 stack_push a vars = "push(" ++ make_obj a vars ++ ");"

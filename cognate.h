@@ -12,32 +12,13 @@
 #define LIST_GROWTH_FACTOR 1.5
 #define STACK_MARGIN_KB    50
 
-// A pointer to a lexical closure
-typedef void(^cognate_block)();
-
-// A boolean value
-typedef _Bool cognate_boolean;
-
-// A double-precision floating point number
-typedef double cognate_number;
-
-// A multibyte null-terminated string
-typedef const char* cognate_string;
-
-// A linked list of cognate_objects
-typedef const struct cognate_list_node* cognate_list;
-
-// A map of string keys to cognate_object values TODO
-typedef _Bool cognate_table;
-
-// Stores values for variables and stack items
-typedef struct cognate_object cognate_object;
-
-// A stack which can be pushed to and popped from
-typedef struct cognate_stack  cognate_stack;
-
-// A single node in a cognate_list
-typedef struct cognate_list_node cognate_list_node;
+typedef void(^BLOCK)();
+typedef _Bool BOOLEAN;
+typedef double NUMBER;
+typedef const char* STRING;
+typedef const struct cognate_list* LIST;
+typedef _Bool TABLE;
+typedef struct cognate_object ANY;
 
 enum cognate_type
 {
@@ -55,34 +36,34 @@ enum cognate_type
 // Enumerates all possible types of a cognate_object
 typedef enum cognate_type cognate_type;
 
-struct cognate_object
+typedef struct cognate_object
 {
   union
   {
-    cognate_boolean boolean;   // 1bit bool
-    cognate_block   block;     // 64bit block pointer
-    cognate_block   heap_block;// 64bit block pointer
-    cognate_number  number;    // 64bit float
-    cognate_string  string;    // 64bit string pointer
-    cognate_list    list;      // 64bit list pointer
-    cognate_table   table;     // TODO
+    BOOLEAN boolean;   // 1bit bool
+    BLOCK   block;     // 64bit block pointer
+    BLOCK   heap_block;// 64bit block pointer
+    NUMBER  number;    // 64bit float
+    STRING  string;    // 64bit string pointer
+    LIST    list;      // 64bit list pointer
+    TABLE   table;     // TODO
   };
   cognate_type type;
-};
+} cognate_object;
 
-struct cognate_list_node
+typedef struct cognate_list
 {
-  cognate_list next;
+  LIST next;
   cognate_object object;
-};
+} cognate_list;
 
-struct cognate_stack
+typedef struct cognate_stack
 {
   cognate_object* restrict start; // Pointer to start.
   cognate_object* restrict top; // Pointer to top.
   ptrdiff_t       size; // Allocated size of the stack.
-  size_t          uncopied_blocks; // Number of uncopied cognate_blocks on the stack.
-};
+  size_t          uncopied_blocks; // Number of uncopied BLOCKs on the stack.
+} cognate_stack;
 
 // Macros
 #define immutable const
@@ -94,15 +75,15 @@ struct cognate_stack
 #define CALL(name, args) (set_current_word_name(#name), ___##name args)
 
 #define DEFINE(flags, name, body) \
-  flags cognate_block ___##name = \
-  BLOCK( \
+  flags BLOCK ___##name = \
+  MAKE_BLOCK( \
     const char* const temp_function_name = current_function_name; \
     current_function_name = #name; \
     body;                                   \
     current_function_name = temp_function_name; \
   );
 
-#define REDEFINE(name, body) ___##name = Block_copy(BLOCK(docopy, body));
+#define REDEFINE(name, body) ___##name = Block_copy(MAKE_BLOCK(docopy, body));
 
 #define LET(flags, name, val) flags cognate_object ___##name = copy_if_block(val);
 
@@ -116,7 +97,7 @@ struct cognate_stack
     cleanup(); \
   }
 
-#define BLOCK(body) \
+#define MAKE_BLOCK(body) \
   ^{ \
     check_function_stack_size(); \
     body \
@@ -141,7 +122,7 @@ struct cognate_stack
 
 // Global variables
 extern cognate_stack stack;
-extern cognate_list cmdline_parameters;
+extern LIST cmdline_parameters;
 extern const char *current_function_name;
 extern const char *current_word_name;
 
@@ -165,68 +146,68 @@ void set_current_word_name(const char *const);
 cognate_object copy_if_block(cognate_object obj);
 
 // Builtin functions needed by compiled source file defined in functions.c
-void ___if(cognate_block, cognate_object, cognate_object);
-void ___while(cognate_block, cognate_block);
-void ___do(cognate_block);
+void ___if(BLOCK, cognate_object, cognate_object);
+void ___while(BLOCK, BLOCK);
+void ___do(BLOCK);
 void ___put(cognate_object);
 void ___print(cognate_object);
-cognate_number ___sum(cognate_number, cognate_number);
-cognate_number ___multiply(cognate_number, cognate_number);
-cognate_number ___subtract(cognate_number, cognate_number);
-cognate_number ___divide(cognate_number, cognate_number);
-cognate_number ___modulo(cognate_number, cognate_number);
-cognate_number ___random(cognate_number, cognate_number, cognate_number);
+NUMBER ___sum(NUMBER, NUMBER);
+NUMBER ___multiply(NUMBER, NUMBER);
+NUMBER ___subtract(NUMBER, NUMBER);
+NUMBER ___divide(NUMBER, NUMBER);
+NUMBER ___modulo(NUMBER, NUMBER);
+NUMBER ___random(NUMBER, NUMBER, NUMBER);
 void ___drop(cognate_object);
 void ___twin(cognate_object);
 void ___triplet(cognate_object);
 void ___swap(cognate_object, cognate_object);
 void ___clear();
-cognate_boolean ___true();
-cognate_boolean ___false();
-cognate_boolean ___either(cognate_boolean, cognate_boolean);
-cognate_boolean ___both  (cognate_boolean, cognate_boolean);
-cognate_boolean ___one_of(cognate_boolean, cognate_boolean);
-cognate_boolean ___not   (cognate_boolean);
-cognate_boolean ___equal(cognate_object, cognate_object);
-cognate_boolean ___unequal(cognate_object, cognate_object);
-cognate_boolean ___exceed(cognate_number, cognate_number);
-cognate_boolean ___preceed(cognate_number, cognate_number);
-cognate_boolean ___equalorpreceed(cognate_number, cognate_number);
-cognate_boolean ___equalorexceed(cognate_number, cognate_number);
-cognate_boolean ___number_(cognate_object);
-cognate_boolean ___list_(cognate_object);
-cognate_boolean ___string_(cognate_object);
-cognate_boolean ___block_(cognate_object);
-cognate_boolean ___boolean_(cognate_object);
-void ___first(cognate_list);
-cognate_list ___rest(cognate_list);
-cognate_string ___head(cognate_string);
-cognate_string ___tail(cognate_string);
-cognate_list ___push(cognate_object, cognate_list);
-cognate_boolean ___empty_(cognate_list);
-cognate_list ___list(cognate_block);
+BOOLEAN ___true();
+BOOLEAN ___false();
+BOOLEAN ___either(BOOLEAN, BOOLEAN);
+BOOLEAN ___both  (BOOLEAN, BOOLEAN);
+BOOLEAN ___one_of(BOOLEAN, BOOLEAN);
+BOOLEAN ___not   (BOOLEAN);
+BOOLEAN ___equal(cognate_object, cognate_object);
+BOOLEAN ___unequal(cognate_object, cognate_object);
+BOOLEAN ___exceed(NUMBER, NUMBER);
+BOOLEAN ___preceed(NUMBER, NUMBER);
+BOOLEAN ___equalorpreceed(NUMBER, NUMBER);
+BOOLEAN ___equalorexceed(NUMBER, NUMBER);
+BOOLEAN ___number_(cognate_object);
+BOOLEAN ___list_(cognate_object);
+BOOLEAN ___string_(cognate_object);
+BOOLEAN ___block_(cognate_object);
+BOOLEAN ___boolean_(cognate_object);
+void ___first(LIST);
+LIST ___rest(LIST);
+STRING ___head(STRING);
+STRING ___tail(STRING);
+LIST ___push(cognate_object, LIST);
+BOOLEAN ___empty_(LIST);
+LIST ___list(BLOCK);
 void ___characters();
 void ___split();
-void ___join(cognate_number);
-cognate_number ___string_length(cognate_string);
-cognate_string ___substring(cognate_number, cognate_number, cognate_string);
-cognate_string ___input();
-cognate_string ___read(cognate_string);
-cognate_number ___number(cognate_string);
-cognate_string ___path();
+void ___join(NUMBER);
+NUMBER ___string_length(STRING);
+STRING ___substring(NUMBER, NUMBER, STRING);
+STRING ___input();
+STRING ___read(STRING);
+NUMBER ___number(STRING);
+STRING ___path();
 void ___stack();
-void ___write(cognate_string, cognate_object);
-cognate_list ___parameters();
+void ___write(STRING, cognate_object);
+LIST ___parameters();
 void ___stop();
-cognate_table ___table();
-cognate_table ___insert(cognate_string, cognate_object, cognate_table);
-void ___get(cognate_string, cognate_table);
-cognate_list ___values(cognate_table);
-cognate_boolean ___match(cognate_string, cognate_string);
-cognate_number ___ordinal(cognate_string);
-cognate_string ___character(cognate_number);
-cognate_number ___floor(cognate_number);
-cognate_number ___round(cognate_number);
-cognate_number ___ceiling(cognate_number);
-void ___assert(cognate_string, cognate_boolean);
-void ___error(cognate_string);
+TABLE ___table();
+TABLE ___insert(STRING, cognate_object, TABLE);
+void ___get(STRING, TABLE);
+LIST ___values(TABLE);
+BOOLEAN ___match(STRING, STRING);
+NUMBER ___ordinal(STRING);
+STRING ___character(NUMBER);
+NUMBER ___floor(NUMBER);
+NUMBER ___round(NUMBER);
+NUMBER ___ceiling(NUMBER);
+void ___assert(STRING, BOOLEAN);
+void ___error(STRING);

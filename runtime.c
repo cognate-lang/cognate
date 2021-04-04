@@ -29,13 +29,13 @@ void blk_gc_memmove(void* dst, void* src, unsigned long size) { memmove(dst, src
 #endif
 
 static const char *lookup_type(cognate_type);
-static _Bool compare_lists(cognate_list, cognate_list);
-static _Bool compare_tables(cognate_table, cognate_table);
+static _Bool compare_lists(LIST, LIST);
+static _Bool compare_tables(TABLE, TABLE);
 static void handle_error_signal(int);
 static void bind_error_signals();
 
 cognate_stack stack;
-cognate_list cmdline_parameters   = NULL;
+LIST cmdline_parameters = NULL;
 const char *current_function_name = NULL;
 const char *current_word_name     = NULL;
 
@@ -79,7 +79,7 @@ void init(int argc, char** argv)
   // Load parameters
   while (argc --> 1)
   {
-    cognate_list_node* const tmp = GC_NEW (cognate_list_node);
+    cognate_list* const tmp = GC_NEW (cognate_list);
     tmp->object = OBJ(string, argv[argc]);
     tmp->next = cmdline_parameters;
     cmdline_parameters = tmp;
@@ -213,7 +213,7 @@ void print_object (const cognate_object object, FILE* out, const _Bool quotes)
     case list:
     {
       fputc('(', out);
-      for (cognate_list i = object.list; i ; i = i->next)
+      for (LIST i = object.list; i ; i = i->next)
       {
         print_object(i->object, out, 1);
         if likely(i->next)
@@ -305,7 +305,7 @@ const char* lookup_type(cognate_type type)
   return GC_STRDUP(str + 1);
 }
 
-_Bool compare_lists(cognate_list lst1, cognate_list lst2)
+_Bool compare_lists(LIST lst1, LIST lst2)
 {
   if (!lst1) return !lst2;
   if (!lst2) return 0;
@@ -319,7 +319,7 @@ _Bool compare_lists(cognate_list lst1, cognate_list lst2)
   return 0;
 }
 
-_Bool compare_tables(const cognate_table tab1, const cognate_table tab2)
+_Bool compare_tables(TABLE tab1, TABLE tab2)
 {
   (void) tab1;
   (void) tab2;
