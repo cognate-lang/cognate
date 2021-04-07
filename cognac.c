@@ -51,18 +51,16 @@ char* type_as_str(value_type typ, _Bool uppercase)
 
 reg_list* flush_registers_to_stack(reg_list* registers, unsigned short exclude)
 {
-  // We can optimise this if we only check the stack length once at runtime.
-  // TODO: Leave one register which can be returned from the function, yielding better performance.
-  if (exclude)
+  /*
+   * Flush all registers to the stack, except for a number of excluded registers.
+   */
+  if (registers)
   {
-    if (registers)
+    if (exclude)
     {
       registers->next = flush_registers_to_stack(registers->next, --exclude);
       return registers;
     }
-  }
-  else if (registers)
-  {
     flush_registers_to_stack(registers->next, 0);
     if (registers->type == any)
       fprintf(outfile, "push(r%zi);", registers->id);
@@ -72,14 +70,13 @@ reg_list* flush_registers_to_stack(reg_list* registers, unsigned short exclude)
   return NULL;
 }
 
-decl_list lookup_word(char* name, decl_list* defs)
+decl_list* lookup_word(char* name, decl_list* defs)
 {
   for (decl_list *ptr = defs; ptr; ptr = ptr->next)
   {
-    if (strcmp(ptr->name, name) == 0) return *ptr;
+    if (strcmp(ptr->name, name) == 0) return ptr;
   }
-  printf("\nUNDEFINED word '%s'\n", name);
-  exit(EXIT_FAILURE);
+  return NULL;
 }
 
 void print_cognate_string(char* str)
@@ -100,18 +97,22 @@ decl_list* predefine(ast* tree, decl_list* defs)
    * Predefining means that functions can reference functions not yet declared.
    * However, these functions cannot be called until declaration.
    * TODO Function calls to guaranteed undeclared functions should be compile errors.
-   * TODO Shadowed functions generate multiple PREDEFINE calls, causing errors.
    */
+  decl_list* already_predefined = NULL;
   for (; tree; tree=tree->next)
   {
-   if (tree->type == define)
+    if (tree->type == define)
     {
+      if (lookup_word(tree->text, already_predefined)) continue;
       fprintf(outfile, "PREDEFINE(%s);", tree->text);
       // We are leaking memory here.
       // This could be stack memory with alloca() is we moved the allocation.
       decl_list* def = malloc(sizeof(*def));
+      decl_list* def2 = malloc(sizeof(*def));
       *def = (decl_list){.type=func, .next=defs, .name=tree->text, .needs_stack=true};
+      *def2 = (decl_list){.type=func, .next=already_predefined, .name=tree->text, .needs_stack=true};
       defs = def;
+      already_predefined = def2;
     }
   }
   return defs;
@@ -130,15 +131,20 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
   {
     case identifier:
     {
-      decl_list def = lookup_word((char*)tree->data, defs);
-      if (def.needs_stack) registers = flush_registers_to_stack(registers, def.argc);
-      if (def.type == func)
+      decl_list* def = lookup_word(tree->text, defs);
+      if (!def)
       {
-        if (def.rets) fprintf(outfile,"%s r%zi=", type_as_str(def.ret, true), current_register);
-        fprintf(outfile,"CALL(%s,(", def.name);
-        for (unsigned short i = 0; i < def.argc; ++i)
+        printf("\nUNDEFINED word '%s'\n", tree->text);
+        exit(EXIT_FAILURE);
+      }
+      if (def->needs_stack) registers = flush_registers_to_stack(registers, def->argc);
+      if (def->type == func)
+      {
+        if (def->rets) fprintf(outfile,"%s r%zi=", type_as_str(def->ret, true), current_register);
+        fprintf(outfile,"CALL(%s,(", def->name);
+        for (unsigned short i = 0; i < def->argc; ++i)
         {
-          value_type arg = def.args[i];
+          value_type arg = def->args[i];
           if (registers)
           {
             if      (registers->type == arg) fprintf(outfile, "r%zi", registers->id);
@@ -153,21 +159,21 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
           }
           else if (arg == any) fputs("pop()", outfile);
           else fprintf(outfile,"CHECK(%s,pop())", type_as_str(arg, false));
-          if (i + 1 < def.argc) fputc(',', outfile);
+          if (i + 1 < def->argc) fputc(',', outfile);
         }
         fputs("));", outfile);
       }
-      else if (def.type == var)
+      else if (def->type == var)
       {
-        if (def.ret == any) fprintf(outfile,"ANY r%zi=VAR(%s);", current_register, def.name);
-        else                fprintf(outfile, "%s r%zi=VAR(%s).%s;", type_as_str(def.ret, true), current_register, def.name, type_as_str(def.ret, false));
+        if (def->ret == any) fprintf(outfile,"ANY r%zi=VAR(%s);", current_register, def->name);
+        else                fprintf(outfile, "%s r%zi=VAR(%s).%s;", type_as_str(def->ret, true), current_register, def->name, type_as_str(def->ret, false));
         // We can bypass typechecks and use a typed register here if we know the variables type.
         // However, this will not work with mutable variables since their type can be changed unpredictably.
       }
-      if (def.rets)
+      if (def->rets)
       {
         reg_list new_reg;
-        new_reg = (reg_list){.id=current_register++, .next=registers, .type=def.ret};
+        new_reg = (reg_list){.id=current_register++, .next=registers, .type=def->ret};
         compile(tree->next, &new_reg, defs);
       }
       else compile(tree->next, registers, defs);

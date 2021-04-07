@@ -53,7 +53,7 @@ extern size_t current_register;
 extern ast* full_ast;
 
 decl_list* builtins(void);
-decl_list lookup_word(char*, decl_list*);
+decl_list* lookup_word(char*, decl_list*);
 ast* ast_join(ast*, ast*);
 ast* alloc_ast(token_type, value_type, void*, size_t, ast*);
 void compile(ast*, reg_list*, decl_list*); // TODO output file arg.

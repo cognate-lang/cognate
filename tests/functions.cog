@@ -5,19 +5,26 @@ Print If (Foo 4, == 5)
 else
   'FAIL: Function call and return';
 
-Do (
-  Define Foo as (+ 2);
+Define Foo as (+ 2);
 
-  Print If (Foo 5, == 7)
+Print If (Foo 5, == 7)
     'PASS: Function shadowing'
   else
     'FAIL: Function shadowing';
+
+Do (
+  Define Foo as (+ 3);
+
+  Print If (Foo 5, == 8)
+    'PASS: Function shadowing in block 1'
+  else
+    'FAIL: Function shadowing in block 1';
 );
 
-Print If (Foo 7, == 8)
-  'PASS: Function shadowing in block'
+Print If (Foo 7, == 9)
+  'PASS: Function shadowing in block 2'
 else
-  'FAIL: Function shadowing in block';
+  'FAIL: Function shadowing in block 2';
 
 ~~ Mutation is TODO
 ~~Let Recurred be False;
