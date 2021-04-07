@@ -1,7 +1,4 @@
-Define Foo as
-(
-  Sum with 1;
-);
+Define Foo as (+ 1);
 
 Print If (Foo 4, == 5)
   'PASS: Function call and return'
@@ -9,10 +6,7 @@ else
   'FAIL: Function call and return';
 
 Do (
-  Define Foo as
-  (
-    Sum with 2;
-  );
+  Define Foo as (+ 2);
 
   Print If (Foo 5, == 7)
     'PASS: Function shadowing'
@@ -25,20 +19,21 @@ Print If (Foo 7, == 8)
 else
   'FAIL: Function shadowing in block';
 
-Let Recurred be False;
-Define Bar as
-(
-  Do If (== 0) (
-    Set Recurred to True;
-  ) else (
-    Bar with 0;
-  );
-);
+~~ Mutation is TODO
+~~Let Recurred be False;
+~~Define Bar as
+~~(
+~~  Do If (== 0) (
+~~    Set Recurred to True;
+~~  ) else (
+~~    Bar with 0;
+~~  );
+~~);
 
-call Bar with 10;
-Print If (Recurred)
-  'PASS: Recursion'
-else
-  'FAIL: Recursion';
+~~call Bar with 10;
+~~Print If (Recurred)
+~~  'PASS: Recursion'
+~~else
+~~  'FAIL: Recursion';
 
 ~~ Put binary recursion test here when I implement binary recursion.

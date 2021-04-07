@@ -1,19 +1,19 @@
-Print If (Sum 5 with 6, == 11)
+Print If (+ 5 6, == 11)
   'PASS: Addition'
 else
   'FAIL: Addition';
 
-Print If (Subtract 10 from 19, == 9)
+Print If (- 10 19, == 9)
   'PASS: Subtraction'
 else
   'FAIL: Subtraction';
 
-Print If (Multiply 9 by 8, == 72)
+Print If (* 9 8, == 72)
   'PASS: Multiplication'
 else
   'FAIL: Multiplication';
 
-Print If (Divide by 7 of 42, == 6)
+Print If (/ 7 42, == 6)
   'PASS: Division'
 else
   'FAIL: Division';

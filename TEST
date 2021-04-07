@@ -13,8 +13,6 @@ failed=0
 # Counter storing total tests passed
 passed=0
 
-ghc cognac
-
 # Iterate over files to test
 for file_name in $(ls tests | grep .cog | cut -f 1 -d '.')
 do
@@ -29,8 +27,7 @@ do
   # Clear log file
   rm -f $log_file
   # Compile
-  export ASAN_OPTIONS=detect_leaks=$LEAKCHECK # Ignore memory leaks, since Block_copy will leak without block GC.
-  ./cognac $source_file -DNO_GC -O0 -fsanitize=address "$@" > /tmp/cognac.log 2>&1
+  ./cognac $source_file > /tmp/cognac.log 2>&1
   # Check if file exists (successful compilation)
   if test -f $binary_file; then
     # Run - outputting to logfile

@@ -15,13 +15,13 @@
 
 static size_t mbstrlen(const char* str);
 
-void ___if(BLOCK cond, cognate_object a, cognate_object b)
+ANY ___if(BLOCK cond, cognate_object a, cognate_object b)
 {
   cond();
   if (CHECK(boolean, pop()))
-    push(a);
+    return a;
   else
-    push(b);
+    return b;
 }
 
 void ___while(BLOCK cond, BLOCK body) {
@@ -39,10 +39,10 @@ void ___put(cognate_object a)   { print_object(a, stdout, 0); fflush(stdout); }
 void ___print(cognate_object a) { print_object(a, stdout, 0); putc('\n', stdout); }
 
 
-NUMBER ___sum(NUMBER a, NUMBER b)      { return a + b; }
-NUMBER ___multiply(NUMBER a, NUMBER b) { return a * b; }
-NUMBER ___subtract(NUMBER a, NUMBER b) { return b - a; }
-NUMBER ___divide(NUMBER a, NUMBER b)   { if likely(a) return b / a; throw_error("Division of %.14g by zero", b); }
+NUMBER ___ADD(NUMBER a, NUMBER b)      { return a + b; }
+NUMBER ___MUL(NUMBER a, NUMBER b) { return a * b; }
+NUMBER ___SUB(NUMBER a, NUMBER b) { return b - a; }
+NUMBER ___DIV(NUMBER a, NUMBER b)   { if likely(a) return b / a; throw_error("Division of %.14g by zero", b); }
 
 NUMBER ___modulo(NUMBER a, NUMBER b) {
   if likely(a) return fmod(b, a);
@@ -70,13 +70,13 @@ NUMBER ___random(NUMBER low, NUMBER high, NUMBER step) {
 }
 
 void ___drop(cognate_object a)                   { (void)a; } // These can be defined within cognate.
-void ___twin(cognate_object a)                   { push(a); push(a); }
-void ___triplet(cognate_object a)                { push(a); push(a); push(a); }
-void ___swap(cognate_object a, cognate_object b) { push(a); push(b); }
+ANY ___twin(cognate_object a)                   { push(a); return a; }
+ANY ___triplet(cognate_object a)                { push(a); push(a); return a; }
+ANY ___swap(cognate_object a, cognate_object b) { push(a); return b; }
 void ___clear()                                  { stack.top=stack.start; }
 
-BOOLEAN ___true()  { return 1; }
-BOOLEAN ___false() { return 0; }
+ANY ___true = OBJ(boolean,1);
+ANY ___false = OBJ(boolean,0);
 
 BOOLEAN ___either(BOOLEAN a, BOOLEAN b) { return a || b; }
 BOOLEAN ___both  (BOOLEAN a, BOOLEAN b) { return a && b; }
@@ -84,12 +84,12 @@ BOOLEAN ___one_of(BOOLEAN a, BOOLEAN b) { return a ^ b;  }
 BOOLEAN ___not   (BOOLEAN a)                    { return !a;     }
 
 
-BOOLEAN ___equal(cognate_object a, cognate_object b)   { return compare_objects(a,b); }
-BOOLEAN ___unequal(cognate_object a, cognate_object b) { return !compare_objects(a,b); }
-BOOLEAN ___exceed(NUMBER a, NUMBER b)  { return a < b; }
-BOOLEAN ___preceed(NUMBER a, NUMBER b) { return a > b; }
-BOOLEAN ___equalorpreceed(NUMBER a, NUMBER b) { return a >= b; }
-BOOLEAN ___equalorexceed(NUMBER a, NUMBER b)  { return a <= b; }
+BOOLEAN ___EQ(cognate_object a, cognate_object b)  { return compare_objects(a,b); }
+BOOLEAN ___NEQ(cognate_object a, cognate_object b) { return !compare_objects(a,b); }
+BOOLEAN ___GT(NUMBER a, NUMBER b)  { return a < b; }
+BOOLEAN ___LT(NUMBER a, NUMBER b)  { return a > b; }
+BOOLEAN ___GTE(NUMBER a, NUMBER b) { return a >= b; }
+BOOLEAN ___LTE(NUMBER a, NUMBER b) { return a <= b; }
 
 BOOLEAN ___number_(cognate_object a)  { return a.type&number; } // Question marks are converted to underscores.
 BOOLEAN ___list_(cognate_object a)    { return a.type&number; } // However all other symbols are too.
@@ -97,11 +97,11 @@ BOOLEAN ___string_(cognate_object a)  { return a.type&string; } // So this is a 
 BOOLEAN ___block_(cognate_object a)   { return a.type&block;  }
 BOOLEAN ___boolean_(cognate_object a) { return a.type&boolean;}
 
-void ___first(LIST lst)
+ANY ___first(LIST lst)
 {
   // Returns the first element of a list. O(1).
   if unlikely(!lst) throw_error("Empty list is invalid");
-  push(lst->object);
+  return lst->object;
 }
 
 LIST ___rest(LIST lst)
@@ -160,9 +160,9 @@ LIST ___list(BLOCK expr) {
   return lst;
 }
 
-void ___characters() {
+/*
+LIST ___characters() {
   // Can be rewritten using substring, albeit O(n^2)
-  /*
   const char* str = pop(string);
   const LIST* lst = NULL;
   for (size_t i = 0; *str ; ++i)
@@ -174,13 +174,13 @@ void ___characters() {
     lst = tmp;
     str += char_len;
   }
-  push(list, lst);
-  */ // TODO: Currently returning list backwards.
+  return NULL;
+  // TODO: Currently returning list backwards.
 }
-
-void ___split() {
+*/
+/*
+LIST ___split() {
   // Can be rewritten using Substring.
-  /*
   const char* const delimiter = pop(string);
   const size_t delim_size     = strlen(delimiter);
   if unlikely(!delim_size) throw_error("Cannot Split a string with a zero-length delimiter!");
@@ -198,10 +198,11 @@ void ___split() {
   }
   lst->start[i] = (cognate_object) {.type=string, .string=str};
   push(list, lst);
-  */ // TODO
+  return NULL;
 }
+*/
 
-void ___join(NUMBER n) {
+STRING ___join(NUMBER n) {
   // Joins a string to the end of another string.
   // Define Prefix (Swap, Suffix);
   size_t n1 = n;
@@ -220,7 +221,7 @@ void ___join(NUMBER n) {
   {
     strcat(result, strings[i]);
   }
-  push(OBJ(string, result));
+  return result;
 }
 
 NUMBER ___string_length(STRING str) {
@@ -305,7 +306,7 @@ STRING ___path() {
   return ret;
 }
 
-void ___stack() {
+LIST ___stack() {
   // We can't return the list or this function is inlined and it breaks.
   copy_stack_blocks();
   LIST lst = NULL;
@@ -317,7 +318,7 @@ void ___stack() {
     tmp -> next = lst;
     lst = tmp;
   }
-  push(OBJ(list, lst));
+  return lst;
 }
 
 void ___write(STRING filename, cognate_object obj) {
@@ -348,9 +349,10 @@ TABLE ___insert(STRING key, cognate_object value, TABLE tab) {
   return NULL; // TODO
 }
 
-void ___get(STRING key, TABLE tab) {
+ANY ___get(STRING key, TABLE tab) {
   (void)key;
   (void)tab; // TODO
+  return OBJ(number,42);
 }
 
 LIST ___values(TABLE tab) {

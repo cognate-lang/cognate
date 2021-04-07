@@ -26,14 +26,14 @@ Drop, Do;
 
 Let Y be ();
 
-Define Foo as
+Define Foo1 as
 (
   Let X;
   Set Y to (Print X);
 );
 
 
-Foo 'PASS: Implicit block copying with mutation', Let Z be Y;
-Foo 'FAIL: Implicit block copying with mutation', Let W be Y;
+Foo1 'PASS: Implicit block copying with mutation', Let Z be Y;
+Foo1 'FAIL: Implicit block copying with mutation', Let W be Y;
 Do Z;
 Drop W;

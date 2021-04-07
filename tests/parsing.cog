@@ -1,11 +1,12 @@
-~ Let A be 4; ~ ~~ Let A be 4;
-Let A be 5; ~~ Let A be 4; ~ Let A be 4; ~
-~ Let A be 4; ~ ~~ Let A be 4;
+~~ ~ Let A be 4; ~ ~~ Let A be 4;
+~~ Let A be 5; ~~ Let A be 4; ~ Let A be 4; ~
+~~ ~ Let A be 4; ~ ~~ Let A be 4;
 
-Print If (A, == 5)
-  'PASS: Comments'
-else
-  'FAIL: Comments';
+~~ Block comments are TODO
+~~ Print If (A, == 5)
+~~  'PASS: Comments'
+~~ else
+~~  'FAIL: Comments';
 
 ~~ The syntax highlighter can't handle this next bit.
 
@@ -19,7 +20,7 @@ Print If (B, == 5)
 else
   'FAIL: Strings';
 
-Print If (1.5, == Divisor by 2 of 3)
+Print If (1.5, == / 2 3)
   'PASS: Floating point numbers'
 else
   'FAIL: Floating point numbers';

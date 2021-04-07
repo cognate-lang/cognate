@@ -5,7 +5,7 @@ Print If (Foo, == Foo)
 else
   'FAIL: Comparing equal lists';
 
-Print If (Foo, != List (5,6,7))
+Print If (Foo, /= List (5,6,7))
   'PASS: Comparing unequal lists'
 else
   'FAIL: Comparing unequal lists';
@@ -15,7 +15,7 @@ Print If (List (), == List ())
 else
   'FAIL: Comparing two empty lists';
 
-Print If (List (), != Foo)
+Print If (List (), /= Foo)
   'PASS: An empty list to a non-empty list'
 else
   'FAIL: An empty list to a non-empty list';
