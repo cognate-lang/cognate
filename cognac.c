@@ -92,6 +92,7 @@ decl_list* predefine(ast* tree, decl_list* defs)
    * Predefining means that functions can reference functions not yet declared.
    * However, these functions cannot be called until declaration.
    * TODO Function calls to guaranteed undeclared functions should be compile errors.
+   * TODO Shadowed functions generate multiple PREDEFINE calls, causing errors.
    */
   for (; tree; tree=tree->next)
   {
