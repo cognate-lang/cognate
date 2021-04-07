@@ -5,63 +5,41 @@
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
 ANY	cognate.h	/^typedef struct cognate_object ANY;$/;"	t	typeref:struct:cognate_object
-BEGIN	compiler/lex.yy.c	117;"	d	file:
 BEGIN	lex.yy.c	117;"	d	file:
 BOOLEAN	cognate.h	/^typedef _Bool BOOLEAN;$/;"	t
 CALL	cognate.h	71;"	d
 CHECK	cognate.h	70;"	d
 DEFINE	cognate.h	76;"	d
-DEFINE	compiler/parser.tab.h	/^    DEFINE = 262,                  \/* DEFINE  *\/$/;"	e	enum:yytokentype
 DEFINE	parser.tab.h	/^    DEFINE = 262,                  \/* DEFINE  *\/$/;"	e	enum:yytokentype
 DOIF	cognate.h	110;"	d
-ECHO	compiler/lex.yy.c	609;"	d	file:
 ECHO	lex.yy.c	606;"	d	file:
-ENTRY	compiler/parser.y	/^ENTRY:$/;"	l
 ENTRY	parser.y	/^ENTRY:$/;"	l
-EOB_ACT_CONTINUE_SCAN	compiler/lex.yy.c	161;"	d	file:
 EOB_ACT_CONTINUE_SCAN	lex.yy.c	161;"	d	file:
-EOB_ACT_END_OF_FILE	compiler/lex.yy.c	162;"	d	file:
 EOB_ACT_END_OF_FILE	lex.yy.c	162;"	d	file:
-EOB_ACT_LAST_MATCH	compiler/lex.yy.c	163;"	d	file:
 EOB_ACT_LAST_MATCH	lex.yy.c	163;"	d	file:
-EXIT_SUCCESS	compiler/parser.tab.c	332;"	d	file:
-EXIT_SUCCESS	compiler/parser.tab.c	360;"	d	file:
 EXIT_SUCCESS	parser.tab.c	332;"	d	file:
 EXIT_SUCCESS	parser.tab.c	360;"	d	file:
-EXPRESSION	compiler/parser.y	/^EXPRESSION:$/;"	l
 EXPRESSION	parser.y	/^EXPRESSION:$/;"	l
-FLEXINT_H	compiler/lex.yy.c	29;"	d	file:
 FLEXINT_H	lex.yy.c	29;"	d	file:
-FLEX_BETA	compiler/lex.yy.c	13;"	d	file:
 FLEX_BETA	lex.yy.c	13;"	d	file:
-FLEX_SCANNER	compiler/lex.yy.c	8;"	d	file:
 FLEX_SCANNER	lex.yy.c	8;"	d	file:
 GC_MALLOC	cognate.h	100;"	d
 GC_NEW	cognate.h	104;"	d
 GC_REALLOC	cognate.h	101;"	d
 GC_STRDUP	cognate.h	103;"	d
 GC_STRNDUP	cognate.h	102;"	d
-IDENTIFIER	compiler/parser.tab.h	/^    IDENTIFIER = 259,              \/* IDENTIFIER  *\/$/;"	e	enum:yytokentype
 IDENTIFIER	parser.tab.h	/^    IDENTIFIER = 259,              \/* IDENTIFIER  *\/$/;"	e	enum:yytokentype
-INITIAL	compiler/lex.yy.c	514;"	d	file:
 INITIAL	lex.yy.c	511;"	d	file:
 INITIAL_LIST_SIZE	cognate.h	10;"	d
 INITIAL_READ_SIZE	cognate.h	9;"	d
 INITIAL_TABLE_SIZE	cognate.h	11;"	d
-INT16_MAX	compiler/lex.yy.c	71;"	d	file:
 INT16_MAX	lex.yy.c	71;"	d	file:
-INT16_MIN	compiler/lex.yy.c	62;"	d	file:
 INT16_MIN	lex.yy.c	62;"	d	file:
-INT32_MAX	compiler/lex.yy.c	74;"	d	file:
 INT32_MAX	lex.yy.c	74;"	d	file:
-INT32_MIN	compiler/lex.yy.c	65;"	d	file:
 INT32_MIN	lex.yy.c	65;"	d	file:
-INT8_MAX	compiler/lex.yy.c	68;"	d	file:
 INT8_MAX	lex.yy.c	68;"	d	file:
-INT8_MIN	compiler/lex.yy.c	59;"	d	file:
 INT8_MIN	lex.yy.c	59;"	d	file:
 LET	cognate.h	80;"	d
-LET	compiler/parser.tab.h	/^    LET = 263,                     \/* LET  *\/$/;"	e	enum:yytokentype
 LET	parser.tab.h	/^    LET = 263,                     \/* LET  *\/$/;"	e	enum:yytokentype
 LIST	cognate.h	/^typedef const struct cognate_list* LIST;$/;"	t	typeref:struct:cognate_list
 LIST_GROWTH_FACTOR	cognate.h	12;"	d
@@ -69,383 +47,199 @@ MAKE_BLOCK	cognate.h	92;"	d
 MAX_TABLE_TRIES	cognate.h	8;"	d
 NOTHING	cognate.h	/^  NOTHING = 0, \/\/ Must be zero because of calloc()$/;"	e	enum:cognate_type
 NUMBER	cognate.h	/^typedef double NUMBER;$/;"	t
-NUMBER	compiler/parser.tab.h	/^    NUMBER = 258,                  \/* NUMBER  *\/$/;"	e	enum:yytokentype
 NUMBER	parser.tab.h	/^    NUMBER = 258,                  \/* NUMBER  *\/$/;"	e	enum:yytokentype
 OBJ	cognate.h	68;"	d
 PREDEFINE	cognate.h	73;"	d
 PROGRAM	cognate.h	84;"	d
 REDEFINE	cognate.h	78;"	d
-REJECT	compiler/lex.yy.c	503;"	d	file:
 REJECT	lex.yy.c	500;"	d	file:
 SET	cognate.h	82;"	d
-SET	compiler/parser.tab.h	/^    SET = 264                      \/* SET  *\/$/;"	e	enum:yytokentype
 SET	parser.tab.h	/^    SET = 264                      \/* SET  *\/$/;"	e	enum:yytokentype
-SIZE_MAX	compiler/lex.yy.c	87;"	d	file:
 SIZE_MAX	lex.yy.c	87;"	d	file:
 STACK_MARGIN_KB	cognate.h	13;"	d
-STATEMENT	compiler/parser.y	/^STATEMENT:$/;"	l
 STATEMENT	parser.y	/^STATEMENT:$/;"	l
 STRING	cognate.h	/^typedef const char* STRING;$/;"	t
-STRING	compiler/parser.tab.h	/^    STRING = 260,                  \/* STRING  *\/$/;"	e	enum:yytokentype
 STRING	parser.tab.h	/^    STRING = 260,                  \/* STRING  *\/$/;"	e	enum:yytokentype
-SYMBOL	compiler/parser.tab.h	/^    SYMBOL = 261,                  \/* SYMBOL  *\/$/;"	e	enum:yytokentype
 SYMBOL	parser.tab.h	/^    SYMBOL = 261,                  \/* SYMBOL  *\/$/;"	e	enum:yytokentype
 TABLE	cognate.h	/^typedef _Bool TABLE;$/;"	t
-TOKEN	compiler/parser.y	/^TOKEN: \/\/ Tokens should be converted to ast nodes in the lexer.$/;"	l
 TOKEN	parser.y	/^TOKEN: \/\/ Tokens should be converted to ast nodes in the lexer.$/;"	l
-UINT16_MAX	compiler/lex.yy.c	80;"	d	file:
 UINT16_MAX	lex.yy.c	80;"	d	file:
-UINT32_MAX	compiler/lex.yy.c	83;"	d	file:
 UINT32_MAX	lex.yy.c	83;"	d	file:
-UINT8_MAX	compiler/lex.yy.c	77;"	d	file:
 UINT8_MAX	lex.yy.c	77;"	d	file:
-UINT_LEAST16_MAX	compiler/parser.tab.c	170;"	d	file:
-UINT_LEAST16_MAX	compiler/parser.tab.c	172;"	d	file:
 UINT_LEAST16_MAX	parser.tab.c	170;"	d	file:
 UINT_LEAST16_MAX	parser.tab.c	172;"	d	file:
-UINT_LEAST8_MAX	compiler/parser.tab.c	169;"	d	file:
-UINT_LEAST8_MAX	compiler/parser.tab.c	171;"	d	file:
 UINT_LEAST8_MAX	parser.tab.c	169;"	d	file:
 UINT_LEAST8_MAX	parser.tab.c	171;"	d	file:
 VAR	cognate.h	69;"	d
-YYABORT	compiler/parser.tab.c	625;"	d	file:
 YYABORT	parser.tab.c	625;"	d	file:
-YYACCEPT	compiler/parser.tab.c	624;"	d	file:
 YYACCEPT	parser.tab.c	624;"	d	file:
-YYBACKUP	compiler/parser.tab.c	631;"	d	file:
 YYBACKUP	parser.tab.c	631;"	d	file:
-YYBISON	compiler/parser.tab.c	49;"	d	file:
 YYBISON	parser.tab.c	49;"	d	file:
-YYBISON_VERSION	compiler/parser.tab.c	52;"	d	file:
 YYBISON_VERSION	parser.tab.c	52;"	d	file:
-YYCOPY	compiler/parser.tab.c	423;"	d	file:
-YYCOPY	compiler/parser.tab.c	426;"	d	file:
 YYCOPY	parser.tab.c	423;"	d	file:
 YYCOPY	parser.tab.c	426;"	d	file:
-YYCOPY_NEEDED	compiler/parser.tab.c	398;"	d	file:
 YYCOPY_NEEDED	parser.tab.c	398;"	d	file:
-YYDEBUG	compiler/parser.tab.h	42;"	d
 YYDEBUG	parser.tab.h	42;"	d
-YYDPRINTF	compiler/parser.tab.c	661;"	d	file:
-YYDPRINTF	compiler/parser.tab.c	780;"	d	file:
 YYDPRINTF	parser.tab.c	661;"	d	file:
 YYDPRINTF	parser.tab.c	780;"	d	file:
-YYEMPTY	compiler/parser.tab.h	/^    YYEMPTY = -2,$/;"	e	enum:yytokentype
 YYEMPTY	parser.tab.h	/^    YYEMPTY = -2,$/;"	e	enum:yytokentype
-YYENOMEM	compiler/parser.tab.c	/^enum { YYENOMEM = -2 };$/;"	e	enum:__anon1	file:
-YYENOMEM	parser.tab.c	/^enum { YYENOMEM = -2 };$/;"	e	enum:__anon11	file:
-YYEOF	compiler/parser.tab.h	/^    YYEOF = 0,                     \/* "end of file"  *\/$/;"	e	enum:yytokentype
+YYENOMEM	parser.tab.c	/^enum { YYENOMEM = -2 };$/;"	e	enum:__anon6	file:
 YYEOF	parser.tab.h	/^    YYEOF = 0,                     \/* "end of file"  *\/$/;"	e	enum:yytokentype
-YYERRCODE	compiler/parser.tab.c	650;"	d	file:
 YYERRCODE	parser.tab.c	650;"	d	file:
-YYERROR	compiler/parser.tab.c	626;"	d	file:
 YYERROR	parser.tab.c	626;"	d	file:
-YYFINAL	compiler/parser.tab.c	439;"	d	file:
 YYFINAL	parser.tab.c	439;"	d	file:
-YYFPRINTF	compiler/parser.tab.c	658;"	d	file:
 YYFPRINTF	parser.tab.c	658;"	d	file:
-YYFREE	compiler/parser.tab.c	370;"	d	file:
 YYFREE	parser.tab.c	370;"	d	file:
-YYINITDEPTH	compiler/parser.tab.c	789;"	d	file:
 YYINITDEPTH	parser.tab.c	789;"	d	file:
-YYLAST	compiler/parser.tab.c	441;"	d	file:
 YYLAST	parser.tab.c	441;"	d	file:
-YYMALLOC	compiler/parser.tab.c	364;"	d	file:
 YYMALLOC	parser.tab.c	364;"	d	file:
-YYMAXDEPTH	compiler/parser.tab.c	800;"	d	file:
 YYMAXDEPTH	parser.tab.c	800;"	d	file:
-YYMAXUTOK	compiler/parser.tab.c	453;"	d	file:
 YYMAXUTOK	parser.tab.c	453;"	d	file:
-YYNNTS	compiler/parser.tab.c	446;"	d	file:
 YYNNTS	parser.tab.c	446;"	d	file:
-YYNRULES	compiler/parser.tab.c	448;"	d	file:
 YYNRULES	parser.tab.c	448;"	d	file:
-YYNSTATES	compiler/parser.tab.c	450;"	d	file:
 YYNSTATES	parser.tab.c	450;"	d	file:
-YYNTOKENS	compiler/parser.tab.c	444;"	d	file:
 YYNTOKENS	parser.tab.c	444;"	d	file:
-YYPACT_NINF	compiler/parser.tab.c	539;"	d	file:
 YYPACT_NINF	parser.tab.c	539;"	d	file:
-YYPOPSTACK	compiler/parser.tab.c	876;"	d	file:
 YYPOPSTACK	parser.tab.c	876;"	d	file:
-YYPTRDIFF_MAXIMUM	compiler/parser.tab.c	200;"	d	file:
-YYPTRDIFF_MAXIMUM	compiler/parser.tab.c	206;"	d	file:
-YYPTRDIFF_MAXIMUM	compiler/parser.tab.c	209;"	d	file:
 YYPTRDIFF_MAXIMUM	parser.tab.c	200;"	d	file:
 YYPTRDIFF_MAXIMUM	parser.tab.c	206;"	d	file:
 YYPTRDIFF_MAXIMUM	parser.tab.c	209;"	d	file:
-YYPTRDIFF_T	compiler/parser.tab.c	199;"	d	file:
-YYPTRDIFF_T	compiler/parser.tab.c	205;"	d	file:
-YYPTRDIFF_T	compiler/parser.tab.c	208;"	d	file:
 YYPTRDIFF_T	parser.tab.c	199;"	d	file:
 YYPTRDIFF_T	parser.tab.c	205;"	d	file:
 YYPTRDIFF_T	parser.tab.c	208;"	d	file:
-YYPULL	compiler/parser.tab.c	64;"	d	file:
 YYPULL	parser.tab.c	64;"	d	file:
-YYPURE	compiler/parser.tab.c	58;"	d	file:
 YYPURE	parser.tab.c	58;"	d	file:
-YYPUSH	compiler/parser.tab.c	61;"	d	file:
 YYPUSH	parser.tab.c	61;"	d	file:
-YYRECOVERING	compiler/parser.tab.c	629;"	d	file:
 YYRECOVERING	parser.tab.c	629;"	d	file:
-YYSIZEOF	compiler/parser.tab.c	232;"	d	file:
 YYSIZEOF	parser.tab.c	232;"	d	file:
-YYSIZE_MAXIMUM	compiler/parser.tab.c	226;"	d	file:
 YYSIZE_MAXIMUM	parser.tab.c	226;"	d	file:
-YYSIZE_T	compiler/parser.tab.c	215;"	d	file:
-YYSIZE_T	compiler/parser.tab.c	217;"	d	file:
-YYSIZE_T	compiler/parser.tab.c	220;"	d	file:
-YYSIZE_T	compiler/parser.tab.c	222;"	d	file:
 YYSIZE_T	parser.tab.c	215;"	d	file:
 YYSIZE_T	parser.tab.c	217;"	d	file:
 YYSIZE_T	parser.tab.c	220;"	d	file:
 YYSIZE_T	parser.tab.c	222;"	d	file:
-YYSKELETON_NAME	compiler/parser.tab.c	55;"	d	file:
 YYSKELETON_NAME	parser.tab.c	55;"	d	file:
-YYSTACK_ALLOC	compiler/parser.tab.c	318;"	d	file:
-YYSTACK_ALLOC	compiler/parser.tab.c	322;"	d	file:
-YYSTACK_ALLOC	compiler/parser.tab.c	327;"	d	file:
-YYSTACK_ALLOC	compiler/parser.tab.c	350;"	d	file:
 YYSTACK_ALLOC	parser.tab.c	318;"	d	file:
 YYSTACK_ALLOC	parser.tab.c	322;"	d	file:
 YYSTACK_ALLOC	parser.tab.c	327;"	d	file:
 YYSTACK_ALLOC	parser.tab.c	350;"	d	file:
-YYSTACK_ALLOC_MAXIMUM	compiler/parser.tab.c	347;"	d	file:
-YYSTACK_ALLOC_MAXIMUM	compiler/parser.tab.c	353;"	d	file:
 YYSTACK_ALLOC_MAXIMUM	parser.tab.c	347;"	d	file:
 YYSTACK_ALLOC_MAXIMUM	parser.tab.c	353;"	d	file:
-YYSTACK_BYTES	compiler/parser.tab.c	394;"	d	file:
 YYSTACK_BYTES	parser.tab.c	394;"	d	file:
-YYSTACK_FREE	compiler/parser.tab.c	341;"	d	file:
-YYSTACK_FREE	compiler/parser.tab.c	351;"	d	file:
 YYSTACK_FREE	parser.tab.c	341;"	d	file:
 YYSTACK_FREE	parser.tab.c	351;"	d	file:
-YYSTACK_GAP_MAXIMUM	compiler/parser.tab.c	390;"	d	file:
 YYSTACK_GAP_MAXIMUM	parser.tab.c	390;"	d	file:
-YYSTACK_RELOCATE	compiler/parser.tab.c	405;"	d	file:
 YYSTACK_RELOCATE	parser.tab.c	405;"	d	file:
-YYSTATE	compiler/lex.yy.c	123;"	d	file:
 YYSTATE	lex.yy.c	123;"	d	file:
-YYSTYPE	compiler/parser.tab.h	/^typedef union YYSTYPE YYSTYPE;$/;"	t	typeref:union:YYSTYPE
-YYSTYPE	compiler/parser.tab.h	/^union YYSTYPE$/;"	u
 YYSTYPE	parser.tab.h	/^typedef union YYSTYPE YYSTYPE;$/;"	t	typeref:union:YYSTYPE
 YYSTYPE	parser.tab.h	/^union YYSTYPE$/;"	u
-YYSTYPE_IS_DECLARED	compiler/parser.tab.h	83;"	d
 YYSTYPE_IS_DECLARED	parser.tab.h	83;"	d
-YYSTYPE_IS_TRIVIAL	compiler/parser.tab.h	82;"	d
 YYSTYPE_IS_TRIVIAL	parser.tab.h	82;"	d
-YYSYMBOL_10_	compiler/parser.tab.c	/^  YYSYMBOL_10_ = 10,                       \/* ';'  *\/$/;"	e	enum:yysymbol_kind_t	file:
 YYSYMBOL_10_	parser.tab.c	/^  YYSYMBOL_10_ = 10,                       \/* ';'  *\/$/;"	e	enum:yysymbol_kind_t	file:
-YYSYMBOL_11_	compiler/parser.tab.c	/^  YYSYMBOL_11_ = 11,                       \/* '('  *\/$/;"	e	enum:yysymbol_kind_t	file:
 YYSYMBOL_11_	parser.tab.c	/^  YYSYMBOL_11_ = 11,                       \/* '('  *\/$/;"	e	enum:yysymbol_kind_t	file:
-YYSYMBOL_12_	compiler/parser.tab.c	/^  YYSYMBOL_12_ = 12,                       \/* ')'  *\/$/;"	e	enum:yysymbol_kind_t	file:
 YYSYMBOL_12_	parser.tab.c	/^  YYSYMBOL_12_ = 12,                       \/* ')'  *\/$/;"	e	enum:yysymbol_kind_t	file:
-YYSYMBOL_DEFINE	compiler/parser.tab.c	/^  YYSYMBOL_DEFINE = 7,                     \/* DEFINE  *\/$/;"	e	enum:yysymbol_kind_t	file:
 YYSYMBOL_DEFINE	parser.tab.c	/^  YYSYMBOL_DEFINE = 7,                     \/* DEFINE  *\/$/;"	e	enum:yysymbol_kind_t	file:
-YYSYMBOL_ENTRY	compiler/parser.tab.c	/^  YYSYMBOL_ENTRY = 14,                     \/* ENTRY  *\/$/;"	e	enum:yysymbol_kind_t	file:
 YYSYMBOL_ENTRY	parser.tab.c	/^  YYSYMBOL_ENTRY = 14,                     \/* ENTRY  *\/$/;"	e	enum:yysymbol_kind_t	file:
-YYSYMBOL_EXPRESSION	compiler/parser.tab.c	/^  YYSYMBOL_EXPRESSION = 15,                \/* EXPRESSION  *\/$/;"	e	enum:yysymbol_kind_t	file:
 YYSYMBOL_EXPRESSION	parser.tab.c	/^  YYSYMBOL_EXPRESSION = 15,                \/* EXPRESSION  *\/$/;"	e	enum:yysymbol_kind_t	file:
-YYSYMBOL_IDENTIFIER	compiler/parser.tab.c	/^  YYSYMBOL_IDENTIFIER = 4,                 \/* IDENTIFIER  *\/$/;"	e	enum:yysymbol_kind_t	file:
 YYSYMBOL_IDENTIFIER	parser.tab.c	/^  YYSYMBOL_IDENTIFIER = 4,                 \/* IDENTIFIER  *\/$/;"	e	enum:yysymbol_kind_t	file:
-YYSYMBOL_LET	compiler/parser.tab.c	/^  YYSYMBOL_LET = 8,                        \/* LET  *\/$/;"	e	enum:yysymbol_kind_t	file:
 YYSYMBOL_LET	parser.tab.c	/^  YYSYMBOL_LET = 8,                        \/* LET  *\/$/;"	e	enum:yysymbol_kind_t	file:
-YYSYMBOL_NUMBER	compiler/parser.tab.c	/^  YYSYMBOL_NUMBER = 3,                     \/* NUMBER  *\/$/;"	e	enum:yysymbol_kind_t	file:
 YYSYMBOL_NUMBER	parser.tab.c	/^  YYSYMBOL_NUMBER = 3,                     \/* NUMBER  *\/$/;"	e	enum:yysymbol_kind_t	file:
-YYSYMBOL_SET	compiler/parser.tab.c	/^  YYSYMBOL_SET = 9,                        \/* SET  *\/$/;"	e	enum:yysymbol_kind_t	file:
 YYSYMBOL_SET	parser.tab.c	/^  YYSYMBOL_SET = 9,                        \/* SET  *\/$/;"	e	enum:yysymbol_kind_t	file:
-YYSYMBOL_STATEMENT	compiler/parser.tab.c	/^  YYSYMBOL_STATEMENT = 16,                 \/* STATEMENT  *\/$/;"	e	enum:yysymbol_kind_t	file:
 YYSYMBOL_STATEMENT	parser.tab.c	/^  YYSYMBOL_STATEMENT = 16,                 \/* STATEMENT  *\/$/;"	e	enum:yysymbol_kind_t	file:
-YYSYMBOL_STRING	compiler/parser.tab.c	/^  YYSYMBOL_STRING = 5,                     \/* STRING  *\/$/;"	e	enum:yysymbol_kind_t	file:
 YYSYMBOL_STRING	parser.tab.c	/^  YYSYMBOL_STRING = 5,                     \/* STRING  *\/$/;"	e	enum:yysymbol_kind_t	file:
-YYSYMBOL_SYMBOL	compiler/parser.tab.c	/^  YYSYMBOL_SYMBOL = 6,                     \/* SYMBOL  *\/$/;"	e	enum:yysymbol_kind_t	file:
 YYSYMBOL_SYMBOL	parser.tab.c	/^  YYSYMBOL_SYMBOL = 6,                     \/* SYMBOL  *\/$/;"	e	enum:yysymbol_kind_t	file:
-YYSYMBOL_TOKEN	compiler/parser.tab.c	/^  YYSYMBOL_TOKEN = 17                      \/* TOKEN  *\/$/;"	e	enum:yysymbol_kind_t	file:
 YYSYMBOL_TOKEN	parser.tab.c	/^  YYSYMBOL_TOKEN = 17                      \/* TOKEN  *\/$/;"	e	enum:yysymbol_kind_t	file:
-YYSYMBOL_YYACCEPT	compiler/parser.tab.c	/^  YYSYMBOL_YYACCEPT = 13,                  \/* $accept  *\/$/;"	e	enum:yysymbol_kind_t	file:
 YYSYMBOL_YYACCEPT	parser.tab.c	/^  YYSYMBOL_YYACCEPT = 13,                  \/* $accept  *\/$/;"	e	enum:yysymbol_kind_t	file:
-YYSYMBOL_YYEMPTY	compiler/parser.tab.c	/^  YYSYMBOL_YYEMPTY = -2,$/;"	e	enum:yysymbol_kind_t	file:
 YYSYMBOL_YYEMPTY	parser.tab.c	/^  YYSYMBOL_YYEMPTY = -2,$/;"	e	enum:yysymbol_kind_t	file:
-YYSYMBOL_YYEOF	compiler/parser.tab.c	/^  YYSYMBOL_YYEOF = 0,                      \/* "end of file"  *\/$/;"	e	enum:yysymbol_kind_t	file:
 YYSYMBOL_YYEOF	parser.tab.c	/^  YYSYMBOL_YYEOF = 0,                      \/* "end of file"  *\/$/;"	e	enum:yysymbol_kind_t	file:
-YYSYMBOL_YYUNDEF	compiler/parser.tab.c	/^  YYSYMBOL_YYUNDEF = 2,                    \/* "invalid token"  *\/$/;"	e	enum:yysymbol_kind_t	file:
 YYSYMBOL_YYUNDEF	parser.tab.c	/^  YYSYMBOL_YYUNDEF = 2,                    \/* "invalid token"  *\/$/;"	e	enum:yysymbol_kind_t	file:
-YYSYMBOL_YYerror	compiler/parser.tab.c	/^  YYSYMBOL_YYerror = 1,                    \/* error  *\/$/;"	e	enum:yysymbol_kind_t	file:
 YYSYMBOL_YYerror	parser.tab.c	/^  YYSYMBOL_YYerror = 1,                    \/* error  *\/$/;"	e	enum:yysymbol_kind_t	file:
-YYTABLES_NAME	compiler/lex.yy.c	1945;"	d	file:
 YYTABLES_NAME	lex.yy.c	1937;"	d	file:
-YYTABLE_NINF	compiler/parser.tab.c	544;"	d	file:
 YYTABLE_NINF	parser.tab.c	544;"	d	file:
-YYTOKENTYPE	compiler/parser.tab.h	50;"	d
 YYTOKENTYPE	parser.tab.h	50;"	d
-YYTRANSLATE	compiler/parser.tab.c	458;"	d	file:
 YYTRANSLATE	parser.tab.c	458;"	d	file:
-YYUNDEF	compiler/parser.tab.h	/^    YYUNDEF = 257,                 \/* "invalid token"  *\/$/;"	e	enum:yytokentype
 YYUNDEF	parser.tab.h	/^    YYUNDEF = 257,                 \/* "invalid token"  *\/$/;"	e	enum:yytokentype
-YY_	compiler/parser.tab.c	245;"	d	file:
-YY_	compiler/parser.tab.c	249;"	d	file:
 YY_	parser.tab.c	245;"	d	file:
 YY_	parser.tab.c	249;"	d	file:
-YY_ACCESSING_SYMBOL	compiler/parser.tab.c	506;"	d	file:
 YY_ACCESSING_SYMBOL	parser.tab.c	506;"	d	file:
-YY_ASSERT	compiler/parser.tab.c	309;"	d	file:
 YY_ASSERT	parser.tab.c	309;"	d	file:
-YY_ATTRIBUTE_PURE	compiler/parser.tab.c	256;"	d	file:
-YY_ATTRIBUTE_PURE	compiler/parser.tab.c	258;"	d	file:
 YY_ATTRIBUTE_PURE	parser.tab.c	256;"	d	file:
 YY_ATTRIBUTE_PURE	parser.tab.c	258;"	d	file:
-YY_ATTRIBUTE_UNUSED	compiler/parser.tab.c	264;"	d	file:
-YY_ATTRIBUTE_UNUSED	compiler/parser.tab.c	266;"	d	file:
 YY_ATTRIBUTE_UNUSED	parser.tab.c	264;"	d	file:
 YY_ATTRIBUTE_UNUSED	parser.tab.c	266;"	d	file:
-YY_AT_BOL	compiler/lex.yy.c	341;"	d	file:
 YY_AT_BOL	lex.yy.c	341;"	d	file:
-YY_BREAK	compiler/lex.yy.c	688;"	d	file:
 YY_BREAK	lex.yy.c	685;"	d	file:
-YY_BUFFER_EOF_PENDING	compiler/lex.yy.c	262;"	d	file:
 YY_BUFFER_EOF_PENDING	lex.yy.c	262;"	d	file:
-YY_BUFFER_NEW	compiler/lex.yy.c	250;"	d	file:
 YY_BUFFER_NEW	lex.yy.c	250;"	d	file:
-YY_BUFFER_NORMAL	compiler/lex.yy.c	251;"	d	file:
 YY_BUFFER_NORMAL	lex.yy.c	251;"	d	file:
-YY_BUFFER_STATE	compiler/lex.yy.c	/^typedef struct yy_buffer_state *YY_BUFFER_STATE;$/;"	t	typeref:struct:yy_buffer_state	file:
 YY_BUFFER_STATE	lex.yy.c	/^typedef struct yy_buffer_state *YY_BUFFER_STATE;$/;"	t	typeref:struct:yy_buffer_state	file:
-YY_BUF_SIZE	compiler/lex.yy.c	137;"	d	file:
-YY_BUF_SIZE	compiler/lex.yy.c	139;"	d	file:
 YY_BUF_SIZE	lex.yy.c	137;"	d	file:
 YY_BUF_SIZE	lex.yy.c	139;"	d	file:
-YY_CAST	compiler/parser.tab.c	78;"	d	file:
-YY_CAST	compiler/parser.tab.c	81;"	d	file:
 YY_CAST	parser.tab.c	78;"	d	file:
 YY_CAST	parser.tab.c	81;"	d	file:
-YY_CHAR	compiler/lex.yy.c	/^typedef flex_uint8_t YY_CHAR;$/;"	t	file:
 YY_CHAR	lex.yy.c	/^typedef flex_uint8_t YY_CHAR;$/;"	t	file:
-YY_CURRENT_BUFFER	compiler/lex.yy.c	278;"	d	file:
 YY_CURRENT_BUFFER	lex.yy.c	278;"	d	file:
-YY_CURRENT_BUFFER_LVALUE	compiler/lex.yy.c	284;"	d	file:
 YY_CURRENT_BUFFER_LVALUE	lex.yy.c	284;"	d	file:
-YY_DECL	compiler/lex.yy.c	676;"	d	file:
 YY_DECL	lex.yy.c	673;"	d	file:
-YY_DECL_IS_OURS	compiler/lex.yy.c	672;"	d	file:
 YY_DECL_IS_OURS	lex.yy.c	669;"	d	file:
-YY_DO_BEFORE_ACTION	compiler/lex.yy.c	367;"	d	file:
 YY_DO_BEFORE_ACTION	lex.yy.c	367;"	d	file:
-YY_END_OF_BUFFER	compiler/lex.yy.c	374;"	d	file:
 YY_END_OF_BUFFER	lex.yy.c	374;"	d	file:
-YY_END_OF_BUFFER_CHAR	compiler/lex.yy.c	128;"	d	file:
 YY_END_OF_BUFFER_CHAR	lex.yy.c	128;"	d	file:
-YY_EXIT_FAILURE	compiler/lex.yy.c	1738;"	d	file:
 YY_EXIT_FAILURE	lex.yy.c	1730;"	d	file:
-YY_EXTRA_TYPE	compiler/lex.yy.c	525;"	d	file:
 YY_EXTRA_TYPE	lex.yy.c	522;"	d	file:
-YY_FATAL_ERROR	compiler/lex.yy.c	663;"	d	file:
 YY_FATAL_ERROR	lex.yy.c	660;"	d	file:
-YY_FLEX_MAJOR_VERSION	compiler/lex.yy.c	9;"	d	file:
 YY_FLEX_MAJOR_VERSION	lex.yy.c	9;"	d	file:
-YY_FLEX_MINOR_VERSION	compiler/lex.yy.c	10;"	d	file:
 YY_FLEX_MINOR_VERSION	lex.yy.c	10;"	d	file:
-YY_FLEX_SUBMINOR_VERSION	compiler/lex.yy.c	11;"	d	file:
 YY_FLEX_SUBMINOR_VERSION	lex.yy.c	11;"	d	file:
-YY_FLUSH_BUFFER	compiler/lex.yy.c	312;"	d	file:
 YY_FLUSH_BUFFER	lex.yy.c	312;"	d	file:
-YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN	compiler/parser.tab.c	279;"	d	file:
-YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN	compiler/parser.tab.c	289;"	d	file:
 YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN	parser.tab.c	279;"	d	file:
 YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN	parser.tab.c	289;"	d	file:
-YY_IGNORE_MAYBE_UNINITIALIZED_END	compiler/parser.tab.c	283;"	d	file:
-YY_IGNORE_MAYBE_UNINITIALIZED_END	compiler/parser.tab.c	290;"	d	file:
 YY_IGNORE_MAYBE_UNINITIALIZED_END	parser.tab.c	283;"	d	file:
 YY_IGNORE_MAYBE_UNINITIALIZED_END	parser.tab.c	290;"	d	file:
-YY_IGNORE_USELESS_CAST_BEGIN	compiler/parser.tab.c	297;"	d	file:
-YY_IGNORE_USELESS_CAST_BEGIN	compiler/parser.tab.c	304;"	d	file:
 YY_IGNORE_USELESS_CAST_BEGIN	parser.tab.c	297;"	d	file:
 YY_IGNORE_USELESS_CAST_BEGIN	parser.tab.c	304;"	d	file:
-YY_IGNORE_USELESS_CAST_END	compiler/parser.tab.c	300;"	d	file:
-YY_IGNORE_USELESS_CAST_END	compiler/parser.tab.c	305;"	d	file:
 YY_IGNORE_USELESS_CAST_END	parser.tab.c	300;"	d	file:
 YY_IGNORE_USELESS_CAST_END	parser.tab.c	305;"	d	file:
-YY_INITIAL_VALUE	compiler/parser.tab.c	286;"	d	file:
-YY_INITIAL_VALUE	compiler/parser.tab.c	293;"	d	file:
 YY_INITIAL_VALUE	parser.tab.c	286;"	d	file:
 YY_INITIAL_VALUE	parser.tab.c	293;"	d	file:
-YY_INPUT	compiler/lex.yy.c	616;"	d	file:
 YY_INPUT	lex.yy.c	613;"	d	file:
-YY_INT_ALIGNED	compiler/lex.yy.c	4;"	d	file:
 YY_INT_ALIGNED	lex.yy.c	4;"	d	file:
-YY_LESS_LINENO	compiler/lex.yy.c	172;"	d	file:
 YY_LESS_LINENO	lex.yy.c	172;"	d	file:
-YY_LINENO_REWIND_TO	compiler/lex.yy.c	179;"	d	file:
 YY_LINENO_REWIND_TO	lex.yy.c	179;"	d	file:
-YY_LOCATION_PRINT	compiler/parser.tab.c	669;"	d	file:
 YY_LOCATION_PRINT	parser.tab.c	669;"	d	file:
-YY_MORE_ADJ	compiler/lex.yy.c	505;"	d	file:
 YY_MORE_ADJ	lex.yy.c	502;"	d	file:
-YY_NEW_FILE	compiler/lex.yy.c	127;"	d	file:
 YY_NEW_FILE	lex.yy.c	127;"	d	file:
-YY_NULL	compiler/lex.yy.c	106;"	d	file:
 YY_NULL	lex.yy.c	106;"	d	file:
-YY_NULLPTR	compiler/parser.tab.c	88;"	d	file:
-YY_NULLPTR	compiler/parser.tab.c	90;"	d	file:
-YY_NULLPTR	compiler/parser.tab.c	93;"	d	file:
 YY_NULLPTR	parser.tab.c	88;"	d	file:
 YY_NULLPTR	parser.tab.c	90;"	d	file:
 YY_NULLPTR	parser.tab.c	93;"	d	file:
-YY_NUM_RULES	compiler/lex.yy.c	373;"	d	file:
 YY_NUM_RULES	lex.yy.c	373;"	d	file:
-YY_READ_BUF_SIZE	compiler/lex.yy.c	598;"	d	file:
-YY_READ_BUF_SIZE	compiler/lex.yy.c	600;"	d	file:
 YY_READ_BUF_SIZE	lex.yy.c	595;"	d	file:
 YY_READ_BUF_SIZE	lex.yy.c	597;"	d	file:
-YY_REDUCE_PRINT	compiler/parser.tab.c	770;"	d	file:
-YY_REDUCE_PRINT	compiler/parser.tab.c	783;"	d	file:
 YY_REDUCE_PRINT	parser.tab.c	770;"	d	file:
 YY_REDUCE_PRINT	parser.tab.c	783;"	d	file:
-YY_REINTERPRET_CAST	compiler/parser.tab.c	79;"	d	file:
-YY_REINTERPRET_CAST	compiler/parser.tab.c	82;"	d	file:
 YY_REINTERPRET_CAST	parser.tab.c	79;"	d	file:
 YY_REINTERPRET_CAST	parser.tab.c	82;"	d	file:
-YY_RESTORE_YY_MORE_OFFSET	compiler/lex.yy.c	506;"	d	file:
 YY_RESTORE_YY_MORE_OFFSET	lex.yy.c	503;"	d	file:
-YY_RULE_SETUP	compiler/lex.yy.c	691;"	d	file:
 YY_RULE_SETUP	lex.yy.c	688;"	d	file:
-YY_SC_TO_UI	compiler/lex.yy.c	111;"	d	file:
 YY_SC_TO_UI	lex.yy.c	111;"	d	file:
-YY_STACK_PRINT	compiler/parser.tab.c	739;"	d	file:
-YY_STACK_PRINT	compiler/parser.tab.c	782;"	d	file:
 YY_STACK_PRINT	parser.tab.c	739;"	d	file:
 YY_STACK_PRINT	parser.tab.c	782;"	d	file:
-YY_START	compiler/lex.yy.c	122;"	d	file:
 YY_START	lex.yy.c	122;"	d	file:
-YY_START_STACK_INCR	compiler/lex.yy.c	658;"	d	file:
 YY_START_STACK_INCR	lex.yy.c	655;"	d	file:
-YY_STATE_BUF_SIZE	compiler/lex.yy.c	145;"	d	file:
 YY_STATE_BUF_SIZE	lex.yy.c	145;"	d	file:
-YY_STATE_EOF	compiler/lex.yy.c	125;"	d	file:
 YY_STATE_EOF	lex.yy.c	125;"	d	file:
-YY_STDINT_H	compiler/parser.tab.c	138;"	d	file:
 YY_STDINT_H	parser.tab.c	138;"	d	file:
-YY_STRUCT_YY_BUFFER_STATE	compiler/lex.yy.c	203;"	d	file:
 YY_STRUCT_YY_BUFFER_STATE	lex.yy.c	203;"	d	file:
-YY_SYMBOL_PRINT	compiler/parser.tab.c	673;"	d	file:
-YY_SYMBOL_PRINT	compiler/parser.tab.c	781;"	d	file:
 YY_SYMBOL_PRINT	parser.tab.c	673;"	d	file:
 YY_SYMBOL_PRINT	parser.tab.c	781;"	d	file:
-YY_TYPEDEF_YY_BUFFER_STATE	compiler/lex.yy.c	148;"	d	file:
 YY_TYPEDEF_YY_BUFFER_STATE	lex.yy.c	148;"	d	file:
-YY_TYPEDEF_YY_SIZE_T	compiler/lex.yy.c	153;"	d	file:
 YY_TYPEDEF_YY_SIZE_T	lex.yy.c	153;"	d	file:
-YY_USE	compiler/parser.tab.c	272;"	d	file:
-YY_USE	compiler/parser.tab.c	274;"	d	file:
 YY_USE	parser.tab.c	272;"	d	file:
 YY_USE	parser.tab.c	274;"	d	file:
-YY_USER_ACTION	compiler/lex.yy.c	683;"	d	file:
 YY_USER_ACTION	lex.yy.c	680;"	d	file:
-YY_YY_PARSER_TAB_H_INCLUDED	compiler/parser.tab.h	39;"	d
 YY_YY_PARSER_TAB_H_INCLUDED	parser.tab.h	39;"	d
-YYerror	compiler/parser.tab.h	/^    YYerror = 256,                 \/* error  *\/$/;"	e	enum:yytokentype
 YYerror	parser.tab.h	/^    YYerror = 256,                 \/* error  *\/$/;"	e	enum:yytokentype
 _GNU_SOURCE	cognate.h	3;"	d
-__STDC_LIMIT_MACROS	compiler/lex.yy.c	39;"	d	file:
 __STDC_LIMIT_MACROS	lex.yy.c	39;"	d	file:
 ___ADD	functions.c	/^NUMBER ___ADD(NUMBER a, NUMBER b)      { return a + b; }$/;"	f
 ___DIV	functions.c	/^NUMBER ___DIV(NUMBER a, NUMBER b)   { if likely(a) return b \/ a; throw_error("Division of %.14g by zero", b); }$/;"	f
@@ -511,41 +305,29 @@ ___values	functions.c	/^LIST ___values(TABLE tab) {$/;"	f
 ___while	functions.c	/^void ___while(BLOCK cond, BLOCK body) {$/;"	f
 ___write	functions.c	/^void ___write(STRING filename, cognate_object obj) {$/;"	f
 alloc_ast	cognac.c	/^ast* alloc_ast(token_type type, value_type val_type, void* data, size_t line, ast* next)$/;"	f
-alloc_ast	compiler/cognac.c	/^ast* alloc_ast(token_type type, value_type val_type, void* data, size_t line, ast* next)$/;"	f
-alloca	compiler/parser.tab.c	325;"	d	file:
 alloca	parser.tab.c	325;"	d	file:
-any	cognac.h	/^typedef enum {block, string, number, symbol, boolean, list, any} value_type;$/;"	e	enum:__anon6
-any	compiler/cognac.h	/^typedef enum {block, string, number, symbol, boolean, any} value_type;$/;"	e	enum:__anon2
+any	cognac.h	/^typedef enum {block, string, number, symbol, boolean, list, any} value_type;$/;"	e	enum:__anon1
 argc	cognac.h	/^  unsigned short argc;$/;"	m	struct:decl_list
-argc	compiler/cognac.h	/^  unsigned short argc;$/;"	m	struct:decl_list
 args	cognac.h	/^  value_type args[3];$/;"	m	struct:decl_list
-args	compiler/cognac.h	/^  value_type args[3];$/;"	m	struct:decl_list
 ast	cognac.h	/^typedef struct ast$/;"	s
 ast	cognac.h	/^} ast;$/;"	t	typeref:struct:ast
-ast	compiler/cognac.h	/^typedef struct ast$/;"	s
-ast	compiler/cognac.h	/^} ast;$/;"	t	typeref:struct:ast
 ast_join	cognac.c	/^ast* ast_join(ast* a, ast* b)$/;"	f
-ast_join	compiler/cognac.c	/^ast* ast_join(ast* a, ast* b)$/;"	f
 bar	tests/block.c	/^PROGRAM(PREDEFINE(baz);PREDEFINE(bar);PREDEFINE(foo);PREDEFINE(foo1);BLOCK r0=MAKE_BLOCK(LET(z,pop());{BLOCK r1=MAKE_BLOCK(ANY r2=VAR(z);push(r2);CALL(do,(CHECK(block,pop()))););push(OBJ(block, r1));});DEFINE(baz,r0);{BLOCK r3=MAKE_BLOCK(LET(y,pop());{BLOCK r4=MAKE_BLOCK(ANY r5=VAR(y);push(r5);CALL(do,(CHECK(block,pop()))););push(OBJ(block, r4));CALL(baz,());});DEFINE(bar,r3);{BLOCK r6=MAKE_BLOCK(LET(x,pop());{BLOCK r7=MAKE_BLOCK(ANY r8=VAR(x);CALL(print,(r8)););push(OBJ(block, r7));CALL(bar,());});DEFINE(foo,r6);{STRING r9="PASS: Implicit block copying";push(OBJ(string, r9));CALL(foo,());STRING r10="FAIL: Implicit block copying";push(OBJ(string, r10));CALL(foo,());CALL(drop,(pop()));CALL(do,(CHECK(block,pop())));BLOCK r11=MAKE_BLOCK();LET(y,OBJ(block,r11));{BLOCK r12=MAKE_BLOCK(LET(x,pop());{BLOCK r13=MAKE_BLOCK(ANY r14=VAR(x);CALL(print,(r14)););});DEFINE(foo1,r12);{STRING r15="PASS: Implicit block copying with mutation";push(OBJ(string, r15));CALL(foo1,());BLOCK r16=VAR(y).block;LET(z,OBJ(block,r16));{STRING r17="FAIL: Implicit block copying with mutation";push(OBJ(string, r17));CALL(foo1,());BLOCK r18=VAR(y).block;LET(w,OBJ(block,r18));{BLOCK r19=VAR(z).block;push(OBJ(block, r19));CALL(do,(CHECK(block,pop())));BLOCK r20=VAR(w).block;CALL(drop,(OBJ(block,r20)));}}}}}}})$/;"	v
 blk_alloc	runtime.c	/^void* blk_alloc(const unsigned long size, __attribute__((unused)) const _Bool _, __attribute__((unused)) const _Bool __) { return GC_MALLOC(size); }$/;"	f
 blk_gc_assign_strong	runtime.c	/^void blk_gc_assign_strong(void* src, void** dst) { *dst = src; }$/;"	f
 blk_gc_assign_weak	runtime.c	/^void blk_gc_assign_weak(const void* src, void* dst) { *(void**)dst = (void*)src; }$/;"	f
 blk_gc_memmove	runtime.c	/^void blk_gc_memmove(void* dst, void* src, unsigned long size) { memmove(dst, src, size); }$/;"	f
 blk_setHasRefcount	runtime.c	/^void blk_setHasRefcount(__attribute__((unused)) const void* _, __attribute__((unused)) const _Bool __) {}$/;"	f
-block	cognac.h	/^typedef enum {block, string, number, symbol, boolean, list, any} value_type;$/;"	e	enum:__anon6
-block	cognate.h	/^    BLOCK   block;     \/\/ 64bit block pointer$/;"	m	union:cognate_object::__anon10
+block	cognac.h	/^typedef enum {block, string, number, symbol, boolean, list, any} value_type;$/;"	e	enum:__anon1
+block	cognate.h	/^    BLOCK   block;     \/\/ 64bit block pointer$/;"	m	union:cognate_object::__anon5
 block	cognate.h	/^  block   = (1 << 5),$/;"	e	enum:cognate_type
-block	compiler/cognac.h	/^typedef enum {block, string, number, symbol, boolean, any} value_type;$/;"	e	enum:__anon2
-boolean	cognac.h	/^typedef enum {block, string, number, symbol, boolean, list, any} value_type;$/;"	e	enum:__anon6
-boolean	cognate.h	/^    BOOLEAN boolean;   \/\/ 1bit bool$/;"	m	union:cognate_object::__anon10
+boolean	cognac.h	/^typedef enum {block, string, number, symbol, boolean, list, any} value_type;$/;"	e	enum:__anon1
+boolean	cognate.h	/^    BOOLEAN boolean;   \/\/ 1bit bool$/;"	m	union:cognate_object::__anon5
 boolean	cognate.h	/^  boolean = (1 << 0),$/;"	e	enum:cognate_type
-boolean	compiler/cognac.h	/^typedef enum {block, string, number, symbol, boolean, any} value_type;$/;"	e	enum:__anon2
 builtins	cognac.c	/^decl_list* builtins(void)$/;"	f
-builtins	compiler/cognac.c	/^decl_list* builtins(void)$/;"	f
 check_function_stack_size	runtime.c	/^void check_function_stack_size()$/;"	f
 check_type	runtime.c	/^cognate_object check_type(cognate_type expected_type, cognate_object object)$/;"	f
-child	cognac.h	/^    struct ast* child;$/;"	m	union:ast::__anon9	typeref:struct:ast::__anon9::ast
-child	compiler/cognac.h	/^    struct ast* child;$/;"	m	union:ast::__anon5	typeref:struct:ast::__anon5::ast
+child	cognac.h	/^    struct ast* child;$/;"	m	union:ast::__anon4	typeref:struct:ast::__anon4::ast
 cleanup	runtime.c	/^void cleanup()$/;"	f
 cmdline_parameters	runtime.c	/^LIST cmdline_parameters = NULL;$/;"	v
 cognate_list	cognate.h	/^typedef struct cognate_list$/;"	s
@@ -560,109 +342,70 @@ compare_lists	runtime.c	/^_Bool compare_lists(LIST lst1, LIST lst2)$/;"	f
 compare_objects	runtime.c	/^_Bool compare_objects(cognate_object ob1, cognate_object ob2)$/;"	f
 compare_tables	runtime.c	/^_Bool compare_tables(TABLE tab1, TABLE tab2)$/;"	f
 compile	cognac.c	/^void compile(ast* tree, reg_list* registers, decl_list* defs)$/;"	f
-compile	compiler/cognac.c	/^void compile(ast* tree, reg_list* registers, decl_list* defs)$/;"	f
 copy_if_block	runtime.c	/^cognate_object copy_if_block(cognate_object obj)$/;"	f
 copy_stack_blocks	runtime.c	/^void copy_stack_blocks()$/;"	f
 current_function_name	runtime.c	/^const char *current_function_name = NULL;$/;"	v
 current_register	cognac.c	/^size_t current_register = 0;$/;"	v
-current_register	compiler/cognac.c	/^size_t current_register = 0;$/;"	v
 current_word_name	runtime.c	/^const char *current_word_name     = NULL;$/;"	v
-data	cognac.h	/^    void* data;$/;"	m	union:ast::__anon9
-data	compiler/cognac.h	/^    void* data;$/;"	m	union:ast::__anon5
+data	cognac.h	/^    void* data;$/;"	m	union:ast::__anon4
 decl_list	cognac.h	/^typedef struct decl_list$/;"	s
 decl_list	cognac.h	/^} decl_list;$/;"	t	typeref:struct:decl_list
-decl_list	compiler/cognac.h	/^typedef struct decl_list$/;"	s
-decl_list	compiler/cognac.h	/^} decl_list;$/;"	t	typeref:struct:decl_list
-decl_type	cognac.h	/^typedef enum {func, var} decl_type;$/;"	t	typeref:enum:__anon8
-decl_type	compiler/cognac.h	/^typedef enum {func, var} decl_type;$/;"	t	typeref:enum:__anon4
-define	cognac.h	/^typedef enum {identifier, value, define, let, set} token_type;$/;"	e	enum:__anon7
-define	compiler/cognac.h	/^typedef enum {identifier, value, define, let, set} token_type;$/;"	e	enum:__anon3
+decl_type	cognac.h	/^typedef enum {func, var} decl_type;$/;"	t	typeref:enum:__anon3
+define	cognac.h	/^typedef enum {identifier, value, define, let, set} token_type;$/;"	e	enum:__anon2
 expand_stack	runtime.c	/^void expand_stack()$/;"	f
-flex_int16_t	compiler/lex.yy.c	/^typedef int16_t flex_int16_t;$/;"	t	file:
-flex_int16_t	compiler/lex.yy.c	/^typedef short int flex_int16_t;$/;"	t	file:
 flex_int16_t	lex.yy.c	/^typedef int16_t flex_int16_t;$/;"	t	file:
 flex_int16_t	lex.yy.c	/^typedef short int flex_int16_t;$/;"	t	file:
-flex_int32_t	compiler/lex.yy.c	/^typedef int flex_int32_t;$/;"	t	file:
-flex_int32_t	compiler/lex.yy.c	/^typedef int32_t flex_int32_t;$/;"	t	file:
 flex_int32_t	lex.yy.c	/^typedef int flex_int32_t;$/;"	t	file:
 flex_int32_t	lex.yy.c	/^typedef int32_t flex_int32_t;$/;"	t	file:
-flex_int8_t	compiler/lex.yy.c	/^typedef int8_t flex_int8_t;$/;"	t	file:
-flex_int8_t	compiler/lex.yy.c	/^typedef signed char flex_int8_t;$/;"	t	file:
 flex_int8_t	lex.yy.c	/^typedef int8_t flex_int8_t;$/;"	t	file:
 flex_int8_t	lex.yy.c	/^typedef signed char flex_int8_t;$/;"	t	file:
-flex_uint16_t	compiler/lex.yy.c	/^typedef uint16_t flex_uint16_t;$/;"	t	file:
-flex_uint16_t	compiler/lex.yy.c	/^typedef unsigned short int flex_uint16_t;$/;"	t	file:
 flex_uint16_t	lex.yy.c	/^typedef uint16_t flex_uint16_t;$/;"	t	file:
 flex_uint16_t	lex.yy.c	/^typedef unsigned short int flex_uint16_t;$/;"	t	file:
-flex_uint32_t	compiler/lex.yy.c	/^typedef uint32_t flex_uint32_t;$/;"	t	file:
-flex_uint32_t	compiler/lex.yy.c	/^typedef unsigned int flex_uint32_t;$/;"	t	file:
 flex_uint32_t	lex.yy.c	/^typedef uint32_t flex_uint32_t;$/;"	t	file:
 flex_uint32_t	lex.yy.c	/^typedef unsigned int flex_uint32_t;$/;"	t	file:
-flex_uint8_t	compiler/lex.yy.c	/^typedef uint8_t flex_uint8_t;$/;"	t	file:
-flex_uint8_t	compiler/lex.yy.c	/^typedef unsigned char flex_uint8_t; $/;"	t	file:
 flex_uint8_t	lex.yy.c	/^typedef uint8_t flex_uint8_t;$/;"	t	file:
 flex_uint8_t	lex.yy.c	/^typedef unsigned char flex_uint8_t; $/;"	t	file:
 flush_registers_to_stack	cognac.c	/^void flush_registers_to_stack(reg_list* registers)$/;"	f
-flush_registers_to_stack	compiler/cognac.c	/^void flush_registers_to_stack(reg_list* registers)$/;"	f
 foo	tests/block.c	/^PROGRAM(PREDEFINE(baz);PREDEFINE(bar);PREDEFINE(foo);PREDEFINE(foo1);BLOCK r0=MAKE_BLOCK(LET(z,pop());{BLOCK r1=MAKE_BLOCK(ANY r2=VAR(z);push(r2);CALL(do,(CHECK(block,pop()))););push(OBJ(block, r1));});DEFINE(baz,r0);{BLOCK r3=MAKE_BLOCK(LET(y,pop());{BLOCK r4=MAKE_BLOCK(ANY r5=VAR(y);push(r5);CALL(do,(CHECK(block,pop()))););push(OBJ(block, r4));CALL(baz,());});DEFINE(bar,r3);{BLOCK r6=MAKE_BLOCK(LET(x,pop());{BLOCK r7=MAKE_BLOCK(ANY r8=VAR(x);CALL(print,(r8)););push(OBJ(block, r7));CALL(bar,());});DEFINE(foo,r6);{STRING r9="PASS: Implicit block copying";push(OBJ(string, r9));CALL(foo,());STRING r10="FAIL: Implicit block copying";push(OBJ(string, r10));CALL(foo,());CALL(drop,(pop()));CALL(do,(CHECK(block,pop())));BLOCK r11=MAKE_BLOCK();LET(y,OBJ(block,r11));{BLOCK r12=MAKE_BLOCK(LET(x,pop());{BLOCK r13=MAKE_BLOCK(ANY r14=VAR(x);CALL(print,(r14)););});DEFINE(foo1,r12);{STRING r15="PASS: Implicit block copying with mutation";push(OBJ(string, r15));CALL(foo1,());BLOCK r16=VAR(y).block;LET(z,OBJ(block,r16));{STRING r17="FAIL: Implicit block copying with mutation";push(OBJ(string, r17));CALL(foo1,());BLOCK r18=VAR(y).block;LET(w,OBJ(block,r18));{BLOCK r19=VAR(z).block;push(OBJ(block, r19));CALL(do,(CHECK(block,pop())));BLOCK r20=VAR(w).block;CALL(drop,(OBJ(block,r20)));}}}}}}})$/;"	v
 foo1	tests/block.c	/^PROGRAM(PREDEFINE(baz);PREDEFINE(bar);PREDEFINE(foo);PREDEFINE(foo1);BLOCK r0=MAKE_BLOCK(LET(z,pop());{BLOCK r1=MAKE_BLOCK(ANY r2=VAR(z);push(r2);CALL(do,(CHECK(block,pop()))););push(OBJ(block, r1));});DEFINE(baz,r0);{BLOCK r3=MAKE_BLOCK(LET(y,pop());{BLOCK r4=MAKE_BLOCK(ANY r5=VAR(y);push(r5);CALL(do,(CHECK(block,pop()))););push(OBJ(block, r4));CALL(baz,());});DEFINE(bar,r3);{BLOCK r6=MAKE_BLOCK(LET(x,pop());{BLOCK r7=MAKE_BLOCK(ANY r8=VAR(x);CALL(print,(r8)););push(OBJ(block, r7));CALL(bar,());});DEFINE(foo,r6);{STRING r9="PASS: Implicit block copying";push(OBJ(string, r9));CALL(foo,());STRING r10="FAIL: Implicit block copying";push(OBJ(string, r10));CALL(foo,());CALL(drop,(pop()));CALL(do,(CHECK(block,pop())));BLOCK r11=MAKE_BLOCK();LET(y,OBJ(block,r11));{BLOCK r12=MAKE_BLOCK(LET(x,pop());{BLOCK r13=MAKE_BLOCK(ANY r14=VAR(x);CALL(print,(r14)););});DEFINE(foo1,r12);{STRING r15="PASS: Implicit block copying with mutation";push(OBJ(string, r15));CALL(foo1,());BLOCK r16=VAR(y).block;LET(z,OBJ(block,r16));{STRING r17="FAIL: Implicit block copying with mutation";push(OBJ(string, r17));CALL(foo1,());BLOCK r18=VAR(y).block;LET(w,OBJ(block,r18));{BLOCK r19=VAR(z).block;push(OBJ(block, r19));CALL(do,(CHECK(block,pop())));BLOCK r20=VAR(w).block;CALL(drop,(OBJ(block,r20)));}}}}}}})$/;"	v
 full_ast	cognac.c	/^ast* full_ast;$/;"	v
-full_ast	compiler/cognac.c	/^ast* full_ast;$/;"	v
-func	cognac.h	/^typedef enum {func, var} decl_type;$/;"	e	enum:__anon8
-func	compiler/cognac.h	/^typedef enum {func, var} decl_type;$/;"	e	enum:__anon4
+func	cognac.h	/^typedef enum {func, var} decl_type;$/;"	e	enum:__anon3
 function_stack_start	runtime.c	/^static const char *function_stack_start;$/;"	v	file:
 function_stack_top	runtime.c	/^static const char *function_stack_top;$/;"	v	file:
 handle_error_signal	runtime.c	/^void handle_error_signal(int sig)$/;"	f
-heap_block	cognate.h	/^    BLOCK   heap_block;\/\/ 64bit block pointer$/;"	m	union:cognate_object::__anon10
+heap_block	cognate.h	/^    BLOCK   heap_block;\/\/ 64bit block pointer$/;"	m	union:cognate_object::__anon5
 heap_block	cognate.h	/^  heap_block = (1 << 5) | (1 << 6)$/;"	e	enum:cognate_type
 id	cognac.h	/^  size_t id;$/;"	m	struct:reg_list
-id	compiler/cognac.h	/^  size_t id;$/;"	m	struct:reg_list
-identifier	cognac.h	/^typedef enum {identifier, value, define, let, set} token_type;$/;"	e	enum:__anon7
-identifier	compiler/cognac.h	/^typedef enum {identifier, value, define, let, set} token_type;$/;"	e	enum:__anon3
+identifier	cognac.h	/^typedef enum {identifier, value, define, let, set} token_type;$/;"	e	enum:__anon2
 init	runtime.c	/^void init(int argc, char** argv)$/;"	f
 init_stack	runtime.c	/^void init_stack()$/;"	f
 lc	cognac.c	/^char* lc(char* s)$/;"	f
-lc	compiler/cognac.c	/^char* lc(char* s)$/;"	f
-let	cognac.h	/^typedef enum {identifier, value, define, let, set} token_type;$/;"	e	enum:__anon7
-let	compiler/cognac.h	/^typedef enum {identifier, value, define, let, set} token_type;$/;"	e	enum:__anon3
+let	cognac.h	/^typedef enum {identifier, value, define, let, set} token_type;$/;"	e	enum:__anon2
 likely	cognate.h	108;"	d
 line	cognac.h	/^  size_t line;$/;"	m	struct:ast
-line	compiler/cognac.h	/^  size_t line;$/;"	m	struct:ast
-list	cognac.h	/^typedef enum {block, string, number, symbol, boolean, list, any} value_type;$/;"	e	enum:__anon6
-list	cognate.h	/^    LIST    list;      \/\/ 64bit list pointer$/;"	m	union:cognate_object::__anon10
+list	cognac.h	/^typedef enum {block, string, number, symbol, boolean, list, any} value_type;$/;"	e	enum:__anon1
+list	cognate.h	/^    LIST    list;      \/\/ 64bit list pointer$/;"	m	union:cognate_object::__anon5
 list	cognate.h	/^  list    = (1 << 3),$/;"	e	enum:cognate_type
 lookup_type	runtime.c	/^const char* lookup_type(cognate_type type)$/;"	f
 lookup_word	cognac.c	/^decl_list lookup_word(char* name, decl_list* defs)$/;"	f
-lookup_word	compiler/cognac.c	/^decl_list lookup_word(char* name, decl_list* defs)$/;"	f
 main	cognac.c	/^int main(int argc, char** argv)$/;"	f
-main	compiler/cognac.c	/^int main(int argc, char** argv)$/;"	f
 mbstrlen	functions.c	/^static size_t mbstrlen(const char* str)$/;"	f	file:
 mut	cognac.h	/^  _Bool mut;$/;"	m	struct:decl_list
-mut	compiler/cognac.h	/^  _Bool mut;$/;"	m	struct:decl_list
 name	cognac.h	/^  char* name;$/;"	m	struct:decl_list
-name	compiler/cognac.h	/^  char* name;$/;"	m	struct:decl_list
 needs_stack	cognac.h	/^  _Bool needs_stack;$/;"	m	struct:decl_list
-needs_stack	compiler/cognac.h	/^  _Bool needs_stack;$/;"	m	struct:decl_list
 next	cognac.h	/^  struct ast* next;$/;"	m	struct:ast	typeref:struct:ast::ast
 next	cognac.h	/^  struct decl_list* next;$/;"	m	struct:decl_list	typeref:struct:decl_list::decl_list
 next	cognac.h	/^  struct reg_list* next;$/;"	m	struct:reg_list	typeref:struct:reg_list::reg_list
 next	cognate.h	/^  LIST next;$/;"	m	struct:cognate_list
-next	compiler/cognac.h	/^  struct ast* next;$/;"	m	struct:ast	typeref:struct:ast::ast
-next	compiler/cognac.h	/^  struct decl_list* next;$/;"	m	struct:decl_list	typeref:struct:decl_list::decl_list
-next	compiler/cognac.h	/^  struct reg_list* next;$/;"	m	struct:reg_list	typeref:struct:reg_list::reg_list
-number	cognac.h	/^typedef enum {block, string, number, symbol, boolean, list, any} value_type;$/;"	e	enum:__anon6
-number	cognate.h	/^    NUMBER  number;    \/\/ 64bit float$/;"	m	union:cognate_object::__anon10
+number	cognac.h	/^typedef enum {block, string, number, symbol, boolean, list, any} value_type;$/;"	e	enum:__anon1
+number	cognate.h	/^    NUMBER  number;    \/\/ 64bit float$/;"	m	union:cognate_object::__anon5
 number	cognate.h	/^  number  = (1 << 2),$/;"	e	enum:cognate_type
-number	compiler/cognac.h	/^typedef enum {block, string, number, symbol, boolean, any} value_type;$/;"	e	enum:__anon2
 object	cognate.h	/^  cognate_object object;$/;"	m	struct:cognate_list
 outfile	cognac.c	/^FILE* outfile;$/;"	v
-outfile	compiler/cognac.c	/^FILE* outfile;$/;"	v
 peek	runtime.c	/^cognate_object peek()$/;"	f
 pop	runtime.c	/^cognate_object pop()$/;"	f
 predefine	cognac.c	/^decl_list* predefine(ast* tree, decl_list* defs)$/;"	f
-predefine	compiler/cognac.c	/^decl_list* predefine(ast* tree, decl_list* defs)$/;"	f
 print_cognate_string	cognac.c	/^void print_cognate_string(char* str)$/;"	f
-print_cognate_string	compiler/cognac.c	/^void print_cognate_string(char* str)$/;"	f
 print_object	runtime.c	/^void print_object (const cognate_object object, FILE* out, const _Bool quotes)$/;"	f
 push	runtime.c	/^void push(cognate_object object)$/;"	f
 r0	examples/fib.c	/^PROGRAM(PREDEFINE(fib);BLOCK r0=MAKE_BLOCK(LET(n,pop());{BLOCK r1=MAKE_BLOCK(ANY r2=VAR(n);NUMBER r3=2;NUMBER r4=CALL(SUB,(r3,CHECK(number,r2)));push(OBJ(number, r4));CALL(fib,());ANY r5=VAR(n);NUMBER r6=1;NUMBER r7=CALL(SUB,(r6,CHECK(number,r5)));push(OBJ(number, r7));CALL(fib,());NUMBER r8=CALL(ADD,(CHECK(number,pop()),CHECK(number,pop())));push(OBJ(number, r8)););BLOCK r9=MAKE_BLOCK(NUMBER r10=1;push(OBJ(number, r10)););BLOCK r11=MAKE_BLOCK(ANY r12=VAR(n);NUMBER r13=2;BOOLEAN r14=CALL(LT,(r13,CHECK(number,r12)));push(OBJ(boolean, r14)););push(OBJ(block, r1));push(OBJ(block, r9));push(OBJ(block, r11));ANY r15=CALL(if,(CHECK(block,pop()),pop(),pop()));push(r15);CALL(do,(CHECK(block,pop())));});DEFINE(fib,r0);{STRING r16="The 35th fibonacci number is... ";CALL(put,(OBJ(string,r16)));NUMBER r17=35;push(OBJ(number, r17));CALL(fib,());CALL(print,(pop()));})$/;"	v
@@ -710,346 +453,180 @@ r8	tests/.booleans.c	/^PROGRAM(CALL(if,(MAKE_BLOCK(push(OBJ(boolean,CALL(equal,(
 r9	tests/.booleans.c	/^PROGRAM(CALL(if,(MAKE_BLOCK(push(OBJ(boolean,CALL(equal,(OBJ(boolean,CALL(true,())),OBJ(boolean,CALL(both,(CALL(true,()),CALL(true,()))))))));),OBJ(string,"PASS: True AND True"),OBJ(string,"FAIL: True AND True")));const cognate_object r0 = pop();CALL(print,(r0));CALL(if,(MAKE_BLOCK(push(OBJ(boolean,CALL(equal,(OBJ(boolean,CALL(false,())),OBJ(boolean,CALL(both,(CALL(true,()),CALL(false,()))))))));),OBJ(string,"PASS: True AND False"),OBJ(string,"FAIL: True AND False")));const cognate_object r1 = pop();CALL(print,(r1));CALL(if,(MAKE_BLOCK(push(OBJ(boolean,CALL(equal,(OBJ(boolean,CALL(false,())),OBJ(boolean,CALL(both,(CALL(false,()),CALL(true,()))))))));),OBJ(string,"PASS: False AND True"),OBJ(string,"FAIL: False AND True")));const cognate_object r2 = pop();CALL(print,(r2));CALL(if,(MAKE_BLOCK(push(OBJ(boolean,CALL(equal,(OBJ(boolean,CALL(false,())),OBJ(boolean,CALL(both,(CALL(false,()),CALL(false,()))))))));),OBJ(string,"PASS: False AND False"),OBJ(string,"FAIL: False AND False")));const cognate_object r3 = pop();CALL(print,(r3));CALL(if,(MAKE_BLOCK(push(OBJ(boolean,CALL(equal,(OBJ(boolean,CALL(true,())),OBJ(boolean,CALL(either,(CALL(true,()),CALL(true,()))))))));),OBJ(string,"PASS: True OR True"),OBJ(string,"FAIL: True OR True")));const cognate_object r4 = pop();CALL(print,(r4));CALL(if,(MAKE_BLOCK(push(OBJ(boolean,CALL(equal,(OBJ(boolean,CALL(true,())),OBJ(boolean,CALL(either,(CALL(true,()),CALL(false,()))))))));),OBJ(string,"PASS: True OR False"),OBJ(string,"FAIL: True OR False")));const cognate_object r5 = pop();CALL(print,(r5));CALL(if,(MAKE_BLOCK(push(OBJ(boolean,CALL(equal,(OBJ(boolean,CALL(true,())),OBJ(boolean,CALL(either,(CALL(false,()),CALL(true,()))))))));),OBJ(string,"PASS: False OR True"),OBJ(string,"FAIL: False OR True")));const cognate_object r6 = pop();CALL(print,(r6));CALL(if,(MAKE_BLOCK(push(OBJ(boolean,CALL(equal,(OBJ(boolean,CALL(false,())),OBJ(boolean,CALL(either,(CALL(false,()),CALL(false,()))))))));),OBJ(string,"PASS: False OR False"),OBJ(string,"FAIL: False OR False")));const cognate_object r7 = pop();CALL(print,(r7));CALL(if,(MAKE_BLOCK(push(OBJ(boolean,CALL(equal,(OBJ(boolean,CALL(false,())),OBJ(boolean,CALL(one_of,(CALL(true,()),CALL(true,()))))))));),OBJ(string,"PASS: True XOR True"),OBJ(string,"FAIL: True XOR True")));const cognate_object r8 = pop();CALL(print,(r8));CALL(if,(MAKE_BLOCK(push(OBJ(boolean,CALL(equal,(OBJ(boolean,CALL(true,())),OBJ(boolean,CALL(one_of,(CALL(true,()),CALL(false,()))))))));),OBJ(string,"PASS: True XOR False"),OBJ(string,"FAIL: True XOR False")));const cognate_object r9 = pop();CALL(print,(r9));CALL(if,(MAKE_BLOCK(push(OBJ(boolean,CALL(equal,(OBJ(boolean,CALL(true,())),OBJ(boolean,CALL(one_of,(CALL(false,()),CALL(true,()))))))));),OBJ(string,"PASS: False XOR True"),OBJ(string,"FAIL: False XOR True")));const cognate_object r10 = pop();CALL(print,(r10));CALL(if,(MAKE_BLOCK(push(OBJ(boolean,CALL(equal,(OBJ(boolean,CALL(false,())),OBJ(boolean,CALL(one_of,(CALL(false,()),CALL(false,()))))))));),OBJ(string,"PASS: False XOR False"),OBJ(string,"FAIL: False XOR False")));const cognate_object r11 = pop();CALL(print,(r11));CALL(if,(MAKE_BLOCK(push(OBJ(boolean,CALL(equal,(OBJ(boolean,CALL(false,())),OBJ(boolean,CALL(not,(CALL(true,()))))))));),OBJ(string,"PASS: NOT True"),OBJ(string,"PASS: NOT True")));const cognate_object r12 = pop();CALL(print,(r12));CALL(if,(MAKE_BLOCK(push(OBJ(boolean,CALL(equal,(OBJ(boolean,CALL(true,())),OBJ(boolean,CALL(not,(CALL(false,()))))))));),OBJ(string,"PASS: NOT False"),OBJ(string,"PASS: NOT False")));const cognate_object r13 = pop();CALL(print,(r13));)$/;"	v
 reg_list	cognac.h	/^typedef struct reg_list$/;"	s
 reg_list	cognac.h	/^} reg_list;$/;"	t	typeref:struct:reg_list
-reg_list	compiler/cognac.h	/^typedef struct reg_list$/;"	s
-reg_list	compiler/cognac.h	/^} reg_list;$/;"	t	typeref:struct:reg_list
 ret	cognac.h	/^  value_type ret;$/;"	m	struct:decl_list
-ret	compiler/cognac.h	/^  value_type ret;$/;"	m	struct:decl_list
 rets	cognac.h	/^  _Bool rets;$/;"	m	struct:decl_list
-rets	compiler/cognac.h	/^  _Bool rets;$/;"	m	struct:decl_list
-set	cognac.h	/^typedef enum {identifier, value, define, let, set} token_type;$/;"	e	enum:__anon7
-set	compiler/cognac.h	/^typedef enum {identifier, value, define, let, set} token_type;$/;"	e	enum:__anon3
+set	cognac.h	/^typedef enum {identifier, value, define, let, set} token_type;$/;"	e	enum:__anon2
 set_current_word_name	runtime.c	/^void set_current_word_name(const char* const name) { current_word_name=name; } \/\/ Need this to avoid unsequenced evaluation error.$/;"	f
-short	compiler/parser.tab.c	127;"	d	file:
 short	parser.tab.c	127;"	d	file:
 size	cognate.h	/^  ptrdiff_t       size; \/\/ Allocated size of the stack.$/;"	m	struct:cognate_stack
 stack	runtime.c	/^cognate_stack stack;$/;"	v
 start	cognate.h	/^  cognate_object* restrict start; \/\/ Pointer to start.$/;"	m	struct:cognate_stack
-string	cognac.h	/^typedef enum {block, string, number, symbol, boolean, list, any} value_type;$/;"	e	enum:__anon6
-string	cognate.h	/^    STRING  string;    \/\/ 64bit string pointer$/;"	m	union:cognate_object::__anon10
+string	cognac.h	/^typedef enum {block, string, number, symbol, boolean, list, any} value_type;$/;"	e	enum:__anon1
+string	cognate.h	/^    STRING  string;    \/\/ 64bit string pointer$/;"	m	union:cognate_object::__anon5
 string	cognate.h	/^  string  = (1 << 1),$/;"	e	enum:cognate_type
-string	compiler/cognac.h	/^typedef enum {block, string, number, symbol, boolean, any} value_type;$/;"	e	enum:__anon2
-symbol	cognac.h	/^typedef enum {block, string, number, symbol, boolean, list, any} value_type;$/;"	e	enum:__anon6
-symbol	compiler/cognac.h	/^typedef enum {block, string, number, symbol, boolean, any} value_type;$/;"	e	enum:__anon2
-table	cognate.h	/^    TABLE   table;     \/\/ TODO$/;"	m	union:cognate_object::__anon10
+symbol	cognac.h	/^typedef enum {block, string, number, symbol, boolean, list, any} value_type;$/;"	e	enum:__anon1
+table	cognate.h	/^    TABLE   table;     \/\/ TODO$/;"	m	union:cognate_object::__anon5
 table	cognate.h	/^  table   = (1 << 4),$/;"	e	enum:cognate_type
-text	cognac.h	/^    char* text;$/;"	m	union:ast::__anon9
-text	compiler/cognac.h	/^    char* text;$/;"	m	union:ast::__anon5
-text	compiler/parser.tab.h	/^  char* text;$/;"	m	union:YYSTYPE
+text	cognac.h	/^    char* text;$/;"	m	union:ast::__anon4
 text	parser.tab.h	/^  char* text;$/;"	m	union:YYSTYPE
 throw_error	runtime.c	/^_Noreturn __attribute__((format(printf, 1, 2))) void throw_error(const char* const fmt, ...)$/;"	f
-token_type	cognac.h	/^typedef enum {identifier, value, define, let, set} token_type;$/;"	t	typeref:enum:__anon7
-token_type	compiler/cognac.h	/^typedef enum {identifier, value, define, let, set} token_type;$/;"	t	typeref:enum:__anon3
+token_type	cognac.h	/^typedef enum {identifier, value, define, let, set} token_type;$/;"	t	typeref:enum:__anon2
 top	cognate.h	/^  cognate_object* restrict top; \/\/ Pointer to top.$/;"	m	struct:cognate_stack
-tree	compiler/parser.tab.h	/^  struct ast* tree;$/;"	m	union:YYSTYPE	typeref:struct:YYSTYPE::ast
 tree	parser.tab.h	/^  struct ast* tree;$/;"	m	union:YYSTYPE	typeref:struct:YYSTYPE::ast
 type	cognac.h	/^  decl_type type;$/;"	m	struct:decl_list
 type	cognac.h	/^  token_type type;$/;"	m	struct:ast
 type	cognac.h	/^  value_type type;$/;"	m	struct:reg_list
 type	cognate.h	/^  cognate_type type;$/;"	m	struct:cognate_object
-type	compiler/cognac.h	/^  decl_type type;$/;"	m	struct:decl_list
-type	compiler/cognac.h	/^  token_type type;$/;"	m	struct:ast
-type	compiler/cognac.h	/^  value_type type;$/;"	m	struct:reg_list
 type_as_str	cognac.c	/^char* type_as_str(value_type typ, _Bool uppercase)$/;"	f
-type_as_str	compiler/cognac.c	/^char* type_as_str(value_type typ, _Bool uppercase)$/;"	f
 uncopied_blocks	cognate.h	/^  size_t          uncopied_blocks; \/\/ Number of uncopied BLOCKs on the stack.$/;"	m	struct:cognate_stack
 unlikely	cognate.h	107;"	d
-unput	compiler/lex.yy.c	200;"	d	file:
 unput	lex.yy.c	200;"	d	file:
 val_type	cognac.h	/^  value_type val_type;$/;"	m	struct:ast
-val_type	compiler/cognac.h	/^  value_type val_type;$/;"	m	struct:ast
-value	cognac.h	/^typedef enum {identifier, value, define, let, set} token_type;$/;"	e	enum:__anon7
-value	compiler/cognac.h	/^typedef enum {identifier, value, define, let, set} token_type;$/;"	e	enum:__anon3
-value_type	cognac.h	/^typedef enum {block, string, number, symbol, boolean, list, any} value_type;$/;"	t	typeref:enum:__anon6
-value_type	compiler/cognac.h	/^typedef enum {block, string, number, symbol, boolean, any} value_type;$/;"	t	typeref:enum:__anon2
-var	cognac.h	/^typedef enum {func, var} decl_type;$/;"	e	enum:__anon8
-var	compiler/cognac.h	/^typedef enum {func, var} decl_type;$/;"	e	enum:__anon4
-yy_accept	compiler/lex.yy.c	/^static const flex_int16_t yy_accept[54] =$/;"	v	file:
+value	cognac.h	/^typedef enum {identifier, value, define, let, set} token_type;$/;"	e	enum:__anon2
+value_type	cognac.h	/^typedef enum {block, string, number, symbol, boolean, list, any} value_type;$/;"	t	typeref:enum:__anon1
+var	cognac.h	/^typedef enum {func, var} decl_type;$/;"	e	enum:__anon3
 yy_accept	lex.yy.c	/^static const flex_int16_t yy_accept[51] =$/;"	v	file:
-yy_at_bol	compiler/lex.yy.c	/^	int yy_at_bol;$/;"	m	struct:yy_buffer_state	file:
 yy_at_bol	lex.yy.c	/^	int yy_at_bol;$/;"	m	struct:yy_buffer_state	file:
-yy_base	compiler/lex.yy.c	/^static const flex_int16_t yy_base[60] =$/;"	v	file:
 yy_base	lex.yy.c	/^static const flex_int16_t yy_base[56] =$/;"	v	file:
-yy_bs_column	compiler/lex.yy.c	/^    int yy_bs_column; \/**< The column count. *\/$/;"	m	struct:yy_buffer_state	file:
 yy_bs_column	lex.yy.c	/^    int yy_bs_column; \/**< The column count. *\/$/;"	m	struct:yy_buffer_state	file:
-yy_bs_lineno	compiler/lex.yy.c	/^    int yy_bs_lineno; \/**< The line count. *\/$/;"	m	struct:yy_buffer_state	file:
 yy_bs_lineno	lex.yy.c	/^    int yy_bs_lineno; \/**< The line count. *\/$/;"	m	struct:yy_buffer_state	file:
-yy_buf_pos	compiler/lex.yy.c	/^	char *yy_buf_pos;		\/* current position in input buffer *\/$/;"	m	struct:yy_buffer_state	file:
 yy_buf_pos	lex.yy.c	/^	char *yy_buf_pos;		\/* current position in input buffer *\/$/;"	m	struct:yy_buffer_state	file:
-yy_buf_size	compiler/lex.yy.c	/^	int yy_buf_size;$/;"	m	struct:yy_buffer_state	file:
 yy_buf_size	lex.yy.c	/^	int yy_buf_size;$/;"	m	struct:yy_buffer_state	file:
-yy_buffer_stack	compiler/lex.yy.c	/^static YY_BUFFER_STATE * yy_buffer_stack = NULL; \/**< Stack as an array. *\/$/;"	v	file:
 yy_buffer_stack	lex.yy.c	/^static YY_BUFFER_STATE * yy_buffer_stack = NULL; \/**< Stack as an array. *\/$/;"	v	file:
-yy_buffer_stack_max	compiler/lex.yy.c	/^static size_t yy_buffer_stack_max = 0; \/**< capacity of stack. *\/$/;"	v	file:
 yy_buffer_stack_max	lex.yy.c	/^static size_t yy_buffer_stack_max = 0; \/**< capacity of stack. *\/$/;"	v	file:
-yy_buffer_stack_top	compiler/lex.yy.c	/^static size_t yy_buffer_stack_top = 0; \/**< index of top of stack. *\/$/;"	v	file:
 yy_buffer_stack_top	lex.yy.c	/^static size_t yy_buffer_stack_top = 0; \/**< index of top of stack. *\/$/;"	v	file:
-yy_buffer_state	compiler/lex.yy.c	/^struct yy_buffer_state$/;"	s	file:
 yy_buffer_state	lex.yy.c	/^struct yy_buffer_state$/;"	s	file:
-yy_buffer_status	compiler/lex.yy.c	/^	int yy_buffer_status;$/;"	m	struct:yy_buffer_state	file:
 yy_buffer_status	lex.yy.c	/^	int yy_buffer_status;$/;"	m	struct:yy_buffer_state	file:
-yy_c_buf_p	compiler/lex.yy.c	/^static char *yy_c_buf_p = NULL;$/;"	v	file:
 yy_c_buf_p	lex.yy.c	/^static char *yy_c_buf_p = NULL;$/;"	v	file:
-yy_ch_buf	compiler/lex.yy.c	/^	char *yy_ch_buf;		\/* input buffer *\/$/;"	m	struct:yy_buffer_state	file:
 yy_ch_buf	lex.yy.c	/^	char *yy_ch_buf;		\/* input buffer *\/$/;"	m	struct:yy_buffer_state	file:
-yy_chk	compiler/lex.yy.c	/^static const flex_int16_t yy_chk[123] =$/;"	v	file:
 yy_chk	lex.yy.c	/^static const flex_int16_t yy_chk[116] =$/;"	v	file:
-yy_create_buffer	compiler/lex.yy.c	/^    YY_BUFFER_STATE yy_create_buffer  (FILE * file, int  size )$/;"	f
 yy_create_buffer	lex.yy.c	/^    YY_BUFFER_STATE yy_create_buffer  (FILE * file, int  size )$/;"	f
-yy_def	compiler/lex.yy.c	/^static const flex_int16_t yy_def[60] =$/;"	v	file:
 yy_def	lex.yy.c	/^static const flex_int16_t yy_def[56] =$/;"	v	file:
-yy_delete_buffer	compiler/lex.yy.c	/^    void yy_delete_buffer (YY_BUFFER_STATE  b )$/;"	f
 yy_delete_buffer	lex.yy.c	/^    void yy_delete_buffer (YY_BUFFER_STATE  b )$/;"	f
-yy_did_buffer_switch_on_eof	compiler/lex.yy.c	/^static int yy_did_buffer_switch_on_eof;$/;"	v	file:
 yy_did_buffer_switch_on_eof	lex.yy.c	/^static int yy_did_buffer_switch_on_eof;$/;"	v	file:
-yy_ec	compiler/lex.yy.c	/^static const YY_CHAR yy_ec[256] =$/;"	v	file:
 yy_ec	lex.yy.c	/^static const YY_CHAR yy_ec[256] =$/;"	v	file:
-yy_fatal_error	compiler/lex.yy.c	/^static void yynoreturn yy_fatal_error (const char* msg )$/;"	f	file:
 yy_fatal_error	lex.yy.c	/^static void yynoreturn yy_fatal_error (const char* msg )$/;"	f	file:
-yy_fill_buffer	compiler/lex.yy.c	/^	int yy_fill_buffer;$/;"	m	struct:yy_buffer_state	file:
 yy_fill_buffer	lex.yy.c	/^	int yy_fill_buffer;$/;"	m	struct:yy_buffer_state	file:
-yy_flex_debug	compiler/lex.yy.c	/^int yy_flex_debug = 0;$/;"	v
 yy_flex_debug	lex.yy.c	/^int yy_flex_debug = 0;$/;"	v
-yy_flex_strlen	compiler/lex.yy.c	/^static int yy_flex_strlen (const char * s )$/;"	f	file:
 yy_flex_strlen	lex.yy.c	/^static int yy_flex_strlen (const char * s )$/;"	f	file:
-yy_flex_strncpy	compiler/lex.yy.c	/^static void yy_flex_strncpy (char* s1, const char * s2, int n )$/;"	f	file:
 yy_flex_strncpy	lex.yy.c	/^static void yy_flex_strncpy (char* s1, const char * s2, int n )$/;"	f	file:
-yy_flush_buffer	compiler/lex.yy.c	/^    void yy_flush_buffer (YY_BUFFER_STATE  b )$/;"	f
 yy_flush_buffer	lex.yy.c	/^    void yy_flush_buffer (YY_BUFFER_STATE  b )$/;"	f
-yy_get_next_buffer	compiler/lex.yy.c	/^static int yy_get_next_buffer (void)$/;"	f	file:
 yy_get_next_buffer	lex.yy.c	/^static int yy_get_next_buffer (void)$/;"	f	file:
-yy_get_previous_state	compiler/lex.yy.c	/^    static yy_state_type yy_get_previous_state (void)$/;"	f	file:
 yy_get_previous_state	lex.yy.c	/^    static yy_state_type yy_get_previous_state (void)$/;"	f	file:
-yy_hold_char	compiler/lex.yy.c	/^static char yy_hold_char;$/;"	v	file:
 yy_hold_char	lex.yy.c	/^static char yy_hold_char;$/;"	v	file:
-yy_init	compiler/lex.yy.c	/^static int yy_init = 0;		\/* whether we need to initialize *\/$/;"	v	file:
 yy_init	lex.yy.c	/^static int yy_init = 0;		\/* whether we need to initialize *\/$/;"	v	file:
-yy_init_buffer	compiler/lex.yy.c	/^    static void yy_init_buffer  (YY_BUFFER_STATE  b, FILE * file )$/;"	f	file:
 yy_init_buffer	lex.yy.c	/^    static void yy_init_buffer  (YY_BUFFER_STATE  b, FILE * file )$/;"	f	file:
-yy_init_globals	compiler/lex.yy.c	/^static int yy_init_globals (void)$/;"	f	file:
 yy_init_globals	lex.yy.c	/^static int yy_init_globals (void)$/;"	f	file:
-yy_input_file	compiler/lex.yy.c	/^	FILE *yy_input_file;$/;"	m	struct:yy_buffer_state	file:
 yy_input_file	lex.yy.c	/^	FILE *yy_input_file;$/;"	m	struct:yy_buffer_state	file:
-yy_is_interactive	compiler/lex.yy.c	/^	int yy_is_interactive;$/;"	m	struct:yy_buffer_state	file:
 yy_is_interactive	lex.yy.c	/^	int yy_is_interactive;$/;"	m	struct:yy_buffer_state	file:
-yy_is_our_buffer	compiler/lex.yy.c	/^	int yy_is_our_buffer;$/;"	m	struct:yy_buffer_state	file:
 yy_is_our_buffer	lex.yy.c	/^	int yy_is_our_buffer;$/;"	m	struct:yy_buffer_state	file:
-yy_last_accepting_cpos	compiler/lex.yy.c	/^static char *yy_last_accepting_cpos;$/;"	v	file:
 yy_last_accepting_cpos	lex.yy.c	/^static char *yy_last_accepting_cpos;$/;"	v	file:
-yy_last_accepting_state	compiler/lex.yy.c	/^static yy_state_type yy_last_accepting_state;$/;"	v	file:
 yy_last_accepting_state	lex.yy.c	/^static yy_state_type yy_last_accepting_state;$/;"	v	file:
-yy_load_buffer_state	compiler/lex.yy.c	/^static void yy_load_buffer_state  (void)$/;"	f	file:
 yy_load_buffer_state	lex.yy.c	/^static void yy_load_buffer_state  (void)$/;"	f	file:
-yy_meta	compiler/lex.yy.c	/^static const YY_CHAR yy_meta[36] =$/;"	v	file:
 yy_meta	lex.yy.c	/^static const YY_CHAR yy_meta[36] =$/;"	v	file:
-yy_n_chars	compiler/lex.yy.c	/^	int yy_n_chars;$/;"	m	struct:yy_buffer_state	file:
-yy_n_chars	compiler/lex.yy.c	/^static int yy_n_chars;		\/* number of characters read into yy_ch_buf *\/$/;"	v	file:
 yy_n_chars	lex.yy.c	/^	int yy_n_chars;$/;"	m	struct:yy_buffer_state	file:
 yy_n_chars	lex.yy.c	/^static int yy_n_chars;		\/* number of characters read into yy_ch_buf *\/$/;"	v	file:
-yy_new_buffer	compiler/lex.yy.c	322;"	d	file:
 yy_new_buffer	lex.yy.c	322;"	d	file:
-yy_nxt	compiler/lex.yy.c	/^	flex_int32_t yy_nxt;$/;"	m	struct:yy_trans_info	file:
-yy_nxt	compiler/lex.yy.c	/^static const flex_int16_t yy_nxt[123] =$/;"	v	file:
 yy_nxt	lex.yy.c	/^	flex_int32_t yy_nxt;$/;"	m	struct:yy_trans_info	file:
 yy_nxt	lex.yy.c	/^static const flex_int16_t yy_nxt[116] =$/;"	v	file:
-yy_reduce_print	compiler/parser.tab.c	/^yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,$/;"	f	file:
 yy_reduce_print	parser.tab.c	/^yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,$/;"	f	file:
-yy_rule_can_match_eol	compiler/lex.yy.c	/^static const flex_int32_t yy_rule_can_match_eol[27] =$/;"	v	file:
 yy_rule_can_match_eol	lex.yy.c	/^static const flex_int32_t yy_rule_can_match_eol[26] =$/;"	v	file:
-yy_scan_buffer	compiler/lex.yy.c	/^YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size )$/;"	f
 yy_scan_buffer	lex.yy.c	/^YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size )$/;"	f
-yy_scan_bytes	compiler/lex.yy.c	/^YY_BUFFER_STATE yy_scan_bytes  (const char * yybytes, int  _yybytes_len )$/;"	f
 yy_scan_bytes	lex.yy.c	/^YY_BUFFER_STATE yy_scan_bytes  (const char * yybytes, int  _yybytes_len )$/;"	f
-yy_scan_string	compiler/lex.yy.c	/^YY_BUFFER_STATE yy_scan_string (const char * yystr )$/;"	f
 yy_scan_string	lex.yy.c	/^YY_BUFFER_STATE yy_scan_string (const char * yystr )$/;"	f
-yy_set_bol	compiler/lex.yy.c	332;"	d	file:
 yy_set_bol	lex.yy.c	332;"	d	file:
-yy_set_interactive	compiler/lex.yy.c	323;"	d	file:
 yy_set_interactive	lex.yy.c	323;"	d	file:
-yy_size_t	compiler/lex.yy.c	/^typedef size_t yy_size_t;$/;"	t	file:
 yy_size_t	lex.yy.c	/^typedef size_t yy_size_t;$/;"	t	file:
-yy_stack_print	compiler/parser.tab.c	/^yy_stack_print (yy_state_t *yybottom, yy_state_t *yytop)$/;"	f	file:
 yy_stack_print	parser.tab.c	/^yy_stack_print (yy_state_t *yybottom, yy_state_t *yytop)$/;"	f	file:
-yy_start	compiler/lex.yy.c	/^static int yy_start = 0;	\/* start state number *\/$/;"	v	file:
 yy_start	lex.yy.c	/^static int yy_start = 0;	\/* start state number *\/$/;"	v	file:
-yy_state_fast_t	compiler/parser.tab.c	/^typedef int yy_state_fast_t;$/;"	t	file:
 yy_state_fast_t	parser.tab.c	/^typedef int yy_state_fast_t;$/;"	t	file:
-yy_state_t	compiler/parser.tab.c	/^typedef yytype_int8 yy_state_t;$/;"	t	file:
 yy_state_t	parser.tab.c	/^typedef yytype_int8 yy_state_t;$/;"	t	file:
-yy_state_type	compiler/lex.yy.c	/^typedef int yy_state_type;$/;"	t	file:
 yy_state_type	lex.yy.c	/^typedef int yy_state_type;$/;"	t	file:
-yy_switch_to_buffer	compiler/lex.yy.c	/^    void yy_switch_to_buffer  (YY_BUFFER_STATE  new_buffer )$/;"	f
 yy_switch_to_buffer	lex.yy.c	/^    void yy_switch_to_buffer  (YY_BUFFER_STATE  new_buffer )$/;"	f
-yy_symbol_print	compiler/parser.tab.c	/^yy_symbol_print (FILE *yyo,$/;"	f	file:
 yy_symbol_print	parser.tab.c	/^yy_symbol_print (FILE *yyo,$/;"	f	file:
-yy_symbol_value_print	compiler/parser.tab.c	/^yy_symbol_value_print (FILE *yyo,$/;"	f	file:
 yy_symbol_value_print	parser.tab.c	/^yy_symbol_value_print (FILE *yyo,$/;"	f	file:
-yy_trans_info	compiler/lex.yy.c	/^struct yy_trans_info$/;"	s	file:
 yy_trans_info	lex.yy.c	/^struct yy_trans_info$/;"	s	file:
-yy_try_NUL_trans	compiler/lex.yy.c	/^    static yy_state_type yy_try_NUL_trans  (yy_state_type yy_current_state )$/;"	f	file:
 yy_try_NUL_trans	lex.yy.c	/^    static yy_state_type yy_try_NUL_trans  (yy_state_type yy_current_state )$/;"	f	file:
-yy_verify	compiler/lex.yy.c	/^	flex_int32_t yy_verify;$/;"	m	struct:yy_trans_info	file:
 yy_verify	lex.yy.c	/^	flex_int32_t yy_verify;$/;"	m	struct:yy_trans_info	file:
-yyalloc	compiler/lex.yy.c	/^void *yyalloc (yy_size_t  size )$/;"	f
-yyalloc	compiler/parser.tab.c	/^union yyalloc$/;"	u	file:
 yyalloc	lex.yy.c	/^void *yyalloc (yy_size_t  size )$/;"	f
 yyalloc	parser.tab.c	/^union yyalloc$/;"	u	file:
-yychar	compiler/parser.tab.c	/^int yychar;$/;"	v
 yychar	parser.tab.c	/^int yychar;$/;"	v
-yycheck	compiler/parser.tab.c	/^static const yytype_int8 yycheck[] =$/;"	v	file:
 yycheck	parser.tab.c	/^static const yytype_int8 yycheck[] =$/;"	v	file:
-yyclearin	compiler/parser.tab.c	622;"	d	file:
 yyclearin	parser.tab.c	622;"	d	file:
-yyconst	compiler/lex.yy.c	97;"	d	file:
 yyconst	lex.yy.c	97;"	d	file:
-yydebug	compiler/parser.tab.c	/^int yydebug;$/;"	v
 yydebug	parser.tab.c	/^int yydebug;$/;"	v
-yydefact	compiler/parser.tab.c	/^static const yytype_int8 yydefact[] =$/;"	v	file:
 yydefact	parser.tab.c	/^static const yytype_int8 yydefact[] =$/;"	v	file:
-yydefgoto	compiler/parser.tab.c	/^static const yytype_int8 yydefgoto[] =$/;"	v	file:
 yydefgoto	parser.tab.c	/^static const yytype_int8 yydefgoto[] =$/;"	v	file:
-yydestruct	compiler/parser.tab.c	/^yydestruct (const char *yymsg,$/;"	f	file:
 yydestruct	parser.tab.c	/^yydestruct (const char *yymsg,$/;"	f	file:
-yyensure_buffer_stack	compiler/lex.yy.c	/^static void yyensure_buffer_stack (void)$/;"	f	file:
 yyensure_buffer_stack	lex.yy.c	/^static void yyensure_buffer_stack (void)$/;"	f	file:
-yyerrok	compiler/parser.tab.c	621;"	d	file:
 yyerrok	parser.tab.c	621;"	d	file:
 yyerror	cognac.c	/^void yyerror(char* str) { puts(str); }$/;"	f
-yyerror	compiler/cognac.c	/^void yyerror(char* str) { puts(str); }$/;"	f
-yyfree	compiler/lex.yy.c	/^void yyfree (void * ptr )$/;"	f
 yyfree	lex.yy.c	/^void yyfree (void * ptr )$/;"	f
-yyget_debug	compiler/lex.yy.c	/^int yyget_debug  (void)$/;"	f
 yyget_debug	lex.yy.c	/^int yyget_debug  (void)$/;"	f
-yyget_in	compiler/lex.yy.c	/^FILE *yyget_in  (void)$/;"	f
 yyget_in	lex.yy.c	/^FILE *yyget_in  (void)$/;"	f
-yyget_leng	compiler/lex.yy.c	/^int yyget_leng  (void)$/;"	f
 yyget_leng	lex.yy.c	/^int yyget_leng  (void)$/;"	f
-yyget_lineno	compiler/lex.yy.c	/^int yyget_lineno  (void)$/;"	f
 yyget_lineno	lex.yy.c	/^int yyget_lineno  (void)$/;"	f
-yyget_out	compiler/lex.yy.c	/^FILE *yyget_out  (void)$/;"	f
 yyget_out	lex.yy.c	/^FILE *yyget_out  (void)$/;"	f
-yyget_text	compiler/lex.yy.c	/^char *yyget_text  (void)$/;"	f
 yyget_text	lex.yy.c	/^char *yyget_text  (void)$/;"	f
-yyin	compiler/lex.yy.c	/^FILE *yyin = NULL, *yyout = NULL;$/;"	v
 yyin	lex.yy.c	/^FILE *yyin = NULL, *yyout = NULL;$/;"	v
-yyinput	compiler/lex.yy.c	/^    static int yyinput (void)$/;"	f	file:
 yyinput	lex.yy.c	/^    static int yyinput (void)$/;"	f	file:
-yyleng	compiler/lex.yy.c	/^int yyleng;$/;"	v
 yyleng	lex.yy.c	/^int yyleng;$/;"	v
-yyless	compiler/lex.yy.c	1749;"	d	file:
-yyless	compiler/lex.yy.c	1750;"	d	file:
-yyless	compiler/lex.yy.c	188;"	d	file:
 yyless	lex.yy.c	1741;"	d	file:
 yyless	lex.yy.c	1742;"	d	file:
 yyless	lex.yy.c	188;"	d	file:
-yylex_destroy	compiler/lex.yy.c	/^int yylex_destroy  (void)$/;"	f
 yylex_destroy	lex.yy.c	/^int yylex_destroy  (void)$/;"	f
-yylineno	compiler/lex.yy.c	/^int yylineno = 1;$/;"	v
 yylineno	lex.yy.c	/^int yylineno = 1;$/;"	v
-yylval	compiler/parser.tab.c	/^YYSTYPE yylval;$/;"	v
 yylval	parser.tab.c	/^YYSTYPE yylval;$/;"	v
-yymore	compiler/lex.yy.c	504;"	d	file:
 yymore	lex.yy.c	501;"	d	file:
-yynerrs	compiler/parser.tab.c	/^int yynerrs;$/;"	v
 yynerrs	parser.tab.c	/^int yynerrs;$/;"	v
-yynoreturn	compiler/lex.yy.c	100;"	d	file:
-yynoreturn	compiler/lex.yy.c	102;"	d	file:
 yynoreturn	lex.yy.c	100;"	d	file:
 yynoreturn	lex.yy.c	102;"	d	file:
-yyout	compiler/lex.yy.c	/^FILE *yyin = NULL, *yyout = NULL;$/;"	v
 yyout	lex.yy.c	/^FILE *yyin = NULL, *yyout = NULL;$/;"	v
-yypact	compiler/parser.tab.c	/^static const yytype_int8 yypact[] =$/;"	v	file:
 yypact	parser.tab.c	/^static const yytype_int8 yypact[] =$/;"	v	file:
-yypact_value_is_default	compiler/parser.tab.c	541;"	d	file:
 yypact_value_is_default	parser.tab.c	541;"	d	file:
-yyparse	compiler/parser.tab.c	/^yyparse (void)$/;"	f
 yyparse	parser.tab.c	/^yyparse (void)$/;"	f
-yypgoto	compiler/parser.tab.c	/^static const yytype_int8 yypgoto[] =$/;"	v	file:
 yypgoto	parser.tab.c	/^static const yytype_int8 yypgoto[] =$/;"	v	file:
-yypop_buffer_state	compiler/lex.yy.c	/^void yypop_buffer_state (void)$/;"	f
 yypop_buffer_state	lex.yy.c	/^void yypop_buffer_state (void)$/;"	f
-yypush_buffer_state	compiler/lex.yy.c	/^void yypush_buffer_state (YY_BUFFER_STATE new_buffer )$/;"	f
 yypush_buffer_state	lex.yy.c	/^void yypush_buffer_state (YY_BUFFER_STATE new_buffer )$/;"	f
-yyr1	compiler/parser.tab.c	/^static const yytype_int8 yyr1[] =$/;"	v	file:
 yyr1	parser.tab.c	/^static const yytype_int8 yyr1[] =$/;"	v	file:
-yyr2	compiler/parser.tab.c	/^static const yytype_int8 yyr2[] =$/;"	v	file:
 yyr2	parser.tab.c	/^static const yytype_int8 yyr2[] =$/;"	v	file:
-yyrealloc	compiler/lex.yy.c	/^void *yyrealloc  (void * ptr, yy_size_t  size )$/;"	f
 yyrealloc	lex.yy.c	/^void *yyrealloc  (void * ptr, yy_size_t  size )$/;"	f
-yyrestart	compiler/lex.yy.c	/^    void yyrestart  (FILE * input_file )$/;"	f
 yyrestart	lex.yy.c	/^    void yyrestart  (FILE * input_file )$/;"	f
-yyrline	compiler/parser.tab.c	/^static const yytype_int8 yyrline[] =$/;"	v	file:
 yyrline	parser.tab.c	/^static const yytype_int8 yyrline[] =$/;"	v	file:
-yyset_debug	compiler/lex.yy.c	/^void yyset_debug (int  _bdebug )$/;"	f
 yyset_debug	lex.yy.c	/^void yyset_debug (int  _bdebug )$/;"	f
-yyset_in	compiler/lex.yy.c	/^void yyset_in (FILE *  _in_str )$/;"	f
 yyset_in	lex.yy.c	/^void yyset_in (FILE *  _in_str )$/;"	f
-yyset_lineno	compiler/lex.yy.c	/^void yyset_lineno (int  _line_number )$/;"	f
 yyset_lineno	lex.yy.c	/^void yyset_lineno (int  _line_number )$/;"	f
-yyset_out	compiler/lex.yy.c	/^void yyset_out (FILE *  _out_str )$/;"	f
 yyset_out	lex.yy.c	/^void yyset_out (FILE *  _out_str )$/;"	f
-yyss_alloc	compiler/parser.tab.c	/^  yy_state_t yyss_alloc;$/;"	m	union:yyalloc	file:
 yyss_alloc	parser.tab.c	/^  yy_state_t yyss_alloc;$/;"	m	union:yyalloc	file:
-yystos	compiler/parser.tab.c	/^static const yytype_int8 yystos[] =$/;"	v	file:
 yystos	parser.tab.c	/^static const yytype_int8 yystos[] =$/;"	v	file:
-yysymbol_kind_t	compiler/parser.tab.c	/^enum yysymbol_kind_t$/;"	g	file:
-yysymbol_kind_t	compiler/parser.tab.c	/^typedef enum yysymbol_kind_t yysymbol_kind_t;$/;"	t	typeref:enum:yysymbol_kind_t	file:
 yysymbol_kind_t	parser.tab.c	/^enum yysymbol_kind_t$/;"	g	file:
 yysymbol_kind_t	parser.tab.c	/^typedef enum yysymbol_kind_t yysymbol_kind_t;$/;"	t	typeref:enum:yysymbol_kind_t	file:
-yysymbol_name	compiler/parser.tab.c	/^yysymbol_name (yysymbol_kind_t yysymbol)$/;"	f	file:
 yysymbol_name	parser.tab.c	/^yysymbol_name (yysymbol_kind_t yysymbol)$/;"	f	file:
-yytable	compiler/parser.tab.c	/^static const yytype_int8 yytable[] =$/;"	v	file:
 yytable	parser.tab.c	/^static const yytype_int8 yytable[] =$/;"	v	file:
-yytable_value_is_error	compiler/parser.tab.c	546;"	d	file:
 yytable_value_is_error	parser.tab.c	546;"	d	file:
-yyterminate	compiler/lex.yy.c	653;"	d	file:
 yyterminate	lex.yy.c	650;"	d	file:
-yytext	compiler/lex.yy.c	/^char *yytext;$/;"	v
 yytext	lex.yy.c	/^char *yytext;$/;"	v
-yytext_ptr	compiler/lex.yy.c	355;"	d	file:
-yytext_ptr	compiler/lex.yy.c	357;"	d	file:
 yytext_ptr	lex.yy.c	355;"	d	file:
 yytext_ptr	lex.yy.c	357;"	d	file:
-yytname	compiler/parser.tab.c	/^static const char *const yytname[] =$/;"	v	file:
 yytname	parser.tab.c	/^static const char *const yytname[] =$/;"	v	file:
-yytoken_kind_t	compiler/parser.tab.h	/^  typedef enum yytokentype yytoken_kind_t;$/;"	t	typeref:enum:yytokentype
 yytoken_kind_t	parser.tab.h	/^  typedef enum yytokentype yytoken_kind_t;$/;"	t	typeref:enum:yytokentype
-yytokentype	compiler/parser.tab.h	/^  enum yytokentype$/;"	g
 yytokentype	parser.tab.h	/^  enum yytokentype$/;"	g
-yytoknum	compiler/parser.tab.c	/^static const yytype_int16 yytoknum[] =$/;"	v	file:
 yytoknum	parser.tab.c	/^static const yytype_int16 yytoknum[] =$/;"	v	file:
-yytranslate	compiler/parser.tab.c	/^static const yytype_int8 yytranslate[] =$/;"	v	file:
 yytranslate	parser.tab.c	/^static const yytype_int8 yytranslate[] =$/;"	v	file:
-yytype_int16	compiler/parser.tab.c	/^typedef __INT_LEAST16_TYPE__ yytype_int16;$/;"	t	file:
-yytype_int16	compiler/parser.tab.c	/^typedef int_least16_t yytype_int16;$/;"	t	file:
-yytype_int16	compiler/parser.tab.c	/^typedef short yytype_int16;$/;"	t	file:
 yytype_int16	parser.tab.c	/^typedef __INT_LEAST16_TYPE__ yytype_int16;$/;"	t	file:
 yytype_int16	parser.tab.c	/^typedef int_least16_t yytype_int16;$/;"	t	file:
 yytype_int16	parser.tab.c	/^typedef short yytype_int16;$/;"	t	file:
-yytype_int8	compiler/parser.tab.c	/^typedef __INT_LEAST8_TYPE__ yytype_int8;$/;"	t	file:
-yytype_int8	compiler/parser.tab.c	/^typedef int_least8_t yytype_int8;$/;"	t	file:
-yytype_int8	compiler/parser.tab.c	/^typedef signed char yytype_int8;$/;"	t	file:
 yytype_int8	parser.tab.c	/^typedef __INT_LEAST8_TYPE__ yytype_int8;$/;"	t	file:
 yytype_int8	parser.tab.c	/^typedef int_least8_t yytype_int8;$/;"	t	file:
 yytype_int8	parser.tab.c	/^typedef signed char yytype_int8;$/;"	t	file:
-yytype_uint16	compiler/parser.tab.c	/^typedef __UINT_LEAST16_TYPE__ yytype_uint16;$/;"	t	file:
-yytype_uint16	compiler/parser.tab.c	/^typedef int yytype_uint16;$/;"	t	file:
-yytype_uint16	compiler/parser.tab.c	/^typedef uint_least16_t yytype_uint16;$/;"	t	file:
-yytype_uint16	compiler/parser.tab.c	/^typedef unsigned short yytype_uint16;$/;"	t	file:
 yytype_uint16	parser.tab.c	/^typedef __UINT_LEAST16_TYPE__ yytype_uint16;$/;"	t	file:
 yytype_uint16	parser.tab.c	/^typedef int yytype_uint16;$/;"	t	file:
 yytype_uint16	parser.tab.c	/^typedef uint_least16_t yytype_uint16;$/;"	t	file:
 yytype_uint16	parser.tab.c	/^typedef unsigned short yytype_uint16;$/;"	t	file:
-yytype_uint8	compiler/parser.tab.c	/^typedef __UINT_LEAST8_TYPE__ yytype_uint8;$/;"	t	file:
-yytype_uint8	compiler/parser.tab.c	/^typedef short yytype_uint8;$/;"	t	file:
-yytype_uint8	compiler/parser.tab.c	/^typedef uint_least8_t yytype_uint8;$/;"	t	file:
-yytype_uint8	compiler/parser.tab.c	/^typedef unsigned char yytype_uint8;$/;"	t	file:
 yytype_uint8	parser.tab.c	/^typedef __UINT_LEAST8_TYPE__ yytype_uint8;$/;"	t	file:
 yytype_uint8	parser.tab.c	/^typedef short yytype_uint8;$/;"	t	file:
 yytype_uint8	parser.tab.c	/^typedef uint_least8_t yytype_uint8;$/;"	t	file:
 yytype_uint8	parser.tab.c	/^typedef unsigned char yytype_uint8;$/;"	t	file:
-yyunput	compiler/lex.yy.c	/^    static void yyunput (int c, char * yy_bp )$/;"	f	file:
 yyunput	lex.yy.c	/^    static void yyunput (int c, char * yy_bp )$/;"	f	file:
-yyvs_alloc	compiler/parser.tab.c	/^  YYSTYPE yyvs_alloc;$/;"	m	union:yyalloc	file:
 yyvs_alloc	parser.tab.c	/^  YYSTYPE yyvs_alloc;$/;"	m	union:yyalloc	file:
 yywrap	cognac.c	/^int yywrap(void) { return 1; }$/;"	f
-yywrap	compiler/cognac.c	/^int yywrap(void) { return 1; }$/;"	f

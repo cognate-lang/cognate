@@ -49,19 +49,27 @@ char* type_as_str(value_type typ, _Bool uppercase)
   }
 }
 
-void flush_registers_to_stack(reg_list* registers)
+reg_list* flush_registers_to_stack(reg_list* registers, unsigned short exclude)
 {
   // We can optimise this if we only check the stack length once at runtime.
   // TODO: Leave one register which can be returned from the function, yielding better performance.
-  if (registers)
+  if (exclude)
   {
-    reg_list* rest = registers->next;
-    flush_registers_to_stack(rest);
+    if (registers)
+    {
+      registers->next = flush_registers_to_stack(registers->next, --exclude);
+      return registers;
+    }
+  }
+  else if (registers)
+  {
+    flush_registers_to_stack(registers->next, 0);
     if (registers->type == any)
       fprintf(outfile, "push(r%zi);", registers->id);
     else
       fprintf(outfile, "push(OBJ(%s, r%zi));", type_as_str(registers->type, false), registers->id);
   }
+  return NULL;
 }
 
 decl_list lookup_word(char* name, decl_list* defs)
@@ -114,7 +122,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
   // TODO split this up into many smaller more maintainable functions.
   if (!tree)
   {
-    flush_registers_to_stack(registers);
+    flush_registers_to_stack(registers, 0);
     return;
   }
   //printf("\n#line %zi\n", tree->line); // TODO only print on line boundaries
@@ -123,7 +131,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
     case identifier:
     {
       decl_list def = lookup_word((char*)tree->data, defs);
-      if (def.needs_stack) { flush_registers_to_stack(registers); registers = NULL; }
+      if (def.needs_stack) registers = flush_registers_to_stack(registers, def.argc);
       if (def.type == func)
       {
         if (def.rets) fprintf(outfile,"%s r%zi=", type_as_str(def.ret, true), current_register);
@@ -235,6 +243,7 @@ decl_list* builtins(void)
   static decl_list b[] =
   {
     // List of all builtin declarations.
+    // TODO put in a different file and #include it
     {.name="ADD", .type=func, .argc=2, .args={number, number}, .rets=true, .ret=number},
     {.name="SUB", .type=func, .argc=2, .args={number, number}, .rets=true, .ret=number},
     {.name="MUL", .type=func, .argc=2, .args={number, number}, .rets=true, .ret=number},
@@ -312,7 +321,6 @@ int main(int argc, char** argv)
   }
   yyin = fopen(argv[1], "r"); // TODO handle file not found error.
   // TODO this assumes that yyin ends in .cog
-  extern char* strdup(const char*); // Weird linter error if I omit this.
   char outfile_name[strlen(argv[1])+1];
   char binary_name[strlen(argv[1])+1];
   strcpy(outfile_name, argv[1]);

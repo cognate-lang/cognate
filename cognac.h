@@ -59,6 +59,7 @@ ast* alloc_ast(token_type, value_type, void*, size_t, ast*);
 void compile(ast*, reg_list*, decl_list*); // TODO output file arg.
 void print_cognate_string(char*);
 decl_list* predefine(ast*, decl_list*);
+reg_list* flush_registers_to_stack(reg_list*, unsigned short);
 
 int yylex(void);
 void yyerror(char*);
