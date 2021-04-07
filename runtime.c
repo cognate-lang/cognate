@@ -15,7 +15,7 @@
 #ifndef NO_GC
 #include <gc/gc.h>
 #endif
-#if __has_include(<Block_private.h>)
+#if 0 //__has_include(<Block_private.h>)
 #define BLOCK_GC
 #endif
 
