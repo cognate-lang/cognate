@@ -70,12 +70,10 @@ typedef struct cognate_stack
 #define CHECK(typ, obj) (check_type(typ, obj) . typ)
 #define CALL(name, args) (set_current_word_name(#name), ___##name args)
 
-#define PREDEFINE(name) \
-  __block BLOCK ___##name = ^{throw_error("Attempt to use uninitialised word "#name);};
-
-#define DEFINE(name, body) ___##name = body;
-
 #define REDEFINE(name, body) ___##name = Block_copy(MAKE_BLOCK(docopy, body));
+
+#define DEFINE(name, body) __block BLOCK ___##name = body;
+
 
 #define LET(name, val) const cognate_object ___##name = copy_if_block(val);
 

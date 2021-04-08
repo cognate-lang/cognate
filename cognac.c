@@ -90,34 +90,6 @@ void print_cognate_string(char* str)
   fputc('"', outfile);
 }
 
-decl_list* predefine(ast* tree, decl_list* defs)
-{
-  /*
-   * Iterate over the ast, outputting a PREDEFINE for each function declaration.
-   * Predefining means that functions can reference functions not yet declared.
-   * However, these functions cannot be called until declaration.
-   * TODO Function calls to guaranteed undeclared functions should be compile errors.
-   */
-  decl_list* already_predefined = NULL;
-  for (; tree; tree=tree->next)
-  {
-    if (tree->type == define)
-    {
-      if (lookup_word(tree->text, already_predefined)) continue;
-      fprintf(outfile, "PREDEFINE(%s);", tree->text);
-      // We are leaking memory here.
-      // This could be stack memory with alloca() is we moved the allocation.
-      decl_list* def = malloc(sizeof(*def));
-      decl_list* def2 = malloc(sizeof(*def));
-      *def = (decl_list){.type=func, .next=defs, .name=tree->text, .needs_stack=true};
-      *def2 = (decl_list){.type=func, .next=already_predefined, .name=tree->text, .needs_stack=true};
-      defs = def;
-      already_predefined = def2;
-    }
-  }
-  return defs;
-}
-
 void compile(ast* tree, reg_list* registers, decl_list* defs)
 {
   // TODO split this up into many smaller more maintainable functions.
@@ -187,7 +159,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       {
         case block:
           fputs("MAKE_BLOCK(", outfile);
-          compile(tree->data, NULL, predefine(tree->data, defs));
+          compile(tree->data, NULL, defs);
           tree->data = NULL; // Prevent double free.
           fputs(")",outfile);
           break;
@@ -225,17 +197,13 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
     {
       // TODO define macro takes function body as arg instead of a block for performance reasons.
       // We can set the function directly to the block, but we lose function name tracking.
+      decl_list d = {.name=tree->text, .type=func, .next=defs, .needs_stack=true};
       fprintf(outfile,"DEFINE(%s,", tree->text);
       if (registers) { fprintf(outfile,"r%zi", registers->id); registers=registers->next; }
       else           { fputs("CHECK(block,pop())",outfile); }
       fputs(");{",outfile);
-      compile(tree->next, registers, defs);
+      compile(tree->next, registers, &d);
       fputc('}',outfile);
-      /*
-       * We predeclare functions at the start of their blocks, and Define simply initialises them.
-       * This creates slightly funky shadowing behavior, but the convenience outweighs this cost.
-       * See the predefine() function here and PREDEFINE macro in cognate.h
-       */
     }
     break;
   }
@@ -336,7 +304,7 @@ int main(int argc, char** argv)
   outfile = fopen(outfile_name, "w");
   yyparse();
   fputs("#include\"cognate.h\"\nPROGRAM(",outfile);
-  compile(full_ast, NULL, predefine(full_ast, builtins()));
+  compile(full_ast, NULL, builtins());
   fputs(")\n", outfile);
   char args[] = "clang %s -o %s -fblocks -I. runtime.c functions.c -lBlocksRuntime"
                 " -l:libgc.so -Ofast -Wall -Wextra -Werror -Wno-unused"
