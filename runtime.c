@@ -103,19 +103,8 @@ void cleanup()
 
 cognate_object copy_if_block(cognate_object obj)
 {
-  return unlikely(obj.type == block) ? OBJ(heap_block, Block_copy(obj.block)) : obj;
-}
-
-void copy_stack_blocks()
-{
-  for (cognate_object* obj = stack.top - 1; stack.uncopied_blocks; --obj)
-  {
-    if unlikely(obj->type == block)
-    {
-      *obj = OBJ(heap_block, Block_copy(obj->block));
-      --stack.uncopied_blocks;
-    }
-  }
+  if unlikely(obj.type == block) obj.block = Block_copy(obj.block);
+  return obj;
 }
 
 void check_function_stack_size()
@@ -227,7 +216,6 @@ void print_object (const cognate_object object, FILE* out, const _Bool quotes)
     }
     case boolean: fputs(object.boolean ? "True" : "False", out); return;
     case block: fprintf(out, "<Block %p>", (void*)object.block); return;
-    case block | heap_block: fprintf(out, "<Block %p>", (void*)object.block); return;
     case table: fprintf(out, "<Table %p>", (void*)object.table); return;
     default: throw_error("Cannot print object of unknown type %i. This may be a compiler bug!", object.type);
   }
@@ -237,31 +225,25 @@ void init_stack()
 {
   stack.uncopied_blocks = 0;
   stack.size = INITIAL_LIST_SIZE;
-  stack.top = stack.start =
-    (cognate_object*) GC_MALLOC (INITIAL_LIST_SIZE * sizeof(cognate_object));
+  stack.top = stack.start = GC_MALLOC (INITIAL_LIST_SIZE * sizeof(cognate_object));
 }
 
 void push(cognate_object object)
 {
-  if unlikely(stack.start + stack.size == stack.top)
-    expand_stack();
-  stack.uncopied_blocks += (object.type == block);
+  if unlikely(stack.start + stack.size == stack.top) expand_stack();
+  if unlikely(object.type == block) object.block = Block_copy(object.block);
   *stack.top++ = object;
 }
 
 cognate_object pop()
 {
-  if unlikely(stack.top == stack.start)
-    throw_error("Stack underflow!");
-  const cognate_object object = *--stack.top;
-  stack.uncopied_blocks -= (object.type == block);
-  return object;
+  if unlikely(stack.top == stack.start) throw_error("Stack underflow!");
+  return *--stack.top;
 }
 
 cognate_object peek()
 {
-  if unlikely(stack.top == stack.start)
-    throw_error("Stack underflow!");
+  if unlikely(stack.top == stack.start) throw_error("Stack underflow!");
   return *(stack.top - 1);
 }
 
@@ -287,8 +269,7 @@ unsigned long hash(const char *str)
 
 cognate_object check_type(cognate_type expected_type, cognate_object object)
 {
-  if likely(object.type & expected_type)
-    return object;
+  if likely(object.type & expected_type) return object;
   // TODO: Print the object itself here.
   throw_error("Type Error! Expected type '%s' but recieved type '%s'", lookup_type(expected_type), lookup_type(object.type));
 }
@@ -302,7 +283,7 @@ const char* lookup_type(cognate_type type)
   if (type & number)  strcat(str, "/Number");
   if (type & list)    strcat(str, "/List");
   if (type & table)   strcat(str, "/Table");
-  if (type & (block | heap_block)) strcat(str, "/Block");
+  if (type & block)   strcat(str, "/Block");
   return GC_STRDUP(str + 1);
 }
 
@@ -342,7 +323,6 @@ _Bool compare_objects(cognate_object ob1, cognate_object ob2)
     case table      : return 0; // compare_tables(*ob1.table, *ob2.table);
     case NOTHING    : throw_error("Cognate should not be in this state - compiler bug!");
     case block      : throw_error("Cannot compare blocks!");
-    case heap_block : throw_error("Cannot compare blocks!");
   }
 }
 

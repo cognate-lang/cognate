@@ -30,7 +30,6 @@ enum cognate_type
   list    = (1 << 3),
   table   = (1 << 4),
   block   = (1 << 5),
-  heap_block = (1 << 5) | (1 << 6)
 };
 
 // Enumerates all possible types of a cognate_object
@@ -42,7 +41,6 @@ typedef struct cognate_object
   {
     BOOLEAN boolean;   // 1bit bool
     BLOCK   block;     // 64bit block pointer
-    BLOCK   heap_block;// 64bit block pointer
     NUMBER  number;    // 64bit float
     STRING  string;    // 64bit string pointer
     LIST    list;      // 64bit list pointer
@@ -72,7 +70,7 @@ typedef struct cognate_stack
 
 #define REDEFINE(name, body) ___##name = Block_copy(MAKE_BLOCK(docopy, body));
 
-#define DEFINE(name, body) __block BLOCK ___##name = body;
+#define DEFINE(name, body) const BLOCK ___##name = body;
 
 
 #define LET(name, val) const cognate_object ___##name = copy_if_block(val);
@@ -91,7 +89,6 @@ typedef struct cognate_stack
   ^{ \
     check_function_stack_size(); \
     body \
-    copy_stack_blocks(); \
   }
 
 #ifdef NO_GC
@@ -131,7 +128,6 @@ void push(cognate_object);
 cognate_object pop();
 cognate_object peek();
 void check_function_stack_size();
-void copy_stack_blocks();
 void set_current_word_name(const char *const);
 cognate_object copy_if_block(cognate_object obj);
 

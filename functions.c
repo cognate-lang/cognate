@@ -308,7 +308,6 @@ STRING ___path() {
 
 LIST ___stack() {
   // We can't return the list or this function is inlined and it breaks.
-  copy_stack_blocks();
   LIST lst = NULL;
   for (cognate_object* i = stack.top - 1 ; i >= stack.start ; --i)
   {
