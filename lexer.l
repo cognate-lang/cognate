@@ -1,8 +1,6 @@
 %option noyywrap noinput nounput nodefault
 %{
-#define YY_USER_ACTION yylloc.first_line = yylloc.last_line = yylineno; \
-                       yylloc.first_column = yycolumn; yylloc.last_column = yycolumn + yyleng - 1; \
-                       yycolumn += yyleng;
+#define YY_USER_ACTION yylloc.first_column += yyleng;
 
 #include "cognac.h"
 #include <ctype.h>
@@ -16,11 +14,22 @@ char* lc(char* s)
 
 void yyerror(char* str)
 {
-  fprintf(stderr, "Error @ %d:%d >> %s\n", yylloc.first_line, yylloc.first_column, str);
+  char header[20];
+  sprintf(header, "Line %d: ", yylloc.first_line, yylloc.first_column);
+  fprintf(stderr, "\033[0;2m%s", header);
+  char line[80];
+  rewind(yyin);
+  while (yylloc.first_line--) fgets(line, sizeof line, yyin);
+  fprintf(stderr, "\033[0;1m%s", line);
+  yylloc.first_column += strlen(header) - 1;
+  while (--yylloc.first_column) fputc(' ', stderr);
+  fprintf(stderr, "\033[31;1m^ %s\n", str);
   exit(EXIT_FAILURE);
 }
 
-int yycolumn = 1;
+int brace_depth = 0;
+int last_openbrace_line;
+int last_openbrace_col;
 %}
 
 %x BLOCK_COMMENT
@@ -45,12 +54,18 @@ S[eE][tT]             return SET;
 \\[A-Za-z_0-9]*      yylval.text=lc(strdup(yytext+1)); return SYMBOL;
 \-?[0-9]+(\.[0-9]+)? yylval.text=strdup(yytext);       return NUMBER;
 \'(\\.|[^'\\])*\'    yylval.text=strdup(yytext);       return STRING;
+\'                   yyerror("unterminated string"); // TODO error message is printing with wrong column.
 
 ;|, return ';';
-\(  return '(';
-\)  return ')';
+\(  brace_depth++; last_openbrace_line = yylloc.first_line; last_openbrace_col = yylloc.first_column; return '(';
 
-\n yylineno++; yycolumn=1;
+\)  if (brace_depth--) return ')'; yyerror("unbalanced brace");
+
+<<EOF>> if (brace_depth) { yylloc.first_line = last_openbrace_line;
+                           yylloc.first_column = last_openbrace_col;
+                           yyerror("unbalanced brace"); } else yyterminate();
+
+\n yylloc.first_line++; yylloc.first_column = 1;
 
 [a-z][A-Za-z_0-9]*  /* Ignore informal syntax */
 [[:space:]]         /* Ignore whitespace      */
@@ -58,8 +73,8 @@ S[eE][tT]             return SET;
 
 \~                 BEGIN(BLOCK_COMMENT);
 <BLOCK_COMMENT>\~  BEGIN(INITIAL);
-<BLOCK_COMMENT>\n  yylineno++; yycolumn=1;
+<BLOCK_COMMENT>\n  yylloc.first_line++; yylloc.first_column = 1;
 <BLOCK_COMMENT>.
 
-. yyerror("Invalid token");
+. yyerror("invalid token");
 %%

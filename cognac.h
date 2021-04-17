@@ -34,6 +34,7 @@ typedef struct ast
     void* data;
   };
   size_t line;
+  size_t col;
   struct ast* next;
   token_type type;
   value_type val_type;

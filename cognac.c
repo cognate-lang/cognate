@@ -72,7 +72,6 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
     flush_registers_to_stack(registers, 0);
     return;
   }
-  //printf("\n#line %zi\n", tree->line); // TODO only print on line boundaries
   switch (tree->type)
   {
     case identifier:
@@ -80,8 +79,9 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       decl_list* def = lookup_word(tree->text, defs);
       if (!def)
       {
-        printf("\nUNDEFINED word '%s'\n", tree->text);
-        exit(EXIT_FAILURE);
+        yylloc.first_line = tree->line;
+        yylloc.first_column = tree->col;
+        yyerror("undefined word");
       }
       if (def->needs_stack) registers = flush_registers_to_stack(registers, def->argc);
       if (def->type == func)
