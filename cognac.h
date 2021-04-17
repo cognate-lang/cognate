@@ -1,7 +1,6 @@
 #pragma once
 
 #include "parser.tab.h"
-#include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
 
@@ -54,8 +53,6 @@ extern ast* full_ast;
 
 decl_list* builtins(void);
 decl_list* lookup_word(char*, decl_list*);
-ast* ast_join(ast*, ast*);
-ast* alloc_ast(token_type, value_type, void*, size_t, ast*);
 void compile(ast*, reg_list*, decl_list*); // TODO output file arg.
 void print_cognate_string(char*);
 decl_list* predefine(ast*, decl_list*);
@@ -63,5 +60,4 @@ reg_list* flush_registers_to_stack(reg_list*, unsigned short);
 
 int yylex(void);
 void yyerror(char*);
-int yywrap(void);
 char* lc(char*);

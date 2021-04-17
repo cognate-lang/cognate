@@ -1,39 +1,13 @@
 #include "cognac.h"
-#include <ctype.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 FILE* outfile;
 size_t current_register = 0;
 ast* full_ast;
-
-ast* ast_join(ast* a, ast* b)
-{
-  if (!a) return b;
-  ast* ptr = a;
-  while (ptr->next) ptr=ptr->next;
-  ptr->next = b;
-  return a;
-}
-
-ast* alloc_ast(token_type type, value_type val_type, void* data, size_t line, ast* next)
-{
-  ast* a = malloc(sizeof(*a));
-  *a = (ast){.type=type, .val_type=val_type, .data=data, .line=line, .next=next};
-  return a;
-}
-
-int yywrap(void) { return 1; }
-void yyerror(char* str) { puts(str); }
-
-char* lc(char* s)
-{
-  char* s1 = malloc(strlen(s) + 1);
-  for (int i = 0; s[i] != '\0'; ++i) s1[i] = tolower(s[i]);
-  return s1;
-}
 
 char* type_as_str(value_type typ, _Bool uppercase)
 {

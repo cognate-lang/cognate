@@ -1,12 +1,11 @@
-~~ ~ Let A be 4; ~ ~~ Let A be 4;
-~~ Let A be 5; ~~ Let A be 4; ~ Let A be 4; ~
-~~ ~ Let A be 4; ~ ~~ Let A be 4;
+~ Let A be 4; ~ ~~ Let A be 4;
+Let A be 5; ~~ Let A be 4; ~ Let A be 4; ~
+~ Let A be 4; ~ ~~ Let A be 4;
 
-~~ Block comments are TODO
-~~ Print If (A, == 5)
-~~  'PASS: Comments'
-~~ else
-~~  'FAIL: Comments';
+Print If (A, == 5)
+ 'PASS: Comments'
+else
+ 'FAIL: Comments';
 
 ~~ The syntax highlighter can't handle this next bit.
 

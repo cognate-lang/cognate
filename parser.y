@@ -1,6 +1,25 @@
 %{
 #include "cognac.h"
+#include <stdlib.h>
+
+ast* ast_join(ast* a, ast* b)
+{
+  if (!a) return b;
+  ast* ptr = a;
+  while (ptr->next) ptr=ptr->next;
+  ptr->next = b;
+  return a;
+}
+
+ast* alloc_ast(token_type type, value_type val_type, void* data, size_t line)
+{
+  ast* a = malloc(sizeof(*a));
+  *a = (ast){.type=type, .val_type=val_type, .data=data, .line=line, .next=NULL};
+  return a;
+}
 %}
+
+%locations
 
 %union {
   char* text;
@@ -43,14 +62,14 @@ STATEMENT:
   | %empty          { $$ = NULL;             } ;
 
 TOKEN: // Tokens should be converted to ast nodes in the lexer.
-    IDENTIFIER         { $$ = alloc_ast(identifier, any, $1, 0, NULL); }
-  | '(' EXPRESSION ')' { $$ = alloc_ast(value, block,    $2, 0, NULL); }
-  | NUMBER             { $$ = alloc_ast(value, number,   $1, 0, NULL); }
-  | STRING             { $$ = alloc_ast(value, string,   $1, 0, NULL); }
-  | SYMBOL             { $$ = alloc_ast(value, symbol,   $1, 0, NULL); }
-  | DEFINE IDENTIFIER  { $$ = alloc_ast(define, any,     $2, 0, NULL); }
-  | LET IDENTIFIER     { $$ = alloc_ast(let, any,        $2, 0, NULL); }
-  | SET IDENTIFIER     { $$ = alloc_ast(set, any,        $2, 0, NULL); }
+    IDENTIFIER         { $$ = alloc_ast(identifier, any, $1, 0); }
+  | '(' EXPRESSION ')' { $$ = alloc_ast(value, block,    $2, 0); }
+  | NUMBER             { $$ = alloc_ast(value, number,   $1, 0); }
+  | STRING             { $$ = alloc_ast(value, string,   $1, 0); }
+  | SYMBOL             { $$ = alloc_ast(value, symbol,   $1, 0); }
+  | DEFINE IDENTIFIER  { $$ = alloc_ast(define, any,     $2, 0); }
+  | LET IDENTIFIER     { $$ = alloc_ast(let, any,        $2, 0); }
+  | SET IDENTIFIER     { $$ = alloc_ast(set, any,        $2, 0); }
   ;
 
 %%
