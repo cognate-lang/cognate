@@ -5,26 +5,19 @@ Print If (Foo 4, == 5)
 else
   'FAIL: Function call and return';
 
-Define Foo as (+ 2);
-
-Print If (Foo 5, == 7)
-    'PASS: Function shadowing'
-  else
-    'FAIL: Function shadowing';
-
 Do (
   Define Foo as (+ 3);
 
   Print If (Foo 5, == 8)
-    'PASS: Function shadowing in block 1'
+    'PASS: Function shadowing 1'
   else
-    'FAIL: Function shadowing in block 1';
+    'FAIL: Function shadowing 1';
 );
 
-Print If (Foo 7, == 9)
-  'PASS: Function shadowing in block 2'
+Print If (Foo 7, == 8)
+  'PASS: Function shadowing 2'
 else
-  'FAIL: Function shadowing in block 2';
+  'FAIL: Function shadowing 2';
 
 ~~ Mutation is TODO
 ~~Let Recurred be False;
@@ -44,3 +37,16 @@ else
 ~~  'FAIL: Recursion';
 
 ~~ Put binary recursion test here when I implement binary recursion.
+
+Define Binrec1
+( Let X;
+  Do If (X, > 1000) (Print 'PASS: Binary recursion')
+     else (Binrec2 with + 1 X);
+);
+
+Define Binrec2
+(
+  Binrec1 with + 1;
+);
+
+Binrec1 1;

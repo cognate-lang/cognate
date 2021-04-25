@@ -58,22 +58,22 @@ typedef struct cognate_list
 typedef struct cognate_stack
 {
   cognate_object* restrict start; // Pointer to start.
-  cognate_object* restrict top; // Pointer to top.
-  ptrdiff_t       size; // Allocated size of the stack.
-  size_t          uncopied_blocks; // Number of uncopied BLOCKs on the stack.
+  cognate_object* restrict top;   // Pointer to top.
+  ptrdiff_t       size;           // Allocated size of the stack.
 } cognate_stack;
 
 #define OBJ(objtype, objvalue) ((cognate_object){.type=objtype, .objtype=objvalue})
 #define VAR(name) ___##name
+#define CHECK_VAR(name) (check_var(#name, ___##name), ___##name)
 #define CHECK(typ, obj) (check_type(typ, obj) . typ)
 #define CALL(name, args) (set_current_word_name(#name), ___##name args)
 
+#define PREDEF_DEFINE(name) __block BLOCK ___##name;
 #define REDEFINE(name, body) ___##name = Block_copy(MAKE_BLOCK(docopy, body));
+#define DEFINE(name, body) ___##name = body;
 
-#define DEFINE(name, body) const BLOCK ___##name = body;
-
-
-#define LET(name, val) const cognate_object ___##name = copy_if_block(val);
+#define PREDEF_LET(name) cognate_object ___##name = (cognate_object){.type=NOTHING};
+#define LET(name, val) ___##name = copy_if_block(val);
 
 #define SET(name, val) ___##name = copy_if_block(val);
 
@@ -116,6 +116,7 @@ extern const char *current_word_name;
 // Variables and  needed by functions.c defined in runtime.c
 void init_stack();
 void expand_stack();
+void check_var(char*, cognate_object);
 void print_object(const cognate_object object, FILE *, const _Bool);
 void _Noreturn __attribute__((format(printf, 1, 2))) throw_error(const char *const, ...);
 _Bool compare_objects(cognate_object, cognate_object);

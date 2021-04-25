@@ -19,6 +19,7 @@ typedef struct decl_list
   value_type ret;
   decl_type type;
   unsigned short argc;
+  _Bool predecl;
   _Bool needs_stack;
   _Bool rets;
   _Bool mut;
@@ -54,6 +55,7 @@ extern ast* full_ast;
 
 decl_list* builtins(void);
 decl_list* lookup_word(char*, decl_list*);
+reg_list* get_register(value_type, reg_list*);
 void compile(ast*, reg_list*, decl_list*); // TODO output file arg.
 void print_cognate_string(char*);
 decl_list* predefine(ast*, decl_list*);

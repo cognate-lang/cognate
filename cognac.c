@@ -9,6 +9,9 @@ FILE* outfile;
 size_t current_register = 0;
 ast* full_ast;
 
+int col;
+int line;
+
 char* type_as_str(value_type typ, _Bool uppercase)
 {
   switch(typ)
@@ -36,10 +39,9 @@ reg_list* flush_registers_to_stack(reg_list* registers, unsigned short exclude)
       return registers;
     }
     flush_registers_to_stack(registers->next, 0);
-    if (registers->type == any)
-      fprintf(outfile, "push(r%zi);", registers->id);
-    else
-      fprintf(outfile, "push(OBJ(%s, r%zi));", type_as_str(registers->type, false), registers->id);
+    fputs("push(", outfile);
+    get_register(any, registers);
+    fputs(");", outfile);
   }
   return NULL;
 }
@@ -64,6 +66,71 @@ void print_cognate_string(char* str)
   fputc('"', outfile);
 }
 
+decl_list* predeclare(ast* tree, decl_list* defs)
+{
+  /*
+   * Iterate over the ast, outputting a PREDEFINE for each function declaration.
+   * Predefining means that functions can reference functions not yet declared.
+   * However, these functions cannot be called until declaration.
+   * TODO Function calls to guaranteed undeclared functions should be compile errors.
+   */
+  decl_list* already_predeclared = NULL;
+  for (; tree; tree=tree->next)
+  {
+    col = tree->col;
+    line = tree->line;
+    if (tree->type == define || tree->type == let)
+    {
+      if (lookup_word(tree->text, already_predeclared))
+      {
+        // Do not allow same-block shadowing.
+        yylloc.first_column = tree->col;
+        yylloc.first_line = tree->line;
+        yyerror("already defined in this block");
+      }
+      fprintf(outfile, "PREDEF_%s(%s);", tree->type == let ? "LET" : "DEFINE", tree->text);
+      // We are leaking memory here.
+      // This could be stack memory with alloca() is we moved the allocation.
+      decl_list* def  = malloc(sizeof(*def));
+      decl_list* def2 = malloc(sizeof(*def2));
+      *def2 = *def = (decl_list){.type=(tree->type == let) ? var : func,
+                                 .next = defs, .name = tree->text,
+                                 .needs_stack = tree->type == let ? false : true,
+                                 .rets = tree->type == let ? true : false,
+                                 .ret = any, .predecl = true};
+      def2->next = already_predeclared;
+      defs = def;
+      already_predeclared = def2;
+    }
+  }
+  return defs;
+}
+
+reg_list* get_register(value_type type, reg_list* regs)
+{
+  if (regs)
+  {
+    if (regs->type == type)     fprintf(outfile, "r%zi",                                           regs->id);
+    else if (regs->type == any) fprintf(outfile, "CHECK(%s,r%zi)", type_as_str(type, false),       regs->id);
+    else if (type == any)       fprintf(outfile, "OBJ(%s,r%zi)",   type_as_str(regs->type, false), regs->id);
+    else
+    {
+      char error_msg[256];
+      sprintf(error_msg, "expected '%s' but got '%s'", type_as_str(type, false), type_as_str(regs->type, false));
+      yylloc.first_column = col;
+      yylloc.first_line = line;
+      yyerror(error_msg);
+    }
+    return regs->next;
+  }
+  else
+  {
+    if (type == any) fputs("pop()", outfile);
+    else fprintf(outfile, "CHECK(%s,pop())", type_as_str(type, false));
+    return NULL;
+  }
+}
+
 void compile(ast* tree, reg_list* registers, decl_list* defs)
 {
   // TODO split this up into many smaller more maintainable functions.
@@ -72,6 +139,8 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
     flush_registers_to_stack(registers, 0);
     return;
   }
+  col = tree->col;
+  line = tree->line;
   switch (tree->type)
   {
     case identifier:
@@ -79,8 +148,8 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       decl_list* def = lookup_word(tree->text, defs);
       if (!def)
       {
-        yylloc.first_line = tree->line;
-        yylloc.first_column = tree->col;
+        yylloc.first_line = line;
+        yylloc.first_column = col;
         yyerror("undefined word");
       }
       if (def->needs_stack) registers = flush_registers_to_stack(registers, def->argc);
@@ -90,31 +159,15 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
         fprintf(outfile,"CALL(%s,(", def->name);
         for (unsigned short i = 0; i < def->argc; ++i)
         {
-          value_type arg = def->args[i];
-          if (registers)
-          {
-            if      (registers->type == arg) fprintf(outfile, "r%zi", registers->id);
-            else if (registers->type == any) fprintf(outfile, "CHECK(%s,r%zi)", type_as_str(arg, false), registers->id);
-            else if (arg == any)             fprintf(outfile, "OBJ(%s,r%zi)",   type_as_str(registers->type, false), registers->id);
-            else
-            {
-              printf("\nTYPE ERR expected a '%s' but got a '%s'\n", type_as_str(arg, false), type_as_str(registers->type, false));
-              exit(EXIT_FAILURE);
-            }
-            registers = registers->next;
-          }
-          else if (arg == any) fputs("pop()", outfile);
-          else fprintf(outfile,"CHECK(%s,pop())", type_as_str(arg, false));
+          registers = get_register(def->args[i], registers);
           if (i + 1 < def->argc) fputc(',', outfile);
         }
         fputs("));", outfile);
       }
       else if (def->type == var)
       {
-        if (def->ret == any) fprintf(outfile,"ANY r%zi=VAR(%s);", current_register, def->name);
-        else                fprintf(outfile, "%s r%zi=VAR(%s).%s;", type_as_str(def->ret, true), current_register, def->name, type_as_str(def->ret, false));
-        // We can bypass typechecks and use a typed register here if we know the variables type.
-        // However, this will not work with mutable variables since their type can be changed unpredictably.
+        if (def -> predecl) fprintf(outfile, "ANY r%zi=CHECK_VAR(%s);", current_register, def->name);
+        else fprintf(outfile,"ANY r%zi=VAR(%s);", current_register, def->name);
       }
       if (def->rets)
       {
@@ -133,9 +186,9 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       {
         case block:
           fputs("MAKE_BLOCK(", outfile);
-          compile(tree->data, NULL, defs);
+          compile(tree->data, NULL, predeclare(tree->data, defs));
           tree->data = NULL; // Prevent double free.
-          fputs(")",outfile);
+          fputs(")", outfile);
           break;
         case string:
           print_cognate_string(tree->text);
@@ -151,18 +204,13 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
     }
     case let:
     {
-      decl_list d = {.name=tree->text, .type=var, .next=defs, .ret=any, .rets=1};
-      fprintf(outfile, "LET(%s,", d.name);
-      if (registers)
-      {
-        d.ret = registers->type;
-        fprintf(outfile,"OBJ(%s,r%zi)", type_as_str(registers->type, false), registers->id);
-        registers = registers->next;
-      }
-      else fputs("pop()", outfile);
+      decl_list* d = lookup_word(tree->text, defs);
+      d -> predecl = false;
+      fprintf(outfile, "LET(%s,", tree->text);
+      registers = get_register(any, registers);
       fputs(");{", outfile);
       // TODO when there are no registers to use, add function args instead of  using the stack.
-      compile(tree->next, registers, &d);
+      compile(tree->next, registers, defs);
       fputc('}', outfile);
     }
     break;
@@ -171,12 +219,12 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
     {
       // TODO define macro takes function body as arg instead of a block for performance reasons.
       // We can set the function directly to the block, but we lose function name tracking.
-      decl_list d = {.name=tree->text, .type=func, .next=defs, .needs_stack=true};
+      decl_list* d = lookup_word(tree->text, defs);
+      d -> predecl = false;
       fprintf(outfile,"DEFINE(%s,", tree->text);
-      if (registers) { fprintf(outfile,"r%zi", registers->id); registers=registers->next; }
-      else           { fputs("CHECK(block,pop())",outfile); }
+      registers = get_register(block, registers);
       fputs(");{",outfile);
-      compile(tree->next, registers, &d);
+      compile(tree->next, registers, defs);
       fputc('}',outfile);
     }
     break;
@@ -214,8 +262,8 @@ decl_list* builtins(void)
     {.name="triplet", .type=func, .argc=1, .args={any}, .rets=true, .ret=any},
     {.name="swap", .type=func, .argc=2, .args={any,any}, .rets=true, .ret=any},
     {.name="clear", .type=func, .argc=0, .needs_stack=true},
-    {.name="true", .type=var, .rets=true, .ret=boolean},
-    {.name="false", .type=var, .rets=true, .ret=boolean},
+    {.name="true", .type=var, .rets=true, .ret=any},
+    {.name="false", .type=var, .rets=true, .ret=any},
     {.name="either", .type=func, .argc=2, .args={boolean, boolean}, .rets=true, .ret=boolean},
     {.name="both", .type=func, .argc=2, .args={boolean, boolean}, .rets=true, .ret=boolean},
     {.name="one_of", .type=func, .argc=2, .args={boolean, boolean}, .rets=true, .ret=boolean},
@@ -278,7 +326,7 @@ int main(int argc, char** argv)
   outfile = fopen(outfile_name, "w");
   yyparse();
   fputs("#include\"cognate.h\"\nPROGRAM(",outfile);
-  compile(full_ast, NULL, builtins());
+  compile(full_ast, NULL, predeclare(full_ast, builtins()));
   fputs(")\n", outfile);
   char args[] = "clang %s -o %s -fblocks -I. runtime.c functions.c -lBlocksRuntime"
                 " -l:libgc.so -Ofast -Wall -Wextra -Werror -Wno-unused"

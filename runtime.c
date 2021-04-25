@@ -223,7 +223,6 @@ void print_object (const cognate_object object, FILE* out, const _Bool quotes)
 
 void init_stack()
 {
-  stack.uncopied_blocks = 0;
   stack.size = INITIAL_LIST_SIZE;
   stack.top = stack.start = GC_MALLOC (INITIAL_LIST_SIZE * sizeof(cognate_object));
 }
@@ -272,6 +271,11 @@ cognate_object check_type(cognate_type expected_type, cognate_object object)
   if likely(object.type & expected_type) return object;
   // TODO: Print the object itself here.
   throw_error("Type Error! Expected type '%s' but recieved type '%s'", lookup_type(expected_type), lookup_type(object.type));
+}
+
+void check_var(char* name, cognate_object val)
+{
+  if (val.type == NOTHING) throw_error("Variable '%s' used before definition!", name);
 }
 
 const char* lookup_type(cognate_type type)
