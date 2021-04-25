@@ -25,8 +25,12 @@ Do (
     'FAIL: Variable modification';
 );
 
-~~ Variable modification is TODO
-~~Print If (X, == 3)
-~~  'PASS: Variable modification in block'
-~~else
-~~  'FAIL: Variable modification in block';
+Print If (X, == 3)
+  'PASS: Variable modification in block'
+else
+  'FAIL: Variable modification in block';
+
+Define Foo ('FAIL: Mutating function into variable');
+Set Foo to 'PASS: Mutating function into variable';
+
+Print Foo;

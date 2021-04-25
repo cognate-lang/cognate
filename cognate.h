@@ -4,6 +4,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <Block.h>
 
 #define MAX_TABLE_TRIES    3
 #define INITIAL_READ_SIZE  64
@@ -69,13 +70,13 @@ typedef struct cognate_stack
 #define CALL(name, args) (set_current_word_name(#name), ___##name args)
 
 #define PREDEF_DEFINE(name) __block BLOCK ___##name;
-#define REDEFINE(name, body) ___##name = Block_copy(MAKE_BLOCK(docopy, body));
-#define DEFINE(name, body) ___##name = body;
 
-#define PREDEF_LET(name) cognate_object ___##name = (cognate_object){.type=NOTHING};
-#define LET(name, val) ___##name = copy_if_block(val);
+#define PREDEF_LET(name) __block cognate_object ___##name = (cognate_object){.type=NOTHING};
+#define LET(name, val) ___##name = val;
 
 #define SET(name, val) ___##name = copy_if_block(val);
+#define SET_FN(name, val) const ANY _tmp_##name = val; \
+                          ___##name = Block_copy(^{push(val);})
 
 #define PROGRAM(body) \
   int main(int argc, char** argv) \

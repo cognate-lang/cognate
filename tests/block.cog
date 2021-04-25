@@ -14,7 +14,7 @@ Define Bar as
 Define Foo as
 (
   Let X;
-  ~~Set X to X;
+  Set X to X;
   Bar (Print X);
 );
 

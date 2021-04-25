@@ -50,7 +50,7 @@ ast* alloc_ast(token_type type, value_type val_type, void* data)
 
 ENTRY:
     EXPRESSION { full_ast = $1; }
-    ;
+  ;
 
 EXPRESSION:
     STATEMENT ';' EXPRESSION { $$ = ast_join($1, $3); }
@@ -59,7 +59,8 @@ EXPRESSION:
 
 STATEMENT:
     TOKEN STATEMENT { $$ = ast_join($2, $1); }
-  | %empty          { $$ = NULL;             } ;
+  | %empty          { $$ = NULL;             }
+  ;
 
 TOKEN: // Tokens should be converted to ast nodes in the lexer.
     IDENTIFIER         { $$ = alloc_ast(identifier, any, $1); }
