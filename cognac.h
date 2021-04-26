@@ -22,7 +22,7 @@ typedef struct decl_list
   _Bool predecl;
   _Bool needs_stack;
   _Bool rets;
-  _Bool mut;
+  enum {immutable, mutable} mut;
   // TODO flags and a bitmask for boolean things?
 } decl_list;
 
@@ -59,6 +59,7 @@ reg_list* get_register(value_type, reg_list*);
 void compile(ast*, reg_list*, decl_list*); // TODO output file arg.
 void print_cognate_string(char*);
 decl_list* predefine(ast*, decl_list*);
+void check_for_mutation(ast*, decl_list*);
 reg_list* flush_registers_to_stack(reg_list*, unsigned short);
 
 int yylex(void);

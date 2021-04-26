@@ -69,9 +69,11 @@ typedef struct cognate_stack
 #define CHECK(typ, obj) (check_type(typ, obj) . typ)
 #define CALL(name, args) (set_current_word_name(#name), ___##name args)
 
-#define PREDEF_DEFINE(name) __block BLOCK ___##name;
+#define PREDEF_MUTABLE_DEFINE(name) __block BLOCK ___##name = ^{ throw_error("Function '"#name"' called before definition!'"); };
+#define PREDEF_IMMUTABLE_DEFINE(name) PREDEF_MUTABLE_DEFINE(name)
 
-#define PREDEF_LET(name) __block cognate_object ___##name = (cognate_object){.type=NOTHING};
+#define PREDEF_MUTABLE_LET(name) __block cognate_object ___##name = (cognate_object){.type=NOTHING};
+#define PREDEF_IMMUTABLE_LET(name) cognate_object ___##name = (cognate_object){.type=NOTHING};
 #define LET(name, val) ___##name = val;
 
 #define SET(name, val) ___##name = copy_if_block(val);
