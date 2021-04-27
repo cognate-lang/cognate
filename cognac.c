@@ -233,8 +233,9 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       d -> predecl = false;
       fprintf(outfile, "DEFINE(%s,", tree->text);
       registers = get_register(block, registers);
-      fputs(");", outfile);
+      fputs(");{", outfile);
       compile(tree->next, registers, defs);
+      fputc('}', outfile);
     }
     break;
     case set:
