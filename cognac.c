@@ -77,7 +77,7 @@ decl_list* predeclare(ast* head, decl_list* defs)
   {
     yylloc.first_column = tree->col;
     yylloc.first_line = tree->line;
-    if (tree->type == define || tree->type == let)
+    if (tree->type == define)
     {
       if (lookup_word(tree->text, already_predeclared)) yyerror("already defined in this block");
       // We are leaking memory here.
@@ -86,11 +86,10 @@ decl_list* predeclare(ast* head, decl_list* defs)
       decl_list* def2 = malloc(sizeof(*def2));
       *def = (decl_list){.type=(tree->type == let) ? var : func,
                          .next = defs, .name = tree->text,
-                         .needs_stack = tree->type == let ? false : true,
-                         .rets = tree->type == let ? true : false,
-                         .ret = any, .predecl = true, .mut=immutable};
-      check_for_mutation(head, def);
-      fprintf(outfile, "PREDEF_%s_%s(%s);", def->mut == mutable ? "MUTABLE" : "IMMUTABLE", tree->type == let ? "LET" : "DEFINE", tree->text);
+                         .needs_stack = true,
+                         .rets = false,
+                         .ret = any, .predecl = true, .mut=mutable};
+      fprintf(outfile, "PREDEF(%s);", tree->text);
       // We use already_predeclared to prevent shadowing.
       *def2 = *def;
       def2->next = already_predeclared;
@@ -107,14 +106,15 @@ decl_list* predeclare(ast* head, decl_list* defs)
   return defs;
 }
 
-void check_for_mutation(ast* tree, decl_list* def)
+bool is_mutated(ast* tree, decl_list def)
 {
   for (; tree ; tree = tree->next)
   {
-    if (tree->type == set && !strcmp(def->name, tree->text)) def->mut = mutable;
-    else if (tree->type == value && tree->val_type == block) check_for_mutation(tree->child, def);
+    if (tree->type == set && !strcmp(def.name, tree->text)) return true;
+    else if (tree->type == value && tree->val_type == block && is_mutated(tree->child, def)) return true;
     // TODO stop checking if var is shadowed.
   }
+  return false;
 }
 
 reg_list* get_register(value_type type, reg_list* regs)
@@ -210,12 +210,29 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       compile(tree->next, &return_register, defs);
       break;
     }
-    case let: case define:
+    case let:
+    {
+      decl_list d = (decl_list)
+      {
+        .name = tree->text,
+        .next = defs,
+        .ret = any,
+        .type = var,
+        .rets = true
+      };
+      fprintf(outfile, "LET_%s(%s,", is_mutated(tree->next, d) ? "MUTABLE" : "IMMUTABLE", tree->text);
+      registers = get_register(any, registers);
+      fputs(");{", outfile);
+      compile(tree->next, registers, &d);
+      fputc('}', outfile);
+    }
+    break;
+    case define:
     {
       decl_list* d = lookup_word(tree->text, defs);
       d -> predecl = false;
-      fprintf(outfile, "LET(%s,", tree->text);
-      registers = get_register(tree->type == let ? any : block, registers);
+      fprintf(outfile, "DEFINE(%s,", tree->text);
+      registers = get_register(block, registers);
       fputs(");", outfile);
       compile(tree->next, registers, defs);
     }
