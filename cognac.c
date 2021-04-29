@@ -296,7 +296,7 @@ int main(int argc, char** argv)
   fputs("#include\"cognate.h\"\nPROGRAM(",outfile);
   compile(full_ast, NULL, predeclare(full_ast, builtins()));
   fputs(")\n", outfile);
-  char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-I.", "runtime.c", "functions.c", "-lBlocksRuntime",
+  char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-I.", "runtime.o", "functions.o", "-lBlocksRuntime",
                    "-l:libgc.so", optimize ? "-Ofast" : "-O0", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
                    "-std=c11", "-lm", "-g0", "-fuse-ld=lld", optimize ? "-flto" : "-fno-lto", NULL};
   fflush(outfile);
