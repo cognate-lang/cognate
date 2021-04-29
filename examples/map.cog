@@ -1,4 +1,2 @@
-Import Builtin functions;
-
-Define Square as (Multiply by Twin);
-Map (Square) over the Range from 1 to 100 step 1, Print;
+Define Square as (* Twin);
+Map (Square) over the List(1, 2, 3, 4, 5), Print;

@@ -1,0 +1,12 @@
+For each in List (1,2,3,4,5) (*) from 1;
+
+Print If (== 120)
+  then 'PASS: Computing 5! using for loop'
+  else 'FAIL: Computing 5! using for loop';
+
+Let X be 0;
+For each in List (1,2,3,4,5) (Set X);
+
+Print If (X, == 5)
+  then 'PASS: For loop executes in order'
+  else 'FAIL: For loop executes in order';

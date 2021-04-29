@@ -198,3 +198,6 @@ NUMBER ___round(NUMBER);
 NUMBER ___ceiling(NUMBER);
 void ___assert(STRING, BOOLEAN);
 void ___error(STRING);
+LIST ___map(BLOCK, LIST);
+LIST ___filter(BLOCK, LIST);
+void ___for(LIST, BLOCK);

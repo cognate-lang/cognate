@@ -433,6 +433,48 @@ void ___error(STRING str) {
   throw_error("%s", str);
 }
 
+LIST ___map(BLOCK blk, LIST lst)
+{
+  if (lst)
+  {
+    push(lst->object);
+    blk();
+    cognate_list* node = GC_NEW(cognate_list);
+    node->object = pop();
+    node->next = ___map(blk, lst->next);
+    return node;
+  }
+  return NULL;
+}
+
+LIST ___filter(BLOCK blk, LIST lst)
+{
+  if (lst)
+  {
+    push(lst->object);
+    blk();
+    if (CHECK(boolean, pop()))
+    {
+      cognate_list* node = GC_NEW(cognate_list);
+      node->object = lst->object;
+      node->next = ___filter(blk, lst->next);
+      return node;
+    }
+    return ___filter(blk, lst->next);
+  }
+  return NULL;
+}
+
+void ___for(LIST lst, BLOCK blk)
+{
+  if (lst)
+  {
+    push(lst->object);
+    blk();
+    ___for(lst->next, blk);
+  }
+}
+
 static size_t mbstrlen(const char* str)
 {
   // Get the number of characters in a multibyte string.

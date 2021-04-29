@@ -56,4 +56,7 @@
 {.name="write", .type=func, .argc=1, .args={string,any}},
 {.name="list", .type=func, .argc=1, .args={block}, .rets=true, .ret=list},
 {.name="number", .type=func, .argc=1, .args={string}, .rets=true, .ret=number},
+{.name="map", .type=func, .argc=2, .args={block, list}, .rets=true, .ret=list, .needs_stack=true},
+{.name="filter", .type=func, .argc=2, .args={block, list}, .rets=true, .ret=list, .needs_stack=true},
+{.name="for", .type=func, .argc=2, .args={list, block}, .rets=false, .needs_stack=true},
 {.name="stop"},
