@@ -475,6 +475,18 @@ void ___for(LIST lst, BLOCK blk)
   }
 }
 
+LIST ___range(NUMBER start, NUMBER end, NUMBER step)
+{
+  if (start * step < end * step)
+  {
+    cognate_list* node = GC_NEW(cognate_list);
+    node->object = OBJ(number, start);
+    node->next = ___range(start+step, end, step);
+    return node;
+  }
+  return NULL;
+}
+
 static size_t mbstrlen(const char* str)
 {
   // Get the number of characters in a multibyte string.

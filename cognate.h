@@ -201,3 +201,4 @@ void ___error(STRING);
 LIST ___map(BLOCK, LIST);
 LIST ___filter(BLOCK, LIST);
 void ___for(LIST, BLOCK);
+LIST ___range(NUMBER, NUMBER, NUMBER);
