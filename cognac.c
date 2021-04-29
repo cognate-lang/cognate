@@ -112,8 +112,8 @@ bool is_mutated(ast* tree, decl_list def)
   for (; tree ; tree = tree->next)
   {
     if (tree->type == set && !strcmp(def.name, tree->text)) return true;
+    else if (tree->type == let && !strcmp(def.name, tree->text)) return false; // TODO check if var is shadowed by function predecl.
     else if (tree->type == value && tree->val_type == block && is_mutated(tree->child, def)) return true;
-    // TODO stop checking if var is shadowed.
   }
   return false;
 }
@@ -287,7 +287,7 @@ int main(int argc, char** argv)
   }
   char* source_file_path = argv[1];
   size_t len = strlen(source_file_path);
-  char* c_file_path =      strdup(source_file_path); c_file_path[len-2] = '\0';
+  char* c_file_path      = strdup(source_file_path); c_file_path[len-2] = '\0';
   char* binary_file_path = strdup(source_file_path); binary_file_path[len-4] = '\0';
   outfile = fopen(c_file_path, "w");
   yyin = fopen(source_file_path, "r");
@@ -297,8 +297,8 @@ int main(int argc, char** argv)
   compile(full_ast, NULL, predeclare(full_ast, builtins()));
   fputs(")\n", outfile);
   char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-I.", "runtime.c", "functions.c", "-lBlocksRuntime",
-                   "-l:libgc.so", optimize ? "-Ofast" : "-O0", "-Wall", "-Wextra", "-Werror", "-Wno-unused",
-                   "-pedantic-errors", "-std=c11", "-lm", "-g0", "-fuse-ld=lld", optimize ? "-flto" : "-fno-lto", NULL};
+                   "-l:libgc.so", optimize ? "-Ofast" : "-O0", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
+                   "-std=c11", "-lm", "-g0", "-fuse-ld=lld", optimize ? "-flto" : "-fno-lto", NULL};
   fflush(outfile);
   if (fork() == 0) execvp(args[0], args); else wait(NULL);
   if (run)
