@@ -15,7 +15,7 @@ char* lc(char* s)
 void yyerror(char* str)
 {
   char header[20];
-  sprintf(header, "Line %d: ", yylloc.first_line, yylloc.first_column);
+  sprintf(header, "Line %d: ", yylloc.first_line);
   fprintf(stderr, "\033[0;2m%s", header);
   char line[80];
   rewind(yyin);

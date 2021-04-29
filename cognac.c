@@ -7,6 +7,7 @@
 #include <regex.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 FILE* outfile;
 size_t current_register = 0;
@@ -269,14 +270,24 @@ decl_list* builtins(void)
 
 int main(int argc, char** argv)
 {
-  if (argc != 2 || strcmp(".cog", strchr(argv[1], '.')))
+  if (argc < 2 || strcmp(".cog", strchr(argv[1], '.')))
   {
-    fputs("Usage: cognac filename.cog", stderr);
+    fputs("Usage: cognac filename.cog -option1 -option2", stderr);
     return EXIT_FAILURE;
+  }
+  bool optimize = false;
+  int run = 0;
+  for (int i = 2; i < argc; ++i)
+  {
+    char* opt = argv[i];
+    if (strlen(opt) < 2 || opt[0] != '-') goto opterr;
+    else if (!strcmp(opt, "-optimize")) optimize = true;
+    else if (!strcmp(opt, "-run")) { run = i; break; }
+    else { opterr: fprintf(stderr, "Invalid option: %s\n", opt); return EXIT_FAILURE; }
   }
   char* source_file_path = argv[1];
   size_t len = strlen(source_file_path);
-  char* c_file_path = strdup(source_file_path); c_file_path[len-2] = '\0';
+  char* c_file_path =      strdup(source_file_path); c_file_path[len-2] = '\0';
   char* binary_file_path = strdup(source_file_path); binary_file_path[len-4] = '\0';
   outfile = fopen(c_file_path, "w");
   yyin = fopen(source_file_path, "r");
@@ -286,8 +297,17 @@ int main(int argc, char** argv)
   compile(full_ast, NULL, predeclare(full_ast, builtins()));
   fputs(")\n", outfile);
   char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-I.", "runtime.c", "functions.c", "-lBlocksRuntime",
-                   "-l:libgc.so", "-Ofast", "-Wall", "-Wextra", "-Werror", "-Wno-unused",
-                   "-pedantic-errors", "-std=c11", "-lm", "-g0", "-fuse-ld=lld", "-flto=full" };
+                   "-l:libgc.so", optimize ? "-Ofast" : "-O0", "-Wall", "-Wextra", "-Werror", "-Wno-unused",
+                   "-pedantic-errors", "-std=c11", "-lm", "-g0", "-fuse-ld=lld", optimize ? "-flto" : "-fno-lto", NULL};
   fflush(outfile);
-  execvp(args[0], args);
+  if (fork() == 0) execvp(args[0], args); else wait(NULL);
+  if (run)
+  {
+    int run_argc = argc - run + 1;
+    char* run_args[run_argc + 1];
+    run_args[0] = binary_file_path;
+    memmove(run_args + 1, argv + run + 1, run_argc * sizeof(char*));
+    run_args[run_argc - 1] = NULL;
+    execvp(run_args[0], run_args);
+  }
 }

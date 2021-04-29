@@ -65,7 +65,7 @@ void init(int argc, char** argv)
 #ifdef BLOCK_GC
   _Block_use_GC(blk_alloc, blk_setHasRefcount, blk_gc_assign_strong, blk_gc_assign_weak, blk_gc_memmove);
 #else
-  #pragma message "Cannot find header <Block_private.h>. Blocks cannot use garbage collection and may leak memory!"
+  //#pragma message "Cannot find header <Block_private.h>. Blocks cannot use garbage collection and may leak memory!"
 #endif
 #else
   #pragma message "Compiling without the garbage collector will cause memory leaks!"

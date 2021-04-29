@@ -18,8 +18,6 @@ for file_name in $(ls tests | grep .cog | cut -f 1 -d '.')
 do
   # file.cog
   source_file="tests/${file_name}.cog"
-  # file
-  binary_file="tests/${file_name}"
   # file.log
   log_file="tests/${file_name}.log"
   # $-12s pads with spaces
@@ -27,17 +25,7 @@ do
   # Clear log file
   rm -f $log_file
   # Compile
-  ./cognac $source_file > /tmp/cognac.log 2>&1
-  # Check if file exists (successful compilation)
-  if test -f $binary_file; then
-    # Run - outputting to logfile
-    { ./$binary_file; } 2>>$log_file 1>&2 # Segfaults will also be redirected to logfile
-  else
-    # File not exists is error
-    echo "FAIL: '$file_name' does not compile!" >> $log_file
-    # If it doesn't compile, put compiler errors in log
-    cat /tmp/cognac.log >> $log_file
-  fi
+  { ./cognac $source_file -run; } 2>>$log_file 1>&2
   # Check if any tests failed
   if [[ $(grep '^PASS:' $log_file) == $(<$log_file) ]]; then
     # If all tests passed
@@ -51,8 +39,6 @@ do
   # Delete binary
   rm -f $binary_file
 done
-
-rm /tmp/cognac.log
 
 if [[ $failed > 0 ]]; then
   echo -e "${RED}${failed} tests failed!${NC}"
