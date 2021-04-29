@@ -273,11 +273,6 @@ cognate_object check_type(cognate_type expected_type, cognate_object object)
   throw_error("Type Error! Expected type '%s' but recieved type '%s'", lookup_type(expected_type), lookup_type(object.type));
 }
 
-void check_var(char* name, cognate_object val)
-{
-  if (val.type == NOTHING) throw_error("Variable '%s' used before definition!", name);
-}
-
 const char* lookup_type(cognate_type type)
 {
   char str[] = "\0oolean/String/Number/List/Table/Block";

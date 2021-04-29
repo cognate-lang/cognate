@@ -177,7 +177,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       }
       else if (def->type == var)
       {
-        if (def->predecl) fprintf(outfile, "CHECK_VAR(%s);", def->name);
+        if (def->predecl) fprintf(outfile, "VAR(%s);", def->name);
         else fprintf(outfile, "VAR(%s);", def->name);
       }
       if (def->rets)
@@ -241,7 +241,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
     case set:
     {
       decl_list* d = lookup_word(tree->text, defs);
-      if (d -> predecl) fprintf(outfile, "CHECK_VAR(%s);", tree->text);
+      if (d -> predecl) fprintf(outfile, "VAR(%s);", tree->text);
       fprintf(outfile, "%s(%s,", d->type == var ? "SET" : "SET_FN", tree->text);
       registers = get_register(any, registers);
       fputs(");", outfile);
