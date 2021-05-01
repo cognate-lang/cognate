@@ -19,9 +19,9 @@ typedef struct decl_list
   value_type ret;
   decl_type type;
   unsigned short argc;
-  _Bool predecl;
-  _Bool needs_stack;
-  _Bool rets;
+  bool predecl;
+  bool needs_stack;
+  bool rets;
   enum {immutable, mutable} mut;
   // TODO flags and a bitmask for boolean things?
 } decl_list;

@@ -2,10 +2,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
-#include <unistd.h>
 #include <stdlib.h>
-#include <regex.h>
-#include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
 
@@ -111,9 +108,14 @@ bool is_mutated(ast* tree, decl_list def)
 {
   for (; tree ; tree = tree->next)
   {
-    if (tree->type == set && !strcmp(def.name, tree->text)) return true;
-    else if (tree->type == let && !strcmp(def.name, tree->text)) return false; // TODO check if var is shadowed by function predecl.
-    else if (tree->type == value && tree->val_type == block && is_mutated(tree->child, def)) return true;
+    switch(tree->type)
+    {
+      case set: if (!strcmp(def.name, tree->text)) return true; break;
+      case let:
+      case define: if (!strcmp(def.name, tree->text)) return false; break;
+      case value: if (tree->val_type == block && is_mutated(tree->child, def)) return true; break;
+      default:;
+    }
   }
   return false;
 }
@@ -276,15 +278,7 @@ int main(int argc, char** argv)
     return EXIT_FAILURE;
   }
   bool optimize = false;
-  int run = 0;
-  for (int i = 2; i < argc; ++i)
-  {
-    char* opt = argv[i];
-    if (strlen(opt) < 2 || opt[0] != '-') goto opterr;
-    else if (!strcmp(opt, "-optimize")) optimize = true;
-    else if (!strcmp(opt, "-run")) { run = i; break; }
-    else { opterr: fprintf(stderr, "Invalid option: %s\n", opt); return EXIT_FAILURE; }
-  }
+  bool run = false;
   char* source_file_path = argv[1];
   size_t len = strlen(source_file_path);
   char* c_file_path      = strdup(source_file_path); c_file_path[len-2] = '\0';
@@ -292,22 +286,23 @@ int main(int argc, char** argv)
   outfile = fopen(c_file_path, "w");
   yyin = fopen(source_file_path, "r");
   if (!yyin) { fprintf(stderr, "File %s not found\n", source_file_path); return EXIT_FAILURE; }
+  for (argv += 2 ;; argv++)
+  {
+    char* opt = *argv;
+    if (!opt) break;
+    else if (!strcmp(opt, "-output")) { binary_file_path = argv[1]; argv++; }
+    else if (!strcmp(opt, "-optimize")) optimize = true;
+    else if (!strcmp(opt, "-run")) { run = true; argv[0] = binary_file_path; /* TODO prepend path with ./ */ break; }
+    else { fprintf(stderr, "Invalid option: %s\n", opt); return EXIT_FAILURE; }
+  }
   yyparse();
   fputs("#include\"cognate.h\"\nPROGRAM(",outfile);
   compile(full_ast, NULL, predeclare(full_ast, builtins()));
   fputs(")\n", outfile);
   char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-I.", "runtime.o", "functions.o", "-lBlocksRuntime",
                    "-l:libgc.so", optimize ? "-Ofast" : "-O0", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
-                   "-std=c11", "-lm", "-g0", "-fuse-ld=lld", optimize ? "-flto" : "-fno-lto", NULL};
+                   "-std=c11", "-lm", "-g0", "-fuse-ld=lld", optimize ? "-flto" : "-fno-lto", NULL };
   fflush(outfile);
   if (fork() == 0) execvp(args[0], args); else wait(NULL);
-  if (run)
-  {
-    int run_argc = argc - run + 1;
-    char* run_args[run_argc + 1];
-    run_args[0] = binary_file_path;
-    memmove(run_args + 1, argv + run + 1, run_argc * sizeof(char*));
-    run_args[run_argc - 1] = NULL;
-    execvp(run_args[0], run_args);
-  }
+  if (run) execvp(argv[0], argv);
 }
