@@ -9,7 +9,14 @@ typedef enum {block, string, number, symbol, boolean, list, any} value_type;
 
 typedef enum {identifier, value, define, let, set} token_type;
 
-typedef enum {func, var} decl_type;
+typedef enum {func, var, stack_op} decl_type;
+
+typedef struct reg_list
+{
+  size_t id;
+  struct reg_list* next;
+  value_type type;
+} reg_list;
 
 typedef struct decl_list
 {
@@ -17,12 +24,13 @@ typedef struct decl_list
   char* name;
   value_type args[3];
   value_type ret;
-  decl_type type;
   unsigned short argc;
   bool predecl;
   bool needs_stack;
   bool rets;
   enum {immutable, mutable} mut;
+  reg_list* (*stack_shuffle)(reg_list*);
+  decl_type type;
   // TODO flags and a bitmask for boolean things?
 } decl_list;
 
@@ -40,13 +48,6 @@ typedef struct ast
   token_type type;
   value_type val_type;
 } ast;
-
-typedef struct reg_list
-{
-  size_t id;
-  struct reg_list* next;
-  value_type type;
-} reg_list;
 
 extern FILE* yyin;
 extern FILE* outfile;

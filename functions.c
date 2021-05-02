@@ -69,10 +69,6 @@ NUMBER ___random(NUMBER low, NUMBER high, NUMBER step) {
   return low + (NUMBER)(num % (unsigned long)((high - low) / step)) * step;
 }
 
-void ___drop(cognate_object a)                   { (void)a; } // These can be defined within cognate.
-ANY ___twin(cognate_object a)                   { push(a); return a; }
-ANY ___triplet(cognate_object a)                { push(a); push(a); return a; }
-ANY ___swap(cognate_object a, cognate_object b) { push(a); return b; }
 void ___clear()                                  { stack.top=stack.start; }
 
 ANY ___true = OBJ(boolean,1);

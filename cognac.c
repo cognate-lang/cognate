@@ -143,6 +143,7 @@ reg_list* get_register(value_type type, reg_list* regs)
   }
 }
 
+
 reg_list add_register(value_type type, reg_list* next)
 {
   reg_list r = (reg_list){.type = type, .id = current_register++, .next=next};
@@ -168,20 +169,24 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       if (def->needs_stack) registers = flush_registers_to_stack(registers, def->argc);
       reg_list return_register;
       if (def->rets) return_register = add_register(def->ret, NULL);
-      if (def->type == func)
+      switch(def->type)
       {
-        fprintf(outfile,"CALL(%s,(", def->name);
-        for (unsigned short i = 0; i < def->argc; ++i)
-        {
-          registers = get_register(def->args[i], registers);
-          if (i + 1 < def->argc) fputc(',', outfile);
-        }
-        fputs("));", outfile);
-      }
-      else if (def->type == var)
-      {
-        if (def->predecl) fprintf(outfile, "VAR(%s);", def->name);
-        else fprintf(outfile, "VAR(%s);", def->name);
+        case func:
+          fprintf(outfile,"CALL(%s,(", def->name);
+          for (unsigned short i = 0; i < def->argc; ++i)
+          {
+            registers = get_register(def->args[i], registers);
+            if (i + 1 < def->argc) fputc(',', outfile);
+          }
+          fputs("));", outfile);
+          break;
+        case var:
+          if (def->predecl) fprintf(outfile, "VAR(%s);", def->name);
+          else fprintf(outfile, "VAR(%s);", def->name);
+          break;
+        case stack_op:
+          registers = def->stack_shuffle(registers);
+          break;
       }
       if (def->rets)
       {
@@ -244,6 +249,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
     case set:
     {
       decl_list* d = lookup_word(tree->text, defs);
+      if (d -> type == stack_op || d -> type == func) { yyerror("cannot mutate function"); }
       if (d -> predecl) fprintf(outfile, "VAR(%s);", tree->text);
       fprintf(outfile, "%s(%s,", d->type == var ? "SET" : "SET_FN", tree->text);
       registers = get_register(any, registers);
@@ -254,6 +260,47 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
   // Free the ast node.
   free(tree->data);
   free(tree);
+}
+
+reg_list* stack_twin(reg_list* registers)
+{
+  reg_list* r1 = malloc(sizeof(*r1));
+  if (registers) { *r1 = *registers; }
+  else { *r1 = add_register(any, NULL); fputs("peek();", outfile); }
+  r1->next = registers;
+  return r1;
+}
+
+reg_list* stack_drop(reg_list* registers)
+{
+  if (registers) registers = registers->next;
+  else fputs("pop();", outfile);
+  return registers;
+}
+
+reg_list* stack_triplet(reg_list* registers)
+{
+  reg_list* r1 = malloc(sizeof(*r1));
+  if (registers) { *r1 = *registers; }
+  else { *r1 = add_register(any, NULL); fputs("peek();", outfile); }
+  reg_list* r2 = malloc(sizeof(*r2));
+  *r2 = *r1;
+  r1->next = registers;
+  r2->next = r1;
+  return r2;
+}
+
+reg_list* stack_swap(reg_list* registers)
+{
+  reg_list* r1 = malloc(sizeof(*r1));
+  reg_list* r2 = malloc(sizeof(*r2));
+  if (registers) { r1 = registers; registers = registers->next; }
+  else { *r1 = add_register(any, NULL); fputs("pop();", outfile); }
+  if (registers) { r2 = registers; registers = registers->next; }
+  else { *r2 = add_register(any, NULL); fputs("pop();", outfile); }
+  r2->next = r1;
+  r1->next = registers;
+  return r2;
 }
 
 decl_list* builtins(void)
@@ -269,6 +316,8 @@ decl_list* builtins(void)
   }
   return b;
 }
+
+
 
 int main(int argc, char** argv)
 {

@@ -20,6 +20,30 @@ Print If (7, Triplet, Drop, Drop, == 7)
 else
   'FAIL: Triplet';
 
+Print If (2, 3, Do(Drop), == 2)
+  'PASS: Drop (runtime stack)'
+else
+  'FAIL: Drop (runtime stack)';
+
+Print If (5, 6, Do(Swap), == 5)
+  'PASS: Swap (runtime stack)'
+else
+  'FAIL: Swap (runtime stack)';
+
+Drop;
+
+Print If (4, Do(Twin), Drop, == 4)
+  'PASS: Twin (runtime stack)'
+else
+  'FAIL: Twin (runtime stack)';
+
+Print If (7, Do(Triplet), Drop, Drop, == 7)
+  'PASS: Triplet (runtime stack)'
+else
+  'FAIL: Triplet (runtime stack)';
+
+
+
 Print If (1,2,3, Stack, == List (1,2,3))
   'PASS: Stack as list'
 else
