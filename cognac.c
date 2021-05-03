@@ -181,8 +181,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
           fputs("));", outfile);
           break;
         case var:
-          if (def->predecl) fprintf(outfile, "VAR(%s);", def->name);
-          else fprintf(outfile, "VAR(%s);", def->name);
+          fprintf(outfile, "VAR(%s);", def->name);
           break;
         case stack_op:
           registers = def->stack_shuffle(registers);
@@ -224,13 +223,15 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       {
         .name = tree->text,
         .next = defs,
-        .ret = any,
+        .ret = registers ? registers -> type : any,
         .type = var,
         .rets = true
       };
-      fprintf(outfile, "LET_%s(%s,", is_mutated(tree->next, d) ? "MUTABLE" : "IMMUTABLE", tree->text);
-      registers = get_register(any, registers);
-      fputs(");{", outfile);
+      bool mutated = is_mutated(tree->next, d);
+      if (mutated) d.ret = any;
+      fprintf(outfile, "%s %s VAR(%s)=", mutated ? "__block" : "const", type_as_str(d.ret, true), d.name);
+      registers = get_register(d.ret, registers);
+      fputs(";{", outfile);
       compile(tree->next, registers, &d);
       fputc('}', outfile);
     }
@@ -239,9 +240,9 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
     {
       decl_list* d = lookup_word(tree->text, defs);
       d -> predecl = false;
-      fprintf(outfile, "DEFINE(%s,", tree->text);
+      fprintf(outfile, "VAR(%s)=", tree->text);
       registers = get_register(block, registers);
-      fputs(");{", outfile);
+      fputs(";{", outfile);
       compile(tree->next, registers, defs);
       fputc('}', outfile);
     }
@@ -251,7 +252,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       decl_list* d = lookup_word(tree->text, defs);
       if (d -> type == stack_op || d -> type == func) { yyerror("cannot mutate function"); }
       if (d -> predecl) fprintf(outfile, "VAR(%s);", tree->text);
-      fprintf(outfile, "%s(%s,", d->type == var ? "SET" : "SET_FN", tree->text);
+      fprintf(outfile, "SET(%s,", tree->text);
       registers = get_register(any, registers);
       fputs(");", outfile);
       compile(tree->next, registers, defs);
@@ -345,9 +346,9 @@ int main(int argc, char** argv)
     else { fprintf(stderr, "Invalid option: %s\n", opt); return EXIT_FAILURE; }
   }
   yyparse();
-  fputs("#include\"cognate.h\"\nPROGRAM(",outfile);
+  fputs("#include\"cognate.h\"\nint main(int argc,char** argv){init(argc,argv);",outfile);
   compile(full_ast, NULL, predeclare(full_ast, builtins()));
-  fputs(")\n", outfile);
+  fputs("cleanup();}\n", outfile);
   char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-I.", "runtime.o", "functions.o", "-lBlocksRuntime",
                    "-l:libgc.so", optimize ? "-Ofast" : "-O0", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
                    "-std=c11", "-lm", "-g0", "-fuse-ld=lld", optimize ? "-flto" : "-fno-lto", NULL };
