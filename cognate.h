@@ -67,13 +67,13 @@ typedef struct cognate_stack
 #define OBJ(objtype, objvalue) ((cognate_object){.type=objtype, .objtype=objvalue})
 #define VAR(name) ___##name
 #define CHECK(typ, obj) (check_type(typ, obj) . typ)
-#define CALL(name, args) (set_current_word_name(#name), ___##name args)
+#define CALL(name, args) (set_current_word_name(#name), VAR(name) args)
 
-#define PREDEF(name) __block BLOCK ___##name = ^{ throw_error("Function '"#name"' called before definition!'"); };
+#define PREDEF(name) __block BLOCK VAR(name) = ^{ throw_error("Function '"#name"' called before definition!'"); };
 
-#define SET(name, val) ___##name = copy_if_block(val);
+#define SET(name, val) VAR(name) = copy_if_block(val);
 #define SET_FN(name, val) const ANY _tmp_##name = val; \
-                          ___##name = Block_copy(^{push(val);})
+                          VAR(name) = Block_copy(^{ push(val); })
 
 #define MAKE_BLOCK(body) \
   ^{ \
@@ -122,66 +122,66 @@ void set_current_word_name(const char *const);
 cognate_object copy_if_block(cognate_object obj);
 
 // Builtin functions needed by compiled source file defined in functions.c
-ANY ___if(BLOCK, cognate_object, cognate_object);
-void ___while(BLOCK, BLOCK);
-void ___do(BLOCK);
-void ___put(cognate_object);
-void ___print(cognate_object);
-NUMBER ___ADD(NUMBER, NUMBER);
-NUMBER ___MUL(NUMBER, NUMBER);
-NUMBER ___SUB(NUMBER, NUMBER);
-NUMBER ___DIV(NUMBER, NUMBER);
-NUMBER ___modulo(NUMBER, NUMBER);
-NUMBER ___random(NUMBER, NUMBER, NUMBER);
-void ___clear();
-extern ANY ___true;
-extern ANY ___false;
-BOOLEAN ___either(BOOLEAN, BOOLEAN);
-BOOLEAN ___both  (BOOLEAN, BOOLEAN);
-BOOLEAN ___one_of(BOOLEAN, BOOLEAN);
-BOOLEAN ___not   (BOOLEAN);
-BOOLEAN ___EQ(cognate_object, cognate_object);
-BOOLEAN ___NEQ(cognate_object, cognate_object);
-BOOLEAN ___LT(NUMBER, NUMBER);
-BOOLEAN ___GT(NUMBER, NUMBER);
-BOOLEAN ___LTE(NUMBER, NUMBER);
-BOOLEAN ___GTE(NUMBER, NUMBER);
-BOOLEAN ___number_(cognate_object);
-BOOLEAN ___list_(cognate_object);
-BOOLEAN ___string_(cognate_object);
-BOOLEAN ___block_(cognate_object);
-BOOLEAN ___boolean_(cognate_object);
-ANY ___first(LIST);
-LIST ___rest(LIST);
-STRING ___head(STRING);
-STRING ___tail(STRING);
-LIST ___push(cognate_object, LIST);
-BOOLEAN ___empty_(LIST);
-LIST ___list(BLOCK);
-STRING ___join(NUMBER);
-NUMBER ___string_length(STRING);
-STRING ___substring(NUMBER, NUMBER, STRING);
-STRING ___input();
-STRING ___read(STRING);
-NUMBER ___number(STRING);
-STRING ___path();
-LIST ___stack();
-void ___write(STRING, cognate_object);
-LIST ___parameters();
-void ___stop();
-//TABLE ___table();
-//TABLE ___insert(STRING, cognate_object, TABLE);
-//ANY ___get(STRING, TABLE);
-//LIST ___values(TABLE);
-BOOLEAN ___match(STRING, STRING);
-NUMBER ___ordinal(STRING);
-STRING ___character(NUMBER);
-NUMBER ___floor(NUMBER);
-NUMBER ___round(NUMBER);
-NUMBER ___ceiling(NUMBER);
-void ___assert(STRING, BOOLEAN);
-void ___error(STRING);
-LIST ___map(BLOCK, LIST);
-LIST ___filter(BLOCK, LIST);
-void ___for(LIST, BLOCK);
-LIST ___range(NUMBER, NUMBER, NUMBER);
+ANY VAR(if)(BLOCK, cognate_object, cognate_object);
+void VAR(while)(BLOCK, BLOCK);
+void VAR(do)(BLOCK);
+void VAR(put)(cognate_object);
+void VAR(print)(cognate_object);
+NUMBER VAR(ADD)(NUMBER, NUMBER);
+NUMBER VAR(MUL)(NUMBER, NUMBER);
+NUMBER VAR(SUB)(NUMBER, NUMBER);
+NUMBER VAR(DIV)(NUMBER, NUMBER);
+NUMBER VAR(modulo)(NUMBER, NUMBER);
+NUMBER VAR(random)(NUMBER, NUMBER, NUMBER);
+void VAR(clear)();
+extern ANY VAR(true);
+extern ANY VAR(false);
+BOOLEAN VAR(either)(BOOLEAN, BOOLEAN);
+BOOLEAN VAR(both)(BOOLEAN, BOOLEAN);
+BOOLEAN VAR(one_of)(BOOLEAN, BOOLEAN);
+BOOLEAN VAR(not)(BOOLEAN);
+BOOLEAN VAR(EQ)(cognate_object, cognate_object);
+BOOLEAN VAR(NEQ)(cognate_object, cognate_object);
+BOOLEAN VAR(LT)(NUMBER, NUMBER);
+BOOLEAN VAR(GT)(NUMBER, NUMBER);
+BOOLEAN VAR(LTE)(NUMBER, NUMBER);
+BOOLEAN VAR(GTE)(NUMBER, NUMBER);
+BOOLEAN VAR(number_)(cognate_object);
+BOOLEAN VAR(list_)(cognate_object);
+BOOLEAN VAR(string_)(cognate_object);
+BOOLEAN VAR(block_)(cognate_object);
+BOOLEAN VAR(boolean_)(cognate_object);
+ANY VAR(first)(LIST);
+LIST VAR(rest)(LIST);
+STRING VAR(head)(STRING);
+STRING VAR(tail)(STRING);
+LIST VAR(push)(cognate_object, LIST);
+BOOLEAN VAR(empty_)(LIST);
+LIST VAR(list)(BLOCK);
+STRING VAR(join)(NUMBER);
+NUMBER VAR(string_length)(STRING);
+STRING VAR(substring)(NUMBER, NUMBER, STRING);
+STRING VAR(input)();
+STRING VAR(read)(STRING);
+NUMBER VAR(number)(STRING);
+STRING VAR(path)();
+LIST VAR(stack)();
+void VAR(write)(STRING, cognate_object);
+LIST VAR(parameters)();
+void VAR(stop)();
+//TABLE VAR(table)();
+//TABLE VAR(insert)(STRING, cognate_object, TABLE);
+//ANY VAR(get)(STRING, TABLE);
+//LIST VAR(values)(TABLE);
+BOOLEAN VAR(match)(STRING, STRING);
+NUMBER VAR(ordinal)(STRING);
+STRING VAR(character)(NUMBER);
+NUMBER VAR(floor)(NUMBER);
+NUMBER VAR(round)(NUMBER);
+NUMBER VAR(ceiling)(NUMBER);
+void VAR(assert)(STRING, BOOLEAN);
+void VAR(error)(STRING);
+LIST VAR(map)(BLOCK, LIST);
+LIST VAR(filter)(BLOCK, LIST);
+void VAR(for)(LIST, BLOCK);
+LIST VAR(range)(NUMBER, NUMBER, NUMBER);

@@ -5,41 +5,46 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <limits.h>
 
 FILE* outfile;
 size_t current_register = 0;
 ast* full_ast;
 
-char* type_as_str(value_type typ, _Bool uppercase)
+char* type_as_str(value_type typ, _Bool up)
 {
   switch (typ)
   {
-    case any:     return uppercase ? "ANY"     : "any";
-    case block:   return uppercase ? "BLOCK"   : "block";
-    case string:  return uppercase ? "STRING"  : "string";
-    case number:  return uppercase ? "NUMBER"  : "number";
-    case symbol:  return uppercase ? "SYMBOL"  : "symbol";
-    case boolean: return uppercase ? "BOOLEAN" : "boolean";
-    case list:    return uppercase ? "LIST"    : "list";
+    case any:     return up ? "ANY"     : "any";
+    case block:   return up ? "BLOCK"   : "block";
+    case string:  return up ? "STRING"  : "string";
+    case number:  return up ? "NUMBER"  : "number";
+    case symbol:  return up ? "SYMBOL"  : "symbol";
+    case boolean: return up ? "BOOLEAN" : "boolean";
+    case list:    return up ? "LIST"    : "list";
   }
 }
 
-reg_list* flush_registers_to_stack(reg_list* registers, unsigned short exclude)
+reg_list* assert_registers(size_t lower, size_t upper, reg_list* registers)
 {
-  /*
-   * Push all registers to the stack, except for a number of excluded registers.
-   */
   if (registers)
   {
-    if (exclude)
+    if (upper)
     {
-      registers->next = flush_registers_to_stack(registers->next, --exclude);
+      registers->next = assert_registers(lower ? lower - 1 : 0, upper - 1, registers->next);
       return registers;
     }
-    flush_registers_to_stack(registers->next, 0);
+    assert_registers(0, 0, registers->next);
     fputs("push(", outfile);
-    get_register(any, registers);
+    registers = emit_register(any, registers);
     fputs(");", outfile);
+  }
+  else if (lower)
+  {
+    reg_list* r = add_register(any, NULL);
+    fputs("pop();", outfile);
+    r->next = assert_registers(lower - 1, upper - 1, NULL);
+    return r;
   }
   return NULL;
 }
@@ -120,34 +125,25 @@ bool is_mutated(ast* tree, decl_list def)
   return false;
 }
 
-reg_list* get_register(value_type type, reg_list* regs)
+reg_list* emit_register(value_type type, reg_list* regs)
 {
-  if (regs)
-  {
-    if (regs->type == type)     fprintf(outfile, "r%zi",                                           regs->id);
-    else if (regs->type == any) fprintf(outfile, "CHECK(%s,r%zi)", type_as_str(type, false),       regs->id);
-    else if (type == any)       fprintf(outfile, "OBJ(%s,r%zi)",   type_as_str(regs->type, false), regs->id);
-    else
-    {
-      char error_msg[256];
-      sprintf(error_msg, "expected %s got %s", type_as_str(type, false), type_as_str(regs->type, false));
-      yyerror(error_msg);
-    }
-    return regs->next;
-  }
+  if (regs->type == type)     fprintf(outfile, "r%zi",                                           regs->id);
+  else if (regs->type == any) fprintf(outfile, "CHECK(%s,r%zi)", type_as_str(type, false),       regs->id);
+  else if (type == any)       fprintf(outfile, "OBJ(%s,r%zi)",   type_as_str(regs->type, false), regs->id);
   else
   {
-    if (type == any) fputs("pop()", outfile);
-    else fprintf(outfile, "CHECK(%s,pop())", type_as_str(type, false));
-    return NULL;
+    char error_msg[256];
+    sprintf(error_msg, "expected %s got %s", type_as_str(type, false), type_as_str(regs->type, false));
+    yyerror(error_msg);
   }
+  return drop_register(regs);
 }
 
-
-reg_list add_register(value_type type, reg_list* next)
+reg_list* add_register(value_type type, reg_list* next)
 {
-  reg_list r = (reg_list){.type = type, .id = current_register++, .next=next};
-  fprintf(outfile, "%s r%zi=", type_as_str(r.type, true), r.id);
+  reg_list* r = malloc(sizeof(*r));
+  *r = (reg_list){.type = type, .id = current_register++, .next=next};
+  fprintf(outfile, "const %s r%zi=", type_as_str(r->type, true), r->id);
   return r;
 }
 
@@ -155,9 +151,10 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 {
   if (!tree)
   {
-    flush_registers_to_stack(registers, 0);
+    assert_registers(0, 0, registers);
     return;
   }
+  const char* footer = "";
   yylloc.first_column = tree->col; // This lets us use yyerror()
   yylloc.first_line = tree->line;
   switch (tree->type)
@@ -165,9 +162,9 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
     case identifier:
     {
       decl_list* def = lookup_word(tree->text, defs);
+      reg_list* return_register = NULL;
       if (!def) yyerror("undefined word");
-      if (def->needs_stack) registers = flush_registers_to_stack(registers, def->argc);
-      reg_list return_register;
+      registers = assert_registers(def->argc, def->needs_stack ? def->argc : LONG_MAX, registers);
       if (def->rets) return_register = add_register(def->ret, NULL);
       switch(def->type)
       {
@@ -175,7 +172,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
           fprintf(outfile,"CALL(%s,(", def->name);
           for (unsigned short i = 0; i < def->argc; ++i)
           {
-            registers = get_register(def->args[i], registers);
+            registers = emit_register(def->args[i], registers);
             if (i + 1 < def->argc) fputc(',', outfile);
           }
           fputs("));", outfile);
@@ -189,15 +186,14 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       }
       if (def->rets)
       {
-        return_register.next = registers;
-        registers = &return_register;
+        return_register->next = registers;
+        registers = return_register;
       }
-      compile(tree->next, registers, defs);
     }
     break;
     case value:
     {
-      reg_list return_register = add_register(tree->val_type, registers);
+      reg_list* return_register = add_register(tree->val_type, registers);
       switch (tree->val_type)
       {
         case block:
@@ -214,9 +210,9 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
           break;
       }
       fputc(';', outfile);
-      compile(tree->next, &return_register, defs);
-      break;
+      registers = return_register;
     }
+    break;
     case let:
     {
       decl_list d = (decl_list)
@@ -229,22 +225,23 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       };
       bool mutated = is_mutated(tree->next, d);
       if (mutated) d.ret = any;
+      registers = assert_registers(1, LONG_MAX, registers);
       fprintf(outfile, "%s %s VAR(%s)=", mutated ? "__block" : "const", type_as_str(d.ret, true), d.name);
-      registers = get_register(d.ret, registers);
+      registers = emit_register(d.ret, registers);
       fputs(";{", outfile);
-      compile(tree->next, registers, &d);
-      fputc('}', outfile);
+      defs = &d;
+      footer = "}";
     }
     break;
     case define:
     {
       decl_list* d = lookup_word(tree->text, defs);
       d -> predecl = false;
+      registers = assert_registers(1, LONG_MAX, registers);
       fprintf(outfile, "VAR(%s)=", tree->text);
-      registers = get_register(block, registers);
+      registers = emit_register(block, registers);
       fputs(";{", outfile);
-      compile(tree->next, registers, defs);
-      fputc('}', outfile);
+      footer = "}";
     }
     break;
     case set:
@@ -252,55 +249,55 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       decl_list* d = lookup_word(tree->text, defs);
       if (d -> type == stack_op || d -> type == func) { yyerror("cannot mutate function"); }
       if (d -> predecl) fprintf(outfile, "VAR(%s);", tree->text);
+      registers = assert_registers(1, LONG_MAX, registers);
       fprintf(outfile, "SET(%s,", tree->text);
-      registers = get_register(any, registers);
+      registers = emit_register(any, registers);
       fputs(");", outfile);
-      compile(tree->next, registers, defs);
     }
   }
   // Free the ast node.
+  compile(tree->next, registers, defs);
+  fputs(footer, outfile);
   free(tree->data);
   free(tree);
 }
 
-reg_list* stack_twin(reg_list* registers)
+reg_list* twin_register(reg_list* registers)
 {
+  registers = assert_registers(1, LONG_MAX, registers);
   reg_list* r1 = malloc(sizeof(*r1));
-  if (registers) { *r1 = *registers; }
-  else { *r1 = add_register(any, NULL); fputs("peek();", outfile); }
+  *r1 = *registers;
   r1->next = registers;
   return r1;
 }
 
-reg_list* stack_drop(reg_list* registers)
+reg_list* drop_register(reg_list* registers)
 {
-  if (registers) registers = registers->next;
-  else fputs("pop();", outfile);
-  return registers;
+  reg_list* r = assert_registers(1, LONG_MAX, registers);
+  reg_list* next = r->next;
+  free(r);
+  return next;
 }
 
-reg_list* stack_triplet(reg_list* registers)
+reg_list* triplet_register(reg_list* registers)
 {
+  registers = assert_registers(1, LONG_MAX, registers);
   reg_list* r1 = malloc(sizeof(*r1));
-  if (registers) { *r1 = *registers; }
-  else { *r1 = add_register(any, NULL); fputs("peek();", outfile); }
   reg_list* r2 = malloc(sizeof(*r2));
-  *r2 = *r1;
+  *r1 = *registers;
+  *r2 = *registers;
   r1->next = registers;
   r2->next = r1;
   return r2;
 }
 
-reg_list* stack_swap(reg_list* registers)
+reg_list* swap_register(reg_list* registers)
 {
-  reg_list* r1 = malloc(sizeof(*r1));
-  reg_list* r2 = malloc(sizeof(*r2));
-  if (registers) { r1 = registers; registers = registers->next; }
-  else { *r1 = add_register(any, NULL); fputs("pop();", outfile); }
-  if (registers) { r2 = registers; registers = registers->next; }
-  else { *r2 = add_register(any, NULL); fputs("pop();", outfile); }
+  registers = assert_registers(2, LONG_MAX, registers);
+  reg_list* r1 = registers;
+  reg_list* r2 = registers->next;
+  r1->next = r2->next;
   r2->next = r1;
-  r1->next = registers;
   return r2;
 }
 
@@ -318,13 +315,11 @@ decl_list* builtins(void)
   return b;
 }
 
-
-
 int main(int argc, char** argv)
 {
   if (argc < 2 || strcmp(".cog", strchr(argv[1], '.')))
   {
-    fputs("Usage: cognac filename.cog -option1 -option2", stderr);
+    fprintf(stderr, "Usage: %s filename.cog -option1 -option2\n", argv[0]);
     return EXIT_FAILURE;
   }
   bool optimize = false;

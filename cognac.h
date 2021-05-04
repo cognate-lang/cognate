@@ -1,5 +1,8 @@
 #pragma once
 
+#define _GNU_SOURCE
+#define _FORTIFY_SOURCE 2
+
 #include "parser.tab.h"
 #include <stdio.h>
 #include <stdbool.h>
@@ -56,12 +59,17 @@ extern ast* full_ast;
 
 decl_list* builtins(void);
 decl_list* lookup_word(char*, decl_list*);
-reg_list* get_register(value_type, reg_list*);
+reg_list* emit_register(value_type, reg_list*);
 void compile(ast*, reg_list*, decl_list*); // TODO output file arg.
 void print_cognate_string(char*);
 decl_list* predefine(ast*, decl_list*);
 void check_for_mutation(ast*, decl_list*);
-reg_list* flush_registers_to_stack(reg_list*, unsigned short);
+reg_list* add_register(value_type, reg_list*);
+reg_list* assert_registers(size_t, size_t, reg_list*);
+reg_list* swap_register(reg_list*);
+reg_list* triplet_register(reg_list*);
+reg_list* twin_register(reg_list*);
+reg_list* drop_register(reg_list*);
 
 int yylex(void);
 void yyerror(char*);

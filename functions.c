@@ -15,7 +15,7 @@
 
 static size_t mbstrlen(const char* str);
 
-ANY ___if(BLOCK cond, cognate_object a, cognate_object b)
+ANY VAR(if)(BLOCK cond, cognate_object a, cognate_object b)
 {
   cond();
   if (CHECK(boolean, pop()))
@@ -24,7 +24,7 @@ ANY ___if(BLOCK cond, cognate_object a, cognate_object b)
     return b;
 }
 
-void ___while(BLOCK cond, BLOCK body) {
+void VAR(while)(BLOCK cond, BLOCK body) {
   cond();
   while (CHECK(boolean, pop()))
   {
@@ -33,23 +33,23 @@ void ___while(BLOCK cond, BLOCK body) {
   }
 }
 
-void ___do(BLOCK blk) { blk(); }
+void VAR(do)(BLOCK blk) { blk(); }
 
-void ___put(cognate_object a)   { print_object(a, stdout, 0); fflush(stdout); }
-void ___print(cognate_object a) { print_object(a, stdout, 0); putc('\n', stdout); }
+void VAR(put)(cognate_object a)   { print_object(a, stdout, 0); fflush(stdout); }
+void VAR(print)(cognate_object a) { print_object(a, stdout, 0); putc('\n', stdout); }
 
 
-NUMBER ___ADD(NUMBER a, NUMBER b)      { return a + b; }
-NUMBER ___MUL(NUMBER a, NUMBER b) { return a * b; }
-NUMBER ___SUB(NUMBER a, NUMBER b) { return b - a; }
-NUMBER ___DIV(NUMBER a, NUMBER b)   { if likely(a) return b / a; throw_error("Division of %.14g by zero", b); }
+NUMBER VAR(ADD)(NUMBER a, NUMBER b)      { return a + b; }
+NUMBER VAR(MUL)(NUMBER a, NUMBER b) { return a * b; }
+NUMBER VAR(SUB)(NUMBER a, NUMBER b) { return b - a; }
+NUMBER VAR(DIV)(NUMBER a, NUMBER b)   { if likely(a) return b / a; throw_error("Division of %.14g by zero", b); }
 
-NUMBER ___modulo(NUMBER a, NUMBER b) {
+NUMBER VAR(modulo)(NUMBER a, NUMBER b) {
   if likely(a) return fmod(b, a);
   throw_error("Modulo of %.14g by zero", b);
 }
 
-NUMBER ___random(NUMBER low, NUMBER high, NUMBER step) {
+NUMBER VAR(random)(NUMBER low, NUMBER high, NUMBER step) {
   if unlikely((high - low) * step < 0 || !step)
   {
     throw_error("Invalid range %.14g..%.14g with step %.14g", low, high, step);
@@ -69,57 +69,57 @@ NUMBER ___random(NUMBER low, NUMBER high, NUMBER step) {
   return low + (NUMBER)(num % (unsigned long)((high - low) / step)) * step;
 }
 
-void ___clear()                                  { stack.top=stack.start; }
+void VAR(clear)() { stack.top=stack.start; }
 
-ANY ___true = OBJ(boolean,1);
-ANY ___false = OBJ(boolean,0);
+ANY VAR(true) = OBJ(boolean,1);
+ANY VAR(false) = OBJ(boolean,0);
 
-BOOLEAN ___either(BOOLEAN a, BOOLEAN b) { return a || b; }
-BOOLEAN ___both  (BOOLEAN a, BOOLEAN b) { return a && b; }
-BOOLEAN ___one_of(BOOLEAN a, BOOLEAN b) { return a ^ b;  }
-BOOLEAN ___not   (BOOLEAN a)                    { return !a;     }
+BOOLEAN VAR(either)(BOOLEAN a, BOOLEAN b) { return a || b; }
+BOOLEAN VAR(both)(BOOLEAN a, BOOLEAN b) { return a && b; }
+BOOLEAN VAR(one_of)(BOOLEAN a, BOOLEAN b) { return a ^ b;  }
+BOOLEAN VAR(not)(BOOLEAN a) { return !a;     }
 
 
-BOOLEAN ___EQ(cognate_object a, cognate_object b)  { return compare_objects(a,b); }
-BOOLEAN ___NEQ(cognate_object a, cognate_object b) { return !compare_objects(a,b); }
-BOOLEAN ___GT(NUMBER a, NUMBER b)  { return a < b; }
-BOOLEAN ___LT(NUMBER a, NUMBER b)  { return a > b; }
-BOOLEAN ___GTE(NUMBER a, NUMBER b) { return a >= b; }
-BOOLEAN ___LTE(NUMBER a, NUMBER b) { return a <= b; }
+BOOLEAN VAR(EQ)(cognate_object a, cognate_object b)  { return compare_objects(a,b); }
+BOOLEAN VAR(NEQ)(cognate_object a, cognate_object b) { return !compare_objects(a,b); }
+BOOLEAN VAR(GT)(NUMBER a, NUMBER b)  { return a < b; }
+BOOLEAN VAR(LT)(NUMBER a, NUMBER b)  { return a > b; }
+BOOLEAN VAR(GTE)(NUMBER a, NUMBER b) { return a >= b; }
+BOOLEAN VAR(LTE)(NUMBER a, NUMBER b) { return a <= b; }
 
-BOOLEAN ___number_(cognate_object a)  { return a.type&number; } // Question marks are converted to underscores.
-BOOLEAN ___list_(cognate_object a)    { return a.type&number; } // However all other symbols are too.
-BOOLEAN ___string_(cognate_object a)  { return a.type&string; } // So this is a temporary hack!
-BOOLEAN ___block_(cognate_object a)   { return a.type&block;  }
-BOOLEAN ___boolean_(cognate_object a) { return a.type&boolean;}
+BOOLEAN VAR(number_)(cognate_object a)  { return a.type&number; } // Question marks are converted to underscores.
+BOOLEAN VAR(list_)(cognate_object a)    { return a.type&number; } // However all other symbols are too.
+BOOLEAN VAR(string_)(cognate_object a)  { return a.type&string; } // So this is a temporary hack!
+BOOLEAN VAR(block_)(cognate_object a)   { return a.type&block;  }
+BOOLEAN VAR(boolean_)(cognate_object a) { return a.type&boolean;}
 
-ANY ___first(LIST lst)
+ANY VAR(first)(LIST lst)
 {
   // Returns the first element of a list. O(1).
   if unlikely(!lst) throw_error("Empty list is invalid");
   return lst->object;
 }
 
-LIST ___rest(LIST lst)
+LIST VAR(rest)(LIST lst)
 {
   // Returns the tail portion of a list. O(1).
   if unlikely(!lst) throw_error("Empty list is invalid");
   return lst->next;
 }
 
-STRING ___head(STRING str)
+STRING VAR(head)(STRING str)
 {
   if unlikely(!*str) throw_error("Empty string is invalid");
   return GC_STRNDUP(str, mblen(str, MB_CUR_MAX));
 }
 
-STRING ___tail(STRING str)
+STRING VAR(tail)(STRING str)
 {
   if unlikely(!*str) throw_error("Empty string is invalid");
   return str + mblen(str, MB_CUR_MAX);
 }
 
-LIST ___push(cognate_object a, LIST b) {
+LIST VAR(push)(cognate_object a, LIST b) {
   // Pushes an object from the stack onto the list's first element. O(1).
   // TODO: Better name? Inconsistent with List where pushing to the stack adds to the END.
   cognate_list* lst = GC_NEW (cognate_list);
@@ -128,13 +128,13 @@ LIST ___push(cognate_object a, LIST b) {
   return lst;
 }
 
-BOOLEAN ___empty_(LIST lst) {
+BOOLEAN VAR(empty_)(LIST lst) {
   // Returns true is a list or string is empty. O(1).
   // Can be used to to write a Length function.
   return !lst;
 }
 
-LIST ___list(BLOCK expr) {
+LIST VAR(list)(BLOCK expr) {
   // Move the stack to temporary storage
   const cognate_stack temp_stack = stack;
   // Allocate a list as the stack
@@ -157,7 +157,7 @@ LIST ___list(BLOCK expr) {
 }
 
 /*
-LIST ___characters() {
+LIST VAR(characters)() {
   // Can be rewritten using substring, albeit O(n^2)
   const char* str = pop(string);
   const LIST* lst = NULL;
@@ -175,7 +175,7 @@ LIST ___characters() {
 }
 */
 /*
-LIST ___split() {
+LIST VAR(split)() {
   // Can be rewritten using Substring.
   const char* const delimiter = pop(string);
   const size_t delim_size     = strlen(delimiter);
@@ -198,7 +198,7 @@ LIST ___split() {
 }
 */
 
-STRING ___join(NUMBER n) {
+STRING VAR(join)(NUMBER n) {
   // Joins a string to the end of another string.
   // Define Prefix (Swap, Suffix);
   size_t n1 = n;
@@ -220,11 +220,11 @@ STRING ___join(NUMBER n) {
   return result;
 }
 
-NUMBER ___string_length(STRING str) {
+NUMBER VAR(string_length)(STRING str) {
   return mbstrlen(str);
 }
 
-STRING ___substring(NUMBER startf, NUMBER endf, STRING str) {
+STRING VAR(substring)(NUMBER startf, NUMBER endf, STRING str) {
   const char* str_start = str;
   // O(end).
   // Only allocates a new string if it has to.
@@ -257,7 +257,7 @@ STRING ___substring(NUMBER startf, NUMBER endf, STRING str) {
 }
 
 
-STRING ___input() {
+STRING VAR(input)() {
   // Read user input to a string.
   size_t size = 0;
   char* buf;
@@ -267,21 +267,21 @@ STRING ___input() {
   return ret;
 }
 
-STRING ___read(STRING filename) {
+STRING VAR(read)(STRING filename) {
   // Read a file to a string.
   FILE *fp = fopen(filename, "ro");
   if unlikely(fp == NULL) throw_error("Cannot open file '%s'. It probably doesn't exist.", filename);
   struct stat st;
   fstat(fileno(fp), &st);
   char* text = GC_MALLOC (st.st_size + 1);
-  fread(text, sizeof(char), st.st_size, fp);
+  if (fread(text, sizeof(char), st.st_size, fp) != st.st_size) throw_error("Error reading file '%s'.", filename);
   fclose(fp);
   text[st.st_size-1] = '\0'; // Remove trailing eof.
   return text;
   // TODO: single line (or delimited) file read function for better IO performance?
 }
 
-NUMBER ___number(STRING str) {
+NUMBER VAR(number)(STRING str) {
   // casts string to number.
   char* end;
   NUMBER num = strtod(str, &end);
@@ -292,7 +292,7 @@ NUMBER ___number(STRING str) {
   return num;
 }
 
-STRING ___path() {
+STRING VAR(path)() {
   char buf[FILENAME_MAX];
   if (!getcwd(buf, FILENAME_MAX))
   {
@@ -302,7 +302,7 @@ STRING ___path() {
   return ret;
 }
 
-LIST ___stack() {
+LIST VAR(stack)() {
   // We can't return the list or this function is inlined and it breaks.
   LIST lst = NULL;
   for (cognate_object* i = stack.top - 1 ; i >= stack.start ; --i)
@@ -316,7 +316,7 @@ LIST ___stack() {
   return lst;
 }
 
-void ___write(STRING filename, cognate_object obj) {
+void VAR(write)(STRING filename, cognate_object obj) {
   // Write object to end of file, without a newline.
   FILE* const fp = fopen(filename, "a");
   if unlikely(fp == NULL) throw_error("Cannot open file '%s'. It probably doesn't exist.", filename);
@@ -324,38 +324,38 @@ void ___write(STRING filename, cognate_object obj) {
   fclose(fp);
 }
 
-LIST ___parameters() {
+LIST VAR(parameters)() {
   return cmdline_parameters; // TODO should be a variable, and allow mutation and stuff
 }
 
-void ___stop() {
+void VAR(stop)() {
   // Don't check stack length, because it probably wont be empty.
   exit(EXIT_SUCCESS);
 }
 
-TABLE ___table() {
+TABLE VAR(table)() {
   return NULL; // TODO
 }
 
-TABLE ___insert(STRING key, cognate_object value, TABLE tab) {
+TABLE VAR(insert)(STRING key, cognate_object value, TABLE tab) {
   (void)key;
   (void)value;
   (void)tab;
   return NULL; // TODO
 }
 
-ANY ___get(STRING key, TABLE tab) {
+ANY VAR(get)(STRING key, TABLE tab) {
   (void)key;
   (void)tab; // TODO
   return OBJ(number,42);
 }
 
-LIST ___values(TABLE tab) {
+LIST VAR(values)(TABLE tab) {
   (void)tab; // TODO
   return NULL;
 }
 
-BOOLEAN ___match(STRING reg_str, STRING str) {
+BOOLEAN VAR(match)(STRING reg_str, STRING str) {
   // Returns true if string matches regex.
   static const char* old_str = NULL;
   static regex_t reg;
@@ -385,7 +385,7 @@ BOOLEAN ___match(STRING reg_str, STRING str) {
   return !found;
 }
 
-NUMBER ___ordinal(STRING str) {
+NUMBER VAR(ordinal)(STRING str) {
   if unlikely(str[0] && !str[1])
   {
     throw_error("Invalid string '%.64s' (should be length 1)", str);
@@ -395,41 +395,40 @@ NUMBER ___ordinal(STRING str) {
   return chr;
 }
 
-STRING ___character(NUMBER d) {
+STRING VAR(character)(NUMBER d) {
   const wchar_t i = d;
-  if unlikely(i != d) throw_error("Cannot convert %.14g to UTF8 character", d);
   char* str = GC_MALLOC (MB_CUR_MAX + 1);
-  wctomb(str, i);
+  if unlikely(i != d || wctomb(str, i) == -1) throw_error("Cannot convert %.14g to UTF8 character", d);
   str[mblen(str, MB_CUR_MAX)] = '\0';
   return str;
 }
 
-NUMBER ___floor(NUMBER a) {
+NUMBER VAR(floor)(NUMBER a) {
   return floor(a);
 }
 
-NUMBER ___round(NUMBER a) {
+NUMBER VAR(round)(NUMBER a) {
   return round(a);
 }
 
-NUMBER ___ceiling(NUMBER a) {
+NUMBER VAR(ceiling)(NUMBER a) {
   return ceil(a);
 }
 
-void ___assert(STRING name, BOOLEAN result) {
+void VAR(assert)(STRING name, BOOLEAN result) {
   if unlikely(!result)
   {
     throw_error("Assertion '%s' has failed", name);
   }
 }
 
-void ___error(STRING str) {
+void VAR(error)(STRING str) {
   current_word_name = NULL;
   errno = 0;
   throw_error("%s", str);
 }
 
-LIST ___map(BLOCK blk, LIST lst)
+LIST VAR(map)(BLOCK blk, LIST lst)
 {
   if (lst)
   {
@@ -437,13 +436,13 @@ LIST ___map(BLOCK blk, LIST lst)
     blk();
     cognate_list* node = GC_NEW(cognate_list);
     node->object = pop();
-    node->next = ___map(blk, lst->next);
+    node->next = VAR(map)(blk, lst->next);
     return node;
   }
   return NULL;
 }
 
-LIST ___filter(BLOCK blk, LIST lst)
+LIST VAR(filter)(BLOCK blk, LIST lst)
 {
   if (lst)
   {
@@ -453,31 +452,31 @@ LIST ___filter(BLOCK blk, LIST lst)
     {
       cognate_list* node = GC_NEW(cognate_list);
       node->object = lst->object;
-      node->next = ___filter(blk, lst->next);
+      node->next = VAR(filter)(blk, lst->next);
       return node;
     }
-    return ___filter(blk, lst->next);
+    return VAR(filter)(blk, lst->next);
   }
   return NULL;
 }
 
-void ___for(LIST lst, BLOCK blk)
+void VAR(for)(LIST lst, BLOCK blk)
 {
   if (lst)
   {
     push(lst->object);
     blk();
-    ___for(lst->next, blk);
+    VAR(for)(lst->next, blk);
   }
 }
 
-LIST ___range(NUMBER start, NUMBER end, NUMBER step)
+LIST VAR(range)(NUMBER start, NUMBER end, NUMBER step)
 {
   if (start * step < end * step)
   {
     cognate_list* node = GC_NEW(cognate_list);
     node->object = OBJ(number, start);
-    node->next = ___range(start+step, end, step);
+    node->next = VAR(range)(start+step, end, step);
     return node;
   }
   return NULL;
