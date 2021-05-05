@@ -39,10 +39,9 @@ ast* alloc_ast(token_type type, value_type val_type, void* data)
        ')'
        ;
 
-%type <tree> STATEMENT
-      <tree> EXPRESSION
-      <tree> TOKEN
-      ;
+%type <tree> STATEMENT;
+%type <tree> EXPRESSION;
+%type <tree> TOKEN;
 
 %start ENTRY;
 // TODO: Declarations need to be compiled here.
@@ -59,7 +58,7 @@ EXPRESSION:
 
 STATEMENT:
     TOKEN STATEMENT { $$ = ast_join($2, $1); }
-  | %empty          { $$ = NULL;             }
+  | /* Empty */     { $$ = NULL;             }
   ;
 
 TOKEN: // Tokens should be converted to ast nodes in the lexer.

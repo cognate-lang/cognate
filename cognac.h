@@ -72,5 +72,6 @@ reg_list* twin_register(reg_list*);
 reg_list* drop_register(reg_list*);
 
 int yylex(void);
+int yyparse (void);
 void yyerror(char*);
 char* lc(char*);
