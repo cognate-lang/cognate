@@ -379,18 +379,18 @@ int main(int argc, char** argv)
     else { fprintf(stderr, "Invalid option: %s\n", opt); return EXIT_FAILURE; }
   }
   yyparse();
-  fputs("#include\"cognate.h\"\n",outfile);
+  fputs("#include\"runtime.h\"\n",outfile);
   fprintf(outfile, "const char* symtable[%zi]={0};", num_symbols + 2);
   fputs("int main(int argc,char** argv){init(argc,argv);",outfile);
   add_symbols(full_ast);
   compile(full_ast, NULL, predeclare(full_ast, builtins()));
   fputs("cleanup();}\n", outfile);
 #ifdef __APPLE__
-  char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-I.", "runtime.o", "functions.o",
+  char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-Iruntime", "runtime/runtime.o", "runtime/functions.o",
                    "-lgc", optimize ? "-Ofast" : "-O0", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
                    "-std=c11", "-lm", "-g0", optimize ? "-flto" : "-fno-lto", NULL };
 #else
-  char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-I.", "runtime.o", "functions.o", "-lBlocksRuntime",
+  char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-Iruntime", "runtime/runtime.o", "runtime/functions.o", "-lBlocksRuntime",
                    "-l:libgc.so", optimize ? "-Ofast" : "-O0", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
                    "-std=c11", "-lm", "-g0", "-fuse-ld=lld", optimize ? "-flto" : "-fno-lto", NULL };
 #endif

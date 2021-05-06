@@ -1,4 +1,4 @@
-#include "cognate.h"
+#include "runtime.h"
 
 #include <errno.h>
 #include <math.h>

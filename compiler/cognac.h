@@ -3,7 +3,7 @@
 #define _GNU_SOURCE
 #define _FORTIFY_SOURCE 2
 
-#include "parser.tab.h"
+#include "parser.h"
 #include <stdio.h>
 #include <stdbool.h>
 

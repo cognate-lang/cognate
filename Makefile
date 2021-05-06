@@ -1,16 +1,16 @@
 CC=clang
 
-cognac: lex.yy.c parser.tab.c runtime.o functions.o
-	$(CC) lex.yy.c parser.tab.c cognac.c -Ofast -o cognac
+cognac: compiler/lexer.c compiler/parser.c runtime/runtime.o runtime/functions.o
+	$(CC) compiler/lexer.c compiler/parser.c compiler/cognac.c -Ofast -o cognac
 
-%.o: %.c
+runtime/%.o: runtime/%.c
 	$(CC) -c -fblocks -Ofast -flto -o $@ $<
 
-lex.yy.c: lexer.l
-	flex lexer.l
+compiler/lexer.c: compiler/lexer.l
+	flex -o compiler/lexer.c compiler/lexer.l
 
-parser.tab.c: parser.y
-	bison parser.y -d
+compiler/parser.c: compiler/parser.y
+	bison compiler/parser.y --defines=compiler/parser.h -o compiler/parser.c
 
 clean:
-	rm -f lex.yy.c parser.tab.h parser.tab.c cognac runtime.o functions.o
+	rm -f compiler/lexer.c compiler/parser.h compiler/parser.c cognac runtime/runtime.o runtime/functions.o
