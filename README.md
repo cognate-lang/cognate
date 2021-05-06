@@ -26,13 +26,9 @@ Cognate is optimised for functional programming - not complicated static-typed f
 The stack, around which cognate is designed, allows Cognate to do things which many other languages cannot. One example is multiple return values. While other languages - such as python - require the use of tuples or lists to return multiple values, Cognate uses the stack to achieve this without the use of any data structures. Cognate also uses the stack to allow any expression to be written in point-free notation.
 
 ### Building Cognate
-Currently, Cognate will run on Linux and MacOS systems. If you use Windows 10, then you can install Cognate on the Windows Subsystem for Linux, following the instructions for Debian-based systems. If you are running Debian or a Debian based system such as Ubuntu or Linux Mint, simply run this command to install Cognate's dependencies and build the compiler:
+Currently, Cognate will run on Linux and MacOS systems. If you use Windows 10, then you can install Cognate on the Windows Subsystem for Linux. To build Cognate, you will need make, flex, bison, clang, libGC (and libBlocksRuntime if on linux). Simply run this command to build the compiler and runtime.
 ```
-./SETUP.debian
-```
-If you are on MacOS, you will need to have Xcode tools and the Brew package manager installed already. Please note that I don't own a Mac, and thus can't test Cognate for Mac as extensively as I do for Linux. Run this command to install dependencies and build CognaC for MacOS:
-```
-./SETUP.macos
+make
 ```
 You should then run the TEST script to test Cognate's functionality. This should work regardless of operating system.
 ```

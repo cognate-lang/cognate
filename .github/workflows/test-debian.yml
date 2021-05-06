@@ -13,8 +13,9 @@ jobs:
       - name: Aquire dependencies and compile
         shell: bash
         run: |
+          sudo apt install flex bison libblocksruntime-dev libgc-dev clang -y
           cd $GITHUB_WORKSPACE
-          ./SETUP.debian
+          make
       - name: Run test script
         shell: bash
         run: |
@@ -25,4 +26,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: tests-debian
-          path: tests/*
+          path: tests/*.*

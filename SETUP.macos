@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-# This script will automatically install CognaC's dependencies on macOS systems
-brew install bdw-gc
-flex lexer.l
-bison parser.y -d
-clang lex.yy.c parser.tab.c cognac.c -o cognac -Ofast
-clang -c -fblocks -Ofast -flto functions.c -o functions.o
-clang -c -fblocks -Ofast -flto runtime.c -o runtime.o

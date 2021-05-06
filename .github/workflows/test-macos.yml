@@ -9,8 +9,9 @@ jobs:
       - name: Aquire dependencies and compile
         shell: bash
         run: |
+          brew install bdw-gc
           cd $GITHUB_WORKSPACE
-          ./SETUP.macos
+          make
       - name: Run test script
         shell: bash
         run: |
@@ -21,4 +22,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: tests-macOS
-          path: tests/*
+          path: tests/*.*
