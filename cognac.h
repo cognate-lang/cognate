@@ -21,6 +21,12 @@ typedef struct reg_list
   value_type type;
 } reg_list;
 
+typedef struct sym_list
+{
+  char* name;
+  struct sym_list* next;
+} sym_list;
+
 typedef struct decl_list
 {
   struct decl_list* next;

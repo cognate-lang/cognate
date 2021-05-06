@@ -9,6 +9,9 @@
 
 FILE* outfile;
 size_t current_register = 0;
+size_t current_symbol = 0;
+size_t num_symbols = 0;
+sym_list* declared_symbols = NULL;
 ast* full_ast;
 
 char* type_as_str(value_type typ, _Bool up)
@@ -54,6 +57,38 @@ decl_list* lookup_word(char* name, decl_list* defs)
   for (decl_list *ptr = defs; ptr; ptr = ptr->next)
     if (strcmp(ptr->name, name) == 0) return ptr;
   return NULL;
+}
+
+void add_symbols(ast* tree)
+{
+  while (tree)
+  {
+    if (tree->type == value)
+    {
+      if (tree->val_type == symbol)
+      {
+        bool already_declared = false;
+        for (sym_list *ptr = declared_symbols; ptr; ptr = ptr->next)
+        {
+          if (strcmp(ptr->name, tree->text) == 0) already_declared = true;
+        }
+        if (!already_declared)
+        {
+          fprintf(outfile, "const SYMBOL SYM(%s)=%zi;symtable[%zi]=\"%s\";", tree->text, current_symbol, current_symbol, tree->text);
+          ++current_symbol;
+          sym_list* s = malloc(sizeof(*s));
+          s->name = tree->text;
+          s->next = declared_symbols;
+          declared_symbols = s;
+        }
+      }
+      else if (tree->val_type == block)
+      {
+        add_symbols(tree->data);
+      }
+    }
+    tree = tree->next;
+  }
 }
 
 void print_cognate_string(char* str)
@@ -205,6 +240,9 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
         case string:
           print_cognate_string(tree->text);
           break;
+        case symbol:
+          fprintf(outfile, "SYM(%s)", tree->text);
+          break;
         default:
           fputs(tree->text, outfile);
           break;
@@ -341,7 +379,10 @@ int main(int argc, char** argv)
     else { fprintf(stderr, "Invalid option: %s\n", opt); return EXIT_FAILURE; }
   }
   yyparse();
-  fputs("#include\"cognate.h\"\nint main(int argc,char** argv){init(argc,argv);",outfile);
+  fputs("#include\"cognate.h\"\n",outfile);
+  fprintf(outfile, "const char* symtable[%zi]={0};", num_symbols + 2);
+  fputs("int main(int argc,char** argv){init(argc,argv);",outfile);
+  add_symbols(full_ast);
   compile(full_ast, NULL, predeclare(full_ast, builtins()));
   fputs("cleanup();}\n", outfile);
 #ifdef __APPLE__

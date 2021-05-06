@@ -218,6 +218,7 @@ void print_object (const cognate_object object, FILE* out, const _Bool quotes)
     case boolean: fputs(object.boolean ? "True" : "False", out); return;
     case block: fprintf(out, "<Block %p>", (void*)object.block); return;
     case table: fprintf(out, "<Table %p>", (void*)object.table); return;
+    case symbol: fputs(symtable[object.symbol], out); return;
     default: throw_error("Cannot print object of unknown type %i. This may be a compiler bug!", object.type);
   }
 }
@@ -319,6 +320,7 @@ _Bool compare_objects(cognate_object ob1, cognate_object ob2)
     case number     : return ob1.number  == ob2.number;
     case boolean    : return ob1.boolean == ob2.boolean;
     case string     : return strcoll(ob1.string, ob2.string) == 0;
+    case symbol     : return ob1.symbol == ob2.symbol;
     case list       : return compare_lists(ob1.list, ob2.list);
     case table      : return 0; // compare_tables(*ob1.table, *ob2.table);
     case NOTHING    : throw_error("Cognate should not be in this state - compiler bug!");

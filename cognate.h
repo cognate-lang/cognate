@@ -20,6 +20,7 @@ typedef double NUMBER;
 typedef const char* STRING;
 typedef const struct cognate_list* LIST;
 typedef _Bool TABLE;
+typedef size_t SYMBOL;
 typedef struct cognate_object ANY;
 
 enum cognate_type
@@ -32,6 +33,7 @@ enum cognate_type
   list    = (1 << 3),
   table   = (1 << 4),
   block   = (1 << 5),
+  symbol =  (1 << 6),
 };
 
 // Enumerates all possible types of a cognate_object
@@ -47,6 +49,7 @@ typedef struct cognate_object
     STRING  string;    // 64bit string pointer
     LIST    list;      // 64bit list pointer
     TABLE   table;     // TODO
+    SYMBOL  symbol;
   };
   cognate_type type;
 } cognate_object;
@@ -64,8 +67,11 @@ typedef struct cognate_stack
   ptrdiff_t       size;           // Allocated size of the stack.
 } cognate_stack;
 
+extern const char* symtable[];
+
 #define OBJ(objtype, objvalue) ((cognate_object){.type=objtype, .objtype=objvalue})
 #define VAR(name) ___##name
+#define SYM(name) ____##name
 #define CHECK(typ, obj) (check_type(typ, obj) . typ)
 #define CALL(name, args) (set_current_word_name(#name), VAR(name) args)
 
