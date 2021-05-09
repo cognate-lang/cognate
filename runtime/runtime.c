@@ -16,18 +16,21 @@
 #ifndef NO_GC
 #include <gc/gc.h>
 #endif
-#if 0 //__has_include(<Block_private.h>)
+#if __has_include(<Block_private.h>)
 #include <Block_private.h>
-#define BLOCK_GC
 #endif
 
-#ifdef BLOCK_GC
 void* blk_alloc(const unsigned long size, __attribute__((unused)) const _Bool _, __attribute__((unused)) const _Bool __) { return GC_MALLOC(size); }
 void blk_setHasRefcount(__attribute__((unused)) const void* _, __attribute__((unused)) const _Bool __) {}
 void blk_gc_assign_strong(void* src, void** dst) { *dst = src; }
 void blk_gc_assign_weak(const void* src, void* dst) { *(void**)dst = (void*)src; }
 void blk_gc_memmove(void* dst, void* src, unsigned long size) { memmove(dst, src, size); }
-#endif
+
+extern void _Block_use_GC(void* (*)(const unsigned long, const _Bool isOne, const _Bool isObject),
+                          void  (*)(const void *, const _Bool),
+                          void  (*)(void *, void **),
+                          void  (*)(const void *, void *),
+                          void  (*)(void *, void *, unsigned long)) __attribute__((weak));
 
 static const char *lookup_type(cognate_type);
 static _Bool compare_lists(LIST, LIST);
@@ -61,11 +64,7 @@ void init(int argc, char** argv)
   // Init GC
 #ifndef NO_GC
   GC_INIT();
-#ifdef BLOCK_GC
-  _Block_use_GC(blk_alloc, blk_setHasRefcount, blk_gc_assign_strong, blk_gc_assign_weak, blk_gc_memmove);
-#else
-  //#pragma message "Cannot find header <Block_private.h>. Blocks cannot use garbage collection and may leak memory!"
-#endif
+  if (_Block_use_GC) _Block_use_GC(blk_alloc, blk_setHasRefcount, blk_gc_assign_strong, blk_gc_assign_weak, blk_gc_memmove);
 #else
   #pragma message "Compiling without the garbage collector will cause memory leaks!"
 #endif
@@ -285,15 +284,13 @@ _Bool compare_objects(cognate_object ob1, cognate_object ob2)
   }
   switch (ob1.type)
   {
-    case number     : return ob1.number  == ob2.number;
-    case boolean    : return ob1.boolean == ob2.boolean;
-    case string     : return strcoll(ob1.string, ob2.string) == 0;
-    case symbol     : return ob1.symbol == ob2.symbol;
-    case list       : return compare_lists(ob1.list, ob2.list);
-    case table      : return 0; // compare_tables(*ob1.table, *ob2.table);
-    case NOTHING    : throw_error("comparing null - compiler bug!");
-    case block      : throw_error("cannot compare blocks");
+    case number  : return ob1.number  == ob2.number;
+    case boolean : return ob1.boolean == ob2.boolean;
+    case string  : return strcoll(ob1.string, ob2.string) == 0;
+    case symbol  : return ob1.symbol == ob2.symbol;
+    case list    : return compare_lists(ob1.list, ob2.list);
+    case table   : return 0; // compare_tables(*ob1.table, *ob2.table);
+    case NOTHING : throw_error("comparing null - compiler bug!");
+    case block   : throw_error("cannot compare blocks");
   }
 }
-
-
