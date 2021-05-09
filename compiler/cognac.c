@@ -13,6 +13,8 @@ size_t current_symbol = 0;
 size_t num_symbols = 0;
 sym_list* declared_symbols = NULL;
 ast* full_ast;
+bool optimize = false;
+bool debug = false;
 
 char* type_as_str(value_type typ, _Bool up)
 {
@@ -192,6 +194,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
   const char* footer = "";
   yylloc.first_column = tree->col; // This lets us use yyerror()
   yylloc.first_line = tree->line;
+  if (debug) fprintf(outfile, "\n#line %zi\n", tree->line);
   switch (tree->type)
   {
     case identifier:
@@ -232,10 +235,10 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       switch (tree->val_type)
       {
         case block:
-          fputs("MAKE_BLOCK(", outfile);
+          fputs("^{check_function_stack_size();", outfile);
           compile(tree->data, NULL, predeclare(tree->data, defs));
           tree->data = NULL; // Prevent double free.
-          fputc(')', outfile);
+          fputc('}', outfile);
           break;
         case string:
           print_cognate_string(tree->text);
@@ -355,12 +358,11 @@ decl_list* builtins(void)
 
 int main(int argc, char** argv)
 {
-  if (argc < 2 || strcmp(".cog", strchr(argv[1], '.')))
+  if (argc < 2 || !strchr(argv[1], '.') || strcmp(".cog", strchr(argv[1], '.')))
   {
     fprintf(stderr, "Usage: %s filename.cog -option1 -option2\n", argv[0]);
     return EXIT_FAILURE;
   }
-  bool optimize = false;
   bool run = false;
   char* source_file_path = argv[1];
   size_t len = strlen(source_file_path);
@@ -375,11 +377,13 @@ int main(int argc, char** argv)
     if (!opt) break;
     else if (!strcmp(opt, "-output")) { binary_file_path = argv[1]; argv++; }
     else if (!strcmp(opt, "-optimize")) optimize = true;
+    else if (!strcmp(opt, "-debug")) debug = true;
     else if (!strcmp(opt, "-run")) { run = true; argv[0] = binary_file_path; /* TODO prepend path with ./ */ break; }
     else { fprintf(stderr, "Invalid option: %s\n", opt); return EXIT_FAILURE; }
   }
   yyparse();
   fputs("#include\"runtime.h\"\n",outfile);
+  if (debug) fprintf(outfile, "#line 1 \"%s\"\n", source_file_path);
   fprintf(outfile, "const char* symtable[%zi]={0};", num_symbols + 2);
   fputs("int main(int argc,char** argv){init(argc,argv);",outfile);
   add_symbols(full_ast);
@@ -388,11 +392,11 @@ int main(int argc, char** argv)
 #ifdef __APPLE__
   char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-Iruntime", "runtime/runtime.o", "runtime/functions.o",
                    "-lgc", optimize ? "-Ofast" : "-O0", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
-                   "-std=c11", "-lm", "-g0", optimize ? "-flto" : "-fno-lto", NULL };
+                   "-std=c11", "-lm", "-g0", optimize ? "-flto" : "-fno-lto", debug ? "-g" : "", NULL };
 #else
   char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-Iruntime", "runtime/runtime.o", "runtime/functions.o", "-lBlocksRuntime",
                    "-l:libgc.so", optimize ? "-Ofast" : "-O0", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
-                   "-std=c11", "-lm", "-g0", "-fuse-ld=lld", optimize ? "-flto" : "-fno-lto", NULL };
+                   "-std=c11", "-lm", "-g0", "-fuse-ld=lld", optimize ? "-flto" : "-fno-lto", debug ? "-ggdb3" : "", NULL };
 #endif
   fflush(outfile);
   if (fork() == 0) execvp(args[0], args); else wait(NULL);

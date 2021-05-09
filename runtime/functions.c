@@ -42,17 +42,17 @@ void VAR(print)(cognate_object a) { print_object(a, stdout, 0); putc('\n', stdou
 NUMBER VAR(ADD)(NUMBER a, NUMBER b)      { return a + b; }
 NUMBER VAR(MUL)(NUMBER a, NUMBER b) { return a * b; }
 NUMBER VAR(SUB)(NUMBER a, NUMBER b) { return b - a; }
-NUMBER VAR(DIV)(NUMBER a, NUMBER b)   { if likely(a) return b / a; throw_error("Division of %.14g by zero", b); }
+NUMBER VAR(DIV)(NUMBER a, NUMBER b)   { if likely(a) return b / a; throw_error("division of %.14g by zero", b); }
 
 NUMBER VAR(modulo)(NUMBER a, NUMBER b) {
   if likely(a) return fmod(b, a);
-  throw_error("Modulo of %.14g by zero", b);
+  throw_error(",odulo of %.14g by zero", b);
 }
 
 NUMBER VAR(random)(NUMBER low, NUMBER high, NUMBER step) {
   if unlikely((high - low) * step < 0 || !step)
   {
-    throw_error("Invalid range %.14g..%.14g with step %.14g", low, high, step);
+    throw_error("invalid range %.14g..%.14g step %.14g", low, high, step);
   }
   else if ((high - low) / step < 1)
   {
@@ -96,26 +96,26 @@ BOOLEAN VAR(boolean_)(cognate_object a) { return a.type&boolean;}
 ANY VAR(first)(LIST lst)
 {
   // Returns the first element of a list. O(1).
-  if unlikely(!lst) throw_error("Empty list is invalid");
+  if unlikely(!lst) throw_error("empty list is invalid");
   return lst->object;
 }
 
 LIST VAR(rest)(LIST lst)
 {
   // Returns the tail portion of a list. O(1).
-  if unlikely(!lst) throw_error("Empty list is invalid");
+  if unlikely(!lst) throw_error("empty list is invalid");
   return lst->next;
 }
 
 STRING VAR(head)(STRING str)
 {
-  if unlikely(!*str) throw_error("Empty string is invalid");
+  if unlikely(!*str) throw_error("empty string is invalid");
   return GC_STRNDUP(str, mblen(str, MB_CUR_MAX));
 }
 
 STRING VAR(tail)(STRING str)
 {
-  if unlikely(!*str) throw_error("Empty string is invalid");
+  if unlikely(!*str) throw_error("empty string is invalid");
   return str + mblen(str, MB_CUR_MAX);
 }
 
@@ -202,7 +202,7 @@ STRING VAR(join)(NUMBER n) {
   // Joins a string to the end of another string.
   // Define Prefix (Swap, Suffix);
   size_t n1 = n;
-  if (n != n1) throw_error("Cannot join %.14g strings", n);
+  if (n != n1) throw_error("cannot join %.14g strings", n);
   const char* strings[n1];
   size_t result_size = 1;
   for (size_t i = 0; i < n1; ++i)
@@ -234,18 +234,17 @@ STRING VAR(substring)(NUMBER startf, NUMBER endf, STRING str) {
    */
   size_t start  = startf;
   size_t end    = endf;
-  if unlikely(start != startf || end != endf || start > end)
-    throw_error("Invalid range %.14g..%.14g for string %.64s", startf, endf, str_start);
+  if unlikely(start != startf || end != endf || start > end) goto invalid_range;
   size_t str_size = 0;
   end -= start;
   for (;start != 0; --start)
   {
-    if unlikely(!*str) throw_error("String %.64s is too small (%li characters)", str_start, mbstrlen(str_start)); // TODO Show more info here.
+    if unlikely(!*str) goto invalid_range;
     str += mblen(str, MB_CUR_MAX);
   }
   for (;end != 0; --end)
   {
-    if unlikely(str[str_size] == '\0') throw_error("String %.64s is too small (%li characters)", str_start, mbstrlen(str_start));
+    if unlikely(str[str_size] == '\0') goto invalid_range;
     str_size += mblen(str+str_size, MB_CUR_MAX);
   }
   if unlikely(str[str_size] == '\0')
@@ -254,6 +253,8 @@ STRING VAR(substring)(NUMBER startf, NUMBER endf, STRING str) {
     return str;
   }
   return GC_STRNDUP(str, str_size);
+invalid_range:
+  throw_error("invalid range %.14g..%.14g", startf, endf);
 }
 
 
@@ -270,11 +271,11 @@ STRING VAR(input)() {
 STRING VAR(read)(STRING filename) {
   // Read a file to a string.
   FILE *fp = fopen(filename, "ro");
-  if unlikely(fp == NULL) throw_error("Cannot open file '%s'. It probably doesn't exist.", filename);
+  if unlikely(fp == NULL) throw_error("cannot open file '%s'", filename);
   struct stat st;
   fstat(fileno(fp), &st);
   char* text = GC_MALLOC (st.st_size + 1);
-  if (fread(text, sizeof(char), st.st_size, fp) != st.st_size) throw_error("Error reading file '%s'.", filename);
+  if (fread(text, sizeof(char), st.st_size, fp) != st.st_size) throw_error("error reading file '%s'", filename);
   fclose(fp);
   text[st.st_size-1] = '\0'; // Remove trailing eof.
   return text;
@@ -287,7 +288,7 @@ NUMBER VAR(number)(STRING str) {
   NUMBER num = strtod(str, &end);
   if (end == str || *end != '\0')
   {
-    throw_error("Cannot parse '%.64s' to a number", str);
+    throw_error("cannot parse '%.32s' to a number", str);
   }
   return num;
 }
@@ -296,7 +297,7 @@ STRING VAR(path)() {
   char buf[FILENAME_MAX];
   if (!getcwd(buf, FILENAME_MAX))
   {
-    throw_error("Cannot get file path");
+    throw_error("cannot get working directory");
   }
   char* ret = GC_STRDUP(buf);
   return ret;
@@ -319,7 +320,7 @@ LIST VAR(stack)() {
 void VAR(write)(STRING filename, cognate_object obj) {
   // Write object to end of file, without a newline.
   FILE* const fp = fopen(filename, "a");
-  if unlikely(fp == NULL) throw_error("Cannot open file '%s'. It probably doesn't exist.", filename);
+  if unlikely(fp == NULL) throw_error("cannot open file '%s'", filename);
   print_object(obj, fp, 0);
   fclose(fp);
 }
@@ -364,13 +365,13 @@ BOOLEAN VAR(match)(STRING reg_str, STRING str) {
     // Technically, the last regex to be used in the program will leak memory.
     // However, this is minor, since only a limited amount of memory can be leaked.
     regfree(&reg); // Apparently freeing an unallocated regex is fine.
-    if unlikely(!*reg_str) throw_error("Cannot compile empty string as regex");
+    if unlikely(!*reg_str) throw_error("cannot match empty regex");
     const int status = regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE | REG_NOSUB);
     if unlikely(status)
     {
       char reg_err[256];
       regerror(status, &reg, reg_err, 256);
-      throw_error("Regex compile error: %s in regex '%.32s'", reg_err, reg_str);
+      throw_error("compile error (%s) in regex '%.32s'", reg_err, reg_str);
     }
     old_str = reg_str; /* This should probably be strcpy, but I trust that reg_str is either
                           allocated with the garbage collector, or read only in the data segment. */
@@ -379,7 +380,7 @@ BOOLEAN VAR(match)(STRING reg_str, STRING str) {
   if unlikely(found != 0 && found != REG_NOMATCH)
   {
 
-    throw_error("Regex match error on string '%.64s' with regex '%.64s'", str, reg_str);
+    throw_error("match error with regex '%.32s' on string '%.32s'", str, reg_str);
     // If this error ever actually appears, use regerror to get the full text.
   }
   return !found;
@@ -388,7 +389,7 @@ BOOLEAN VAR(match)(STRING reg_str, STRING str) {
 NUMBER VAR(ordinal)(STRING str) {
   if unlikely(str[0] && !str[1])
   {
-    throw_error("Invalid string '%.64s' (should be length 1)", str);
+    throw_error("Invalid string '%.32s' (should be length 1)", str);
   }
   wchar_t chr = 0;
   mbtowc(&chr, str, MB_CUR_MAX);
@@ -418,7 +419,7 @@ NUMBER VAR(ceiling)(NUMBER a) {
 void VAR(assert)(STRING name, BOOLEAN result) {
   if unlikely(!result)
   {
-    throw_error("Assertion '%s' has failed", name);
+    throw_error("failed assertion '%s'", name);
   }
 }
 
@@ -430,6 +431,7 @@ void VAR(error)(STRING str) {
 
 LIST VAR(map)(BLOCK blk, LIST lst)
 {
+  // TODO This needs to defined iteratively!
   if (lst)
   {
     push(lst->object);
@@ -444,6 +446,7 @@ LIST VAR(map)(BLOCK blk, LIST lst)
 
 LIST VAR(filter)(BLOCK blk, LIST lst)
 {
+  // TODO This needs to defined iteratively!
   if (lst)
   {
     push(lst->object);
@@ -462,6 +465,7 @@ LIST VAR(filter)(BLOCK blk, LIST lst)
 
 void VAR(for)(LIST lst, BLOCK blk)
 {
+  // TODO This needs to defined iteratively!
   if (lst)
   {
     push(lst->object);
@@ -472,6 +476,7 @@ void VAR(for)(LIST lst, BLOCK blk)
 
 LIST VAR(range)(NUMBER start, NUMBER end, NUMBER step)
 {
+  // TODO This needs to defined iteratively!
   if (start * step < end * step)
   {
     cognate_list* node = GC_NEW(cognate_list);

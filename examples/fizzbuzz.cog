@@ -8,4 +8,4 @@ Define FizzBuzz
                             else N
 );
 
-(FizzBuzz), For each in Range from 1 to 100 with step 1;
+(FizzBuzz), For each in Range from 1 to 1000000 with step 1;

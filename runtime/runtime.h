@@ -81,12 +81,6 @@ extern const char* symtable[];
 #define SET_FN(name, val) const ANY _tmp_##name = val; \
                           VAR(name) = Block_copy(^{ push(val); })
 
-#define MAKE_BLOCK(body) \
-  ^{ \
-    check_function_stack_size(); \
-    body \
-  }
-
 #ifdef NO_GC
   #define GC_MALLOC  malloc
   #define GC_REALLOC realloc
@@ -106,7 +100,6 @@ extern const char* symtable[];
 // Global variables
 extern cognate_stack stack;
 extern LIST cmdline_parameters;
-extern const char *current_function_name;
 extern const char *current_word_name;
 
 // Variables and  needed by functions.c defined in runtime.c

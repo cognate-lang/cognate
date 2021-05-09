@@ -16,7 +16,7 @@ jobs:
         shell: bash
         run: |
           cd $GITHUB_WORKSPACE
-          ./TEST
+          make test
       - name: Upload test output
         if: failure()
         uses: actions/upload-artifact@v2

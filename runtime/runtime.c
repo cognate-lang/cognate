@@ -17,12 +17,11 @@
 #include <gc/gc.h>
 #endif
 #if 0 //__has_include(<Block_private.h>)
-// TODO
+#include <Block_private.h>
 #define BLOCK_GC
 #endif
 
 #ifdef BLOCK_GC
-#include <Block_private.h>
 void* blk_alloc(const unsigned long size, __attribute__((unused)) const _Bool _, __attribute__((unused)) const _Bool __) { return GC_MALLOC(size); }
 void blk_setHasRefcount(__attribute__((unused)) const void* _, __attribute__((unused)) const _Bool __) {}
 void blk_gc_assign_strong(void* src, void** dst) { *dst = src; }
@@ -38,8 +37,7 @@ static void bind_error_signals();
 
 cognate_stack stack;
 LIST cmdline_parameters = NULL;
-const char *current_function_name = NULL;
-const char *current_word_name     = NULL;
+const char *current_word_name = NULL;
 
 static const char *function_stack_start;
 static const char *function_stack_top;
@@ -52,13 +50,13 @@ void init(int argc, char** argv)
   struct rlimit stack_limit;
   if unlikely(getrlimit(RLIMIT_STACK, &stack_limit) == -1)
   {
-    throw_error("Cannot get return stack limit!");
+    throw_error("cannot get return stack limit");
   }
   function_stack_top = function_stack_start - stack_limit.rlim_cur;
   // Set locale for strings.
   if unlikely(setlocale(LC_ALL, "") == NULL)
   {
-    throw_error("Cannot set locale!");
+    throw_error("cannot set locale");
   }
   // Init GC
 #ifndef NO_GC
@@ -75,7 +73,7 @@ void init(int argc, char** argv)
   struct timespec ts;
   if unlikely(timespec_get(&ts, TIME_UTC) == 0)
   {
-    throw_error("Cannot get system time!");
+    throw_error("cannot get system time");
   }
   srand(ts.tv_nsec ^ ts.tv_sec); // TODO make random more random.
   // Load parameters
@@ -98,7 +96,7 @@ void cleanup()
   if unlikely(stack.top != stack.start)
   {
     current_word_name = NULL;
-    throw_error("Program exiting with non-empty stack of length %ti", stack.top - stack.start);
+    throw_error("exiting with %ti objects on the stack", stack.top - stack.start);
   }
 }
 
@@ -112,61 +110,31 @@ void check_function_stack_size()
 {
   char sp;
   if unlikely(&sp - function_stack_top < STACK_MARGIN_KB * 1024)
-    throw_error("Call stack overflow - too much recursion! (call stack is %tikB out of maximum %tikB)", (function_stack_start - &sp) >> 10, (function_stack_start - function_stack_top) >> 10);
+    throw_error("too much recursion (call stack is %tikB of %tikB)", (function_stack_start - &sp) >> 10, (function_stack_start - function_stack_top) >> 10);
 }
 
 void set_current_word_name(const char* const name) { current_word_name=name; } // Need this to avoid unsequenced evaluation error.
 
 _Noreturn __attribute__((format(printf, 1, 2))) void throw_error(const char* const fmt, ...)
 {
-  struct winsize term;
-  // If we cannot determine the terminal size (redirected to file or something), assume width is 80.
-  const char tmp_errno = errno;
-  if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &term) == -1) term.ws_col = 80;
-  fputc('\n', stderr);
-  // Print the title bar.
-  for (unsigned short i = 0; i < (term.ws_col - 18) / 2; ++i) fputs("\342\224\200", stderr);
-  fputs("\342\224\244 \033[0;1mCognate Error!\033[0m \342\224\234", stderr);
-  for (unsigned short i = 0; i < (term.ws_col - 17) / 2; ++i) fputs("\342\224\200", stderr);
-  // Print generic error header.
-  fputs("\nCognate has encountered an unrecoverable error.\n"
-         "Details are below...\n", stderr);
-  // Print the function name, if inside a function.
-  if (current_word_name || current_function_name) fputc('\n', stderr);
-  if (current_function_name) fprintf(stderr, "In function '\033[0;1m%c%s\033[0m'\n", toupper(*current_function_name), current_function_name+1);
-  if ((current_word_name != current_function_name) && current_word_name)
-    fprintf(stderr, "During (or immediately after) evaluation of '\033[0;1m%c%s\033[0m'\n", toupper(*current_word_name), current_word_name+1);
+  if (current_word_name)
+  {
+    fprintf(stderr, "\033[0;1m%c%s ➤ ", toupper(*current_word_name), current_word_name+1);
+  }
   // Actually print the error message now.
-  fprintf(stderr, "\n\033[31;1m");
+  fputs("\033[31;1m", stderr);
   va_list args;
   va_start(args, fmt);
   vfprintf(stderr, fmt, args);
   va_end(args);
   fputc('\n', stderr);
-  if (tmp_errno) fprintf(stderr, "\033[0;2m%s\n", strerror(tmp_errno));
-  // Print the top 5 stack items.
-  if (stack.top != stack.start)
-  {
-    fputs("\n\033[0;2mHere is the top of the stack:\n", stderr);
-    for (unsigned char i = 0; i < 5 && (stack.top != stack.start); ++i)
-    { // FIXME: Inlining of stack operations may cause inaccuracies here.
-      const cognate_object obj = pop();
-      fprintf(stderr, "[%s]: ", lookup_type(obj.type));
-      print_object(obj, stderr, 1); // FIXME: large objects will print in their entirety here.
-      fputc('\n', stderr);
-    }
-    if (stack.top != stack.start) fprintf(stderr, "and %li more...\n", stack.top - stack.start);
-  }
-  fputs("\033[0m", stderr);
-  // Print the bottom row thing.
-  for (unsigned short i = 0; i < term.ws_col; ++i) fputs("\342\224\200", stderr);
-  // Exit, with error.
+  if (errno) fprintf(stderr, "\033[0;2m%s\033[0m\n", strerror(errno));
   exit(EXIT_FAILURE);
 }
 
 void handle_error_signal(int sig)
 {
-  throw_error("Recieved signal %i (%s), exiting.", sig, strsignal(sig));
+  throw_error("recieved signal %i (%s)", sig, strsignal(sig));
 }
 
 void print_object (const cognate_object object, FILE* out, const _Bool quotes)
@@ -219,7 +187,7 @@ void print_object (const cognate_object object, FILE* out, const _Bool quotes)
     case block: fprintf(out, "<Block %p>", (void*)object.block); return;
     case table: fprintf(out, "<Table %p>", (void*)object.table); return;
     case symbol: fputs(symtable[object.symbol], out); return;
-    default: throw_error("Cannot print object of unknown type %i. This may be a compiler bug!", object.type);
+    default: throw_error("cannot print type %i - this may be a compiler bug!", object.type);
   }
 }
 
@@ -238,13 +206,13 @@ void push(cognate_object object)
 
 cognate_object pop()
 {
-  if unlikely(stack.top == stack.start) throw_error("Stack underflow!");
+  if unlikely(stack.top == stack.start) throw_error("stack underflow");
   return *--stack.top;
 }
 
 cognate_object peek()
 {
-  if unlikely(stack.top == stack.start) throw_error("Stack underflow!");
+  if unlikely(stack.top == stack.start) throw_error("stack underflow");
   return *(stack.top - 1);
 }
 
@@ -272,7 +240,7 @@ cognate_object check_type(cognate_type expected_type, cognate_object object)
 {
   if likely(object.type & expected_type) return object;
   // TODO: Print the object itself here.
-  throw_error("Type Error! Expected type '%s' but recieved type '%s'", lookup_type(expected_type), lookup_type(object.type));
+  throw_error("expected %s got %s", lookup_type(expected_type), lookup_type(object.type));
 }
 
 const char* lookup_type(cognate_type type)
@@ -323,8 +291,8 @@ _Bool compare_objects(cognate_object ob1, cognate_object ob2)
     case symbol     : return ob1.symbol == ob2.symbol;
     case list       : return compare_lists(ob1.list, ob2.list);
     case table      : return 0; // compare_tables(*ob1.table, *ob2.table);
-    case NOTHING    : throw_error("Cognate should not be in this state - compiler bug!");
-    case block      : throw_error("Cannot compare blocks!");
+    case NOTHING    : throw_error("comparing null - compiler bug!");
+    case block      : throw_error("cannot compare blocks");
   }
 }
 

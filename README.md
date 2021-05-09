@@ -30,9 +30,9 @@ Currently, Cognate will run on Linux and MacOS systems. If you use Windows 10, t
 ```
 make
 ```
-You should then run the TEST script to test Cognate's functionality. This should work regardless of operating system.
+You should then run the test script to test Cognate's functionality. This should work regardless of operating system.
 ```
-./TEST
+make test
 ```
 If the tests all pass (they should!), you can then try running some of the included demo programs like this:
 ```
@@ -40,4 +40,4 @@ If the tests all pass (they should!), you can then try running some of the inclu
 ./examples/fizzbuzz
 ```
 ### Block Garbage Collection
-By default, all Cognate objects are garbage collected by the Boehm garbage collector (libgc). However, the version of libBlocksRuntime (which provides lexical closures) in the Debian repositories does not expose the correct functions to work with the garbage collector. What this means is that using blocks can leak memory in specific scenarios (try using valgrind on tests/block.cog). This can be rectified if you install libBlocksRuntime from [here](https://github.com/mackyle/blocksruntime) after applying the BlocksRuntime patch found in this repository. Now Cognate should automatically use the garbage collector for blocks.
+By default, all Cognate objects are garbage collected by the Boehm garbage collector (libgc). However, the version of libBlocksRuntime (which provides lexical closures) in the Debian repositories does not expose the correct functions to work with the garbage collector. What this means is that using blocks can leak memory in specific scenarios (try using valgrind on tests/block.cog). This can be rectified if you install libBlocksRuntime from [here](https://github.com/mackyle/blocksruntime) after applying the BlocksRuntime patch found in this repository. Now Cognate should automatically use the garbage collector for blocks. Make sure to only have one version of libBlocksRuntime installed at once, or the compiler will not run.
