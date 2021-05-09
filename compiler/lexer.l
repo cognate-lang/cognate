@@ -23,7 +23,7 @@ void yyerror(char* str)
   fprintf(stderr, "\033[0;1m%s", line);
   yylloc.first_column += strlen(header) - 1;
   while (--yylloc.first_column) fputc(' ', stderr);
-  fprintf(stderr, "\033[31;1m^ %s\n", str);
+  fprintf(stderr, "\033[31;1m↳ %s\n", str);
   exit(EXIT_FAILURE);
 }
 
