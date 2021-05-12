@@ -231,6 +231,26 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
     break;
     case value:
     {
+      if (tree->val_type == block && tree->next && tree->next->type == value && tree->next->val_type == block
+        && tree->next->next && tree->next->next->type == value && tree->next->next->val_type == block
+        && tree->next->next->next && tree->next->next->next->type == identifier
+        && tree->next->next->next->next && tree->next->next->next->next->type == identifier)
+      {
+        decl_list* ifdef = lookup_word(tree->next->next->next->text, defs);
+        decl_list* dodef = lookup_word(tree->next->next->next->next->text, defs);
+        if (ifdef && ifdef->argc && strcmp(ifdef->name, "if") == 0)
+        {
+          fputs("{", outfile);
+          compile(tree->next->next->data, NULL, predeclare(tree->next->next->data, defs));
+          fputs("}if(CHECK(boolean,pop())){", outfile);
+          compile(tree->next->data, NULL, predeclare(tree->next->data, defs));
+          fputs("}else{", outfile);
+          compile(tree->data, NULL, predeclare(tree->next->next->data, defs));
+          fputs("}", outfile);
+          tree = tree->next->next->next->next;
+        }
+        break;
+      }
       reg_list* return_register = add_register(tree->val_type, registers);
       switch (tree->val_type)
       {

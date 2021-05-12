@@ -92,11 +92,6 @@ extern const char* symtable[];
 #define unlikely(expr) (__builtin_expect((_Bool)(expr), 0))
 #define likely(expr)   (__builtin_expect((_Bool)(expr), 1))
 
-#define DOIF(cond, a, b) \
-  cond; \
-  if (CHECK(boolean, pop())) \
-  a else b
-
 // Global variables
 extern cognate_stack stack;
 extern LIST cmdline_parameters;
