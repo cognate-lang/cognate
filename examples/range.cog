@@ -1,3 +1,1 @@
-Import Builtin;
-
-Print the Range from 0 to 10000 with step 2;
+Print the Range from 100 to 0 with step -2;

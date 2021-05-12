@@ -19,4 +19,3 @@ clean:
 
 test: build
 	./TEST
-

@@ -431,60 +431,63 @@ void VAR(error)(STRING str) {
 
 LIST VAR(map)(BLOCK blk, LIST lst)
 {
-  // TODO This needs to defined iteratively!
-  if (lst)
+  cognate_list start = {0};
+  cognate_list* ptr = &start;
+  for (; lst ; lst = lst->next)
   {
     push(lst->object);
     blk();
-    cognate_list* node = GC_NEW(cognate_list);
-    node->object = pop();
-    node->next = VAR(map)(blk, lst->next);
-    return node;
+    cognate_list* new = GC_NEW(cognate_list);
+    new->object = pop();
+    ptr->next = new;
+    ptr = new;
   }
-  return NULL;
+  return start.next;
+
 }
 
 LIST VAR(filter)(BLOCK blk, LIST lst)
 {
-  // TODO This needs to defined iteratively!
-  if (lst)
+  cognate_list start = {0};
+  cognate_list* ptr = &start;
+  for (; lst ; lst = lst->next)
   {
     push(lst->object);
     blk();
     if (CHECK(boolean, pop()))
     {
-      cognate_list* node = GC_NEW(cognate_list);
-      node->object = lst->object;
-      node->next = VAR(filter)(blk, lst->next);
-      return node;
+      cognate_list* new = GC_NEW(cognate_list);
+      new->object = lst->object;
+      ptr->next = new;
+      ptr = new;
     }
-    return VAR(filter)(blk, lst->next);
   }
-  return NULL;
+  return start.next;
 }
 
 void VAR(for)(LIST lst, BLOCK blk)
 {
-  // TODO This needs to defined iteratively!
-  if (lst)
+  for (; lst ; lst = lst->next)
   {
     push(lst->object);
     blk();
-    VAR(for)(lst->next, blk);
   }
 }
 
 LIST VAR(range)(NUMBER start, NUMBER end, NUMBER step)
 {
-  // TODO This needs to defined iteratively!
-  if (start * step < end * step)
+  if ((end - start) * step < 0)
+    throw_error("invalid range %.14g..%.14g step %.14g", start, end, step);
+  end = start + step * (int)((end - start) / step) - step;
+  LIST lst = NULL;
+  for (; start * step <= end * step; end -= step)
   {
     cognate_list* node = GC_NEW(cognate_list);
-    node->object = OBJ(number, start);
-    node->next = VAR(range)(start+step, end, step);
-    return node;
+    node->object = OBJ(number, end);
+    node->next = lst;
+    lst = node;
   }
-  return NULL;
+  return lst;
 }
 
 static size_t mbstrlen(const char* str)
