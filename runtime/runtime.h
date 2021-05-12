@@ -7,10 +7,8 @@
 #include <stdio.h>
 #include <Block.h>
 
-#define MAX_TABLE_TRIES    3
 #define INITIAL_READ_SIZE  64
 #define INITIAL_LIST_SIZE  16
-#define INITIAL_TABLE_SIZE 256
 #define LIST_GROWTH_FACTOR 1.5
 #define STACK_MARGIN_KB    50
 
@@ -33,7 +31,7 @@ enum cognate_type
   list    = (1 << 3),
   table   = (1 << 4),
   block   = (1 << 5),
-  symbol =  (1 << 6),
+  symbol  = (1 << 6),
 };
 
 // Enumerates all possible types of a cognate_object

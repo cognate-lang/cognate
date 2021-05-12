@@ -39,14 +39,14 @@ void VAR(put)(cognate_object a)   { print_object(a, stdout, 0); fflush(stdout); 
 void VAR(print)(cognate_object a) { print_object(a, stdout, 0); putc('\n', stdout); }
 
 
-NUMBER VAR(ADD)(NUMBER a, NUMBER b)      { return a + b; }
+NUMBER VAR(ADD)(NUMBER a, NUMBER b) { return a + b; }
 NUMBER VAR(MUL)(NUMBER a, NUMBER b) { return a * b; }
 NUMBER VAR(SUB)(NUMBER a, NUMBER b) { return b - a; }
-NUMBER VAR(DIV)(NUMBER a, NUMBER b)   { if likely(a) return b / a; throw_error("division of %.14g by zero", b); }
+NUMBER VAR(DIV)(NUMBER a, NUMBER b) { if likely(a) return b / a; throw_error("division of %.14g by zero", b); }
 
 NUMBER VAR(modulo)(NUMBER a, NUMBER b) {
   if likely(a) return fmod(b, a);
-  throw_error(",odulo of %.14g by zero", b);
+  throw_error("modulo of %.14g by zero", b);
 }
 
 NUMBER VAR(random)(NUMBER low, NUMBER high, NUMBER step) {
