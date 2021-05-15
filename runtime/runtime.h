@@ -177,3 +177,4 @@ LIST VAR(map)(BLOCK, LIST);
 LIST VAR(filter)(BLOCK, LIST);
 void VAR(for)(LIST, BLOCK);
 LIST VAR(range)(NUMBER, NUMBER, NUMBER);
+void VAR(open)(STRING, BLOCK);

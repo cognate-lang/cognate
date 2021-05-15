@@ -2,7 +2,7 @@ CC=clang
 
 build: cognac runtime/functions.o runtime/runtime.o
 
-cognac: compiler/lexer.c compiler/parser.c
+cognac: compiler/lexer.c compiler/parser.c compiler/parser.h compiler/cognac.c compiler/builtins.c compiler/cognac.h
 	$(CC) compiler/lexer.c compiler/parser.c compiler/cognac.c -Ofast -o cognac
 
 runtime/%.o: runtime/%.c
@@ -11,7 +11,7 @@ runtime/%.o: runtime/%.c
 compiler/lexer.c: compiler/lexer.l
 	flex -o compiler/lexer.c compiler/lexer.l
 
-compiler/parser.c: compiler/parser.y
+compiler/parser.c compiler/parser.h: compiler/parser.y
 	bison compiler/parser.y --defines=compiler/parser.h -o compiler/parser.c
 
 clean:

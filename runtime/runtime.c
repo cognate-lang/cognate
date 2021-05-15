@@ -95,6 +95,7 @@ void cleanup()
     current_word_name = NULL;
     throw_error("exiting with %ti objects on the stack", stack.top - stack.start);
   }
+  GC_gcollect();
 }
 
 cognate_object copy_if_block(cognate_object obj)
@@ -125,7 +126,8 @@ _Noreturn __attribute__((format(printf, 1, 2))) void throw_error(const char* con
   vfprintf(stderr, fmt, args);
   va_end(args);
   fputc('\n', stderr);
-  if (errno) fprintf(stderr, "\033[0;2m%s\033[0m\n", strerror(errno));
+  if (errno) fprintf(stderr, "\033[0;2m%s\n", strerror(errno));
+  fputs("\033[0m", stderr);
   exit(EXIT_FAILURE);
 }
 
