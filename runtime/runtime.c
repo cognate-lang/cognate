@@ -38,7 +38,9 @@ static void bind_error_signals();
 
 cognate_stack stack;
 LIST cmdline_parameters = NULL;
-const char *current_word_name = NULL;
+
+const char *word_name = NULL;
+int line_num  = -1;
 
 static const char *function_stack_start;
 static const char *function_stack_top;
@@ -92,7 +94,7 @@ void cleanup()
 {
   if unlikely(stack.top != stack.start)
   {
-    current_word_name = NULL;
+    word_name = NULL;
     throw_error("exiting with %ti objects on the stack", stack.top - stack.start);
   }
   GC_gcollect();
@@ -111,22 +113,30 @@ void check_function_stack_size()
     throw_error("too much recursion (call stack is %tikB of %tikB)", (function_stack_start - &sp) >> 10, (function_stack_start - function_stack_top) >> 10);
 }
 
-void set_current_word_name(const char* const name) { current_word_name=name; } // Need this to avoid unsequenced evaluation error.
+void set_word_name(const char* const name) { word_name=name; } // Need this to avoid unsequenced evaluation error.
+void set_line_num(int num) { line_num=num; } // Need this to avoid unsequenced evaluation error.
 
 _Noreturn __attribute__((format(printf, 1, 2))) void throw_error(const char* const fmt, ...)
 {
-  if (current_word_name)
+  const _Bool debug = word_name && line_num != -1;
+  int offset = 0;
+  if (debug)
   {
-    fprintf(stderr, "\033[0;1m%c%s ➤ ", toupper(*current_word_name), current_word_name+1);
-  }
-  // Actually print the error message now.
-  fputs("\033[31;1m", stderr);
+    int line_num_digits = 1;
+    for (int tmp = line_num; tmp /= 10; ++line_num_digits);
+    offset = strlen("Line: ... ") + line_num_digits + strlen(word_name);
+    fprintf(stderr, "\033[0;2mLine %i: \033[0;1m... %c%s ...\n%*s\033[31;1m↳ ", line_num, toupper(*word_name), word_name + 1, offset, "");
+  } else fputs("\033[31;1m", stderr);
   va_list args;
   va_start(args, fmt);
   vfprintf(stderr, fmt, args);
   va_end(args);
   fputc('\n', stderr);
-  if (errno) fprintf(stderr, "\033[0;2m%s\n", strerror(errno));
+  if (errno)
+  {
+    const char* str = strerror(errno);
+    fprintf(stderr, "%*s\033[0;2m%c%s\n", offset + 2, "", tolower(*str), str+1);
+  }
   fputs("\033[0m", stderr);
   exit(EXIT_FAILURE);
 }

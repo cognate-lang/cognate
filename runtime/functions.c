@@ -425,8 +425,6 @@ void VAR(assert)(STRING name, BOOLEAN result) {
 }
 
 void VAR(error)(STRING str) {
-  current_word_name = NULL;
-  errno = 0;
   throw_error("%s", str);
 }
 

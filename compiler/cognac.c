@@ -207,7 +207,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       switch(def->type)
       {
         case func:
-          fprintf(outfile,"CALL(%s,(", def->name);
+          fprintf(outfile,"%s(%s,(", debug ? "CALLDEBUG" : "CALL", def->name);
           for (unsigned short i = 0; i < def->argc; ++i)
           {
             registers = emit_register(def->args[i], registers);
@@ -404,7 +404,7 @@ int main(int argc, char** argv)
   yyparse();
   fputs("#include\"runtime.h\"\n",outfile);
   if (debug) fprintf(outfile, "#line 1 \"%s\"\n", source_file_path);
-  fprintf(outfile, "const char* symtable[%zi]={0};", num_symbols + 2);
+  fprintf(outfile, "const char* symtable[%zi];", num_symbols ? num_symbols : 1);
   fputs("int main(int argc,char** argv){init(argc,argv);",outfile);
   add_symbols(full_ast);
   compile(full_ast, NULL, predeclare(full_ast, builtins()));
@@ -412,7 +412,7 @@ int main(int argc, char** argv)
 #ifdef __APPLE__
   char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-Iruntime", "runtime/runtime.o", "runtime/functions.o",
                    "-lgc", optimize ? "-Ofast" : "-O0", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
-                   "-std=c11", "-lm", "-g0", optimize ? "-flto" : "-fno-lto", debug ? "-g" : "", NULL };
+                   "-std=c11", "-lm", "-g0", optimize ? "-flto" : "-fno-lto", debug ? "-ggdb3" : "", NULL };
 #else
   char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-Iruntime", "runtime/runtime.o", "runtime/functions.o", "-lBlocksRuntime",
                    "-l:libgc.so", optimize ? "-Ofast" : "-O0", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",

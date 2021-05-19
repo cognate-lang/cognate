@@ -23,7 +23,6 @@ typedef struct cognate_object ANY;
 
 enum cognate_type
 {
-  // NOTHING is currently only used for unused hashtable buckets.
   NOTHING = 0, // Must be zero because of calloc()
   boolean = (1 << 0),
   string  = (1 << 1),
@@ -71,7 +70,8 @@ extern const char* symtable[];
 #define VAR(name) ___##name
 #define SYM(name) ____##name
 #define CHECK(typ, obj) (check_type(typ, obj) . typ)
-#define CALL(name, args) (set_current_word_name(#name), VAR(name) args)
+#define CALL(name, args) VAR(name) args
+#define CALLDEBUG(name, args) (set_word_name(#name), set_line_num(__LINE__), VAR(name) args)
 
 #define PREDEF(name) __block BLOCK VAR(name) = ^{ throw_error("Function '"#name"' called before definition!'"); };
 
@@ -93,7 +93,8 @@ extern const char* symtable[];
 // Global variables
 extern cognate_stack stack;
 extern LIST cmdline_parameters;
-extern const char *current_word_name;
+extern const char *word_name;
+extern int line_num;
 
 // Variables and  needed by functions.c defined in runtime.c
 void init_stack();
@@ -110,7 +111,8 @@ void push(cognate_object);
 cognate_object pop();
 cognate_object peek();
 void check_function_stack_size();
-void set_current_word_name(const char *const);
+void set_word_name(const char *const);
+void set_line_num(int);
 cognate_object copy_if_block(cognate_object obj);
 
 // Builtin functions needed by compiled source file defined in functions.c
@@ -161,10 +163,6 @@ LIST VAR(stack)();
 void VAR(write)(STRING, cognate_object);
 LIST VAR(parameters)();
 void VAR(stop)();
-//TABLE VAR(table)();
-//TABLE VAR(insert)(STRING, cognate_object, TABLE);
-//ANY VAR(get)(STRING, TABLE);
-//LIST VAR(values)(TABLE);
 BOOLEAN VAR(match)(STRING, STRING);
 NUMBER VAR(ordinal)(STRING);
 STRING VAR(character)(NUMBER);
