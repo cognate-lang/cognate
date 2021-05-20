@@ -16,7 +16,7 @@
 
 static size_t mbstrlen(const char* str);
 
-ANY VAR(if)(BLOCK cond, cognate_object a, cognate_object b)
+ANY VAR(if)(BLOCK cond, ANY a, ANY b)
 {
   cond();
   if (CHECK(boolean, pop()))
@@ -36,8 +36,8 @@ void VAR(while)(BLOCK cond, BLOCK body) {
 
 void VAR(do)(BLOCK blk) { blk(); }
 
-void VAR(put)(cognate_object a)   { print_object(a, stdout, 0); fflush(stdout); }
-void VAR(print)(cognate_object a) { print_object(a, stdout, 0); putc('\n', stdout); }
+void VAR(put)(ANY a)   { print_object(a, stdout, 0); fflush(stdout); }
+void VAR(print)(ANY a) { print_object(a, stdout, 0); putc('\n', stdout); }
 
 
 NUMBER VAR(ADD)(NUMBER a, NUMBER b) { return a + b; }
@@ -81,18 +81,18 @@ BOOLEAN VAR(one_of)(BOOLEAN a, BOOLEAN b) { return a ^ b;  }
 BOOLEAN VAR(not)(BOOLEAN a) { return !a;     }
 
 
-BOOLEAN VAR(EQ)(cognate_object a, cognate_object b)  { return compare_objects(a,b); }
-BOOLEAN VAR(NEQ)(cognate_object a, cognate_object b) { return !compare_objects(a,b); }
+BOOLEAN VAR(EQ)(ANY a, ANY b)  { return compare_objects(a,b); }
+BOOLEAN VAR(NEQ)(ANY a, ANY b) { return !compare_objects(a,b); }
 BOOLEAN VAR(GT)(NUMBER a, NUMBER b)  { return a < b; }
 BOOLEAN VAR(LT)(NUMBER a, NUMBER b)  { return a > b; }
 BOOLEAN VAR(GTE)(NUMBER a, NUMBER b) { return a >= b; }
 BOOLEAN VAR(LTE)(NUMBER a, NUMBER b) { return a <= b; }
 
-BOOLEAN VAR(number_)(cognate_object a)  { return a.type&number; } // Question marks are converted to underscores.
-BOOLEAN VAR(list_)(cognate_object a)    { return a.type&number; } // However all other symbols are too.
-BOOLEAN VAR(string_)(cognate_object a)  { return a.type&string; } // So this is a temporary hack!
-BOOLEAN VAR(block_)(cognate_object a)   { return a.type&block;  }
-BOOLEAN VAR(boolean_)(cognate_object a) { return a.type&boolean;}
+BOOLEAN VAR(number_)(ANY a)  { return a.type&number; } // Question marks are converted to underscores.
+BOOLEAN VAR(list_)(ANY a)    { return a.type&number; } // However all other symbols are too.
+BOOLEAN VAR(string_)(ANY a)  { return a.type&string; } // So this is a temporary hack!
+BOOLEAN VAR(block_)(ANY a)   { return a.type&block;  }
+BOOLEAN VAR(boolean_)(ANY a) { return a.type&boolean;}
 
 ANY VAR(first)(LIST lst)
 {
@@ -120,7 +120,7 @@ STRING VAR(tail)(STRING str)
   return str + mblen(str, MB_CUR_MAX);
 }
 
-LIST VAR(push)(cognate_object a, LIST b) {
+LIST VAR(push)(ANY a, LIST b) {
   // Pushes an object from the stack onto the list's first element. O(1).
   // TODO: Better name? Inconsistent with List where pushing to the stack adds to the END.
   cognate_list* lst = GC_NEW (cognate_list);
@@ -307,7 +307,7 @@ STRING VAR(path)() {
 LIST VAR(stack)() {
   // We can't return the list or this function is inlined and it breaks.
   LIST lst = NULL;
-  for (cognate_object* i = stack.top - 1 ; i >= stack.start ; --i)
+  for (ANY* i = stack.top - 1 ; i >= stack.start ; --i)
   {
     // TODO: Allocate the list as an array for the sake of memory locality.
     cognate_list* tmp = GC_NEW (cognate_list);
@@ -318,7 +318,7 @@ LIST VAR(stack)() {
   return lst;
 }
 
-void VAR(write)(STRING filename, cognate_object obj) {
+void VAR(write)(STRING filename, ANY obj) {
   // Write object to end of file, without a newline.
   FILE* const fp = fopen(filename, "a");
   if unlikely(fp == NULL) throw_error("cannot open file '%s'", filename);
@@ -339,7 +339,7 @@ TABLE VAR(table)() {
   return NULL; // TODO
 }
 
-TABLE VAR(insert)(STRING key, cognate_object value, TABLE tab) {
+TABLE VAR(insert)(STRING key, ANY value, TABLE tab) {
   (void)key;
   (void)value;
   (void)tab;

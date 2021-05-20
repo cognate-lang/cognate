@@ -153,8 +153,7 @@ bool is_mutated(ast* tree, decl_list def)
     switch(tree->type)
     {
       case set: if (!strcmp(def.name, tree->text)) return true; break;
-      case let:
-      case define: if (!strcmp(def.name, tree->text)) return false; break;
+      case let: case define: if (!strcmp(def.name, tree->text)) return false; break;
       case value: if (tree->val_type == block && is_mutated(tree->child, def)) return true; break;
       default:;
     }

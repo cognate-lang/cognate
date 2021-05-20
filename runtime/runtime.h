@@ -54,19 +54,19 @@ typedef struct cognate_object
 typedef struct cognate_list
 {
   LIST next;
-  cognate_object object;
+  ANY object;
 } cognate_list;
 
 typedef struct cognate_stack
 {
-  cognate_object* restrict start; // Pointer to start.
-  cognate_object* restrict top;   // Pointer to top.
+  ANY* restrict start; // Pointer to start.
+  ANY* restrict top;   // Pointer to top.
   ptrdiff_t       size;           // Allocated size of the stack.
 } cognate_stack;
 
 extern const char* symtable[];
 
-#define OBJ(objtype, objvalue) ((cognate_object){.type=objtype, .objtype=objvalue})
+#define OBJ(objtype, objvalue) ((ANY){.type=objtype, .objtype=objvalue})
 #define VAR(name) ___##name
 #define SYM(name) ____##name
 #define CHECK(typ, obj) (check_type(typ, obj) . typ)
@@ -99,28 +99,28 @@ extern int line_num;
 // Variables and  needed by functions.c defined in runtime.c
 void init_stack();
 void expand_stack();
-void print_object(const cognate_object object, FILE *, const _Bool);
+void print_object(const ANY object, FILE *, const _Bool);
 void _Noreturn __attribute__((format(printf, 1, 2))) throw_error(const char *const, ...);
-_Bool compare_objects(cognate_object, cognate_object);
+_Bool compare_objects(ANY, ANY);
 
 // Variables and functions needed by compiled source file defined in runtime.c
 void init(int, char **);
 void cleanup();
-cognate_object check_type(cognate_type, cognate_object);
-void push(cognate_object);
-cognate_object pop();
-cognate_object peek();
+ANY check_type(cognate_type, ANY);
+void push(ANY);
+ANY pop();
+ANY peek();
 void check_function_stack_size();
 void set_word_name(const char *const);
 void set_line_num(int);
-cognate_object copy_if_block(cognate_object obj);
+ANY copy_if_block(ANY obj);
 
 // Builtin functions needed by compiled source file defined in functions.c
-ANY VAR(if)(BLOCK, cognate_object, cognate_object);
+ANY VAR(if)(BLOCK, ANY, ANY);
 void VAR(while)(BLOCK, BLOCK);
 void VAR(do)(BLOCK);
-void VAR(put)(cognate_object);
-void VAR(print)(cognate_object);
+void VAR(put)(ANY);
+void VAR(print)(ANY);
 NUMBER VAR(ADD)(NUMBER, NUMBER);
 NUMBER VAR(MUL)(NUMBER, NUMBER);
 NUMBER VAR(SUB)(NUMBER, NUMBER);
@@ -134,22 +134,22 @@ BOOLEAN VAR(either)(BOOLEAN, BOOLEAN);
 BOOLEAN VAR(both)(BOOLEAN, BOOLEAN);
 BOOLEAN VAR(one_of)(BOOLEAN, BOOLEAN);
 BOOLEAN VAR(not)(BOOLEAN);
-BOOLEAN VAR(EQ)(cognate_object, cognate_object);
-BOOLEAN VAR(NEQ)(cognate_object, cognate_object);
+BOOLEAN VAR(EQ)(ANY, ANY);
+BOOLEAN VAR(NEQ)(ANY, ANY);
 BOOLEAN VAR(LT)(NUMBER, NUMBER);
 BOOLEAN VAR(GT)(NUMBER, NUMBER);
 BOOLEAN VAR(LTE)(NUMBER, NUMBER);
 BOOLEAN VAR(GTE)(NUMBER, NUMBER);
-BOOLEAN VAR(number_)(cognate_object);
-BOOLEAN VAR(list_)(cognate_object);
-BOOLEAN VAR(string_)(cognate_object);
-BOOLEAN VAR(block_)(cognate_object);
-BOOLEAN VAR(boolean_)(cognate_object);
+BOOLEAN VAR(number_)(ANY);
+BOOLEAN VAR(list_)(ANY);
+BOOLEAN VAR(string_)(ANY);
+BOOLEAN VAR(block_)(ANY);
+BOOLEAN VAR(boolean_)(ANY);
 ANY VAR(first)(LIST);
 LIST VAR(rest)(LIST);
 STRING VAR(head)(STRING);
 STRING VAR(tail)(STRING);
-LIST VAR(push)(cognate_object, LIST);
+LIST VAR(push)(ANY, LIST);
 BOOLEAN VAR(empty_)(LIST);
 LIST VAR(list)(BLOCK);
 STRING VAR(join)(NUMBER);
@@ -160,7 +160,7 @@ STRING VAR(read)(STRING);
 NUMBER VAR(number)(STRING);
 STRING VAR(path)();
 LIST VAR(stack)();
-void VAR(write)(STRING, cognate_object);
+void VAR(write)(STRING, ANY);
 LIST VAR(parameters)();
 void VAR(stop)();
 BOOLEAN VAR(match)(STRING, STRING);
@@ -175,4 +175,3 @@ LIST VAR(map)(BLOCK, LIST);
 LIST VAR(filter)(BLOCK, LIST);
 void VAR(for)(LIST, BLOCK);
 LIST VAR(range)(NUMBER, NUMBER, NUMBER);
-void VAR(open)(STRING, BLOCK);

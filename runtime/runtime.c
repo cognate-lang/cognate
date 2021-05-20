@@ -100,7 +100,7 @@ void cleanup()
   GC_gcollect();
 }
 
-cognate_object copy_if_block(cognate_object obj)
+ANY copy_if_block(ANY obj)
 {
   if unlikely(obj.type == block) obj.block = Block_copy(obj.block);
   return obj;
@@ -146,7 +146,7 @@ void handle_error_signal(int sig)
   throw_error("recieved signal %i (%s)", sig, strsignal(sig));
 }
 
-void print_object (const cognate_object object, FILE* out, const _Bool quotes)
+void print_object (const ANY object, FILE* out, const _Bool quotes)
 {
   // TODO I want to be able to print_object to a string, so that i can have a Show function.
   switch (object.type)
@@ -203,23 +203,23 @@ void print_object (const cognate_object object, FILE* out, const _Bool quotes)
 void init_stack()
 {
   stack.size = INITIAL_LIST_SIZE;
-  stack.top = stack.start = GC_MALLOC (INITIAL_LIST_SIZE * sizeof(cognate_object));
+  stack.top = stack.start = GC_MALLOC (INITIAL_LIST_SIZE * sizeof(ANY));
 }
 
-void push(cognate_object object)
+void push(ANY object)
 {
   if unlikely(stack.start + stack.size == stack.top) expand_stack();
   if unlikely(object.type == block) object.block = Block_copy(object.block);
   *stack.top++ = object;
 }
 
-cognate_object pop()
+ANY pop()
 {
   if unlikely(stack.top == stack.start) throw_error("stack underflow");
   return *--stack.top;
 }
 
-cognate_object peek()
+ANY peek()
 {
   if unlikely(stack.top == stack.start) throw_error("stack underflow");
   return *(stack.top - 1);
@@ -228,24 +228,12 @@ cognate_object peek()
 void expand_stack()
 {
   // Assumes that stack is currently of length stack.size.
-  stack.start = (cognate_object*) GC_REALLOC (stack.start, stack.size * LIST_GROWTH_FACTOR * sizeof(cognate_object));
+  stack.start = (ANY*) GC_REALLOC (stack.start, stack.size * LIST_GROWTH_FACTOR * sizeof(ANY));
   stack.top = stack.start + stack.size;
   stack.size *= LIST_GROWTH_FACTOR;
 }
 
-/*
-unsigned long hash(const char *str)
-{
-  // http://www.cse.yorku.ca/~oz/hash.html
-  unsigned long hash = 0;
-  int c;
-  while ((c = *str++))
-    hash = c + (hash << 6) + (hash << 16) - hash;
-  return hash;
-}
-*/
-
-cognate_object check_type(cognate_type expected_type, cognate_object object)
+ANY check_type(cognate_type expected_type, ANY object)
 {
   if likely(object.type & expected_type) return object;
   // TODO: Print the object itself here.
@@ -286,7 +274,7 @@ _Bool compare_tables(TABLE tab1, TABLE tab2)
   return 1; // TODO
 }
 
-_Bool compare_objects(cognate_object ob1, cognate_object ob2)
+_Bool compare_objects(ANY ob1, ANY ob2)
 {
   if (!(ob1.type & ob2.type))
   {

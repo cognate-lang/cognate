@@ -60,5 +60,4 @@
 {.name="filter", .type=func, .argc=2, .args={block, list}, .rets=true, .ret=list, .needs_stack=true},
 {.name="for", .type=func, .argc=2, .args={list, block}, .rets=false, .needs_stack=true},
 {.name="range", .type=func, .argc=3, .args={number, number, number}, .rets=true, .ret=list},
-{.name="open", .type=func, .argc=2, .args={string, block}, .rets=false, .needs_stack=true},
 {.name="stop"},
