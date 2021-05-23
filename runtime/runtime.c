@@ -96,7 +96,6 @@ void cleanup()
     word_name = NULL;
     throw_error_fmt("exiting with %ti objects on the stack", stack.top - stack.start);
   }
-  GC_gcollect();
 }
 
 ANY copy_if_block(ANY obj)
@@ -233,7 +232,6 @@ void push(ANY object)
 {
   if unlikely(object.type == block) object.block = Block_copy(object.block);
   if (!stack.cache.type) { stack.cache = object; return; }
-
   if unlikely(stack.start + stack.size == stack.top) expand_stack();
   *stack.top++ = stack.cache;
   stack.cache = object;
