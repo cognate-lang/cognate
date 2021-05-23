@@ -18,11 +18,11 @@
 #include <Block_private.h>
 #endif
 
-void* blk_alloc(const unsigned long size, __attribute__((unused)) const _Bool _, __attribute__((unused)) const _Bool __) { return GC_MALLOC(size); }
-void blk_setHasRefcount(__attribute__((unused)) const void* _, __attribute__((unused)) const _Bool __) {}
-void blk_gc_assign_strong(void* src, void** dst) { *dst = src; }
-void blk_gc_assign_weak(const void* src, void* dst) { *(void**)dst = (void*)src; }
-void blk_gc_memmove(void* dst, void* src, unsigned long size) { memmove(dst, src, size); }
+static void* blk_alloc(const unsigned long size, __attribute__((unused)) const _Bool _, __attribute__((unused)) const _Bool __) { return GC_MALLOC(size); }
+static void blk_setHasRefcount(__attribute__((unused)) const void* _, __attribute__((unused)) const _Bool __) {}
+static void blk_gc_assign_strong(void* src, void** dst) { *dst = src; }
+static void blk_gc_assign_weak(const void* src, void* dst) { *(void**)dst = (void*)src; }
+static void blk_gc_memmove(void* dst, void* src, unsigned long size) { memmove(dst, src, size); }
 
 extern void _Block_use_GC(void* (*)(const unsigned long, const _Bool isOne, const _Bool isObject),
                           void  (*)(const void *, const _Bool),
@@ -39,11 +39,11 @@ static void bind_error_signals();
 cognate_stack stack;
 LIST cmdline_parameters = NULL;
 
-const char *word_name = NULL;
+const char* restrict word_name = NULL;
 int line_num  = -1;
 
-static const char *function_stack_start;
-static const char *function_stack_top;
+static const char* restrict function_stack_start;
+static const char* restrict function_stack_top;
 
 void init(int argc, char** argv)
 {
@@ -108,15 +108,15 @@ ANY copy_if_block(ANY obj)
 
 void check_function_stack_size()
 {
-  char sp;
+  const char sp;
   if unlikely(&sp - function_stack_top < STACK_MARGIN_KB * 1024)
     throw_error("too much recursion (call stack is %tikB of %tikB)", (function_stack_start - &sp) >> 10, (function_stack_start - function_stack_top) >> 10);
 }
 
-void set_word_name(const char* const name) { word_name=name; } // Need this to avoid unsequenced evaluation error.
+void set_word_name(const char* restrict const name) { word_name=name; } // Need this to avoid unsequenced evaluation error.
 void set_line_num(int num) { line_num=num; } // Need this to avoid unsequenced evaluation error.
 
-_Noreturn __attribute__((format(printf, 1, 2))) void throw_error(const char* const fmt, ...)
+_Noreturn __attribute__((format(printf, 1, 2))) void throw_error(const char* restrict const fmt, ...)
 {
   const _Bool debug = word_name && line_num != -1;
   int offset = 0;
@@ -164,7 +164,7 @@ void print_object (const ANY object, FILE* out, const _Bool quotes)
       }
       fputc('\'', out);
       char c;
-      for (const char* ptr = object.string; (c = *ptr) != '\0'; ++ptr)
+      for (const char* restrict ptr = object.string; (c = *ptr) != '\0'; ++ptr)
       {
         if (c >= '\a' && c <= '\r')
         {

@@ -212,7 +212,7 @@ STRING VAR(join)(NUMBER n) {
     strings[i] = str;
     result_size += strlen(str);
   }
-  char* result = GC_MALLOC(result_size);
+  char* const result = GC_MALLOC_ATOMIC(result_size);
   result[0] = '\0';
   for (size_t i = 0; i < n1; ++i)
   {
@@ -275,7 +275,7 @@ STRING VAR(read)(STRING filename) {
   if unlikely(fp == NULL) throw_error("cannot open file '%s'", filename);
   struct stat st;
   fstat(fileno(fp), &st);
-  char* text = GC_MALLOC (st.st_size + 1);
+  char* const text = GC_MALLOC_ATOMIC (st.st_size + 1);
   if (fread(text, sizeof(char), st.st_size, fp) != st.st_size) throw_error("error reading file '%s'", filename);
   fclose(fp);
   text[st.st_size-1] = '\0'; // Remove trailing eof.
@@ -399,7 +399,7 @@ NUMBER VAR(ordinal)(STRING str) {
 
 STRING VAR(character)(NUMBER d) {
   const wchar_t i = d;
-  char* str = GC_MALLOC (MB_CUR_MAX + 1);
+  char* const str = GC_MALLOC_ATOMIC (MB_CUR_MAX + 1);
   if unlikely(i != d || wctomb(str, i) == -1) throw_error("Cannot convert %.14g to UTF8 character", d);
   str[mblen(str, MB_CUR_MAX)] = '\0';
   return str;

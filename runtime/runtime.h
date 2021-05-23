@@ -15,8 +15,8 @@
 typedef void(^BLOCK)();
 typedef _Bool BOOLEAN;
 typedef double NUMBER;
-typedef const char* STRING;
-typedef const struct cognate_list* LIST;
+typedef char* restrict STRING;
+typedef struct cognate_list* restrict LIST;
 typedef _Bool TABLE;
 typedef size_t SYMBOL;
 typedef struct cognate_object ANY;
@@ -53,7 +53,7 @@ typedef struct cognate_object
 
 typedef struct cognate_list
 {
-  LIST next;
+  LIST restrict next;
   ANY object;
 } cognate_list;
 
@@ -61,7 +61,7 @@ typedef struct cognate_stack
 {
   ANY* restrict start; // Pointer to start.
   ANY* restrict top;   // Pointer to top.
-  ptrdiff_t       size;           // Allocated size of the stack.
+  ptrdiff_t     size;  // Allocated size of the stack.
 } cognate_stack;
 
 extern const char* symtable[];
@@ -81,6 +81,7 @@ extern const char* symtable[];
 
 #ifdef NO_GC
   #define GC_MALLOC  malloc
+  #define GC_MALLOC_ATOMIC malloc
   #define GC_REALLOC realloc
   #define GC_STRNDUP strndup
   #define GC_STRDUP  strdup
@@ -93,14 +94,14 @@ extern const char* symtable[];
 // Global variables
 extern cognate_stack stack;
 extern LIST cmdline_parameters;
-extern const char *word_name;
+extern const char* restrict word_name;
 extern int line_num;
 
 // Variables and  needed by functions.c defined in runtime.c
 void init_stack();
 void expand_stack();
 void print_object(const ANY object, FILE *, const _Bool);
-void _Noreturn __attribute__((format(printf, 1, 2))) throw_error(const char *const, ...);
+void _Noreturn __attribute__((format(printf, 1, 2))) throw_error(const char* restrict const, ...);
 _Bool compare_objects(ANY, ANY);
 
 // Variables and functions needed by compiled source file defined in runtime.c
@@ -111,7 +112,7 @@ void push(ANY);
 ANY pop();
 ANY peek();
 void check_function_stack_size();
-void set_word_name(const char *const);
+void set_word_name(const char* restrict const);
 void set_line_num(int);
 ANY copy_if_block(ANY obj);
 
