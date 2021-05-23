@@ -70,7 +70,7 @@ NUMBER VAR(random)(NUMBER low, NUMBER high, NUMBER step) {
   return low + (NUMBER)(num % (unsigned long)((high - low) / step)) * step;
 }
 
-void VAR(clear)() { stack.top=stack.start; }
+void VAR(clear)() { stack.cache.type = NOTHING; stack.top=stack.start; }
 
 ANY VAR(true) = OBJ(boolean,1);
 ANY VAR(false) = OBJ(boolean,0);
@@ -144,7 +144,7 @@ LIST VAR(list)(BLOCK expr) {
   expr();
   // Move to a list.
   LIST lst = NULL;
-  while (stack.top != stack.start)
+  while (stack_length())
   {
     // This can just be Swap, Push;
     cognate_list* tmp = GC_NEW (cognate_list);
@@ -307,11 +307,11 @@ STRING VAR(path)() {
 LIST VAR(stack)() {
   // We can't return the list or this function is inlined and it breaks.
   LIST lst = NULL;
-  for (ANY* i = stack.top - 1 ; i >= stack.start ; --i)
+  while (stack_length())
   {
     // TODO: Allocate the list as an array for the sake of memory locality.
     cognate_list* tmp = GC_NEW (cognate_list);
-    tmp -> object = *i;
+    tmp -> object = pop();
     tmp -> next = lst;
     lst = tmp;
   }

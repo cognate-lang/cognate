@@ -5,7 +5,6 @@
 
 #include <stddef.h>
 #include <stdio.h>
-#include <Block.h>
 
 #define INITIAL_READ_SIZE  64
 #define INITIAL_LIST_SIZE  16
@@ -62,6 +61,7 @@ typedef struct cognate_stack
   ANY* restrict start; // Pointer to start.
   ANY* restrict top;   // Pointer to top.
   ptrdiff_t     size;  // Allocated size of the stack.
+  ANY cache;
 } cognate_stack;
 
 extern const char* symtable[];
@@ -111,6 +111,7 @@ ANY check_type(cognate_type, ANY);
 void push(ANY);
 ANY pop();
 ANY peek();
+int stack_length();
 void check_function_stack_size();
 void set_word_name(const char* restrict const);
 void set_line_num(int);

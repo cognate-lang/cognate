@@ -10,7 +10,6 @@
 #include <string.h>
 #include <sys/resource.h>
 #include <time.h>
-#include <unistd.h>
 #ifndef NO_GC
 #include <gc/gc.h>
 #endif
@@ -204,25 +203,36 @@ void init_stack()
 {
   stack.size = INITIAL_LIST_SIZE;
   stack.top = stack.start = GC_MALLOC (INITIAL_LIST_SIZE * sizeof(ANY));
+  stack.cache.type = NOTHING;
 }
 
 void push(ANY object)
 {
-  if unlikely(stack.start + stack.size == stack.top) expand_stack();
   if unlikely(object.type == block) object.block = Block_copy(object.block);
-  *stack.top++ = object;
+  if (!stack.cache.type) { stack.cache = object; return; }
+
+  if unlikely(stack.start + stack.size == stack.top) expand_stack();
+  *stack.top++ = stack.cache;
+  stack.cache = object;
 }
 
 ANY pop()
 {
+  if (stack.cache.type) { const ANY a = stack.cache; stack.cache.type = NOTHING; return a; }
   if unlikely(stack.top == stack.start) throw_error("stack underflow");
   return *--stack.top;
 }
 
 ANY peek()
 {
+  if (stack.cache.type) return stack.cache;
   if unlikely(stack.top == stack.start) throw_error("stack underflow");
   return *(stack.top - 1);
+}
+
+int stack_length()
+{
+  return stack.top - stack.start + (stack.cache.type != NOTHING);
 }
 
 void expand_stack()
