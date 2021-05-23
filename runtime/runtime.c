@@ -94,7 +94,7 @@ void cleanup()
   if unlikely(stack.top != stack.start)
   {
     word_name = NULL;
-    throw_error("exiting with %ti objects on the stack", stack.top - stack.start);
+    throw_error_fmt("exiting with %ti objects on the stack", stack.top - stack.start);
   }
   GC_gcollect();
 }
@@ -109,13 +109,13 @@ void check_function_stack_size()
 {
   const char sp;
   if unlikely(&sp - function_stack_top < STACK_MARGIN_KB * 1024)
-    throw_error("too much recursion (call stack is %tikB of %tikB)", (function_stack_start - &sp) >> 10, (function_stack_start - function_stack_top) >> 10);
+    throw_error("maximum recursion depth exceeded");
 }
 
 void set_word_name(const char* restrict const name) { word_name=name; } // Need this to avoid unsequenced evaluation error.
 void set_line_num(int num) { line_num=num; } // Need this to avoid unsequenced evaluation error.
 
-_Noreturn __attribute__((format(printf, 1, 2))) void throw_error(const char* restrict const fmt, ...)
+_Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(const char* restrict const fmt, ...)
 {
   const _Bool debug = word_name && line_num != -1;
   int offset = 0;
@@ -129,7 +129,6 @@ _Noreturn __attribute__((format(printf, 1, 2))) void throw_error(const char* res
   va_list args;
   va_start(args, fmt);
   vfprintf(stderr, fmt, args);
-  va_end(args);
   fputc('\n', stderr);
   if (errno)
   {
@@ -140,9 +139,33 @@ _Noreturn __attribute__((format(printf, 1, 2))) void throw_error(const char* res
   exit(EXIT_FAILURE);
 }
 
+_Noreturn void throw_error(const char* restrict const msg)
+{
+  const _Bool debug = word_name && line_num != -1;
+  int offset = 0;
+  if (debug)
+  {
+    int line_num_digits = 1;
+    for (int tmp = line_num; tmp /= 10; ++line_num_digits);
+    offset = strlen("Line: ... ") + line_num_digits + strlen(word_name);
+    fprintf(stderr, "\033[0;2mLine %i: \033[0;1m... %c%s ...\n%*s\033[31;1m↳ ", line_num, toupper(*word_name), word_name + 1, offset, "");
+  } else fputs("\033[31;1m", stderr);
+  fputs(msg, stderr);
+  fputc('\n', stderr);
+  if (errno)
+  {
+    const char* str = strerror(errno);
+    fprintf(stderr, "%*s\033[0;2m%c%s\n", offset + 2, "", tolower(*str), str+1);
+  }
+  fputs("\033[0m", stderr);
+  exit(EXIT_FAILURE);
+}
+
+
+
 void handle_error_signal(int sig)
 {
-  throw_error("recieved signal %i (%s)", sig, strsignal(sig));
+  throw_error_fmt("recieved signal %i (%s)", sig, strsignal(sig));
 }
 
 void print_object (const ANY object, FILE* out, const _Bool quotes)
@@ -195,7 +218,7 @@ void print_object (const ANY object, FILE* out, const _Bool quotes)
     case block: fprintf(out, "<Block %p>", (void*)object.block); return;
     case table: fprintf(out, "<Table %p>", (void*)object.table); return;
     case symbol: fputs(symtable[object.symbol], out); return;
-    default: throw_error("cannot print type %i - this may be a compiler bug!", object.type);
+    default: throw_error("cannot print object");
   }
 }
 
@@ -247,7 +270,7 @@ ANY check_type(cognate_type expected_type, ANY object)
 {
   if likely(object.type & expected_type) return object;
   // TODO: Print the object itself here.
-  throw_error("expected %s got %s", lookup_type(expected_type), lookup_type(object.type));
+  throw_error_fmt("expected %s got %s", lookup_type(expected_type), lookup_type(object.type));
 }
 
 const char* lookup_type(cognate_type type)

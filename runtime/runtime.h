@@ -101,7 +101,8 @@ extern int line_num;
 void init_stack();
 void expand_stack();
 void print_object(const ANY object, FILE *, const _Bool);
-void _Noreturn __attribute__((format(printf, 1, 2))) throw_error(const char* restrict const, ...);
+void _Noreturn __attribute__((format(printf, 1, 2))) throw_error_fmt(const char* restrict const, ...);
+void _Noreturn throw_error(const char* restrict const);
 _Bool compare_objects(ANY, ANY);
 
 // Variables and functions needed by compiled source file defined in runtime.c

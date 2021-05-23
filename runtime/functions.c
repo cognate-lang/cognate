@@ -43,17 +43,17 @@ void VAR(print)(ANY a) { print_object(a, stdout, 0); putc('\n', stdout); }
 NUMBER VAR(ADD)(NUMBER a, NUMBER b) { return a + b; }
 NUMBER VAR(MUL)(NUMBER a, NUMBER b) { return a * b; }
 NUMBER VAR(SUB)(NUMBER a, NUMBER b) { return b - a; }
-NUMBER VAR(DIV)(NUMBER a, NUMBER b) { if likely(a) return b / a; throw_error("division of %.14g by zero", b); }
+NUMBER VAR(DIV)(NUMBER a, NUMBER b) { if likely(a) return b / a; throw_error_fmt("division of %.14g by zero", b); }
 
 NUMBER VAR(modulo)(NUMBER a, NUMBER b) {
   if likely(a) return fmod(b, a);
-  throw_error("modulo of %.14g by zero", b);
+  throw_error_fmt("modulo of %.14g by zero", b);
 }
 
 NUMBER VAR(random)(NUMBER low, NUMBER high, NUMBER step) {
   if unlikely((high - low) * step < 0 || !step)
   {
-    throw_error("invalid range %.14g..%.14g step %.14g", low, high, step);
+    throw_error_fmt("invalid range %.14g..%.14g step %.14g", low, high, step);
   }
   else if ((high - low) / step < 1)
   {
@@ -203,7 +203,7 @@ STRING VAR(join)(NUMBER n) {
   // Joins a string to the end of another string.
   // Define Prefix (Swap, Suffix);
   size_t n1 = n;
-  if (n != n1) throw_error("cannot join %.14g strings", n);
+  if (n != n1) throw_error_fmt("cannot join %.14g strings", n);
   const char* strings[n1];
   size_t result_size = 1;
   for (size_t i = 0; i < n1; ++i)
@@ -255,7 +255,7 @@ STRING VAR(substring)(NUMBER startf, NUMBER endf, STRING str) {
   }
   return GC_STRNDUP(str, str_size);
 invalid_range:
-  throw_error("invalid range %.14g..%.14g", startf, endf);
+  throw_error_fmt("invalid range %.14g..%.14g", startf, endf);
 }
 
 
@@ -272,11 +272,11 @@ STRING VAR(input)() {
 STRING VAR(read)(STRING filename) {
   // Read a file to a string.
   FILE *fp = fopen(filename, "ro");
-  if unlikely(fp == NULL) throw_error("cannot open file '%s'", filename);
+  if unlikely(fp == NULL) throw_error_fmt("cannot open file '%s'", filename);
   struct stat st;
   fstat(fileno(fp), &st);
   char* const text = GC_MALLOC_ATOMIC (st.st_size + 1);
-  if (fread(text, sizeof(char), st.st_size, fp) != st.st_size) throw_error("error reading file '%s'", filename);
+  if (fread(text, sizeof(char), st.st_size, fp) != st.st_size) throw_error_fmt("error reading file '%s'", filename);
   fclose(fp);
   text[st.st_size-1] = '\0'; // Remove trailing eof.
   return text;
@@ -289,7 +289,7 @@ NUMBER VAR(number)(STRING str) {
   NUMBER num = strtod(str, &end);
   if (end == str || *end != '\0')
   {
-    throw_error("cannot parse '%.32s' to a number", str);
+    throw_error_fmt("cannot parse '%.32s' to a number", str);
   }
   return num;
 }
@@ -321,7 +321,7 @@ LIST VAR(stack)() {
 void VAR(write)(STRING filename, ANY obj) {
   // Write object to end of file, without a newline.
   FILE* const fp = fopen(filename, "a");
-  if unlikely(fp == NULL) throw_error("cannot open file '%s'", filename);
+  if unlikely(fp == NULL) throw_error_fmt("cannot open file '%s'", filename);
   print_object(obj, fp, 0);
   fclose(fp);
 }
@@ -372,7 +372,7 @@ BOOLEAN VAR(match)(STRING reg_str, STRING str) {
     {
       char reg_err[256];
       regerror(status, &reg, reg_err, 256);
-      throw_error("compile error (%s) in regex '%.32s'", reg_err, reg_str);
+      throw_error_fmt("compile error (%s) in regex '%.32s'", reg_err, reg_str);
     }
     old_str = reg_str; /* This should probably be strcpy, but I trust that reg_str is either
                           allocated with the garbage collector, or read only in the data segment. */
@@ -381,7 +381,7 @@ BOOLEAN VAR(match)(STRING reg_str, STRING str) {
   if unlikely(found != 0 && found != REG_NOMATCH)
   {
 
-    throw_error("match error with regex '%.32s' on string '%.32s'", str, reg_str);
+    throw_error_fmt("match error with regex '%.32s' on string '%.32s'", str, reg_str);
     // If this error ever actually appears, use regerror to get the full text.
   }
   return !found;
@@ -390,7 +390,7 @@ BOOLEAN VAR(match)(STRING reg_str, STRING str) {
 NUMBER VAR(ordinal)(STRING str) {
   if unlikely(str[0] && !str[1])
   {
-    throw_error("Invalid string '%.32s' (should be length 1)", str);
+    throw_error_fmt("Invalid string '%.32s' (should be length 1)", str);
   }
   wchar_t chr = 0;
   mbtowc(&chr, str, MB_CUR_MAX);
@@ -400,7 +400,7 @@ NUMBER VAR(ordinal)(STRING str) {
 STRING VAR(character)(NUMBER d) {
   const wchar_t i = d;
   char* const str = GC_MALLOC_ATOMIC (MB_CUR_MAX + 1);
-  if unlikely(i != d || wctomb(str, i) == -1) throw_error("Cannot convert %.14g to UTF8 character", d);
+  if unlikely(i != d || wctomb(str, i) == -1) throw_error_fmt("Cannot convert %.14g to UTF8 character", d);
   str[mblen(str, MB_CUR_MAX)] = '\0';
   return str;
 }
@@ -420,12 +420,12 @@ NUMBER VAR(ceiling)(NUMBER a) {
 void VAR(assert)(STRING name, BOOLEAN result) {
   if unlikely(!result)
   {
-    throw_error("failed assertion '%s'", name);
+    throw_error_fmt("failed assertion '%s'", name);
   }
 }
 
 void VAR(error)(STRING str) {
-  throw_error("%s", str);
+  throw_error(str);
 }
 
 LIST VAR(map)(BLOCK blk, LIST lst)
@@ -476,7 +476,7 @@ void VAR(for)(LIST lst, BLOCK blk)
 LIST VAR(range)(NUMBER start, NUMBER end, NUMBER step)
 {
   if ((end - start) * step < 0)
-    throw_error("invalid range %.14g..%.14g step %.14g", start, end, step);
+    throw_error_fmt("invalid range %.14g..%.14g step %.14g", start, end, step);
   end = start + step * (int)((end - start) / step) - step;
   LIST lst = NULL;
   for (; start * step <= end * step; end -= step)
