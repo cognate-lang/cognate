@@ -216,7 +216,7 @@ void print_object (const ANY object, FILE* out, const _Bool quotes)
     case boolean: fputs(object.boolean ? "True" : "False", out); return;
     case block: fprintf(out, "<Block %p>", (void*)object.block); return;
     case table: fprintf(out, "<Table %p>", (void*)object.table); return;
-    case symbol: fputs(symtable[object.symbol], out); return;
+    case symbol: fputs(object.symbol, out); return;
     default: throw_error("cannot print object");
   }
 }

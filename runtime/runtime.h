@@ -14,10 +14,10 @@
 typedef void(^BLOCK)();
 typedef _Bool BOOLEAN;
 typedef double NUMBER;
-typedef char* restrict STRING;
-typedef struct cognate_list* restrict LIST;
+typedef const char* restrict STRING;
+typedef const struct cognate_list* restrict LIST;
 typedef _Bool TABLE;
-typedef size_t SYMBOL;
+typedef const char* restrict SYMBOL;
 typedef struct cognate_object ANY;
 
 enum cognate_type
@@ -63,8 +63,6 @@ typedef struct cognate_stack
   ptrdiff_t     size;  // Allocated size of the stack.
   ANY cache;
 } cognate_stack;
-
-extern const char* symtable[];
 
 #define OBJ(objtype, objvalue) ((ANY){.type=objtype, .objtype=objvalue})
 #define VAR(name) ___##name

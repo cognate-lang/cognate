@@ -2,8 +2,6 @@
 #include "cognac.h"
 #include <stdlib.h>
 
-extern size_t num_symbols;
-
 ast* ast_join(ast* a, ast* b)
 {
   if (!a) return b;
@@ -68,7 +66,7 @@ TOKEN: // Tokens should be converted to ast nodes in the lexer.
   | '(' EXPRESSION ')' { $$ = alloc_ast(value, block,    $2); }
   | NUMBER             { $$ = alloc_ast(value, number,   $1); }
   | STRING             { $$ = alloc_ast(value, string,   $1); }
-  | SYMBOL             { $$ = alloc_ast(value, symbol,   $1); num_symbols++; }
+  | SYMBOL             { $$ = alloc_ast(value, symbol,   $1); }
   | DEFINE IDENTIFIER  { $$ = alloc_ast(define, any,     $2); }
   | LET IDENTIFIER     { $$ = alloc_ast(let, any,        $2); }
   | SET IDENTIFIER     { $$ = alloc_ast(set, any,        $2); }

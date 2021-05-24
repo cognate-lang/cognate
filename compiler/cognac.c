@@ -9,8 +9,6 @@
 
 FILE* outfile;
 size_t current_register = 0;
-size_t current_symbol = 0;
-size_t num_symbols = 0;
 sym_list* declared_symbols = NULL;
 ast* full_ast;
 bool optimize = false;
@@ -76,8 +74,7 @@ void add_symbols(ast* tree)
         }
         if (!already_declared)
         {
-          fprintf(outfile, "const SYMBOL SYM(%s)=%zi;symtable[%zi]=\"%s\";", tree->text, current_symbol, current_symbol, tree->text);
-          ++current_symbol;
+          fprintf(outfile, "const SYMBOL SYM(%s)=\"%s\";", tree->text, tree->text);
           sym_list* s = malloc(sizeof(*s));
           s->name = tree->text;
           s->next = declared_symbols;
@@ -403,7 +400,6 @@ int main(int argc, char** argv)
   yyparse();
   fputs("#include\"runtime.h\"\n",outfile);
   if (debug) fprintf(outfile, "#line 1 \"%s\"\n", source_file_path);
-  fprintf(outfile, "const char* symtable[%zi];", num_symbols ? num_symbols : 1);
   fputs("int main(int argc,char** argv){init(argc,argv);",outfile);
   add_symbols(full_ast);
   compile(full_ast, NULL, predeclare(full_ast, builtins()));
