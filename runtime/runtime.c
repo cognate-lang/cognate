@@ -24,11 +24,13 @@ static void blk_gc_assign_strong(void* src, void** dst) { *dst = src; }
 static void blk_gc_assign_weak(const void* src, void* dst) { *(void**)dst = (void*)src; }
 static void blk_gc_memmove(void* dst, void* src, unsigned long size) { memmove(dst, src, size); }
 
+#ifndef __APPLE__
 extern void _Block_use_GC(void* (*)(const unsigned long, const _Bool isOne, const _Bool isObject),
                           void  (*)(const void *, const _Bool),
                           void  (*)(void *, void **),
                           void  (*)(const void *, void *),
                           void  (*)(void *, void *, unsigned long)) __attribute__((weak));
+#endif
 
 static const char *lookup_type(cognate_type);
 static _Bool compare_lists(LIST, LIST);
@@ -64,7 +66,9 @@ void init(int argc, char** argv)
   // Init GC
 #ifndef NO_GC
   GC_INIT();
+#ifndef __APPLE__
   if (_Block_use_GC) _Block_use_GC(blk_alloc, blk_setHasRefcount, blk_gc_assign_strong, blk_gc_assign_weak, blk_gc_memmove);
+#endif
 #else
   #pragma message "Compiling without the garbage collector will cause memory leaks!"
 #endif
