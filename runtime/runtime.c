@@ -10,6 +10,7 @@
 #include <string.h>
 #include <sys/resource.h>
 #include <time.h>
+#include <stdarg.h>
 #ifndef NO_GC
 #include <gc/gc.h>
 #endif
@@ -39,7 +40,7 @@ cognate_stack stack;
 LIST cmdline_parameters = NULL;
 
 const char* restrict word_name = NULL;
-int line_num  = -1;
+int line_num = -1;
 
 static const char* restrict function_stack_start;
 static const char* restrict function_stack_top;
