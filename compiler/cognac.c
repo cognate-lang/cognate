@@ -262,6 +262,9 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
         case symbol:
           fprintf(outfile, "SYM(%s)", tree->text);
           break;
+        case number:
+          fprintf(outfile, "%sl", tree->text);
+          break;
         default:
           fputs(tree->text, outfile);
           break;

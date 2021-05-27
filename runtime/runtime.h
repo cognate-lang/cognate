@@ -46,6 +46,7 @@ typedef struct cognate_object
     LIST    list;      // 64bit list pointer
     TABLE   table;     // TODO
     SYMBOL  symbol;
+    long binary_representation;
   };
   cognate_type type;
 } cognate_object;

@@ -11,6 +11,7 @@
 #include <sys/resource.h>
 #include <time.h>
 #include <stdarg.h>
+#include <math.h>
 #ifndef NO_GC
 #include <gc/gc.h>
 #endif
@@ -318,7 +319,7 @@ _Bool compare_objects(ANY ob1, ANY ob2)
   }
   switch (ob1.type)
   {
-    case number  : return ob1.number  == ob2.number;
+    case number  : return fabs(ob1.number - ob2.number) <= 0.5e-14 * fabs(ob1.number);
     case boolean : return ob1.boolean == ob2.boolean;
     case string  : return strcoll(ob1.string, ob2.string) == 0;
     case symbol  : return ob1.symbol == ob2.symbol;

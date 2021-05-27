@@ -25,7 +25,8 @@ ANY VAR(if)(BLOCK cond, ANY a, ANY b)
     return b;
 }
 
-void VAR(while)(BLOCK cond, BLOCK body) {
+void VAR(while)(BLOCK cond, BLOCK body)
+{
   cond();
   while (CHECK(boolean, pop()))
   {
@@ -45,12 +46,14 @@ NUMBER VAR(MUL)(NUMBER a, NUMBER b) { return a * b; }
 NUMBER VAR(SUB)(NUMBER a, NUMBER b) { return b - a; }
 NUMBER VAR(DIV)(NUMBER a, NUMBER b) { if likely(a) return b / a; throw_error_fmt("division of %.14g by zero", b); }
 
-NUMBER VAR(modulo)(NUMBER a, NUMBER b) {
+NUMBER VAR(modulo)(NUMBER a, NUMBER b)
+{
   if likely(a) return fmod(b, a);
   throw_error_fmt("modulo of %.14g by zero", b);
 }
 
-NUMBER VAR(random)(NUMBER low, NUMBER high, NUMBER step) {
+NUMBER VAR(random)(NUMBER low, NUMBER high, NUMBER step)
+{
   if unlikely((high - low) * step < 0 || !step)
   {
     throw_error_fmt("invalid range %.14g..%.14g step %.14g", low, high, step);
@@ -120,7 +123,8 @@ STRING VAR(tail)(STRING str)
   return str + mblen(str, MB_CUR_MAX);
 }
 
-LIST VAR(push)(ANY a, LIST b) {
+LIST VAR(push)(ANY a, LIST b)
+{
   // Pushes an object from the stack onto the list's first element. O(1).
   // TODO: Better name? Inconsistent with List where pushing to the stack adds to the END.
   cognate_list* lst = GC_NEW (cognate_list);
@@ -129,13 +133,15 @@ LIST VAR(push)(ANY a, LIST b) {
   return lst;
 }
 
-BOOLEAN VAR(empty_)(LIST lst) {
+BOOLEAN VAR(empty_)(LIST lst)
+{
   // Returns true is a list or string is empty. O(1).
   // Can be used to to write a Length function.
   return !lst;
 }
 
-LIST VAR(list)(BLOCK expr) {
+LIST VAR(list)(BLOCK expr)
+{
   // Move the stack to temporary storage
   const cognate_stack temp_stack = stack;
   // Allocate a list as the stack
@@ -199,7 +205,8 @@ LIST VAR(split)() {
 }
 */
 
-STRING VAR(join)(NUMBER n) {
+STRING VAR(join)(NUMBER n)
+{
   // Joins a string to the end of another string.
   // Define Prefix (Swap, Suffix);
   size_t n1 = n;
@@ -221,11 +228,13 @@ STRING VAR(join)(NUMBER n) {
   return result;
 }
 
-NUMBER VAR(string_length)(STRING str) {
+NUMBER VAR(string_length)(STRING str)
+{
   return mbstrlen(str);
 }
 
-STRING VAR(substring)(NUMBER startf, NUMBER endf, STRING str) {
+STRING VAR(substring)(NUMBER startf, NUMBER endf, STRING str)
+{
   const char* str_start = str;
   // O(end).
   // Only allocates a new string if it has to.
@@ -259,7 +268,8 @@ invalid_range:
 }
 
 
-STRING VAR(input)() {
+STRING VAR(input)()
+{
   // Read user input to a string.
   size_t size = 0;
   char* buf;
@@ -269,21 +279,24 @@ STRING VAR(input)() {
   return ret;
 }
 
-STRING VAR(read)(STRING filename) {
+STRING VAR(read)(STRING filename)
+{
   // Read a file to a string.
   FILE *fp = fopen(filename, "ro");
   if unlikely(fp == NULL) throw_error_fmt("cannot open file '%s'", filename);
   struct stat st;
   fstat(fileno(fp), &st);
   char* const text = GC_MALLOC_ATOMIC (st.st_size + 1);
-  if (fread(text, sizeof(char), st.st_size, fp) != st.st_size) throw_error_fmt("error reading file '%s'", filename);
+  if (fread(text, sizeof(char), st.st_size, fp) != st.st_size)
+    throw_error_fmt("error reading file '%s'", filename);
   fclose(fp);
   text[st.st_size-1] = '\0'; // Remove trailing eof.
   return text;
   // TODO: single line (or delimited) file read function for better IO performance?
 }
 
-NUMBER VAR(number)(STRING str) {
+NUMBER VAR(number)(STRING str)
+{
   // casts string to number.
   char* end;
   NUMBER num = strtod(str, &end);
@@ -294,7 +307,8 @@ NUMBER VAR(number)(STRING str) {
   return num;
 }
 
-STRING VAR(path)() {
+STRING VAR(path)()
+{
   char buf[FILENAME_MAX];
   if (!getcwd(buf, FILENAME_MAX))
   {
@@ -304,7 +318,8 @@ STRING VAR(path)() {
   return ret;
 }
 
-LIST VAR(stack)() {
+LIST VAR(stack)()
+{
   // We can't return the list or this function is inlined and it breaks.
   LIST lst = NULL;
   while (stack_length())
@@ -318,7 +333,8 @@ LIST VAR(stack)() {
   return lst;
 }
 
-void VAR(write)(STRING filename, ANY obj) {
+void VAR(write)(STRING filename, ANY obj)
+{
   // Write object to end of file, without a newline.
   FILE* const fp = fopen(filename, "a");
   if unlikely(fp == NULL) throw_error_fmt("cannot open file '%s'", filename);
@@ -326,38 +342,45 @@ void VAR(write)(STRING filename, ANY obj) {
   fclose(fp);
 }
 
-LIST VAR(parameters)() {
+LIST VAR(parameters)()
+{
   return cmdline_parameters; // TODO should be a variable, and allow mutation and stuff
 }
 
-void VAR(stop)() {
+void VAR(stop)()
+{
   // Don't check stack length, because it probably wont be empty.
   exit(EXIT_SUCCESS);
 }
 
-TABLE VAR(table)() {
+TABLE VAR(table)()
+{
   return NULL; // TODO
 }
 
-TABLE VAR(insert)(STRING key, ANY value, TABLE tab) {
+TABLE VAR(insert)(STRING key, ANY value, TABLE tab)
+{
   (void)key;
   (void)value;
   (void)tab;
   return NULL; // TODO
 }
 
-ANY VAR(get)(STRING key, TABLE tab) {
+ANY VAR(get)(STRING key, TABLE tab)
+{
   (void)key;
   (void)tab; // TODO
   return OBJ(number,42);
 }
 
-LIST VAR(values)(TABLE tab) {
+LIST VAR(values)(TABLE tab)
+{
   (void)tab; // TODO
   return NULL;
 }
 
-BOOLEAN VAR(match)(STRING reg_str, STRING str) {
+BOOLEAN VAR(match)(STRING reg_str, STRING str)
+{
   // Returns true if string matches regex.
   static const char* old_str = NULL;
   static regex_t reg;
@@ -387,7 +410,8 @@ BOOLEAN VAR(match)(STRING reg_str, STRING str) {
   return !found;
 }
 
-NUMBER VAR(ordinal)(STRING str) {
+NUMBER VAR(ordinal)(STRING str)
+{
   if unlikely(str[0] && !str[1])
   {
     throw_error_fmt("Invalid string '%.32s' (should be length 1)", str);
@@ -397,34 +421,41 @@ NUMBER VAR(ordinal)(STRING str) {
   return chr;
 }
 
-STRING VAR(character)(NUMBER d) {
+STRING VAR(character)(NUMBER d)
+{
   const wchar_t i = d;
   char* const str = GC_MALLOC_ATOMIC (MB_CUR_MAX + 1);
-  if unlikely(i != d || wctomb(str, i) == -1) throw_error_fmt("Cannot convert %.14g to UTF8 character", d);
+  if unlikely(i != d || wctomb(str, i) == -1)
+    throw_error_fmt("Cannot convert %.14g to UTF8 character", d);
   str[mblen(str, MB_CUR_MAX)] = '\0';
   return str;
 }
 
-NUMBER VAR(floor)(NUMBER a) {
+NUMBER VAR(floor)(NUMBER a)
+{
   return floor(a);
 }
 
-NUMBER VAR(round)(NUMBER a) {
+NUMBER VAR(round)(NUMBER a)
+{
   return round(a);
 }
 
-NUMBER VAR(ceiling)(NUMBER a) {
+NUMBER VAR(ceiling)(NUMBER a)
+{
   return ceil(a);
 }
 
-void VAR(assert)(STRING name, BOOLEAN result) {
+void VAR(assert)(STRING name, BOOLEAN result)
+{
   if unlikely(!result)
   {
     throw_error_fmt("failed assertion '%s'", name);
   }
 }
 
-void VAR(error)(STRING str) {
+void VAR(error)(STRING str)
+{
   throw_error(str);
 }
 

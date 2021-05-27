@@ -37,3 +37,13 @@ Print If (Round 4.7, == 5)
   'PASS: Round'
 else
   'FAIL: Round';
+
+Print If (+ 0.1 0.2, == 0.3)
+  'PASS: Floating point error'
+else
+  'FAIL: Floating point error';
+
+Print If (* 3 0.3, + 0.1, == 1)
+  'PASS: Floating point error 2'
+else
+  'FAIL: Floating point error 2';
