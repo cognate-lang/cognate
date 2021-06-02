@@ -124,6 +124,7 @@ _Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(const char*
 {
   const _Bool debug = word_name && line_num != -1;
   int offset = 0;
+  fputc('\n', stderr);
   if (debug)
   {
     int line_num_digits = 1;
@@ -148,6 +149,7 @@ _Noreturn void throw_error(const char* restrict const msg)
 {
   const _Bool debug = word_name && line_num != -1;
   int offset = 0;
+  fputc('\n', stderr);
   if (debug)
   {
     int line_num_digits = 1;
