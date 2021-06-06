@@ -10,13 +10,14 @@
 #define INITIAL_LIST_SIZE  16
 #define LIST_GROWTH_FACTOR 1.5
 #define STACK_MARGIN_KB    50
+#define NUM_TREE_BRANCHES  8
 
 typedef void(^BLOCK)();
 typedef _Bool BOOLEAN;
 typedef double NUMBER;
 typedef const char* restrict STRING;
 typedef const struct cognate_list* restrict LIST;
-typedef _Bool TABLE;
+typedef const struct cognate_tree* restrict TABLE;
 typedef const char* restrict SYMBOL;
 typedef struct cognate_object ANY;
 
@@ -56,6 +57,15 @@ typedef struct cognate_list
   LIST restrict next;
   ANY object;
 } cognate_list;
+
+typedef struct cognate_tree
+{
+  union
+  {
+    ANY* objects[NUM_TREE_BRANCHES];
+    struct cognate_tree* branches[NUM_TREE_BRANCHES];
+  };
+} cognate_tree;
 
 typedef struct cognate_stack
 {
@@ -103,6 +113,8 @@ void print_object(const ANY object, FILE *, const _Bool);
 void _Noreturn __attribute__((format(printf, 1, 2))) throw_error_fmt(const char* restrict const, ...);
 void _Noreturn throw_error(const char* restrict const);
 _Bool compare_objects(ANY, ANY);
+cognate_tree* insert_into_tree(size_t key, cognate_tree *tree, ANY object);
+ANY get_from_tree(size_t key, cognate_tree *tree);
 
 // Variables and functions needed by compiled source file defined in runtime.c
 void init(int, char **);

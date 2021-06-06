@@ -355,7 +355,7 @@ void VAR(stop)()
 
 TABLE VAR(table)()
 {
-  return NULL; // TODO
+  return NULL;
 }
 
 TABLE VAR(insert)(STRING key, ANY value, TABLE tab)
