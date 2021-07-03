@@ -365,7 +365,7 @@ TABLE VAR(table)(BLOCK expr)
     int key = (long)sym;
     ANY object = pop();
     cognate_table *ptr = tab;
-    for (unsigned char i = 0; i < 3; ++i)
+    for (unsigned char i = 0; i < 7; ++i)
     {
       const unsigned char index = key & 7;
       if (!ptr->branches[index]) ptr->branches[index] = GC_MALLOC(sizeof(TABLE) * 8);
@@ -386,7 +386,7 @@ TABLE VAR(insert)(SYMBOL sym, ANY object, TABLE old)
   int key = (long)sym;
   cognate_table *new, *ptr = new = GC_MALLOC(sizeof(TABLE) * 8);
   *new = *old;
-  for (unsigned char i = 0; i < 3; ++i)
+  for (unsigned char i = 0; i < 7; ++i)
   {
     const unsigned char index = key & 7;
     if (old)
@@ -408,7 +408,7 @@ TABLE VAR(insert)(SYMBOL sym, ANY object, TABLE old)
 ANY VAR(get)(SYMBOL sym, TABLE tab)
 {
   int key = (long)sym;
-  for (unsigned short i = 0; i < 3; ++i)
+  for (unsigned short i = 0; i < 7; ++i)
   {
     tab = tab->branches[key & 7];
     if (!tab) goto cant_find;
@@ -420,32 +420,6 @@ cant_find:
   throw_error("cannot index tree");
 
 }
-
-LIST VAR(values)(TABLE tab)
-{
-  LIST lst = NULL;
-  for (unsigned char i = 0; i < 8; ++i)
-  {
-    if (tab->branches[i]) for (unsigned char ii = 0; ii < 8; ++ii)
-    {
-      if (tab->branches[i]->branches[ii]) for (unsigned char iii = 0; iii < 8; ++iii)
-      {
-        if (tab->branches[i]->branches[ii]->branches[iii]) for (unsigned char iv = 0; iv < 8; ++iv)
-        {
-          if (tab->branches[i]->branches[ii]->branches[iii]->objects[iv])
-          {
-            cognate_list* tmp = GC_NEW(cognate_list);
-            tmp -> object = *(tab->branches[i]->branches[ii]->branches[iii]->objects[iv]);
-            tmp -> next = lst;
-            lst = tmp;
-          }
-        }
-      }
-    }
-  }
-  return lst;
-}
-
 
 BOOLEAN VAR(match)(STRING reg_str, STRING str)
 {
