@@ -332,43 +332,12 @@ _Bool compare_objects(ANY ob1, ANY ob2)
   }
 }
 
-ANY get_from_tree(size_t key, cognate_tree* tree)
+size_t hash(const char *str)
 {
-  const unsigned short bits = sizeof(key) << 3;
-  for (unsigned short i = 0; i < bits / NUM_TREE_BRANCHES - 1; ++i)
-  {
-    const unsigned short index = key % NUM_TREE_BRANCHES;
-    tree = tree->branches[index];
-    if (!tree) goto cant_find;
-    key /= NUM_TREE_BRANCHES;
-  }
-  const unsigned short index = key % NUM_TREE_BRANCHES;
-  ANY* object = tree->objects[index];
-  if (object) return *object;
-cant_find:
-  throw_error("cannot index tree");
-}
-
-cognate_tree* insert_into_tree(size_t key, cognate_tree* old, ANY object)
-{
-  const unsigned short bits = sizeof(key) << 3;
-  cognate_tree *new, *ptr = new = GC_MALLOC(sizeof(cognate_tree));
-  *new = *old;
-  for (unsigned short i = 0; i < bits / NUM_TREE_BRANCHES - 1; ++i)
-  {
-    const unsigned short index = key % NUM_TREE_BRANCHES;
-    if (old)
-    {
-      memmove(ptr->branches, old->branches, sizeof(cognate_tree));
-      old = old->branches[index];
-    }
-    ptr->branches[index] = GC_MALLOC(sizeof(cognate_tree));
-    ptr = ptr->branches[index];
-    key /= NUM_TREE_BRANCHES;
-  }
-  const unsigned short index = key % NUM_TREE_BRANCHES;
-  if (old) memmove(ptr->branches, old->branches, sizeof(cognate_tree));
-  ptr->objects[index] = GC_MALLOC(sizeof(ANY));
-  *(ptr->objects[index]) = object;
-  return new;
+  // http://www.cse.yorku.ca/~oz/hash.html
+  size_t hash = 0;
+  int c;
+  while ((c = *str++))
+    hash = c + (hash << 6) + (hash << 16) - hash;
+  return hash;
 }

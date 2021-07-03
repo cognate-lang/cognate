@@ -60,4 +60,8 @@
 {.name="filter", .type=func, .argc=2, .args={block, list}, .rets=true, .ret=list, .needs_stack=true},
 {.name="for", .type=func, .argc=2, .args={list, block}, .rets=false, .needs_stack=true},
 {.name="range", .type=func, .argc=3, .args={number, number, number}, .rets=true, .ret=list},
+{.name="table", .type=func, .argc=1, .args={block}, .rets=true, .ret=table, .needs_stack=true},
+{.name="insert", .type=func, .argc=3, .args={symbol, any, table}, .rets=true, .ret=table},
+{.name="values", .type=func, .argc=1, .args={table}, .rets=true, .ret=list},
+{.name="get", .type=func, .argc=2, .args={symbol, table}, .rets=true, .ret=any},
 {.name="stop"},

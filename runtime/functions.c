@@ -353,31 +353,99 @@ void VAR(stop)()
   exit(EXIT_SUCCESS);
 }
 
-TABLE VAR(table)()
+TABLE VAR(table)(BLOCK expr)
 {
-  return NULL;
+  const cognate_stack temp_stack = stack;
+  init_stack();
+  expr();
+  cognate_table *tab = GC_NEW(cognate_table);
+  while (stack_length())
+  {
+    SYMBOL sym = CHECK(symbol, pop());
+    int key = (long)sym;
+    ANY object = pop();
+    cognate_table *ptr = tab;
+    for (unsigned char i = 0; i < 3; ++i)
+    {
+      const unsigned char index = key & 7;
+      if (!ptr->branches[index]) ptr->branches[index] = GC_MALLOC(sizeof(TABLE) * 8);
+      ptr = ptr->branches[index];
+      key >>= 3;
+    }
+    const unsigned char index = key & 7;
+    if (ptr->objects[index]) throw_error_fmt("duplicate key (%s) in table initialiser", sym);
+    ptr->objects[index] = GC_NEW(ANY);
+    *(ptr->objects[index]) = object;
+  }
+  stack = temp_stack;
+  return tab;
 }
 
-TABLE VAR(insert)(STRING key, ANY value, TABLE tab)
+TABLE VAR(insert)(SYMBOL sym, ANY object, TABLE old)
 {
-  (void)key;
-  (void)value;
-  (void)tab;
-  return NULL; // TODO
+  int key = (long)sym;
+  cognate_table *new, *ptr = new = GC_MALLOC(sizeof(TABLE) * 8);
+  *new = *old;
+  for (unsigned char i = 0; i < 3; ++i)
+  {
+    const unsigned char index = key & 7;
+    if (old)
+    {
+      memmove(ptr->branches, old->branches, sizeof(TABLE) * 8);
+      old = old->branches[index];
+    }
+    ptr->branches[index] = GC_MALLOC(sizeof(TABLE) * 8);
+    ptr = ptr->branches[index];
+    key >>= 3;
+  }
+  const unsigned char index = key & 7;
+  if (old) memmove(ptr->branches, old->branches, sizeof(TABLE) * 8);
+  ptr->objects[index] = GC_NEW(ANY);
+  *(ptr->objects[index]) = object;
+  return new;
 }
 
-ANY VAR(get)(STRING key, TABLE tab)
+ANY VAR(get)(SYMBOL sym, TABLE tab)
 {
-  (void)key;
-  (void)tab; // TODO
-  return OBJ(number,42);
+  int key = (long)sym;
+  for (unsigned short i = 0; i < 3; ++i)
+  {
+    tab = tab->branches[key & 7];
+    if (!tab) goto cant_find;
+    key >>= 3;
+  }
+  ANY* object = tab->objects[key & 7];
+  if (object) return *object;
+cant_find:
+  throw_error("cannot index tree");
+
 }
 
 LIST VAR(values)(TABLE tab)
 {
-  (void)tab; // TODO
-  return NULL;
+  LIST lst = NULL;
+  for (unsigned char i = 0; i < 8; ++i)
+  {
+    if (tab->branches[i]) for (unsigned char ii = 0; ii < 8; ++ii)
+    {
+      if (tab->branches[i]->branches[ii]) for (unsigned char iii = 0; iii < 8; ++iii)
+      {
+        if (tab->branches[i]->branches[ii]->branches[iii]) for (unsigned char iv = 0; iv < 8; ++iv)
+        {
+          if (tab->branches[i]->branches[ii]->branches[iii]->objects[iv])
+          {
+            cognate_list* tmp = GC_NEW(cognate_list);
+            tmp -> object = *(tab->branches[i]->branches[ii]->branches[iii]->objects[iv]);
+            tmp -> next = lst;
+            lst = tmp;
+          }
+        }
+      }
+    }
+  }
+  return lst;
 }
+
 
 BOOLEAN VAR(match)(STRING reg_str, STRING str)
 {

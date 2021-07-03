@@ -25,6 +25,7 @@ char* type_as_str(value_type typ, _Bool up)
     case symbol:  return up ? "SYMBOL"  : "symbol";
     case boolean: return up ? "BOOLEAN" : "boolean";
     case list:    return up ? "LIST"    : "list";
+    case table:   return up ? "TABLE"   : "table";
   }
 }
 
