@@ -368,7 +368,7 @@ TABLE VAR(table)(BLOCK expr)
     for (unsigned char i = 0; i < 15; ++i)
     {
       const unsigned char index = key & 3;
-      if (!ptr->branches[index]) ptr->branches[index] = GC_MALLOC(sizeof(TABLE) * 4);
+      if (!ptr->branches[index]) ptr->branches[index] = GC_MALLOC(sizeof(cognate_table*[4]));
       ptr = ptr->branches[index];
       key >>= 2;
     }
@@ -391,15 +391,15 @@ TABLE VAR(insert)(SYMBOL sym, ANY object, TABLE old)
     const unsigned char index = key & 3;
     if (old)
     {
-      memmove(ptr->branches, old->branches, sizeof(TABLE) * 4);
+      memmove(ptr->branches, old->branches, sizeof(cognate_table*[4]));
       old = old->branches[index];
     }
-    ptr->branches[index] = GC_MALLOC(sizeof(TABLE) * 4);
+    ptr->branches[index] = GC_MALLOC(sizeof(cognate_table*[4]));
     ptr = ptr->branches[index];
     key >>= 2;
   }
   const unsigned char index = key & 3;
-  if (old) memmove(ptr->branches, old->branches, sizeof(TABLE) * 4);
+  if (old) memmove(ptr->branches, old->branches, sizeof(cognate_table*[4]));
   ptr->objects[index] = GC_NEW(ANY);
   *(ptr->objects[index]) = object;
   return new;
