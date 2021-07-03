@@ -61,8 +61,8 @@ typedef struct cognate_table
 {
   union
   {
-    ANY* objects[8];
-    struct cognate_table* branches[8];
+    ANY* objects[4];
+    struct cognate_table* branches[4];
   };
 } cognate_table;
 

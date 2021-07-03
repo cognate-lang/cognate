@@ -365,14 +365,14 @@ TABLE VAR(table)(BLOCK expr)
     int key = (long)sym;
     ANY object = pop();
     cognate_table *ptr = tab;
-    for (unsigned char i = 0; i < 7; ++i)
+    for (unsigned char i = 0; i < 15; ++i)
     {
-      const unsigned char index = key & 7;
-      if (!ptr->branches[index]) ptr->branches[index] = GC_MALLOC(sizeof(TABLE) * 8);
+      const unsigned char index = key & 3;
+      if (!ptr->branches[index]) ptr->branches[index] = GC_MALLOC(sizeof(TABLE) * 4);
       ptr = ptr->branches[index];
-      key >>= 3;
+      key >>= 2;
     }
-    const unsigned char index = key & 7;
+    const unsigned char index = key & 3;
     if (ptr->objects[index]) throw_error_fmt("duplicate key (%s) in table initialiser", sym);
     ptr->objects[index] = GC_NEW(ANY);
     *(ptr->objects[index]) = object;
@@ -384,22 +384,22 @@ TABLE VAR(table)(BLOCK expr)
 TABLE VAR(insert)(SYMBOL sym, ANY object, TABLE old)
 {
   int key = (long)sym;
-  cognate_table *new, *ptr = new = GC_MALLOC(sizeof(TABLE) * 8);
+  cognate_table *new, *ptr = new = GC_MALLOC(sizeof(TABLE) * 4);
   *new = *old;
-  for (unsigned char i = 0; i < 7; ++i)
+  for (unsigned char i = 0; i < 15; ++i)
   {
-    const unsigned char index = key & 7;
+    const unsigned char index = key & 3;
     if (old)
     {
-      memmove(ptr->branches, old->branches, sizeof(TABLE) * 8);
+      memmove(ptr->branches, old->branches, sizeof(TABLE) * 4);
       old = old->branches[index];
     }
-    ptr->branches[index] = GC_MALLOC(sizeof(TABLE) * 8);
+    ptr->branches[index] = GC_MALLOC(sizeof(TABLE) * 4);
     ptr = ptr->branches[index];
-    key >>= 3;
+    key >>= 2;
   }
-  const unsigned char index = key & 7;
-  if (old) memmove(ptr->branches, old->branches, sizeof(TABLE) * 8);
+  const unsigned char index = key & 3;
+  if (old) memmove(ptr->branches, old->branches, sizeof(TABLE) * 4);
   ptr->objects[index] = GC_NEW(ANY);
   *(ptr->objects[index]) = object;
   return new;
@@ -408,13 +408,13 @@ TABLE VAR(insert)(SYMBOL sym, ANY object, TABLE old)
 ANY VAR(get)(SYMBOL sym, TABLE tab)
 {
   int key = (long)sym;
-  for (unsigned short i = 0; i < 7; ++i)
+  for (unsigned short i = 0; i < 15; ++i)
   {
-    tab = tab->branches[key & 7];
+    tab = tab->branches[key & 3];
     if (!tab) goto cant_find;
-    key >>= 3;
+    key >>= 2;
   }
-  ANY* object = tab->objects[key & 7];
+  ANY* object = tab->objects[key & 3];
   if (object) return *object;
 cant_find:
   throw_error("cannot index tree");
