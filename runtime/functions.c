@@ -391,7 +391,7 @@ TABLE VAR(insert)(SYMBOL sym, ANY object, TABLE old)
     const unsigned char index = key & 3;
     if (old)
     {
-      memcpy(ptr->branches, old->branches, sizeof(cognate_table*[4]));
+      *ptr = *old;
       old = old->branches[index];
     }
     ptr->branches[index] = GC_MALLOC(sizeof(cognate_table*[4]));
@@ -399,7 +399,7 @@ TABLE VAR(insert)(SYMBOL sym, ANY object, TABLE old)
     key >>= 2;
   }
   const unsigned char index = key & 3;
-  if (old) memcpy(ptr->branches, old->branches, sizeof(cognate_table*[4]));
+  if (old) *ptr = *old; 
   ptr->objects[index] = GC_NEW(ANY);
   *(ptr->objects[index]) = object;
   return new;
