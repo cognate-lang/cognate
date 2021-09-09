@@ -46,7 +46,7 @@
 {.name="floor", .type=func, .argc=1, .args={number}, .rets=true, .ret=number},
 {.name="round", .type=func, .argc=1, .args={number}, .rets=true, .ret=number},
 {.name="ceiling", .type=func, .argc=1, .args={number}, .rets=true, .ret=number},
-{.name="assert", .type=func, .argc=1, .args={string,boolean}},
+{.name="assert", .type=func, .argc=2, .args={string,boolean}},
 {.name="error", .type=func, .argc=1, .args={string}},
 {.name="path", .type=func, .rets=true, .ret=string},
 {.name="stack", .type=func, .rets=true, .ret=list, .needs_stack=true},
