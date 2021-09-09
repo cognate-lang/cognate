@@ -235,7 +235,8 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       {
         decl_list* ifdef = lookup_word(tree->next->next->next->text, defs);
         decl_list* dodef = lookup_word(tree->next->next->next->next->text, defs);
-        if (ifdef && ifdef->argc && strcmp(ifdef->name, "if") == 0)
+        if (ifdef && ifdef->argc && strcmp(ifdef->name, "if") == 0
+         && dodef && dodef->argc && strcmp(dodef->name, "do") == 0)
         {
           fputs("{", outfile);
           compile(tree->next->next->data, NULL, predeclare(tree->next->next->data, defs));
