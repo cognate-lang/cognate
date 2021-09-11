@@ -37,6 +37,7 @@ typedef struct decl_list
   bool predecl;
   bool needs_stack;
   bool rets;
+  bool builtin;
   enum {immutable, mutable} mut;
   reg_list* (*stack_shuffle)(reg_list*);
   decl_type type;

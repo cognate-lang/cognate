@@ -399,7 +399,7 @@ TABLE VAR(insert)(SYMBOL sym, ANY object, TABLE old)
     key >>= 2;
   }
   const unsigned char index = key & 3;
-  if (old) *ptr = *old; 
+  if (old) *ptr = *old;
   ptr->objects[index] = GC_NEW(ANY);
   *(ptr->objects[index]) = object;
   return new;

@@ -235,8 +235,8 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       {
         decl_list* ifdef = lookup_word(tree->next->next->next->text, defs);
         decl_list* dodef = lookup_word(tree->next->next->next->next->text, defs);
-        if (ifdef && ifdef->argc && strcmp(ifdef->name, "if") == 0
-         && dodef && dodef->argc && strcmp(dodef->name, "do") == 0)
+        if (ifdef && ifdef->builtin && strcmp(ifdef->name, "if") == 0
+         && dodef && dodef->builtin && strcmp(dodef->name, "do") == 0)
         {
           fputs("{", outfile);
           compile(tree->next->next->data, NULL, predeclare(tree->next->next->data, defs));
@@ -283,7 +283,8 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
         .next = defs,
         .ret = registers ? registers -> type : any,
         .type = var,
-        .rets = true
+        .rets = true,
+        .builtin = false
       };
       bool mutated = is_mutated(tree->next, d);
       if (mutated) d.ret = any;
@@ -372,6 +373,7 @@ decl_list* builtins(void)
   for (size_t i = 0; i < sizeof(b) / sizeof(b[0]) - 1; ++i)
   {
     // This just creates a linked list.
+    b[i].builtin = true;
     b[i].next = b + i + 1;
   }
   return b;
