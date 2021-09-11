@@ -34,7 +34,19 @@ int last_openbrace_col;
 
 %x BLOCK_COMMENT
 
+ALLOWCHAR [A-Za-z0-9\-\?\!\>\<\=\+\/]
+
 %%
+D[eE][fF][iI][nN][eE] return DEFINE;
+L[eE][tT]             return LET;
+S[eE][tT]             return SET;
+
+[A-Z]{ALLOWCHAR}*    yylval.text=lc(strdup(yytext));   return IDENTIFIER;
+\\{ALLOWCHAR}+       yylval.text=lc(strdup(yytext+1)); return SYMBOL;
+\-?[0-9]+(\.[0-9]+)? yylval.text=strdup(yytext);       return NUMBER;
+\'(\\.|[^'\\])*\'    yylval.text=strdup(yytext);       return STRING;
+\'                   yyerror("unterminated string"); // TODO error message is printing with wrong column.
+
 ">"  yylval.text=strdup("GT");  return IDENTIFIER;
 ">=" yylval.text=strdup("GTE"); return IDENTIFIER;
 "<"  yylval.text=strdup("LT");  return IDENTIFIER;
@@ -45,16 +57,6 @@ int last_openbrace_col;
 "-"  yylval.text=strdup("SUB"); return IDENTIFIER;
 "*"  yylval.text=strdup("MUL"); return IDENTIFIER;
 "/"  yylval.text=strdup("DIV"); return IDENTIFIER;
-
-D[eE][fF][iI][nN][eE] return DEFINE;
-L[eE][tT]             return LET;
-S[eE][tT]             return SET;
-
-[A-Z][A-Za-z_0-9]*   yylval.text=lc(strdup(yytext));   return IDENTIFIER;
-\\[A-Za-z_0-9]*      yylval.text=lc(strdup(yytext+1)); return SYMBOL;
-\-?[0-9]+(\.[0-9]+)? yylval.text=strdup(yytext);       return NUMBER;
-\'(\\.|[^'\\])*\'    yylval.text=strdup(yytext);       return STRING;
-\'                   yyerror("unterminated string"); // TODO error message is printing with wrong column.
 
 ;|, return ';';
 \(  brace_depth++; last_openbrace_line = yylloc.first_line; last_openbrace_col = yylloc.first_column; return '(';

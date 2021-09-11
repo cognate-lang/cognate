@@ -80,7 +80,7 @@ ANY VAR(false) = OBJ(boolean,0);
 
 BOOLEAN VAR(either)(BOOLEAN a, BOOLEAN b) { return a || b; }
 BOOLEAN VAR(both)(BOOLEAN a, BOOLEAN b) { return a && b; }
-BOOLEAN VAR(one_of)(BOOLEAN a, BOOLEAN b) { return a ^ b;  }
+BOOLEAN VAR(oneDASHof)(BOOLEAN a, BOOLEAN b) { return a ^ b;  }
 BOOLEAN VAR(not)(BOOLEAN a) { return !a;     }
 
 
@@ -91,11 +91,12 @@ BOOLEAN VAR(LT)(NUMBER a, NUMBER b)  { return a > b; }
 BOOLEAN VAR(GTE)(NUMBER a, NUMBER b) { return a >= b; }
 BOOLEAN VAR(LTE)(NUMBER a, NUMBER b) { return a <= b; }
 
-BOOLEAN VAR(number_)(ANY a)  { return a.type&number; } // Question marks are converted to underscores.
-BOOLEAN VAR(list_)(ANY a)    { return a.type&number; } // However all other symbols are too.
-BOOLEAN VAR(string_)(ANY a)  { return a.type&string; } // So this is a temporary hack!
-BOOLEAN VAR(block_)(ANY a)   { return a.type&block;  }
-BOOLEAN VAR(boolean_)(ANY a) { return a.type&boolean;}
+BOOLEAN VAR(numberQMARK)(ANY a)  { return a.type&number; }
+BOOLEAN VAR(listQMARK)(ANY a)    { return a.type&number; }
+BOOLEAN VAR(stringQMARK)(ANY a)  { return a.type&string; }
+BOOLEAN VAR(blockQMARK)(ANY a)   { return a.type&block;  }
+BOOLEAN VAR(booleanQMARK)(ANY a) { return a.type&boolean;}
+BOOLEAN VAR(integerQMARK)(ANY a) { return VAR(numberQMARK)(a) && a.number == floor(a.number); }
 
 ANY VAR(first)(LIST lst)
 {
@@ -133,7 +134,7 @@ LIST VAR(push)(ANY a, LIST b)
   return lst;
 }
 
-BOOLEAN VAR(empty_)(LIST lst)
+BOOLEAN VAR(emptyQMARK)(LIST lst)
 {
   // Returns true is a list or string is empty. O(1).
   // Can be used to to write a Length function.
@@ -228,7 +229,7 @@ STRING VAR(join)(NUMBER n)
   return result;
 }
 
-NUMBER VAR(string_length)(STRING str)
+NUMBER VAR(stringDASHlength)(STRING str)
 {
   return mbstrlen(str);
 }

@@ -14,6 +14,38 @@ ast* full_ast;
 bool optimize = false;
 bool debug = false;
 
+char* restrict_chars(char* in)
+{
+  // Sanitise variable names so they won't upset the C compiler.
+  // This could be a lot faster
+  char replace[] = {'-', '!', '?', '=', '<', '>', '+', '*', '/'};
+  char* with[]   = {"DASH", "XMARK", "QMARK", "EQ", "LT", "GT", "PLUS", "STAR", "SLASH"};
+  size_t sz = 1;
+  for (char* ptr = in; *ptr; ++ptr)
+  {
+    for (size_t i = 0; i < sizeof replace; ++i)
+    {
+      if (*ptr == replace[i]) sz += strlen(with[i]);
+      else ++sz;
+    }
+  }
+  char* out = calloc(sz, 1);
+  for (char* ptr = in; *ptr; ++ptr)
+  {
+    for (size_t i = 0; i < sizeof replace; ++i)
+    {
+      if (*ptr == replace[i])
+      {
+        strcat(out, with[i]);
+        goto br;
+      }
+    }
+    strncat(out, ptr, 1);
+br:;
+  }
+  return out;
+}
+
 char* type_as_str(value_type typ, _Bool up)
 {
   switch (typ)
@@ -75,7 +107,7 @@ void add_symbols(ast* tree)
         }
         if (!already_declared)
         {
-          fprintf(outfile, "const SYMBOL SYM(%s)=\"%s\";", tree->text, tree->text);
+          fprintf(outfile, "const SYMBOL SYM(%s)=\"%s\";", restrict_chars(tree->text), tree->text);
           sym_list* s = malloc(sizeof(*s));
           s->name = tree->text;
           s->next = declared_symbols;
@@ -127,7 +159,7 @@ decl_list* predeclare(ast* head, decl_list* defs)
                          .needs_stack = true,
                          .rets = false,
                          .ret = any, .predecl = true, .mut=mutable};
-      fprintf(outfile, "PREDEF(%s);", tree->text);
+      fprintf(outfile, "PREDEF(%s);", restrict_chars(tree->text));
       // We use already_predeclared to prevent shadowing.
       *def2 = *def;
       def2->next = already_predeclared;
@@ -204,7 +236,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       switch(def->type)
       {
         case func:
-          fprintf(outfile,"%s(%s,(", debug ? "CALLDEBUG" : "CALL", def->name);
+          fprintf(outfile,"%s(%s,(", debug ? "CALLDEBUG" : "CALL", restrict_chars(def->name));
           for (unsigned short i = 0; i < def->argc; ++i)
           {
             registers = emit_register(def->args[i], registers);
@@ -213,7 +245,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
           fputs("));", outfile);
           break;
         case var:
-          fprintf(outfile, "VAR(%s);", def->name);
+          fprintf(outfile, "VAR(%s);", restrict_chars(def->name));
           break;
         case stack_op:
           registers = def->stack_shuffle(registers);
@@ -262,7 +294,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
           print_cognate_string(tree->text);
           break;
         case symbol:
-          fprintf(outfile, "SYM(%s)", tree->text);
+          fprintf(outfile, "SYM(%s)", restrict_chars(tree->text));
           break;
         case number:
           fprintf(outfile, "%sl", tree->text);
@@ -289,7 +321,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       bool mutated = is_mutated(tree->next, d);
       if (mutated) d.ret = any;
       registers = assert_registers(1, LONG_MAX, registers);
-      fprintf(outfile, "%s %s VAR(%s)=", mutated ? "__block" : "const", type_as_str(d.ret, true), d.name);
+      fprintf(outfile, "%s %s VAR(%s)=", mutated ? "__block" : "const", type_as_str(d.ret, true), restrict_chars(d.name));
       registers = emit_register(d.ret, registers);
       fputs(";{", outfile);
       defs = &d;
@@ -301,7 +333,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       decl_list* d = lookup_word(tree->text, defs);
       d -> predecl = false;
       registers = assert_registers(1, LONG_MAX, registers);
-      fprintf(outfile, "VAR(%s)=", tree->text);
+      fprintf(outfile, "VAR(%s)=", restrict_chars(tree->text));
       registers = emit_register(block, registers);
       fputs(";{", outfile);
       footer = "}";
@@ -311,9 +343,9 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
     {
       decl_list* d = lookup_word(tree->text, defs);
       if (d -> type == stack_op || d -> type == func) { yyerror("cannot mutate function"); }
-      if (d -> predecl) fprintf(outfile, "VAR(%s);", tree->text);
+      if (d -> predecl) fprintf(outfile, "VAR(%s);", restrict_chars(tree->text));
       registers = assert_registers(1, LONG_MAX, registers);
-      fprintf(outfile, "SET(%s,", tree->text);
+      fprintf(outfile, "SET(%s,", restrict_chars(tree->text));
       registers = emit_register(any, registers);
       fputs(");", outfile);
     }
@@ -374,6 +406,7 @@ decl_list* builtins(void)
   {
     // This just creates a linked list.
     b[i].builtin = true;
+    //b[i].name = restrict_chars(b[i].name);
     b[i].next = b + i + 1;
   }
   return b;

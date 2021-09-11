@@ -1,6 +1,0 @@
-Import Builtin functions;
-
-Splice the Range from 0 to 1 with step 0.1
-    to the Range from 0 to 10 with step 1;
-
-Print;

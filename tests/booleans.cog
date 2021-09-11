@@ -8,10 +8,10 @@ Print If(Either True and False, == True) 'PASS: True OR False' else 'FAIL: True 
 Print If(Either False and True, == True) 'PASS: False OR True' else 'FAIL: False OR True';
 Print If(Either False and False, == False) 'PASS: False OR False' else 'FAIL: False OR False';
 
-Print If(One_of True or True, == False) 'PASS: True XOR True' else 'FAIL: True XOR True';
-Print If(One_of True and False, == True) 'PASS: True XOR False' else 'FAIL: True XOR False';
-Print If(One_of False and True, == True) 'PASS: False XOR True' else 'FAIL: False XOR True';
-Print If(One_of False and False, == False) 'PASS: False XOR False' else 'FAIL: False XOR False';
+Print If(One-of True xor True, == False) 'PASS: True XOR True' else 'FAIL: True XOR True';
+Print If(One-of True xor False, == True) 'PASS: True XOR False' else 'FAIL: True XOR False';
+Print If(One-of False xor True, == True) 'PASS: False XOR True' else 'FAIL: False XOR True';
+Print If(One-of False xor False, == False) 'PASS: False XOR False' else 'FAIL: False XOR False';
 
 Print If(Not True, == False) 'PASS: NOT True' else 'PASS: NOT True';
 Print If(Not False, == True) 'PASS: NOT False' else 'PASS: NOT False';

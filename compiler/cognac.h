@@ -64,6 +64,7 @@ extern FILE* outfile;
 extern size_t current_register;
 extern ast* full_ast;
 
+char* restrict_chars(char*);
 decl_list* builtins(void);
 decl_list* lookup_word(char*, decl_list*);
 reg_list* emit_register(value_type, reg_list*);

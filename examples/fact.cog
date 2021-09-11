@@ -1,18 +1,14 @@
-Import Builtin;
-
 Define Factorial
 ( Let X;
   Do If (X, == 0) (
     1
   ) else (
-    Subtract 1 from X;
-    find the Factorial;
-    Multiply by X;
+    Factorial - 1 X, * X
   )
 );
 
 Put 'Enter an integer: ';
-Input, ParseNumber, Twin;
+Input, cast to Number, Twin;
 Assert 'Input is an integer' Integer?;
  ~~ Syntax highlighter breaks here, but actual parser is fine
 Put 'It\'s factorial is... ';
