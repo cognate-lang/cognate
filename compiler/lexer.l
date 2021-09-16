@@ -17,9 +17,11 @@ void yyerror(char* str)
   char header[20];
   sprintf(header, "Line %d: ", yylloc.first_line);
   fprintf(stderr, "\033[0;2m%s", header);
-  char line[80];
+  char* line = NULL;
   rewind(yyin);
-  while (yylloc.first_line--) fgets(line, sizeof line, yyin);
+  while (--yylloc.first_line) fgets(NULL, 0, yyin);
+  size_t n = SIZE_MAX;
+  getline(&line, &n, yyin);
   fprintf(stderr, "\033[0;1m%s", line);
   yylloc.first_column += strlen(header) - 1;
   while (--yylloc.first_column) fputc(' ', stderr);
