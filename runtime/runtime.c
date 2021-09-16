@@ -35,7 +35,7 @@ extern void _Block_use_GC(void* (*)(const unsigned long, const _Bool isOne, cons
 
 static const char *lookup_type(cognate_type);
 static _Bool compare_lists(LIST, LIST);
-static _Bool compare_tables(TABLE, TABLE);
+static _Bool compare_tables(TABLE, TABLE, int);
 static void handle_error_signal(int);
 static void bind_error_signals();
 
@@ -306,11 +306,25 @@ _Bool compare_lists(LIST lst1, LIST lst2)
   return 0;
 }
 
-_Bool compare_tables(TABLE tab1, TABLE tab2)
+_Bool compare_tables(TABLE tab1, TABLE tab2, int depth)
 {
-  (void) tab1;
-  (void) tab2;
-  return 1; // TODO
+  if (!tab1 && !tab2) return 1;
+  if (!tab1 != !tab2) return 0;
+  if (depth)
+  {
+    for (int i = 0; i < 4; ++i)
+    {
+      if (!compare_tables(tab1->branches[i], tab2->branches[i], depth - 1)) return 0;
+    }
+    return 1;
+  }
+  for (int i = 0; i < 4; ++i)
+  {
+    if (!tab1->objects[i] && !tab2->objects[i]) continue;
+    if (!tab1->objects[i] != !tab2->objects[i]) return 0;
+    if (!compare_objects(*tab1->objects[i], *tab2->objects[i])) return 0;
+  }
+  return 1;
 }
 
 _Bool compare_objects(ANY ob1, ANY ob2)
@@ -326,7 +340,7 @@ _Bool compare_objects(ANY ob1, ANY ob2)
     case string  : return strcmp(ob1.string, ob2.string) == 0;
     case symbol  : return ob1.symbol == ob2.symbol;
     case list    : return compare_lists(ob1.list, ob2.list);
-    case table   : return 0; // compare_tables(*ob1.table, *ob2.table);
+    case table   : return compare_tables(ob1.table, ob2.table, 15);
     case NOTHING : throw_error("comparing null - compiler bug!");
     case block   : throw_error("cannot compare blocks");
   }
