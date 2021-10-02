@@ -224,7 +224,7 @@ void print_object (const ANY object, FILE* out, const _Bool quotes)
     case block: fprintf(out, "<Block %p>", (void*)object.block); return;
     case table: fprintf(out, "<Table %p>", (void*)object.table); return;
     case symbol: fputs(object.symbol, out); return;
-    default: throw_error("cannot print object");
+    case NOTHING: __builtin_trap();
   }
 }
 
@@ -340,8 +340,8 @@ _Bool compare_objects(ANY ob1, ANY ob2)
     case symbol  : return ob1.symbol == ob2.symbol;
     case list    : return compare_lists(ob1.list, ob2.list);
     case table   : return compare_tables(ob1.table, ob2.table, 15);
-    case NOTHING : throw_error("comparing null - compiler bug!");
     case block   : throw_error("cannot compare blocks");
+    case NOTHING : __builtin_trap();
   }
 }
 
