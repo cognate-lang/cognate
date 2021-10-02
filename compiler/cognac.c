@@ -191,6 +191,15 @@ bool is_mutated(ast* tree, decl_list def)
   return false;
 }
 
+bool needs_block_tag(ast* tree, decl_list def)
+{
+  for (; tree ; tree = tree->next)
+  {
+    if (tree->type == value && tree->val_type == block && is_mutated(tree->child, def)) return true;
+  }
+  return false;
+}
+
 reg_list* emit_register(value_type type, reg_list* regs)
 {
   if (regs->type == type)     fprintf(outfile, "r%zi",                                           regs->id);
@@ -316,12 +325,14 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
         .name = tree->text,
         .next = defs,
         .type = var,
+        .ret = registers->type,
         .rets = true,
         .builtin = false
       };
-      const bool mutated = is_mutated(tree->next, d);
-      d.ret = mutated ? any : registers->type;
-      fprintf(outfile, "%s %s VAR(%s)=", mutated ? "__block" : "const", type_as_str(d.ret, true), restrict_chars(d.name));
+      char* tag = "const";
+      if (is_mutated(tree->next, d)) d.ret = any, tag = "";
+      if (needs_block_tag(tree->next, d)) tag = "__block";
+      fprintf(outfile, "%s %s VAR(%s)=", tag, type_as_str(d.ret, true), restrict_chars(d.name));
       registers = emit_register(d.ret, registers);
       fputs(";{", outfile);
       defs = &d;
