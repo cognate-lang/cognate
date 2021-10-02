@@ -220,6 +220,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
     assert_registers(0, 0, registers);
     return;
   }
+  decl_list d;
   const char* footer = "";
   yylloc.first_column = tree->col; // This lets us use yyerror()
   yylloc.first_line = tree->line;
@@ -309,18 +310,17 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
     break;
     case let:
     {
-      decl_list d = (decl_list)
+      registers = assert_registers(1, LONG_MAX, registers);
+      d = (decl_list)
       {
         .name = tree->text,
         .next = defs,
-        .ret = registers ? registers -> type : any,
         .type = var,
         .rets = true,
         .builtin = false
       };
-      bool mutated = is_mutated(tree->next, d);
-      if (mutated) d.ret = any;
-      registers = assert_registers(1, LONG_MAX, registers);
+      const bool mutated = is_mutated(tree->next, d);
+      d.ret = mutated ? any : registers->type;
       fprintf(outfile, "%s %s VAR(%s)=", mutated ? "__block" : "const", type_as_str(d.ret, true), restrict_chars(d.name));
       registers = emit_register(d.ret, registers);
       fputs(";{", outfile);
