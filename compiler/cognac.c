@@ -47,20 +47,17 @@ br:;
   return out;
 }
 
-char* type_as_str(value_type typ, _Bool up)
+char* type_as_str[8][2] =
 {
-  switch (typ)
-  {
-    case any:     return up ? "ANY"     : "any";
-    case block:   return up ? "BLOCK"   : "block";
-    case string:  return up ? "STRING"  : "string";
-    case number:  return up ? "NUMBER"  : "number";
-    case symbol:  return up ? "SYMBOL"  : "symbol";
-    case boolean: return up ? "BOOLEAN" : "boolean";
-    case list:    return up ? "LIST"    : "list";
-    case table:   return up ? "TABLE"   : "table";
-  }
-}
+  [any]     = {  "any",    "ANY"     },
+  [block]   = { "block",   "BLOCK"   },
+  [string]  = { "string",  "STRING"  },
+  [number]  = { "number",  "NUMBER"  },
+  [symbol]  = { "symbol",  "SYMBOL"  },
+  [boolean] = { "boolean", "BOOLEAN" },
+  [list]    = { "list",    "LIST"    },
+  [table]   = { "table",   "TABLE"   }
+};
 
 reg_list* assert_registers(size_t lower, size_t upper, reg_list* registers)
 {
@@ -199,12 +196,12 @@ bool needs_block_tag(ast* tree, decl_list def)
 reg_list* emit_register(value_type type, reg_list* regs)
 {
   if (regs->type == type)     fprintf(outfile, "r%zi",                                           regs->id);
-  else if (regs->type == any) fprintf(outfile, "CHECK(%s,r%zi)", type_as_str(type, false),       regs->id);
-  else if (type == any)       fprintf(outfile, "OBJ(%s,r%zi)",   type_as_str(regs->type, false), regs->id);
+  else if (regs->type == any) fprintf(outfile, "CHECK(%s,r%zi)", type_as_str[type][false],       regs->id);
+  else if (type == any)       fprintf(outfile, "OBJ(%s,r%zi)",   type_as_str[regs->type][false], regs->id);
   else
   {
     char error_msg[256];
-    sprintf(error_msg, "expected %s got %s", type_as_str(type, false), type_as_str(regs->type, false));
+    sprintf(error_msg, "expected %s got %s", type_as_str[type][false], type_as_str[regs->type][false]);
     yyerror(error_msg);
   }
   return drop_register(regs);
@@ -214,7 +211,7 @@ reg_list* add_register(value_type type, reg_list* next)
 {
   reg_list* r = GC_MALLOC(sizeof(*r));
   *r = (reg_list){.type = type, .id = current_register++, .next=next};
-  fprintf(outfile, "const %s r%zi=", type_as_str(r->type, true), r->id);
+  fprintf(outfile, "const %s r%zi=", type_as_str[r->type][true], r->id);
   return r;
 }
 
@@ -293,7 +290,6 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
         case block:
           fputs("^{check_function_stack_size();", outfile);
           compile(tree->data, NULL, predeclare(tree->data, defs));
-          tree->data = NULL; // Prevent double free.
           fputc('}', outfile);
           break;
         case string:
@@ -328,7 +324,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       char* tag = "const";
       if (is_mutated(tree->next, d)) d.ret = any, tag = "";
       if (needs_block_tag(tree->next, d)) tag = "__block";
-      fprintf(outfile, "%s %s VAR(%s)=", tag, type_as_str(d.ret, true), restrict_chars(d.name));
+      fprintf(outfile, "%s %s VAR(%s)=", tag, type_as_str[d.ret][true], restrict_chars(d.name));
       registers = emit_register(d.ret, registers);
       fputs(";{", outfile);
       defs = &d;
