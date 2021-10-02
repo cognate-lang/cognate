@@ -97,10 +97,10 @@ void init(int argc, char** argv)
 
 void cleanup()
 {
-  if unlikely(stack.top != stack.start)
+  if unlikely(stack.top != stack.start || stack.cache.type)
   {
     word_name = NULL;
-    throw_error_fmt("exiting with %ti objects on the stack", stack.top - stack.start);
+    throw_error_fmt("exiting with %ti object(s) on the stack", stack.top - stack.start + (stack.cache.type != 0));
   }
 }
 
