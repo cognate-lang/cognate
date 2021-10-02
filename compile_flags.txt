@@ -5,4 +5,3 @@
 -Werror
 -Wno-unused
 -pedantic-errors
--Wno-gnu-statement-expression

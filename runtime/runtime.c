@@ -37,7 +37,6 @@ static const char *lookup_type(cognate_type);
 static _Bool compare_lists(LIST, LIST);
 static _Bool compare_tables(TABLE, TABLE, int);
 static void handle_error_signal(int);
-static void bind_error_signals();
 
 cognate_stack stack;
 LIST cmdline_parameters = NULL;

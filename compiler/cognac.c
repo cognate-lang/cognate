@@ -168,11 +168,7 @@ decl_list* predeclare(ast* head, decl_list* defs)
       already_predeclared = def2;
     }
   }
-  while (already_predeclared)
-  {
-    decl_list* tmp = already_predeclared;
-    already_predeclared = already_predeclared->next;
-  }
+  while (already_predeclared) already_predeclared = already_predeclared->next;
   return defs;
 }
 

@@ -236,7 +236,6 @@ NUMBER VAR(stringDASHlength)(STRING str)
 
 STRING VAR(substring)(NUMBER startf, NUMBER endf, STRING str)
 {
-  const char* str_start = str;
   // O(end).
   // Only allocates a new string if it has to.
   /* TODO: Would it be better to have a simpler and more minimalist set of string functions, like lists do?
@@ -288,7 +287,7 @@ STRING VAR(read)(STRING filename)
   struct stat st;
   fstat(fileno(fp), &st);
   char* const text = GC_MALLOC_ATOMIC (st.st_size + 1);
-  if (fread(text, sizeof(char), st.st_size, fp) != st.st_size)
+  if (fread(text, sizeof(char), st.st_size, fp) != (unsigned long)st.st_size)
     throw_error_fmt("error reading file '%s'", filename);
   fclose(fp);
   text[st.st_size-1] = '\0'; // Remove trailing eof.
