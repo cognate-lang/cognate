@@ -3,7 +3,7 @@ CC=clang
 build: cognac runtime/functions.o runtime/runtime.o
 
 cognac: compiler/lexer.c compiler/parser.c compiler/parser.h compiler/cognac.c compiler/builtins.c compiler/cognac.h
-	$(CC) compiler/lexer.c compiler/parser.c compiler/cognac.c -Ofast -o cognac
+	$(CC) compiler/lexer.c compiler/parser.c compiler/cognac.c -Ofast -o cognac -l:libgc.so
 
 runtime/%.o: runtime/%.c runtime/runtime.h
 	$(CC) -c -fblocks -Ofast -flto -o $@ $<
