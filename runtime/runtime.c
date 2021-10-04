@@ -47,7 +47,7 @@ void init(int argc, char** argv)
   GC_INIT();
   // Seed the random number generator properly.
   struct timespec ts;
-  if unlikely(timespec_get(&ts, TIME_UTC) == 0)
+  if unlikely(clock_gettime(CLOCK_REALTIME, &ts) == -1)
   {
     throw_error("cannot get system time");
   }
@@ -318,20 +318,17 @@ _Bool compare_objects(ANY ob1, ANY ob2)
   }
 }
 
-size_t hash(const char *str)
-{
-  // http://www.cse.yorku.ca/~oz/hash.html
-  size_t hash = 0;
-  int c;
-  while ((c = *str++))
-    hash = c + (hash << 6) + (hash << 16) - hash;
-  return hash;
-}
+void * _NSConcreteStackBlock       [32] = { 0 };
+void * _NSConcreteMallocBlock      [32] = { 0 };
+void * _NSConcreteAutoBlock        [32] = { 0 };
+void * _NSConcreteFinalizingBlock  [32] = { 0 };
+void * _NSConcreteGlobalBlock      [32] = { 0 };
+void * _NSConcreteWeakBlockVariable[32] = { 0 };
 
 void *Block_copy(const void *arg) {
     struct Block_layout *aBlock = (struct Block_layout *)arg;
     struct Block_layout *result = GC_MALLOC(aBlock->descriptor->size);
-    if (!result) return (void *)0;
+    if unlikely(!result) return NULL;
     memcpy(result, aBlock, aBlock->descriptor->size);
     return result;
 }
