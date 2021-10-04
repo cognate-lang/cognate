@@ -1,6 +1,5 @@
 #include "runtime.h"
 
-#include <Block.h>
 #include <ctype.h>
 #include <errno.h>
 #include <locale.h>
@@ -12,26 +11,7 @@
 #include <time.h>
 #include <stdarg.h>
 #include <math.h>
-#ifndef NO_GC
 #include <gc/gc.h>
-#endif
-#if __has_include(<Block_private.h>)
-#include <Block_private.h>
-#endif
-
-static void* blk_alloc(const unsigned long size, __attribute__((unused)) const _Bool _, __attribute__((unused)) const _Bool __) { return GC_MALLOC(size); }
-static void blk_setHasRefcount(__attribute__((unused)) const void* _, __attribute__((unused)) const _Bool __) {}
-static void blk_gc_assign_strong(void* src, void** dst) { *dst = src; }
-static void blk_gc_assign_weak(const void* src, void* dst) { *(void**)dst = (void*)src; }
-static void blk_gc_memmove(void* dst, void* src, unsigned long size) { memmove(dst, src, size); }
-
-#ifndef __APPLE__
-extern void _Block_use_GC(void* (*)(const unsigned long, const _Bool isOne, const _Bool isObject),
-                          void  (*)(const void *, const _Bool),
-                          void  (*)(void *, void **),
-                          void  (*)(const void *, void *),
-                          void  (*)(void *, void *, unsigned long)) __attribute__((weak));
-#endif
 
 static const char *lookup_type(cognate_type);
 static _Bool compare_lists(LIST, LIST);
@@ -64,14 +44,7 @@ void init(int argc, char** argv)
     throw_error("cannot set locale");
   }
   // Init GC
-#ifndef NO_GC
   GC_INIT();
-#ifndef __APPLE__
-  if (_Block_use_GC) _Block_use_GC(blk_alloc, blk_setHasRefcount, blk_gc_assign_strong, blk_gc_assign_weak, blk_gc_memmove);
-#endif
-#else
-  #pragma message "Compiling without the garbage collector will cause memory leaks!"
-#endif
   // Seed the random number generator properly.
   struct timespec ts;
   if unlikely(timespec_get(&ts, TIME_UTC) == 0)
@@ -354,3 +327,17 @@ size_t hash(const char *str)
     hash = c + (hash << 6) + (hash << 16) - hash;
   return hash;
 }
+
+void *Block_copy(const void *arg) {
+    struct Block_layout *aBlock = (struct Block_layout *)arg;
+    struct Block_layout *result = GC_MALLOC(aBlock->descriptor->size);
+    if (!result) return (void *)0;
+    memcpy(result, aBlock, aBlock->descriptor->size);
+    return result;
+}
+
+void _Block_object_assign(void *destAddr, const void *object, __attribute__((unused)) const int flags) {
+    *(void**)destAddr = (void*)object;
+}
+
+void _Block_object_dispose(const void __attribute__((unused)) *object, const int __attribute__((unused)) flags) {}

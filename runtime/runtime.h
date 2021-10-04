@@ -74,6 +74,18 @@ typedef struct cognate_stack
   ANY cache;
 } cognate_stack;
 
+struct Block_descriptor {
+    unsigned long int reserved;
+    unsigned long int size;
+};
+
+struct Block_layout {
+    void *isa;
+    int reserved;
+    long also_reserved;
+    struct Block_descriptor *descriptor;
+};
+
 #define OBJ(objtype, objvalue) ((ANY){.type=objtype, .objtype=objvalue})
 #define VAR(name) ___##name
 #define SYM(name) ____##name
@@ -87,15 +99,6 @@ typedef struct cognate_stack
 #define SET_FN(name, val) const ANY _tmp_##name = val; \
                           VAR(name) = Block_copy(^{ push(val); })
 
-#ifdef NO_GC
-  #define GC_MALLOC  malloc
-  #define GC_MALLOC_ATOMIC malloc
-  #define GC_REALLOC realloc
-  #define GC_STRNDUP strndup
-  #define GC_STRDUP  strdup
-  #define GC_NEW(t)  ((t*) malloc (sizeof(t)))
-#endif
-
 #define unlikely(expr) (__builtin_expect((_Bool)(expr), 0))
 #define likely(expr)   (__builtin_expect((_Bool)(expr), 1))
 
@@ -106,6 +109,7 @@ extern const char* restrict word_name;
 extern int line_num;
 
 // Variables and  needed by functions.c defined in runtime.c
+void* Block_copy(const void*);
 void init_stack();
 void expand_stack();
 void print_object(const ANY object, FILE *, const _Bool);

@@ -26,7 +26,7 @@ Cognate is optimised for functional programming - not complicated static-typed f
 The stack, around which cognate is designed, allows Cognate to do things which many other languages cannot. One example is multiple return values. While other languages - such as python - require the use of tuples or lists to return multiple values, Cognate uses the stack to achieve this without the use of any data structures. Cognate also uses the stack to allow any expression to be written in point-free notation.
 
 ### Building Cognate
-Currently, Cognate will run on Linux and MacOS systems. If you use Windows 10, then you can install Cognate on the Windows Subsystem for Linux. To build Cognate, you will need make, flex, bison, clang, libGC (and libBlocksRuntime if on linux). Simply run this command to build the compiler and runtime.
+Currently, Cognate will run on Linux and MacOS systems. If you use Windows 10, then you can install Cognate on the Windows Subsystem for Linux. To build Cognate, you will need make, flex, bison, clang, libGC. Simply run this command to build the compiler and runtime.
 ```
 make
 ```
@@ -39,5 +39,3 @@ If the tests all pass (they should!), you can then try running some of the inclu
 ./cognac examples/fizzbuzz.cog
 ./examples/fizzbuzz
 ```
-### Block Garbage Collection
-By default, all Cognate objects are garbage collected by the Boehm garbage collector (libgc). However, the version of libBlocksRuntime (which provides lexical closures) in the Debian repositories does not expose the correct functions to work with the garbage collector. What this means is that using blocks can leak memory in specific scenarios (try using valgrind on tests/block.cog). This can be rectified if you install libBlocksRuntime from [here](https://github.com/mackyle/blocksruntime) after applying the BlocksRuntime patch found in this repository. Now Cognate should automatically use the garbage collector for blocks. Make sure to only have one version of libBlocksRuntime installed at once, or the compiler will not run.
