@@ -3,7 +3,7 @@ CC=clang
 build: cognac runtime/functions.o runtime/runtime.o
 
 cognac: compiler/lexer.c compiler/parser.c compiler/parser.h compiler/cognac.c compiler/builtins.c compiler/cognac.h
-	$(CC) compiler/lexer.c compiler/parser.c compiler/cognac.c -Ofast -o cognac -l:libgc.so -Wall -Wextra -Werror -pedantic-errors
+	$(CC) compiler/lexer.c compiler/parser.c compiler/cognac.c -Ofast -o cognac -lgc -Wall -Wextra -Werror -pedantic-errors
 
 runtime/%.o: runtime/%.c runtime/runtime.h
 	$(CC) -c -Wall -Wextra -Werror -pedantic-errors -fblocks -Ofast -flto -o $@ $<
