@@ -1,49 +1,49 @@
-Print If (+ 5 6, == 11)
+Print If (+ 5 6; == 11)
   'PASS: Addition'
 else
   'FAIL: Addition';
 
-Print If (- 10 19, == 9)
+Print If (- 10 19; == 9)
   'PASS: Subtraction'
 else
   'FAIL: Subtraction';
 
-Print If (* 9 8, == 72)
+Print If (* 9 8; == 72)
   'PASS: Multiplication'
 else
   'FAIL: Multiplication';
 
-Print If (/ 7 42, == 6)
+Print If (/ 7 42; == 6)
   'PASS: Division'
 else
   'FAIL: Division';
 
-Print If (Modulo by 3 of 10, == 1)
+Print If (Modulo by 3 of 10; == 1)
   'PASS: Modulus'
 else
   'FAIL: Modulus';
 
-Print If (Floor 4.7, == 4)
+Print If (Floor 4.7; == 4)
   'PASS: Floor'
 else
   'FAIL: Floor';
 
-Print If (Ceiling 4.3, == 5)
+Print If (Ceiling 4.3; == 5)
   'PASS: Ceiling'
 else
   'FAIL: Ceiling';
 
-Print If (Round 4.7, == 5)
+Print If (Round 4.7; == 5)
   'PASS: Round'
 else
   'FAIL: Round';
 
-Print If (+ 0.1 0.2, == 0.3)
+Print If (+ 0.1 0.2; == 0.3)
   'PASS: Floating point error'
 else
   'FAIL: Floating point error';
 
-Print If (* 3 0.3, + 0.1, == 1)
+Print If (* 3 0.3; + 0.1; == 1)
   'PASS: Floating point error 2'
 else
   'FAIL: Floating point error 2';

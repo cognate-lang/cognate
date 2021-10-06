@@ -1,15 +1,15 @@
 Define Factorial
 ( Let X;
-  Do If (X, == 0) (
+  Do If (X; == 0) (
     1
   ) else (
-    Factorial - 1 X, * X
+    Factorial - 1 X; * X
   )
 );
 
 Put 'Enter an integer: ';
-Input, cast to Number, Twin;
+Input; cast to Number; Twin;
 Assert 'Input is an integer' Integer?;
- ~~ Syntax highlighter breaks here, but actual parser is fine
+ ~~ Syntax highlighter breaks here; but actual parser is fine
 Put 'It\'s factorial is... ';
 Print the Factorial;

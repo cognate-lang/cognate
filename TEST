@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-# Config options
-LEAKCHECK=0
-
 # Colour codes for printing
 RED='\033[0;31m'
 GREEN='\033[0;32m'

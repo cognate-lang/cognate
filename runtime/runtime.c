@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <locale.h>
 #include <signal.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,7 +16,7 @@
 
 static const char *lookup_type(cognate_type);
 static _Bool compare_lists(LIST, LIST);
-static _Bool compare_tables(TABLE, TABLE, int);
+static _Bool compare_records(RECORD, RECORD);
 static void handle_error_signal(int);
 
 cognate_stack stack;
@@ -185,17 +186,26 @@ void print_object (const ANY object, FILE* out, const _Bool quotes)
       for (LIST i = object.list; i ; i = i->next)
       {
         print_object(i->object, out, 1);
-        if likely(i->next)
-        {
-          fputs(", ", out);
-        }
+        if likely(i->next) fputc(' ', out);
+      }
+      fputc(')', out);
+      return;
+    }
+    case record:
+    {
+      RECORD rec = object.record;
+      fputc('(', out);
+      for (size_t i = 0; i < rec->len; ++i)
+      {
+        fprintf(out, "%s: ", rec->items[i].name);
+        print_object(rec->items[i].object, out, 1);
+        if likely(i + 1 < rec->len) fputs(", ", out);
       }
       fputc(')', out);
       return;
     }
     case boolean: fputs(object.boolean ? "True" : "False", out); return;
     case block: fprintf(out, "<Block %p>", (void*)object.block); return;
-    case table: fprintf(out, "<Table %p>", (void*)object.table); return;
     case symbol: fputs(object.symbol, out); return;
     case NOTHING: __builtin_trap();
   }
@@ -253,14 +263,15 @@ ANY check_type(cognate_type expected_type, ANY object)
 
 const char* lookup_type(cognate_type type)
 {
-  char str[] = "\0oolean/String/Number/List/Table/Block";
+  char str[] = "\0oolean/String/Number/List/Block/Record/Symbol";
   if (!type) return "NOTHING";
   if (type & boolean) strcat(str, "/Boolean");
   if (type & string)  strcat(str, "/String");
   if (type & number)  strcat(str, "/Number");
   if (type & list)    strcat(str, "/List");
-  if (type & table)   strcat(str, "/Table");
   if (type & block)   strcat(str, "/Block");
+  if (type & record)  strcat(str, "/Record");
+  if (type & symbol)  strcat(str, "/Symbol");
   return GC_STRDUP(str + 1);
 }
 
@@ -278,23 +289,29 @@ _Bool compare_lists(LIST lst1, LIST lst2)
   return 0;
 }
 
-_Bool compare_tables(TABLE tab1, TABLE tab2, int depth)
+static _Bool compare_records(RECORD rec1, RECORD rec2)
 {
-  if (!tab1 && !tab2) return 1;
-  if (!tab1 != !tab2) return 0;
-  if (depth)
+  if (rec1->len != rec2->len) return 0;
+  size_t len = rec1->len;
+  for (size_t i = 0; i < len; ++i)
   {
-    for (int i = 0; i < 4; ++i)
+    SYMBOL name = rec1->items[i].name;
+    size_t index1 = i;
+    size_t index2 = 0;
+    if (name == rec2->items[i].name) index2 = i;
+    else
     {
-      if (!compare_tables(tab1->branches[i], tab2->branches[i], depth - 1)) return 0;
+      _Bool found = 0;
+      for (size_t ii = 0; ii < len; ++ii)
+      {
+        const _Bool eq = name == rec2->items[ii].name;
+        found |= eq;
+        index2 += ii * eq;
+      }
+      if (!found) return 0;
     }
-    return 1;
-  }
-  for (int i = 0; i < 4; ++i)
-  {
-    if (!tab1->objects[i] && !tab2->objects[i]) continue;
-    if (!tab1->objects[i] != !tab2->objects[i]) return 0;
-    if (!compare_objects(*tab1->objects[i], *tab2->objects[i])) return 0;
+    if (!compare_objects(rec1->items[index1].object, rec2->items[index2].object))
+      return 0;
   }
   return 1;
 }
@@ -312,8 +329,8 @@ _Bool compare_objects(ANY ob1, ANY ob2)
     case string  : return strcmp(ob1.string, ob2.string) == 0;
     case symbol  : return ob1.symbol == ob2.symbol;
     case list    : return compare_lists(ob1.list, ob2.list);
-    case table   : return compare_tables(ob1.table, ob2.table, 15);
     case block   : throw_error("cannot compare blocks");
+    case record  : return compare_records(ob1.record, ob2.record);
     case NOTHING : __builtin_trap();
   }
 }
@@ -326,15 +343,15 @@ void * _NSConcreteGlobalBlock      [32] = { 0 };
 void * _NSConcreteWeakBlockVariable[32] = { 0 };
 
 void *Block_copy(const void *arg) {
-    struct Block_layout *aBlock = (struct Block_layout *)arg;
-    struct Block_layout *result = GC_MALLOC(aBlock->descriptor->size);
-    if unlikely(!result) return NULL;
-    memcpy(result, aBlock, aBlock->descriptor->size);
-    return result;
+  struct Block_layout *aBlock = (struct Block_layout *)arg;
+  struct Block_layout *result = GC_MALLOC(aBlock->descriptor->size);
+  if unlikely(!result) return NULL;
+  memcpy(result, aBlock, aBlock->descriptor->size);
+  return result;
 }
 
 void _Block_object_assign(void *destAddr, const void *object, __attribute__((unused)) const int flags) {
-    *(void**)destAddr = (void*)object;
+  *(void**)destAddr = (void*)object;
 }
 
 void _Block_object_dispose(const void __attribute__((unused)) *object, const int __attribute__((unused)) flags) {}

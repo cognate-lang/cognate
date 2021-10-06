@@ -1,12 +1,12 @@
-Print If (Map (+ 1) over the List (1,2,3), == List (2,3,4))
+Print If (Map (+ 1) over the List (1 2 3); == List (2 3 4))
   then 'PASS: Mapping over a list'
   else 'FAIL: Mapping over a list';
 
-Print If (Map (+ 1) over the List (), == List ())
+Print If (Map (+ 1) over the List (); == List ())
   then 'PASS: Mapping over an empty list'
   else 'FAIL: Mapping over a list';
 
 Let X be 0;
-Print If (Map (+ X, Set X, X) over List (1,2,3), == List (1, 3, 6))
+Print If (Map (+ X; Set X; X) over List (1 2 3); == List (1 3 6))
   then 'PASS: Mapping in order'
   else 'FAIL: Mapping in order';

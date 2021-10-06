@@ -1,7 +1,7 @@
-Define Tuple be (Let X, Let Y, List (X, Y));
+Define Tuple be (Let X; Let Y; List (X Y));
 
 Define For as
-( Let Lst, Let Body;
+( Let Lst; Let Body;
   Do If (Empty? Lst) then ()
   else (
     push First element in Lst;
@@ -12,13 +12,13 @@ Define For as
 );
 
 Define Range as
-( Let A, Let B, Let S;
+( Let A; Let B; Let S;
   List from
   (
     Define Count as
     (
       Let X;
-      Do If (X, < B)
+      Do If (X; < B)
       (
         return X;
         Count from + X S;
@@ -39,7 +39,7 @@ Define Splice as
 
 Define Integer?
 ( Let X;
-  X, == Floor X;
+  X; == Floor X;
 );
 
 
@@ -66,7 +66,7 @@ Define Map
 Define Prepend
 ( Let L1 be the first list;
   Let L2 be the second list;
-  Do If (L1, is Empty?) then (return L2)
+  Do If (L1; is Empty?) then (return L2)
   else
   (
     Prepend the Rest of L1 to L2;
@@ -74,15 +74,15 @@ Define Prepend
   )
 );
 
-Define Append (Swap, Prepend);
+Define Append (Swap; Prepend);
 
 Define Concat
 ( Let N be the number of lists to concatenate;
   List();
-  For each in Range from 0 to N step 1 (Drop the index, Prepend);
+  For each in Range from 0 to N step 1 (Drop the index; Prepend);
 )
 
 Define Length
 ( Let L be a list;
-  Do If (L, is Empty?) (return 0) else (return Length of Rest of L, + 1);
+  Do If (L; is Empty?) (return 0) else (return Length of Rest of L; + 1);
 )

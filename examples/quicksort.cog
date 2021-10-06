@@ -2,7 +2,7 @@ Import Builtin functions;
 
 Define Quicksort
 ( Let L be the input list;
-  Do If (Length of L, < 2) (return L)
+  Do If (Length of L; < 2) (return L)
   else
   ( Let the Pivot be the First element in L;
     Let LessThan be Quicksort Filter (< Pivot) Rest of L;

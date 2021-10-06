@@ -7,14 +7,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #ifndef NO_GC
 #include <gc/gc.h>
 #endif
-
-static size_t mbstrlen(const char* str);
 
 ANY VAR(if)(BLOCK cond, ANY a, ANY b)
 {
@@ -150,18 +149,20 @@ LIST VAR(list)(BLOCK expr)
   // Eval expr
   expr();
   // Move to a list.
-  LIST lst = NULL;
-  while (stack_length())
+  cognate_list* lstarr = NULL;
+  size_t len = stack_length();
+  if (!len) goto end;
+  lstarr = GC_MALLOC(len * sizeof(cognate_list));
+  for (size_t i = 0; i < len; ++i)
   {
-    // This can just be Swap, Push;
-    cognate_list* tmp = GC_NEW (cognate_list);
-    tmp -> object = pop();
-    tmp -> next = lst;
-    lst = tmp;
+    lstarr[i].object = pop();
+    lstarr[i].next = lstarr + i + 1;
   }
+  lstarr[len - 1].next = NULL;
   // Restore the stack.
+end:
   stack = temp_stack;
-  return lst;
+  return lstarr;
 }
 
 /*
@@ -231,7 +232,9 @@ STRING VAR(join)(NUMBER n)
 
 NUMBER VAR(stringDASHlength)(STRING str)
 {
-  return mbstrlen(str);
+  size_t len = 0;
+  for (; *str ; str += mblen(str, MB_CUR_MAX), ++len);
+  return len;
 }
 
 STRING VAR(substring)(NUMBER startf, NUMBER endf, STRING str)
@@ -320,13 +323,18 @@ STRING VAR(path)()
 
 LIST VAR(stack)()
 {
-  // We can't return the list or this function is inlined and it breaks.
   LIST lst = NULL;
-  while (stack_length())
+  for (size_t i = 0; i + stack.start < stack.top; ++i)
   {
-    // TODO: Allocate the list as an array for the sake of memory locality.
     cognate_list* tmp = GC_NEW (cognate_list);
-    tmp -> object = pop();
+    tmp -> object = stack.start[i];
+    tmp -> next = lst;
+    lst = tmp;
+  }
+  if (stack.cache.type != NOTHING)
+  {
+    cognate_list* tmp = GC_NEW (cognate_list);
+    tmp -> object = stack.cache;
     tmp -> next = lst;
     lst = tmp;
   }
@@ -351,74 +359,6 @@ void VAR(stop)()
 {
   // Don't check stack length, because it probably wont be empty.
   exit(EXIT_SUCCESS);
-}
-
-TABLE VAR(table)(BLOCK expr)
-{
-  const cognate_stack temp_stack = stack;
-  init_stack();
-  expr();
-  cognate_table *tab = GC_NEW(cognate_table);
-  while (stack_length())
-  {
-    SYMBOL sym = CHECK(symbol, pop());
-    int key = (long)sym;
-    ANY object = pop();
-    cognate_table *ptr = tab;
-    for (unsigned char i = 0; i < 15; ++i)
-    {
-      const unsigned char index = key & 3;
-      if (!ptr->branches[index]) ptr->branches[index] = GC_MALLOC(sizeof(cognate_table*[4]));
-      ptr = ptr->branches[index];
-      key >>= 2;
-    }
-    const unsigned char index = key & 3;
-    if (ptr->objects[index]) throw_error_fmt("duplicate key (%s) in table initialiser", sym);
-    ptr->objects[index] = GC_NEW(ANY);
-    *(ptr->objects[index]) = object;
-  }
-  stack = temp_stack;
-  return tab;
-}
-
-TABLE VAR(insert)(SYMBOL sym, ANY object, TABLE old)
-{
-  int key = (long)sym;
-  cognate_table *new, *ptr = new = GC_MALLOC(sizeof(TABLE) * 4);
-  *new = *old;
-  for (unsigned char i = 0; i < 15; ++i)
-  {
-    const unsigned char index = key & 3;
-    if (old)
-    {
-      *ptr = *old;
-      old = old->branches[index];
-    }
-    ptr->branches[index] = GC_MALLOC(sizeof(cognate_table*[4]));
-    ptr = ptr->branches[index];
-    key >>= 2;
-  }
-  const unsigned char index = key & 3;
-  if (old) *ptr = *old;
-  ptr->objects[index] = GC_NEW(ANY);
-  *(ptr->objects[index]) = object;
-  return new;
-}
-
-ANY VAR(get)(SYMBOL sym, TABLE tab)
-{
-  int key = (long)sym;
-  for (unsigned short i = 0; i < 15; ++i)
-  {
-    tab = tab->branches[key & 3];
-    if (!tab) goto cant_find;
-    key >>= 2;
-  }
-  ANY* object = tab->objects[key & 3];
-  if (object) return *object;
-cant_find:
-  throw_error("cannot index tree");
-
 }
 
 BOOLEAN VAR(match)(STRING reg_str, STRING str)
@@ -562,11 +502,36 @@ LIST VAR(range)(NUMBER start, NUMBER end, NUMBER step)
   return lst;
 }
 
-static size_t mbstrlen(const char* str)
+RECORD VAR(record)(BLOCK init)
 {
-  // Get the number of characters in a multibyte string.
-  // Normal strlen() gets number of bytes for some reason.
-  size_t len = 0;
-  for (; *str ; str += mblen(str, MB_CUR_MAX), ++len);
-  return len;
+  // Move the stack to temporary storage
+  const cognate_stack temp_stack = stack;
+  // Allocate a list as the stack
+  init_stack();
+  // Eval expr
+  init();
+  const size_t len = stack_length();
+  RECORD r = GC_MALLOC (sizeof *r + len * sizeof r->items[0]);
+  r->len = len;
+  for (size_t i = 0; i < len; ++i) r->items[i].name = CHECK(symbol, pop());
+  stack = temp_stack;
+  for (size_t i = 0; i < len; ++i) r->items[i].object = pop();
+  return r;
+}
+
+ANY VAR(get)(SYMBOL key, RECORD rec)
+{
+  size_t index = SIZE_MAX;
+  for (size_t i = 0; i < rec->len; ++i)
+    index += (i + 1) * (rec->items[i].name == key);
+  if unlikely(index == SIZE_MAX) throw_error_fmt("cannot find \\%.32s in record", key);
+  return rec->items[index].object;
+}
+
+BOOLEAN VAR(has)(SYMBOL key, RECORD rec)
+{
+  size_t has = 0;
+  for (size_t i = 0; i < rec->len; ++i)
+    has += rec->items[i].name == key;
+  return has;
 }

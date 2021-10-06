@@ -1,6 +1,6 @@
 Define Foo as (+ 1);
 
-Print If (Foo 4, == 5)
+Print If (Foo 4; == 5)
   'PASS: Function call and return'
 else
   'FAIL: Function call and return';
@@ -8,13 +8,13 @@ else
 Do (
   Define Foo as (+ 3);
 
-  Print If (Foo 5, == 8)
+  Print If (Foo 5; == 8)
     'PASS: Function shadowing 1'
   else
     'FAIL: Function shadowing 1';
 );
 
-Print If (Foo 7, == 8)
+Print If (Foo 7; == 8)
   'PASS: Function shadowing 2'
 else
   'FAIL: Function shadowing 2';
@@ -40,7 +40,7 @@ else
 
 Define Binrec1
 ( Let X;
-  Do If (X, > 1000) (Print 'PASS: Binary recursion')
+  Do If (X; > 1000) (Print 'PASS: Binary recursion')
      else (Binrec2 with + 1 X);
 );
 

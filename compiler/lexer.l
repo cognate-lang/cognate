@@ -61,7 +61,7 @@ S[eE][tT]             return SET;
 "*"  yylval.text=GC_STRDUP("MUL"); return IDENTIFIER;
 "/"  yylval.text=GC_STRDUP("DIV"); return IDENTIFIER;
 
-;|, return ';';
+; return ';';
 \(  brace_depth++; last_openbrace_line = yylloc.first_line; last_openbrace_col = yylloc.first_column; return '(';
 
 \)  if (brace_depth--) return ')'; yyerror("unbalanced brace");

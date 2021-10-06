@@ -1,0 +1,22 @@
+Define Test-record as  ( Record (\foo \bar \baz) );
+Define Test-record2 as ( Record (\bar \baz \foo) );
+
+Print If (Test-record 1 2 3; == Test-record 1 2 3)
+  'PASS: Comparing the same record'
+  'FAIL: Comparing the same record';
+
+Print If (Test-record 1 2 3; == Test-record2 2 3 1)
+  'PASS: Comparing identical records'
+  'FAIL: Comparing identical records';
+
+Print If (Get \bar from Test-record 1 2 3; == 2)
+  'PASS: Getting a value from a record'
+  'FAIL: Getting a value from a record';
+
+Print If (Test-record 1 2 3; Has \baz)
+  'PASS: Checking that a record has a key'
+  'FAIL: Checking that a record has a key';
+
+Print If (Test-record 1 2 3; Not Has \hello)
+  'PASS: Checking that a record does not have a key'
+  'FAIL: Checking that a record does not have a key';

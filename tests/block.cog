@@ -21,7 +21,7 @@ Define Foo as
 
 Foo 'PASS: Implicit block copying';
 Foo 'FAIL: Implicit block copying';
-Drop, Do;
+Drop; Do;
 
 
 Let Y be ();
@@ -33,7 +33,7 @@ Define Foo2 as
 );
 
 
-Foo2 'PASS: Implicit block copying with mutation', Let Z be Y;
-Foo2 'FAIL: Implicit block copying with mutation', Let W be Y;
+Foo2 'PASS: Implicit block copying with mutation'; Let Z be Y;
+Foo2 'FAIL: Implicit block copying with mutation'; Let W be Y;
 Do Z;
 Drop W;

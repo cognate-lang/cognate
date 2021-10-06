@@ -1,56 +1,55 @@
-Print If (2, 3, Drop, == 2)
+Print If (2; 3; Drop; == 2)
   'PASS: Drop'
 else
   'FAIL: Drop';
 
-Print If (5, 6, Swap, == 5)
+Print If (5; 6; Swap; == 5)
   'PASS: Swap'
 else
   'FAIL: Swap';
 
 Drop;
 
-Print If (4, Twin, Drop, == 4)
+Print If (4; Twin; Drop; == 4)
   'PASS: Twin'
 else
   'FAIL: Twin';
 
-Print If (7, Triplet, Drop, Drop, == 7)
+Print If (7; Triplet; Drop; Drop; == 7)
   'PASS: Triplet'
 else
   'FAIL: Triplet';
 
-Print If (2, 3, Do(Drop), == 2)
+Print If (2; 3; Do(Drop); == 2)
   'PASS: Drop (runtime stack)'
 else
   'FAIL: Drop (runtime stack)';
 
-Print If (5, 6, Do(Swap), == 5)
+Print If (5; 6; Do(Swap); == 5)
   'PASS: Swap (runtime stack)'
 else
   'FAIL: Swap (runtime stack)';
 
 Drop;
 
-Print If (4, Do(Twin), Drop, == 4)
+Print If (4; Do(Twin); Drop; == 4)
   'PASS: Twin (runtime stack)'
 else
   'FAIL: Twin (runtime stack)';
 
-Print If (7, Do(Triplet), Drop, Drop, == 7)
+Print If (7; Do(Triplet); Drop; Drop; == 7)
   'PASS: Triplet (runtime stack)'
 else
   'FAIL: Triplet (runtime stack)';
 
 
 
-Print If (1,2,3, Stack, == List (1,2,3))
+Print If (1; 2; 3; Stack; == List (3 2 1))
   'PASS: Stack as list'
 else
   'FAIL: Stack as list';
 
-Print If (Clear, Stack, == List())
+Print If (Clear; Stack; == List())
   'PASS: Clearing the stack'
 else
   'FAIL: Clearing the stack';
-

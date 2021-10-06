@@ -11,13 +11,14 @@
 #define LIST_GROWTH_FACTOR 1.5
 #define STACK_MARGIN_KB    50
 
+// Put the restrict qualifiers back when llvn can stop their compiler segfaulting
 typedef void(^BLOCK)();
 typedef _Bool BOOLEAN;
 typedef double NUMBER;
-typedef const char* restrict STRING;
-typedef const struct cognate_list* restrict LIST;
-typedef const struct cognate_table* restrict TABLE;
-typedef const char* restrict SYMBOL;
+typedef const char* STRING;
+typedef const struct cognate_list*  LIST;
+typedef struct cognate_record* RECORD;
+typedef const char* SYMBOL;
 typedef struct cognate_object ANY;
 
 enum cognate_type
@@ -27,7 +28,7 @@ enum cognate_type
   string  = (1 << 1),
   number  = (1 << 2),
   list    = (1 << 3),
-  table   = (1 << 4),
+  record  = (1 << 4),
   block   = (1 << 5),
   symbol  = (1 << 6),
 };
@@ -39,12 +40,12 @@ typedef struct cognate_object
 {
   union
   {
-    BOOLEAN boolean;   // 1bit bool
-    BLOCK   block;     // 64bit block pointer
-    NUMBER  number;    // 64bit float
-    STRING  string;    // 64bit string pointer
-    LIST    list;      // 64bit list pointer
-    TABLE   table;     // TODO
+    BOOLEAN boolean; // 1bit bool
+    BLOCK   block;   // 64bit block pointer
+    NUMBER  number;  // 64bit float
+    STRING  string;  // 64bit string pointer
+    LIST    list;    // 64bit list pointer
+    RECORD  record;
     SYMBOL  symbol;
     long binary_representation;
   };
@@ -57,14 +58,15 @@ typedef struct cognate_list
   ANY object;
 } cognate_list;
 
-typedef struct cognate_table
+typedef struct cognate_record
 {
-  union
+  size_t len;
+  struct
   {
-    ANY* objects[4];
-    struct cognate_table* branches[4];
-  };
-} cognate_table;
+    SYMBOL name;
+    ANY object;
+  } items [1];
+} cognate_record;
 
 typedef struct cognate_stack
 {
@@ -116,9 +118,6 @@ void print_object(const ANY object, FILE *, const _Bool);
 void _Noreturn __attribute__((format(printf, 1, 2))) throw_error_fmt(const char* restrict const, ...);
 void _Noreturn throw_error(const char* restrict const);
 _Bool compare_objects(ANY, ANY);
-TABLE insert_into_table(int, TABLE, ANY);
-ANY get_from_table(int, TABLE);
-size_t hash(const char *str);
 
 // Variables and functions needed by compiled source file defined in runtime.c
 void init(int, char **);
@@ -194,6 +193,6 @@ LIST VAR(map)(BLOCK, LIST);
 LIST VAR(filter)(BLOCK, LIST);
 void VAR(for)(LIST, BLOCK);
 LIST VAR(range)(NUMBER, NUMBER, NUMBER);
-TABLE VAR(table)(BLOCK);
-ANY VAR(get)(STRING, TABLE);
-TABLE VAR(insert)(STRING, ANY, TABLE);
+RECORD VAR(record)(BLOCK);
+ANY VAR(get)(SYMBOL, RECORD);
+BOOLEAN VAR(has)(SYMBOL, RECORD);

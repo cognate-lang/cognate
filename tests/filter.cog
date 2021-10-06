@@ -1,12 +1,12 @@
-Print If (Filter (Modulo 2, == 0) over the List (1,2,3,4,5), == List (2, 4))
+Print If (Filter (Modulo 2; == 0) over the List (1;2;3;4;5); == List (2; 4))
   then 'PASS: Filtering a list'
   else 'FAIL: Filtering a list';
 
-Print If (Filter (Modulo 2, == 0) over the List (), == List ())
+Print If (Filter (Modulo 2; == 0) over the List (); == List ())
   then 'PASS: Filtering an empty list'
   else 'FAIL: Filtering an empty list';
 
 Let X be True;
-Print If (Filter (Drop, X, Set X to Not X) over the List (1,2,3,4,5), == List (1,3,5))
+Print If (Filter (Drop; X; Set X to Not X) over the List (1;2;3;4;5); == List (1;3;5))
   then 'PASS: Filtering a list in order'
   else 'FAIL: Filtering a list in order';
