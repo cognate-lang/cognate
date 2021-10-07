@@ -444,15 +444,9 @@ int main(int argc, char** argv)
   add_symbols(full_ast);
   compile(full_ast, NULL, predeclare(full_ast, builtins()));
   fputs("cleanup();}\n", outfile);
-#ifdef __APPLE__
   char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-Iruntime", "runtime/runtime.o", "runtime/functions.o",
                    "-lgc", optimize ? "-Ofast" : "-O0", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
-                   "-std=c11", "-lm", "-g0", optimize ? "-flto" : "-fno-lto", debug ? "-ggdb3" : "", NULL };
-#else
-  char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-Iruntime", "runtime/runtime.o", "runtime/functions.o",
-                   "-lgc", optimize ? "-Ofast" : "-O0", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
-                   "-std=c11", "-lm", "-g0", "-fuse-ld=lld", optimize ? "-flto" : "-fno-lto", debug ? "-ggdb3" : "", NULL };
-#endif
+                   "-std=c11", "-lm", "-g0", "-flto", debug ? "-ggdb3" : "", NULL };
   fflush(outfile);
   if (fork() == 0) execvp(args[0], args); else wait(NULL);
   if (run) execvp(argv[0], argv);
