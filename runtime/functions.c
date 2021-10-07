@@ -1,19 +1,13 @@
 #include "runtime.h"
 
-#include <errno.h>
 #include <math.h>
 #include <regex.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdint.h>
-#include <fcntl.h>
-#include <sys/mman.h>
 #include <sys/stat.h>
-#ifndef NO_GC
 #include <gc/gc.h>
-#endif
 
 ANY VAR(if)(BLOCK cond, ANY a, ANY b)
 {

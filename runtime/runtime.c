@@ -4,13 +4,10 @@
 #include <errno.h>
 #include <locale.h>
 #include <signal.h>
-#include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/resource.h>
 #include <time.h>
-#include <stdarg.h>
 #include <math.h>
 #include <gc/gc.h>
 
