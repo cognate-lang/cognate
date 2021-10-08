@@ -92,7 +92,7 @@ decl_list* lookup_word(char* name, decl_list* defs)
 
 void add_symbols(ast* tree)
 {
-  while (tree)
+  for (; tree ; tree = tree->next)
   {
     if (tree->type == value)
     {
@@ -106,7 +106,7 @@ void add_symbols(ast* tree)
         if (!already_declared)
         {
           fprintf(outfile, "const SYMBOL SYM(%s)=\"%s\";", restrict_chars(tree->text), tree->text);
-          sym_list* s = GC_MALLOC(sizeof(*s));
+          sym_list* s = GC_NEW(sym_list);
           s->name = tree->text;
           s->next = declared_symbols;
           declared_symbols = s;
@@ -117,7 +117,6 @@ void add_symbols(ast* tree)
         add_symbols(tree->data);
       }
     }
-    tree = tree->next;
   }
 }
 
@@ -150,8 +149,8 @@ decl_list* predeclare(ast* head, decl_list* defs)
       if (lookup_word(tree->text, already_predeclared)) yyerror("already defined in this block");
       // We are leaking memory here.
       // This could be stack memory with alloca() is we moved the allocation.
-      decl_list* def  = GC_MALLOC(sizeof(*def));
-      decl_list* def2 = GC_MALLOC(sizeof(*def2));
+      decl_list* def  = GC_NEW(decl_list);
+      decl_list* def2 = GC_NEW(decl_list);
       *def = (decl_list){.type=(tree->type == let) ? var : func,
                          .next = defs, .name = tree->text,
                          .needs_stack = true,
@@ -209,7 +208,7 @@ reg_list* emit_register(value_type type, reg_list* regs)
 
 reg_list* add_register(value_type type, reg_list* next)
 {
-  reg_list* r = GC_MALLOC(sizeof(*r));
+  reg_list* r = GC_NEW(reg_list);
   *r = (reg_list){.type = type, .id = current_register++, .next=next};
   fprintf(outfile, "const %s r%zi=", type_as_str[r->type][true], r->id);
   return r;
@@ -222,7 +221,6 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
     assert_registers(0, 0, registers);
     return;
   }
-  decl_list d;
   const char* footer = "";
   yylloc.first_column = tree->col; // This lets us use yyerror()
   yylloc.first_line = tree->line;
@@ -312,7 +310,8 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
     case let:
     {
       registers = assert_registers(1, LONG_MAX, registers);
-      d = (decl_list)
+      decl_list* d = GC_NEW(decl_list);
+      *d = (decl_list)
       {
         .name = tree->text,
         .next = defs,
@@ -322,12 +321,12 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
         .builtin = false
       };
       char* tag = "const";
-      if (is_mutated(tree->next, d)) d.ret = any, tag = "";
-      if (needs_block_tag(tree->next, d)) tag = "__block";
-      fprintf(outfile, "%s %s VAR(%s)=", tag, type_as_str[d.ret][true], restrict_chars(d.name));
-      registers = emit_register(d.ret, registers);
+      if (is_mutated(tree->next, *d)) d->ret = any, tag = "";
+      if (needs_block_tag(tree->next, *d)) tag = "__block";
+      fprintf(outfile, "%s %s VAR(%s)=", tag, type_as_str[d->ret][true], restrict_chars(d->name));
+      registers = emit_register(d->ret, registers);
       fputs(";{", outfile);
-      defs = &d;
+      defs = d;
       footer = "}";
     }
     break;
@@ -361,7 +360,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 reg_list* twin_register(reg_list* registers)
 {
   registers = assert_registers(1, LONG_MAX, registers);
-  reg_list* r1 = GC_MALLOC(sizeof(*r1));
+  reg_list* r1 = GC_NEW(reg_list);
   *r1 = *registers;
   r1->next = registers;
   return r1;
@@ -377,8 +376,8 @@ reg_list* drop_register(reg_list* registers)
 reg_list* triplet_register(reg_list* registers)
 {
   registers = assert_registers(1, LONG_MAX, registers);
-  reg_list* r1 = GC_MALLOC(sizeof(*r1));
-  reg_list* r2 = GC_MALLOC(sizeof(*r2));
+  reg_list* r1 = GC_NEW(reg_list);
+  reg_list* r2 = GC_NEW(reg_list);
   *r1 = *registers;
   *r2 = *registers;
   r1->next = registers;
