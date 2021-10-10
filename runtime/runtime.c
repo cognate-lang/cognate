@@ -1,6 +1,7 @@
 #include "runtime.h"
 #include <ctype.h>
 #include <errno.h>
+#include <stdarg.h>
 #include <locale.h>
 #include <signal.h>
 #include <stdlib.h>

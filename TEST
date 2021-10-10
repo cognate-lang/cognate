@@ -22,7 +22,7 @@ do
   # Clear log file
   rm -f $log_file
   # Compile
-  { cognac $source_file -debug -run; } 2>>$log_file 1>&2
+  { cognac $source_file -run; } 2>>$log_file 1>&2
   # Check if any tests failed
   if [[ $(grep '^PASS:' $log_file) == $(<$log_file) ]]; then
     # If all tests passed

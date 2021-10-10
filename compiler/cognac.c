@@ -12,8 +12,7 @@ FILE* outfile;
 size_t current_register = 0;
 sym_list* declared_symbols = NULL;
 ast* full_ast;
-bool optimize = false;
-bool debug = false;
+bool release = false;
 
 char* restrict_chars(char* in)
 {
@@ -224,7 +223,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
   const char* footer = "";
   yylloc.first_column = tree->col; // This lets us use yyerror()
   yylloc.first_line = tree->line;
-  if (debug) fprintf(outfile, "\n#line %zi\n", tree->line);
+  if (!release) fprintf(outfile, "\n#line %zi\n", tree->line);
   switch (tree->type)
   {
     case identifier:
@@ -237,7 +236,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       switch(def->type)
       {
         case func:
-          fprintf(outfile,"%s(%s,(", debug ? "CALLDEBUG" : "CALL", restrict_chars(def->name));
+          fprintf(outfile,"%s(%s,(", release ? "CALL" : "CALLDEBUG", restrict_chars(def->name));
           for (unsigned short i = 0; i < def->argc; ++i)
           {
             registers = emit_register(def->args[i], registers);
@@ -431,21 +430,20 @@ int main(int argc, char** argv)
     char* opt = *argv;
     if (!opt) break;
     else if (!strcmp(opt, "-output")) { binary_file_path = argv[1]; argv++; }
-    else if (!strcmp(opt, "-optimize")) optimize = true;
-    else if (!strcmp(opt, "-debug")) debug = true;
+    else if (!strcmp(opt, "-release")) release = true;
     else if (!strcmp(opt, "-run")) { run = true; argv[0] = binary_file_path; /* TODO prepend path with ./ */ break; }
     else { fprintf(stderr, "Invalid option: %s\n", opt); return EXIT_FAILURE; }
   }
   yyparse();
   fputs("#include<cognate/runtime.h>\n",outfile);
-  if (debug) fprintf(outfile, "#line 1 \"%s\"\n", source_file_path);
+  if (!release) fprintf(outfile, "#line 1 \"%s\"\n", source_file_path);
   fputs("int main(int argc,char** argv){init(argc,argv);",outfile);
   add_symbols(full_ast);
   compile(full_ast, NULL, predeclare(full_ast, builtins()));
   fputs("cleanup();}\n", outfile);
   char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-l:libcognate.a",
-                   "-lgc", optimize ? "-Ofast" : "-O0", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
-                   "-std=c11", "-lm", "-g0", "-flto", debug ? "-ggdb3" : "-s", NULL };
+                   "-lgc", release ? "-Ofast" : "-O1", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
+                   "-std=c11", "-lm", "-g0", "-flto", release ? "-s" : "-ggdb3", NULL };
   fflush(outfile);
   if (fork() == 0) execvp(args[0], args); else wait(NULL);
   if (run) execvp(argv[0], argv);
