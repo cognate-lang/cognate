@@ -1,5 +1,4 @@
 #include "runtime.h"
-
 #include <ctype.h>
 #include <errno.h>
 #include <locale.h>

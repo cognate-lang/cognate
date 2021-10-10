@@ -1,12 +1,28 @@
 CC=clang
+CFLAGS=-Wall -Wextra -pedantic -fblocks -Ofast -flto
+PREFIX=/usr/local
+INCLUDEDIR=$(PREFIX)/include/cognate
+LIBDIR=$(PREFIX)/lib
+BINDIR=$(PREFIX)/bin
 
-build: cognac runtime/functions.o runtime/runtime.o
+build: cognac libcognate.a
+
+install: build
+	mkdir -p $(PREFIX)/include/cognate
+	cp runtime/runtime.h $(INCLUDEDIR)/runtime.h
+	cp libcognate.a $(LIBDIR)/libcognate.a
+	cp cognac $(BINDIR)/cognac
+
+uninstall:
+	rm -rf $(INCLUDEDIR) $(LIBDIR)/libcognate.a $(BINDIR)/cognac
 
 cognac: compiler/lexer.c compiler/parser.c compiler/parser.h compiler/cognac.c compiler/builtins.c compiler/cognac.h
-	$(CC) compiler/lexer.c compiler/parser.c compiler/cognac.c -Ofast -o cognac -lgc -Wall -Wextra -Werror -pedantic-errors
+	$(CC) compiler/lexer.c compiler/parser.c compiler/cognac.c -o cognac -lgc $(CFLAGS)
 
-runtime/%.o: runtime/%.c runtime/runtime.h
-	$(CC) -c -Wall -Wextra -Werror -pedantic-errors -fblocks -Ofast -flto -o $@ $<
+libcognate.a: runtime/runtime.c runtime/functions.c runtime/runtime.h
+	$(CC) -c $(CFLAGS) -o runtime.o runtime/runtime.c
+	$(CC) -c $(CFLAGS) -o functions.o runtime/functions.c
+	llvm-ar rvs libcognate.a runtime.o functions.o
 
 compiler/lexer.c: compiler/lexer.l
 	flex -o compiler/lexer.c compiler/lexer.l
@@ -15,7 +31,4 @@ compiler/parser.c compiler/parser.h: compiler/parser.y
 	bison compiler/parser.y --defines=compiler/parser.h -o compiler/parser.c
 
 clean:
-	rm -f compiler/lexer.c compiler/parser.h compiler/parser.c cognac runtime/runtime.o runtime/functions.o
-
-test: build
-	./TEST
+	rm -f compiler/lexer.c compiler/parser.h compiler/parser.c cognac libcognate.a runtime.o functions.o

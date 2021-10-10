@@ -437,15 +437,15 @@ int main(int argc, char** argv)
     else { fprintf(stderr, "Invalid option: %s\n", opt); return EXIT_FAILURE; }
   }
   yyparse();
-  fputs("#include\"runtime.h\"\n",outfile);
+  fputs("#include<cognate/runtime.h>\n",outfile);
   if (debug) fprintf(outfile, "#line 1 \"%s\"\n", source_file_path);
   fputs("int main(int argc,char** argv){init(argc,argv);",outfile);
   add_symbols(full_ast);
   compile(full_ast, NULL, predeclare(full_ast, builtins()));
   fputs("cleanup();}\n", outfile);
-  char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-Iruntime", "runtime/runtime.o", "runtime/functions.o",
+  char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-l:libcognate.a",
                    "-lgc", optimize ? "-Ofast" : "-O0", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
-                   "-std=c11", "-lm", "-g0", "-flto", debug ? "-ggdb3" : "", NULL };
+                   "-std=c11", "-lm", "-g0", "-flto", debug ? "-ggdb3" : "-s", NULL };
   fflush(outfile);
   if (fork() == 0) execvp(args[0], args); else wait(NULL);
   if (run) execvp(argv[0], argv);

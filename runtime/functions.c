@@ -1,5 +1,4 @@
 #include "runtime.h"
-
 #include <math.h>
 #include <regex.h>
 #include <stdlib.h>

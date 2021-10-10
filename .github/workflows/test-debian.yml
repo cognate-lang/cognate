@@ -13,14 +13,14 @@ jobs:
       - name: Aquire dependencies and compile
         shell: bash
         run: |
-          sudo apt install flex bison libblocksruntime-dev libgc-dev clang -y
+          sudo apt install flex bison libgc-dev clang llvm -y
           cd $GITHUB_WORKSPACE
-          make
+          sudo make install
       - name: Run test script
         shell: bash
         run: |
           cd $GITHUB_WORKSPACE
-          make test
+          ./TEST
       - name: Upload test output
         if: failure()
         uses: actions/upload-artifact@v2

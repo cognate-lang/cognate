@@ -12,7 +12,7 @@ CognaC compiles Cognate directly to C. This produces very efficient binaries and
 |                 | Python 3 | Lua   | Ruby  | CognaC | Lisp (SBCL) | Gforth | Haskell (GHC) | Lua (JIT) | Go     | C++ (G++) | C (GCC) |
 |-----------------|----------|-------|-------|--------|-------------|--------|---------------|-----------|--------|-----------|---------|
 | fib(35) runtime | 3.15s    | 1.33s | 1.32s | 0.22s  | 0.19s       | 0.19s  | 0.15s         | 0.14s     | 0.08s  | 0.04s     | 0.04s   |
-| fib binary size | N/A      | N/A   | N/A   | 20k    | N/A         | N/A    | 896k          | N/A       | 2M     | 24k       | 20k     |
+| fib binary size | N/A      | N/A   | N/A   | 16k    | N/A         | N/A    | 896k          | N/A       | 2M     | 24k       | 20k     |
 
 (If newer language versions produce different results, please submit an issue so I can update this table)
 
@@ -30,12 +30,19 @@ Currently, Cognate will run on Linux and MacOS systems. If you use Windows 10, t
 ```
 make
 ```
+If that succeeds, install the compiler with the following command:
+```
+sudo make install
+```
+This installs cognate to the /usr/local prefix. To install to a different directory, use this command
+```
+sudo make PREFIX=/my/prefix/dir install
+```
 You should then run the test script to test Cognate's functionality. This should work regardless of operating system.
 ```
-make test
+./TEST
 ```
 If the tests all pass (they should!), you can then try running some of the included demo programs like this:
 ```
-./cognac examples/fizzbuzz.cog
-./examples/fizzbuzz
+cognac examples/fizzbuzz.cog -run
 ```
