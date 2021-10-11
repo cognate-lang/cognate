@@ -67,8 +67,8 @@ NUMBER VAR(random)(NUMBER low, NUMBER high, NUMBER step)
 
 void VAR(clear)() { stack.cache.type = NOTHING; stack.top=stack.start; }
 
-ANY VAR(true) = OBJ(boolean,1);
-ANY VAR(false) = OBJ(boolean,0);
+BOOLEAN VAR(true) =  1;
+BOOLEAN VAR(false) = 0;
 
 BOOLEAN VAR(either)(BOOLEAN a, BOOLEAN b) { return a || b; }
 BOOLEAN VAR(both)(BOOLEAN a, BOOLEAN b) { return a && b; }

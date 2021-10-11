@@ -430,7 +430,7 @@ int main(int argc, char** argv)
     if      (!strcmp(*argv, "-output")) { binary_file_path = argv[1]; argv++; }
     else if (!strcmp(*argv, "-release")) release = true;
     else if (!strcmp(*argv, "-run")) { run = true; argv[0] = binary_file_path; /* TODO prepend path with ./ */ break; }
-    else { fprintf(stderr, "Invalid option: %s\n", opt); return EXIT_FAILURE; }
+    else { fprintf(stderr, "Invalid option: %s\n", *argv); return EXIT_FAILURE; }
   }
   yyparse();
   fputs("#include<cognate/runtime.h>\n",outfile);
