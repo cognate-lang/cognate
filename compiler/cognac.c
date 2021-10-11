@@ -425,13 +425,11 @@ int main(int argc, char** argv)
   outfile = fopen(c_file_path, "w");
   yyin = fopen(source_file_path, "r");
   if (!yyin) { fprintf(stderr, "File %s not found\n", source_file_path); return EXIT_FAILURE; }
-  for (argv += 2 ;; argv++)
+  for (argv += 2 ; *argv ; argv++)
   {
-    char* opt = *argv;
-    if (!opt) break;
-    else if (!strcmp(opt, "-output")) { binary_file_path = argv[1]; argv++; }
-    else if (!strcmp(opt, "-release")) release = true;
-    else if (!strcmp(opt, "-run")) { run = true; argv[0] = binary_file_path; /* TODO prepend path with ./ */ break; }
+    if      (!strcmp(*argv, "-output")) { binary_file_path = argv[1]; argv++; }
+    else if (!strcmp(*argv, "-release")) release = true;
+    else if (!strcmp(*argv, "-run")) { run = true; argv[0] = binary_file_path; /* TODO prepend path with ./ */ break; }
     else { fprintf(stderr, "Invalid option: %s\n", opt); return EXIT_FAILURE; }
   }
   yyparse();
