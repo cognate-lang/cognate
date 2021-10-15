@@ -444,9 +444,10 @@ int main(int argc, char** argv)
                    "-std=c11", "-lm", "-g0", "-flto", release ? "-s" : "-ggdb3", NULL };
   fflush(outfile);
   if (fork() == 0) execvp(args[0], args); else wait(NULL);
+  if (!run) return EXIT_SUCCESS;
   char prog_name[strlen(argv[0])];
   strcpy(prog_name, "./");
   strcpy(prog_name + 2, argv[0]);
   argv[0] = prog_name;
-  if (run) execvp(argv[0], argv);
+  execvp(argv[0], argv);
 }
