@@ -412,7 +412,7 @@ decl_list* builtins(void)
 
 int main(int argc, char** argv)
 {
-  if (argc < 2 || !strchr(argv[1], '.') || strcmp(".cog", strchr(argv[1], '.')))
+  if (argc < 2 || !strchr(argv[1], '.') || strcmp(".cog", strchr(argv[1], '.'))) // Will not work with ./ or ../ filepaths TODO
   {
     fprintf(stderr, "Usage: %s filename.cog -option1 -option2\n", argv[0]);
     return EXIT_FAILURE;
@@ -444,5 +444,9 @@ int main(int argc, char** argv)
                    "-std=c11", "-lm", "-g0", "-flto", release ? "-s" : "-ggdb3", NULL };
   fflush(outfile);
   if (fork() == 0) execvp(args[0], args); else wait(NULL);
+  char prog_name[strlen(argv[0])];
+  strcpy(prog_name, "./");
+  strcpy(prog_name + 2, argv[0]);
+  argv[0] = prog_name;
   if (run) execvp(argv[0], argv);
 }
