@@ -1,0 +1,22 @@
+Define Test-group as  ( Group (\foo \bar \baz) );
+Define Test-group2 as ( Group (\bar \baz \foo) );
+
+Print If (Test-group 1 2 3; == Test-group 1 2 3)
+  'PASS: Comparing the same record'
+  'FAIL: Comparing the same record';
+
+Print If (Test-group 1 2 3; == Test-group2 2 3 1)
+  'PASS: Comparing identical records'
+  'FAIL: Comparing identical records';
+
+Print If (The \bar in Test-group 1 2 3; == 2)
+  'PASS: Theting a value from a record'
+  'FAIL: Theting a value from a record';
+
+Print If (Test-group 1 2 3; Has \baz)
+  'PASS: Checking that a record has a key'
+  'FAIL: Checking that a record has a key';
+
+Print If (Test-group 1 2 3; Not Has \hello)
+  'PASS: Checking that a record does not have a key'
+  'FAIL: Checking that a record does not have a key';

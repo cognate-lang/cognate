@@ -55,7 +55,7 @@ char* type_as_str[8][2] =
   [symbol]  = { "symbol",  "SYMBOL"  },
   [boolean] = { "boolean", "BOOLEAN" },
   [list]    = { "list",    "LIST"    },
-  [record]  = { "record",  "RECORD"  },
+  [group]   = { "group",   "GROUP"   },
 };
 
 reg_list* assert_registers(size_t lower, size_t upper, reg_list* registers)

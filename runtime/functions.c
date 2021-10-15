@@ -495,7 +495,7 @@ LIST VAR(range)(NUMBER start, NUMBER end, NUMBER step)
   return lst;
 }
 
-RECORD VAR(record)(BLOCK init)
+GROUP VAR(group)(BLOCK init)
 {
   // Move the stack to temporary storage
   const cognate_stack temp_stack = stack;
@@ -504,27 +504,27 @@ RECORD VAR(record)(BLOCK init)
   // Eval expr
   init();
   const size_t len = stack_length();
-  RECORD r = GC_MALLOC (sizeof *r + len * sizeof r->items[0]);
-  r->len = len;
-  for (size_t i = 0; i < len; ++i) r->items[i].name = CHECK(symbol, pop());
+  GROUP g = GC_MALLOC (sizeof *g + len * sizeof g->items[0]);
+  g->len = len;
+  for (size_t i = 0; i < len; ++i) g->items[i].name = CHECK(symbol, pop());
   stack = temp_stack;
-  for (size_t i = 0; i < len; ++i) r->items[i].object = pop();
-  return r;
+  for (size_t i = 0; i < len; ++i) g->items[i].object = pop();
+  return g;
 }
 
-ANY VAR(get)(SYMBOL key, RECORD rec)
+ANY VAR(the)(SYMBOL key, GROUP g)
 {
   size_t index = SIZE_MAX;
-  for (size_t i = 0; i < rec->len; ++i)
-    index += (i + 1) * (rec->items[i].name == key);
+  for (size_t i = 0; i < g->len; ++i)
+    index += (i + 1) * (g->items[i].name == key);
   if unlikely(index == SIZE_MAX) throw_error_fmt("cannot find \\%.32s in record", key);
-  return rec->items[index].object;
+  return g->items[index].object;
 }
 
-BOOLEAN VAR(has)(SYMBOL key, RECORD rec)
+BOOLEAN VAR(has)(SYMBOL key, GROUP g)
 {
   size_t has = 0;
-  for (size_t i = 0; i < rec->len; ++i)
-    has += rec->items[i].name == key;
+  for (size_t i = 0; i < g->len; ++i)
+    has += g->items[i].name == key;
   return has;
 }

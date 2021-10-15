@@ -13,7 +13,7 @@
 
 static const char *lookup_type(cognate_type);
 static _Bool compare_lists(LIST, LIST);
-static _Bool compare_records(RECORD, RECORD);
+static _Bool compare_groups(GROUP, GROUP);
 static void handle_error_signal(int);
 
 cognate_stack stack;
@@ -188,15 +188,15 @@ void print_object (const ANY object, FILE* out, const _Bool quotes)
       fputc(')', out);
       return;
     }
-    case record:
+    case group:
     {
-      RECORD rec = object.record;
+      GROUP g = object.group;
       fputc('(', out);
-      for (size_t i = 0; i < rec->len; ++i)
+      for (size_t i = 0; i < g->len; ++i)
       {
-        fprintf(out, "%s: ", rec->items[i].name);
-        print_object(rec->items[i].object, out, 1);
-        if likely(i + 1 < rec->len) fputs(", ", out);
+        fprintf(out, "%s: ", g->items[i].name);
+        print_object(g->items[i].object, out, 1);
+        if likely(i + 1 < g->len) fputs(", ", out);
       }
       fputc(')', out);
       return;
@@ -260,14 +260,14 @@ ANY check_type(cognate_type expected_type, ANY object)
 
 const char* lookup_type(cognate_type type)
 {
-  char str[] = "\0oolean/String/Number/List/Block/Record/Symbol";
+  char str[] = "\0oolean/String/Number/List/Block/Group/Symbol";
   if (!type) return "NOTHING";
   if (type & boolean) strcat(str, "/Boolean");
   if (type & string)  strcat(str, "/String");
   if (type & number)  strcat(str, "/Number");
   if (type & list)    strcat(str, "/List");
   if (type & block)   strcat(str, "/Block");
-  if (type & record)  strcat(str, "/Record");
+  if (type & group)   strcat(str, "/Group");
   if (type & symbol)  strcat(str, "/Symbol");
   return GC_STRDUP(str + 1);
 }
@@ -286,28 +286,28 @@ _Bool compare_lists(LIST lst1, LIST lst2)
   return 0;
 }
 
-static _Bool compare_records(RECORD rec1, RECORD rec2)
+static _Bool compare_groups(GROUP g1, GROUP g2)
 {
-  if (rec1->len != rec2->len) return 0;
-  size_t len = rec1->len;
+  if (g1->len != g2->len) return 0;
+  size_t len = g1->len;
   for (size_t i = 0; i < len; ++i)
   {
-    SYMBOL name = rec1->items[i].name;
+    SYMBOL name = g1->items[i].name;
     size_t index1 = i;
     size_t index2 = 0;
-    if (name == rec2->items[i].name) index2 = i;
+    if (name == g2->items[i].name) index2 = i;
     else
     {
       _Bool found = 0;
       for (size_t ii = 0; ii < len; ++ii)
       {
-        const _Bool eq = name == rec2->items[ii].name;
+        const _Bool eq = name == g2->items[ii].name;
         found |= eq;
         index2 += ii * eq;
       }
       if (!found) return 0;
     }
-    if (!compare_objects(rec1->items[index1].object, rec2->items[index2].object))
+    if (!compare_objects(g1->items[index1].object, g2->items[index2].object))
       return 0;
   }
   return 1;
@@ -327,7 +327,7 @@ _Bool compare_objects(ANY ob1, ANY ob2)
     case symbol  : return ob1.symbol == ob2.symbol;
     case list    : return compare_lists(ob1.list, ob2.list);
     case block   : throw_error("cannot compare blocks");
-    case record  : return compare_records(ob1.record, ob2.record);
+    case group   : return compare_groups(ob1.group, ob2.group);
     case NOTHING : __builtin_trap();
   }
 }

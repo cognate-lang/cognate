@@ -17,7 +17,7 @@ typedef _Bool BOOLEAN;
 typedef double NUMBER;
 typedef const char* STRING;
 typedef const struct cognate_list*  LIST;
-typedef struct cognate_record* RECORD;
+typedef struct cognate_group* GROUP;
 typedef const char* SYMBOL;
 typedef struct cognate_object ANY;
 
@@ -28,7 +28,7 @@ enum cognate_type
   string  = (1 << 1),
   number  = (1 << 2),
   list    = (1 << 3),
-  record  = (1 << 4),
+  group   = (1 << 4),
   block   = (1 << 5),
   symbol  = (1 << 6),
 };
@@ -45,7 +45,7 @@ typedef struct cognate_object
     NUMBER  number;  // 64bit float
     STRING  string;  // 64bit string pointer
     LIST    list;    // 64bit list pointer
-    RECORD  record;
+    GROUP   group;
     SYMBOL  symbol;
     long binary_representation;
   };
@@ -58,7 +58,7 @@ typedef struct cognate_list
   ANY object;
 } cognate_list;
 
-typedef struct cognate_record
+typedef struct cognate_group
 {
   size_t len;
   struct
@@ -66,7 +66,7 @@ typedef struct cognate_record
     SYMBOL name;
     ANY object;
   } items [1];
-} cognate_record;
+} cognate_group;
 
 typedef struct cognate_stack
 {
@@ -193,6 +193,6 @@ LIST VAR(map)(BLOCK, LIST);
 LIST VAR(filter)(BLOCK, LIST);
 void VAR(for)(LIST, BLOCK);
 LIST VAR(range)(NUMBER, NUMBER, NUMBER);
-RECORD VAR(record)(BLOCK);
-ANY VAR(get)(SYMBOL, RECORD);
-BOOLEAN VAR(has)(SYMBOL, RECORD);
+GROUP VAR(group)(BLOCK);
+ANY VAR(the)(SYMBOL, GROUP);
+BOOLEAN VAR(has)(SYMBOL, GROUP);
