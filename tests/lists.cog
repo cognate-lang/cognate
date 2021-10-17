@@ -44,3 +44,7 @@ Print If (Rest of List (1); == List ())
   'PASS: Getting Rest of single-element list'
 else
   'FAIL: Getting Rest of single-element list';
+
+Print If (Index 3 of List (1 2 3 4 5); == 4)
+  'PASS: Getting index of list'
+  'FAIL: Getting index of list';

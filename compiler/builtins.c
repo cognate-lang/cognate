@@ -64,4 +64,5 @@
 {.name="group", .type=func, .argc=1, .args={block}, .rets=true, .ret=group, .needs_stack=true},
 {.name="the", .type=func, .argc=2, .args={symbol, group}, .rets=true, .ret=any},
 {.name="has", .type=func, .argc=2, .args={symbol, group}, .rets=true, .ret=boolean},
+{.name="index", .type=func, .argc=2, .args={number, list}, .rets=true, .ret=any},
 {.name="stop"},

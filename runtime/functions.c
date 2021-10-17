@@ -40,7 +40,7 @@ NUMBER VAR(DIV)(NUMBER a, NUMBER b) { if likely(a) return b / a; throw_error_fmt
 
 NUMBER VAR(modulo)(NUMBER a, NUMBER b)
 {
-  if likely(a) return fmod(b, a);
+  if likely(a) return b - a * floor(b / a);
   throw_error_fmt("modulo of %.14g by zero", b);
 }
 
@@ -527,4 +527,15 @@ BOOLEAN VAR(has)(SYMBOL key, GROUP g)
   for (size_t i = 0; i < g->len; ++i)
     has += g->items[i].name == key;
   return has;
+}
+
+ANY VAR(index)(NUMBER ind, LIST lst)
+{
+  size_t i = ind;
+  if unlikely(i != ind) throw_error_fmt("cannot get index %.14g", ind);
+  for (;lst;lst=lst->next)
+  {
+    if (!i--) return lst->object;
+  }
+  throw_error_fmt("index %zi is outside of array", (size_t)ind);
 }
