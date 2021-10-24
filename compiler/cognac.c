@@ -270,6 +270,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
         if (ifdef && ifdef->builtin && strcmp(ifdef->name, "if") == 0
          && dodef && dodef->builtin && strcmp(dodef->name, "do") == 0)
         {
+          registers = assert_registers(0, 0, registers);
           fputs("{", outfile);
           compile(tree->next->next->data, NULL, predeclare(tree->next->next->data, defs));
           fputs("}if(CHECK(boolean,pop())){", outfile);

@@ -387,10 +387,8 @@ BOOLEAN VAR(match)(STRING reg_str, STRING str)
 
 NUMBER VAR(ordinal)(STRING str)
 {
-  if unlikely(str[0] && !str[1])
-  {
+  if unlikely(!str[0] || str[1])
     throw_error_fmt("Invalid string '%.32s' (should be length 1)", str);
-  }
   wchar_t chr = 0;
   mbtowc(&chr, str, MB_CUR_MAX);
   return chr;

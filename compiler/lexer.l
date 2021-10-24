@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <gc/gc.h>
+#include <limits.h>
 
 char* lc(char* s)
 {
@@ -16,16 +17,25 @@ char* lc(char* s)
 void yyerror(char* str)
 {
   char header[20];
-  sprintf(header, "Line %d: ", yylloc.first_line);
+  int line_n = yylloc.first_line;
+  sprintf(header, "Line %d: ", line_n);
+  int col_n = yylloc.first_column + strlen(header) - 1;
   fprintf(stderr, "\033[0;2m%s", header);
   char* line = NULL;
   rewind(yyin);
-  while (--yylloc.first_line) fgets(NULL, 0, yyin);
+  while (--line_n)
+  {
+    char c;
+    do { c = fgetc(yyin); } while (c != '\n');
+  }
   size_t n = SIZE_MAX;
   getline(&line, &n, yyin);
+  int whitespace = 0;
+  while (isspace(line[whitespace])) whitespace++;
+  line += whitespace;
+  col_n -= whitespace;
   fprintf(stderr, "\033[0;1m%s", line);
-  yylloc.first_column += strlen(header) - 1;
-  while (--yylloc.first_column) fputc(' ', stderr);
+  while (--col_n) fputc(' ', stderr);
   fprintf(stderr, "\033[31;1m↳ %s\033[0m\n", str);
   exit(EXIT_FAILURE);
 }
