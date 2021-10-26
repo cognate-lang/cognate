@@ -11,50 +11,37 @@
 #define LIST_GROWTH_FACTOR 1.5
 #define STACK_MARGIN_KB    50
 
-// Put the restrict qualifiers back when llvn can stop their compiler segfaulting
+typedef unsigned long ANY;
+typedef ANY* restrict ANYPTR;
 typedef void(^BLOCK)();
 typedef _Bool BOOLEAN;
 typedef double NUMBER;
-typedef const char* STRING;
-typedef const struct cognate_list*  LIST;
-typedef struct cognate_group* GROUP;
-typedef const char* SYMBOL;
-typedef struct cognate_object ANY;
+typedef const char* restrict STRING;
+typedef const struct cognate_list* restrict LIST;
+typedef struct cognate_group* restrict GROUP;
+typedef const char* restrict SYMBOL;
 
-enum cognate_type
+typedef enum cognate_type
 {
-  NOTHING = 0, // Must be zero because of calloc()
-  boolean = (1 << 0),
-  string  = (1 << 1),
-  number  = (1 << 2),
-  list    = (1 << 3),
-  group   = (1 << 4),
-  block   = (1 << 5),
-  symbol  = (1 << 6),
-};
+  NOTHING = 0,
+  boolean = 1,
+  string  = 2,
+  list    = 3,
+  group   = 4,
+  block   = 5,
+  symbol  = 6,
+  number  = -1,
+} cognate_type;
 
-// Enumerates all possible types of a cognate_object
-typedef enum cognate_type cognate_type;
-
-typedef struct cognate_object
+typedef struct type_punning
 {
-  union
-  {
-    BOOLEAN boolean; // 1bit bool
-    BLOCK   block;   // 64bit block pointer
-    NUMBER  number;  // 64bit float
-    STRING  string;  // 64bit string pointer
-    LIST    list;    // 64bit list pointer
-    GROUP   group;
-    SYMBOL  symbol;
-    long binary_representation;
-  };
-  cognate_type type;
-} cognate_object;
+  double d;
+  long l;
+} type_punning;
 
 typedef struct cognate_list
 {
-  LIST restrict next;
+  LIST next;
   ANY object;
 } cognate_list;
 
@@ -70,36 +57,37 @@ typedef struct cognate_group
 
 typedef struct cognate_stack
 {
-  ANY* restrict start; // Pointer to start.
-  ANY* restrict top;   // Pointer to top.
-  ptrdiff_t     size;  // Allocated size of the stack.
+  ANYPTR start; // Pointer to start.
+  ANYPTR top;   // Pointer to top.
+  ptrdiff_t size;  // Allocated size of the stack.
   ANY cache;
 } cognate_stack;
 
 struct Block_descriptor {
-    unsigned long int reserved;
-    unsigned long int size;
+  unsigned long int reserved;
+  unsigned long int size;
 };
 
 struct Block_layout {
-    void *isa;
-    int reserved;
-    long also_reserved;
-    struct Block_descriptor *descriptor;
+  void* restrict isa;
+  int flags;
+  long also_reserved;
+  struct Block_descriptor* restrict descriptor;
 };
 
-#define OBJ(objtype, objvalue) ((ANY){.type=objtype, .objtype=objvalue})
+#define NAN_MASK 0x7ff8000000000000
+#define PTR_MASK 0x0000ffffffffffff
+#define TYP_MASK 0x0007000000000000
+#define NIL_OBJ  NAN_MASK
+
 #define VAR(name) ___##name
 #define SYM(name) ____##name
-#define CHECK(typ, obj) (check_type(typ, obj) . typ)
 #define CALL(name, args) VAR(name) args
 #define CALLDEBUG(name, args) (set_word_name(#name), set_line_num(__LINE__), VAR(name) args)
 
 #define PREDEF(name) __block BLOCK VAR(name) = ^{ throw_error("Function '"#name"' called before definition!'"); };
 
 #define SET(name, val) VAR(name) = copy_if_block(val);
-#define SET_FN(name, val) const ANY _tmp_##name = val; \
-                          VAR(name) = Block_copy(^{ push(val); })
 
 #define unlikely(expr) (__builtin_expect((_Bool)(expr), 0))
 #define likely(expr)   (__builtin_expect((_Bool)(expr), 1))
@@ -120,9 +108,24 @@ void _Noreturn throw_error(const char* restrict const);
 _Bool compare_objects(ANY, ANY);
 
 // Variables and functions needed by compiled source file defined in runtime.c
+cognate_type get_type(ANY);
+NUMBER unbox_number(ANY);
+ANY box_number(NUMBER);
+BOOLEAN unbox_boolean(ANY);
+ANY box_boolean(BOOLEAN);
+STRING unbox_string(ANY);
+ANY box_string(STRING);
+LIST unbox_list(ANY);
+ANY box_list(LIST);
+GROUP unbox_group(ANY);
+ANY box_group(GROUP);
+SYMBOL unbox_symbol(ANY);
+ANY box_symbol(SYMBOL);
+BLOCK unbox_block(ANY);
+ANY box_block(BLOCK);
+
 void init(int, char **);
 void cleanup();
-ANY check_type(cognate_type, ANY);
 void push(ANY);
 ANY pop();
 ANY peek();

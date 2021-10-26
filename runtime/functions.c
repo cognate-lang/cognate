@@ -11,7 +11,7 @@
 ANY VAR(if)(BLOCK cond, ANY a, ANY b)
 {
   cond();
-  if (CHECK(boolean, pop()))
+  if (unbox_boolean(pop()))
     return a;
   else
     return b;
@@ -20,7 +20,7 @@ ANY VAR(if)(BLOCK cond, ANY a, ANY b)
 void VAR(while)(BLOCK cond, BLOCK body)
 {
   cond();
-  while (CHECK(boolean, pop()))
+  while (unbox_boolean(pop()))
   {
     body();
     cond();
@@ -65,15 +65,15 @@ NUMBER VAR(random)(NUMBER low, NUMBER high, NUMBER step)
   return low + (NUMBER)(num % (unsigned long)((high - low) / step)) * step;
 }
 
-void VAR(clear)() { stack.cache.type = NOTHING; stack.top=stack.start; }
+void VAR(clear)() { stack.cache = NIL_OBJ; stack.top=stack.start; }
 
 BOOLEAN VAR(true) =  1;
 BOOLEAN VAR(false) = 0;
 
-BOOLEAN VAR(either)(BOOLEAN a, BOOLEAN b) { return a || b; }
-BOOLEAN VAR(both)(BOOLEAN a, BOOLEAN b) { return a && b; }
+BOOLEAN VAR(either)(BOOLEAN a, BOOLEAN b)    { return a || b; }
+BOOLEAN VAR(both)(BOOLEAN a, BOOLEAN b)      { return a && b; }
 BOOLEAN VAR(oneDASHof)(BOOLEAN a, BOOLEAN b) { return a ^ b;  }
-BOOLEAN VAR(not)(BOOLEAN a) { return !a;     }
+BOOLEAN VAR(not)(BOOLEAN a)                  { return !a;     }
 
 
 BOOLEAN VAR(EQ)(ANY a, ANY b)  { return compare_objects(a,b); }
@@ -83,12 +83,12 @@ BOOLEAN VAR(LT)(NUMBER a, NUMBER b)  { return a > b; }
 BOOLEAN VAR(GTE)(NUMBER a, NUMBER b) { return a >= b; }
 BOOLEAN VAR(LTE)(NUMBER a, NUMBER b) { return a <= b; }
 
-BOOLEAN VAR(numberQMARK)(ANY a)  { return a.type&number; }
-BOOLEAN VAR(listQMARK)(ANY a)    { return a.type&number; }
-BOOLEAN VAR(stringQMARK)(ANY a)  { return a.type&string; }
-BOOLEAN VAR(blockQMARK)(ANY a)   { return a.type&block;  }
-BOOLEAN VAR(booleanQMARK)(ANY a) { return a.type&boolean;}
-BOOLEAN VAR(integerQMARK)(ANY a) { return VAR(numberQMARK)(a) && a.number == floor(a.number); }
+BOOLEAN VAR(numberQMARK)(ANY a)  { return get_type(a)==number; }
+BOOLEAN VAR(listQMARK)(ANY a)    { return get_type(a)==number; }
+BOOLEAN VAR(stringQMARK)(ANY a)  { return get_type(a)==string; }
+BOOLEAN VAR(blockQMARK)(ANY a)   { return get_type(a)==block;  }
+BOOLEAN VAR(booleanQMARK)(ANY a) { return get_type(a)==boolean;}
+BOOLEAN VAR(integerQMARK)(ANY a) { return VAR(numberQMARK)(a) && unbox_number(a) == floor(unbox_number(a)); }
 
 ANY VAR(first)(LIST lst)
 {
@@ -210,7 +210,7 @@ STRING VAR(join)(NUMBER n)
   size_t result_size = 1;
   for (size_t i = 0; i < n1; ++i)
   {
-    const char* str = check_type(string, pop()).string;
+    const char* str = unbox_string(pop());
     strings[i] = str;
     result_size += strlen(str);
   }
@@ -324,7 +324,7 @@ LIST VAR(stack)()
     tmp -> next = lst;
     lst = tmp;
   }
-  if (stack.cache.type != NOTHING)
+  if (stack.cache != NIL_OBJ)
   {
     cognate_list* tmp = GC_NEW (cognate_list);
     tmp -> object = stack.cache;
@@ -387,7 +387,7 @@ BOOLEAN VAR(match)(STRING reg_str, STRING str)
 
 NUMBER VAR(ordinal)(STRING str)
 {
-  if unlikely(!str[0] || str[1])
+  if unlikely(!str[0] || strlen(str) > (size_t)mblen(str, MB_CUR_MAX))
     throw_error_fmt("Invalid string '%.32s' (should be length 1)", str);
   wchar_t chr = 0;
   mbtowc(&chr, str, MB_CUR_MAX);
@@ -457,7 +457,7 @@ LIST VAR(filter)(BLOCK blk, LIST lst)
   {
     push(lst->object);
     blk();
-    if (CHECK(boolean, pop()))
+    if (unbox_boolean(pop()))
     {
       cognate_list* new = GC_NEW(cognate_list);
       new->object = lst->object;
@@ -486,7 +486,7 @@ LIST VAR(range)(NUMBER start, NUMBER end, NUMBER step)
   for (; start * step <= end * step; end -= step)
   {
     cognate_list* node = GC_NEW(cognate_list);
-    node->object = OBJ(number, end);
+    node->object = box_number(end);
     node->next = lst;
     lst = node;
   }
@@ -504,7 +504,7 @@ GROUP VAR(group)(BLOCK init)
   const size_t len = stack_length();
   GROUP g = GC_MALLOC (sizeof *g + len * sizeof g->items[0]);
   g->len = len;
-  for (size_t i = 0; i < len; ++i) g->items[i].name = CHECK(symbol, pop());
+  for (size_t i = 0; i < len; ++i) g->items[i].name = unbox_symbol(pop());
   stack = temp_stack;
   for (size_t i = 0; i < len; ++i) g->items[i].object = pop();
   return g;

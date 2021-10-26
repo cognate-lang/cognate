@@ -193,9 +193,9 @@ bool needs_block_tag(ast* tree, decl_list def)
 
 reg_list* emit_register(value_type type, reg_list* regs)
 {
-  if (regs->type == type)     fprintf(outfile, "r%zi",                                           regs->id);
-  else if (regs->type == any) fprintf(outfile, "CHECK(%s,r%zi)", type_as_str[type][false],       regs->id);
-  else if (type == any)       fprintf(outfile, "OBJ(%s,r%zi)",   type_as_str[regs->type][false], regs->id);
+  if (regs->type == type)     fprintf(outfile, "r%zi", regs->id);
+  else if (regs->type == any) fprintf(outfile, "unbox_%s(r%zi)", type_as_str[type][false], regs->id);
+  else if (type == any)       fprintf(outfile, "box_%s(r%zi)", type_as_str[regs->type][false], regs->id);
   else
   {
     char error_msg[256];
@@ -273,7 +273,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
           registers = assert_registers(0, 0, registers);
           fputs("{", outfile);
           compile(tree->next->next->data, NULL, predeclare(tree->next->next->data, defs));
-          fputs("}if(CHECK(boolean,pop())){", outfile);
+          fputs("}if(unbox_boolean(pop())){", outfile);
           compile(tree->next->data, NULL, predeclare(tree->next->data, defs));
           fputs("}else{", outfile);
           compile(tree->data, NULL, predeclare(tree->next->next->data, defs));
