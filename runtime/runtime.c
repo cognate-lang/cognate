@@ -75,11 +75,6 @@ void cleanup()
   }
 }
 
-ANY copy_if_block(ANY obj)
-{
-  return obj;
-}
-
 void check_function_stack_size()
 {
   const char sp;
@@ -427,10 +422,9 @@ void * _NSConcreteGlobalBlock      [32] = { 0 };
 void * _NSConcreteWeakBlockVariable[32] = { 0 };
 
 void *Block_copy(const void *arg) {
-  struct Block_layout *aBlock = (struct Block_layout *)arg;
+  struct Block_layout *aBlock = (struct Block_layout*)arg;
   if (aBlock->flags & (1 << 24)) return aBlock;
   struct Block_layout *result = GC_MALLOC(aBlock->descriptor->size);
-  if unlikely(!result) return NULL;
   memcpy(result, aBlock, aBlock->descriptor->size);
   result->flags |= (1 << 24);
   return result;

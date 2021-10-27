@@ -37,3 +37,19 @@ Foo2 'PASS: Implicit block copying with mutation'; Let Z be Y;
 Foo2 'FAIL: Implicit block copying with mutation'; Let W be Y;
 Do Z;
 Drop W;
+
+Define A
+( Let B;
+  Let Foo as (Print B);
+  return (Do Foo);
+);
+
+Do A 'PASS: Another block copying test';
+
+Define B
+( Let B;
+  Define Foo as (Print B);
+  return (Foo);
+);
+
+Do B 'PASS: Another block copying test again';

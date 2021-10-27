@@ -324,7 +324,9 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       if (is_mutated(tree->next, *d)) d->ret = any, tag = "";
       if (needs_block_tag(tree->next, *d)) tag = "__block";
       fprintf(outfile, "%s %s VAR(%s)=", tag, type_as_str[d->ret][true], restrict_chars(d->name));
+      if (d->ret == block) fputs("Block_copy(", outfile);
       registers = emit_register(d->ret, registers);
+      if (d->ret == block) fputs(")", outfile);
       fputs(";{", outfile);
       defs = d;
       footer = "}";
@@ -335,9 +337,9 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       decl_list* d = lookup_word(tree->text, defs);
       d -> predecl = false;
       registers = assert_registers(1, LONG_MAX, registers);
-      fprintf(outfile, "VAR(%s)=", restrict_chars(tree->text));
+      fprintf(outfile, "VAR(%s)=Block_copy(", restrict_chars(tree->text));
       registers = emit_register(block, registers);
-      fputs(";{", outfile);
+      fputs(");{", outfile);
       footer = "}";
     }
     break;

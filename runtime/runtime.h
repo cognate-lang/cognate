@@ -87,7 +87,7 @@ struct Block_layout {
 
 #define PREDEF(name) __block BLOCK VAR(name) = ^{ throw_error("Function '"#name"' called before definition!'"); };
 
-#define SET(name, val) VAR(name) = copy_if_block(val);
+#define SET(name, val) VAR(name) = val;
 
 #define unlikely(expr) (__builtin_expect((_Bool)(expr), 0))
 #define likely(expr)   (__builtin_expect((_Bool)(expr), 1))
@@ -133,7 +133,6 @@ int stack_length();
 void check_function_stack_size();
 void set_word_name(const char* restrict const);
 void set_line_num(int);
-ANY copy_if_block(ANY obj);
 
 // Builtin functions needed by compiled source file defined in functions.c
 ANY VAR(if)(BLOCK, ANY, ANY);
