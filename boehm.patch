@@ -1,0 +1,13 @@
+diff --git a/include/private/gcconfig.h b/include/private/gcconfig.h
+index 2601b18b..12119a9b 100644
+--- a/include/private/gcconfig.h
++++ b/include/private/gcconfig.h
+@@ -3204,6 +3204,8 @@ EXTERN_C_BEGIN
+ # define DBG_HDRS_ALL 1
+ #endif
+ 
++#define POINTER_MASK 0x0000ffffffffffff
++
+ #if defined(POINTER_MASK) && !defined(POINTER_SHIFT)
+ # define POINTER_SHIFT 0
+ #endif
