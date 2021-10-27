@@ -413,25 +413,3 @@ ANY box_block(BLOCK s)
 {
   return NAN_MASK | ((long)block << 48) | (long)Block_copy(s);
 }
-
-void * _NSConcreteStackBlock       [32] = { 0 };
-void * _NSConcreteMallocBlock      [32] = { 0 };
-void * _NSConcreteAutoBlock        [32] = { 0 };
-void * _NSConcreteFinalizingBlock  [32] = { 0 };
-void * _NSConcreteGlobalBlock      [32] = { 0 };
-void * _NSConcreteWeakBlockVariable[32] = { 0 };
-
-void *Block_copy(const void *arg) {
-  struct Block_layout *aBlock = (struct Block_layout*)arg;
-  if (aBlock->flags & (1 << 24)) return aBlock;
-  struct Block_layout *result = GC_MALLOC(aBlock->descriptor->size);
-  memcpy(result, aBlock, aBlock->descriptor->size);
-  result->flags |= (1 << 24);
-  return result;
-}
-
-void _Block_object_assign(void *destAddr, const void *object, __attribute__((unused)) const int flags) {
-  *(void**)destAddr = (void*)object;
-}
-
-void _Block_object_dispose(const void __attribute__((unused)) *object, const int __attribute__((unused)) flags) {}

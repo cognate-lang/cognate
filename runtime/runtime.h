@@ -5,6 +5,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <Block.h>
 
 #define INITIAL_READ_SIZE  64
 #define INITIAL_LIST_SIZE  16
@@ -63,18 +64,6 @@ typedef struct cognate_stack
   ANY cache;
 } cognate_stack;
 
-struct Block_descriptor {
-  unsigned long int reserved;
-  unsigned long int size;
-};
-
-struct Block_layout {
-  void* restrict isa;
-  int flags;
-  long also_reserved;
-  struct Block_descriptor* restrict descriptor;
-};
-
 #define NAN_MASK 0x7ff8000000000000
 #define PTR_MASK 0x0000ffffffffffff
 #define TYP_MASK 0x0007000000000000
@@ -99,7 +88,6 @@ extern const char* restrict word_name;
 extern int line_num;
 
 // Variables and  needed by functions.c defined in runtime.c
-void* Block_copy(const void*);
 void init_stack();
 void expand_stack();
 void print_object(const ANY object, FILE *, const _Bool);
