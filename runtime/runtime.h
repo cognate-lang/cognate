@@ -187,3 +187,5 @@ GROUP VAR(group)(BLOCK);
 ANY VAR(the)(SYMBOL, GROUP);
 BOOLEAN VAR(has)(SYMBOL, GROUP);
 ANY VAR(index)(NUMBER, LIST);
+void VAR(puts)(BLOCK);
+void VAR(prints)(BLOCK);

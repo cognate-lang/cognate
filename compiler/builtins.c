@@ -12,6 +12,8 @@
 {.name="while", .type=func, .argc=2, .args={block, block}, .needs_stack=true},
 {.name="print", .type=func, .argc=1, .args={any}},
 {.name="put",   .type=func, .argc=1, .args={any}},
+{.name="prints", .type=func, .argc=1, .args={block}},
+{.name="puts",   .type=func, .argc=1, .args={block}},
 {.name="do", .type=func, .argc=1, .args={block}, .needs_stack=true},
 {.name="random", .type=func, .argc=3, .args={number, number, number}, .rets=true, .ret=number},
 {.name="modulo", .type=func, .argc=2, .args={number, number}, .rets=true, .ret=number},

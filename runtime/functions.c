@@ -32,6 +32,8 @@ void VAR(do)(BLOCK blk) { blk(); }
 void VAR(put)(ANY a)   { print_object(a, stdout, 0); fflush(stdout); }
 void VAR(print)(ANY a) { print_object(a, stdout, 0); putc('\n', stdout); }
 
+void VAR(puts)(BLOCK b)   { VAR(for)(VAR(list)(b), ^{VAR(put)(pop()); }); }
+void VAR(prints)(BLOCK b) { VAR(for)(VAR(list)(b), ^{VAR(put)(pop()); }); putc('\n', stdout); }
 
 NUMBER VAR(ADD)(NUMBER a, NUMBER b) { return a + b; }
 NUMBER VAR(MUL)(NUMBER a, NUMBER b) { return a * b; }
@@ -442,6 +444,7 @@ LIST VAR(map)(BLOCK blk, LIST lst)
     blk();
     cognate_list* new = GC_NEW(cognate_list);
     new->object = pop();
+    new->next = NULL;
     ptr->next = new;
     ptr = new;
   }
@@ -461,6 +464,7 @@ LIST VAR(filter)(BLOCK blk, LIST lst)
     {
       cognate_list* new = GC_NEW(cognate_list);
       new->object = lst->object;
+      new->next = NULL;
       ptr->next = new;
       ptr = new;
     }
