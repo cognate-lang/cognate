@@ -67,4 +67,7 @@
 {.name="the", .type=func, .argc=2, .args={symbol, group}, .rets=true, .ret=any},
 {.name="has", .type=func, .argc=2, .args={symbol, group}, .rets=true, .ret=boolean},
 {.name="index", .type=func, .argc=2, .args={number, list}, .rets=true, .ret=any},
+{.name="precompute", .type=func, .argc=1, .args={block}, .rets=true, .ret=block},
+{.name="parallel-precompute", .type=func, .argc=1, .args={block}, .rets=true, .ret=block},
+{.name="wait", .type=func, .argc=1, .args={number}, .rets=false},
 {.name="stop"},

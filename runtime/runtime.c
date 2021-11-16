@@ -9,6 +9,7 @@
 #include <sys/resource.h>
 #include <time.h>
 #include <math.h>
+#include <threads.h>
 #include <gc/gc.h>
 
 static const char *lookup_type(cognate_type);
@@ -16,27 +17,23 @@ static _Bool compare_lists(LIST, LIST);
 static _Bool compare_groups(GROUP, GROUP);
 static void handle_error_signal(int);
 
-cognate_stack stack;
+thread_local cognate_stack stack;
 LIST cmdline_parameters = NULL;
 
 const char* restrict word_name = NULL;
 int line_num = -1;
 
-static const char* restrict function_stack_start;
-static const char* restrict function_stack_top;
+thread_local static const char* restrict function_stack_top;
+static ptrdiff_t function_stack_size;
 
 
 void init(int argc, char** argv)
 {
-  // Get function stack limit
-  char a;
-  function_stack_start = &a;
   struct rlimit stack_limit;
   if unlikely(getrlimit(RLIMIT_STACK, &stack_limit) == -1)
-  {
     throw_error("cannot get return stack limit");
-  }
-  function_stack_top = function_stack_start - stack_limit.rlim_cur;
+  function_stack_size = stack_limit.rlim_cur;
+  set_function_stack_start();
   // Set locale for strings.
   if unlikely(setlocale(LC_ALL, "") == NULL)
   {
@@ -66,6 +63,13 @@ void init(int argc, char** argv)
   init_stack();
 }
 
+void set_function_stack_start()
+{
+  // Get function stack limit
+  char a;
+  function_stack_top = &a - function_stack_size;
+}
+
 void cleanup()
 {
   if unlikely(stack.top != stack.start || stack.cache != NIL_OBJ)
@@ -78,8 +82,8 @@ void cleanup()
 void check_function_stack_size()
 {
   const char sp;
-  if unlikely(&sp - function_stack_top < STACK_MARGIN_KB * 1024)
-    throw_error("maximum recursion depth exceeded");
+  if unlikely(&sp < function_stack_top + STACK_MARGIN_KB * 1024)
+    throw_error_fmt("maximum recursion depth exceeded");
 }
 
 void set_word_name(const char* restrict const name) { word_name=name; } // Need this to avoid unsequenced evaluation error.

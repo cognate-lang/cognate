@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <sys/stat.h>
 #include <gc/gc.h>
+#include <pthread.h>
 
 ANY VAR(if)(BLOCK cond, ANY a, ANY b)
 {
@@ -540,4 +541,52 @@ ANY VAR(index)(NUMBER ind, LIST lst)
     if (!i--) return lst->object;
   }
   throw_error_fmt("index %zi is outside of array", (size_t)ind);
+}
+
+void VAR(wait)(NUMBER seconds)
+{
+  sleep(seconds);
+}
+
+BLOCK VAR(precompute)(BLOCK blk)
+{
+  const cognate_stack temp_stack = stack;
+  init_stack();
+  blk();
+  const cognate_stack s = stack;
+  stack = temp_stack;
+  return Block_copy(^{
+    const size_t l = s.top - s.start;
+    for (size_t i = 0; i < l; ++i) push(s.start[i]);
+    if (s.cache != NIL_OBJ)        push(s.cache);
+  });
+}
+
+static cognate_stack* parallel_precompute_helper(BLOCK blk)
+{
+  set_function_stack_start();
+  init_stack();
+  blk();
+  cognate_stack* s = GC_NEW(cognate_stack);
+  *s = stack;
+  return s;
+}
+
+BLOCK VAR(parallelDASHprecompute)(BLOCK blk)
+{
+  /*
+   * A clever implementation of this would do what Go does and use threads
+   * managed by the runtime instead of the OS, which would startup much
+   * faster, and use much less memory. However, that would require writing
+   * a scheduler so TODO.
+   */
+  pthread_t id;
+  pthread_create(&id, NULL, (void*(*)(void *))parallel_precompute_helper, blk);
+  return Block_copy(^{
+    cognate_stack* s;
+    pthread_join(id, (void*)&s);
+    const size_t l = s->top - s->start;
+    for (size_t i = 0; i < l; ++i) push(s->start[i]);
+    if (s->cache != NIL_OBJ)        push(s->cache);
+  });
 }

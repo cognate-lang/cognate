@@ -5,6 +5,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <threads.h>
 #include <Block.h>
 
 #define INITIAL_READ_SIZE  64
@@ -82,13 +83,14 @@ typedef struct cognate_stack
 #define likely(expr)   (__builtin_expect((_Bool)(expr), 1))
 
 // Global variables
-extern cognate_stack stack;
+thread_local extern cognate_stack stack;
 extern LIST cmdline_parameters;
 extern const char* restrict word_name;
 extern int line_num;
 
 // Variables and  needed by functions.c defined in runtime.c
 void init_stack();
+void set_function_stack_start();
 void expand_stack();
 void print_object(const ANY object, FILE *, const _Bool);
 void _Noreturn __attribute__((format(printf, 1, 2))) throw_error_fmt(const char* restrict const, ...);
@@ -189,3 +191,6 @@ BOOLEAN VAR(has)(SYMBOL, GROUP);
 ANY VAR(index)(NUMBER, LIST);
 void VAR(puts)(BLOCK);
 void VAR(prints)(BLOCK);
+BLOCK VAR(precompute)(BLOCK);
+BLOCK VAR(parallelDASHprecompute)(BLOCK);
+void VAR(wait)(NUMBER);
