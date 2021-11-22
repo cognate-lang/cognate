@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <sys/stat.h>
-#include <gc/gc.h>
 #include <pthread.h>
 
 ANY VAR(if)(BLOCK cond, ANY a, ANY b)
@@ -110,7 +109,7 @@ LIST VAR(rest)(LIST lst)
 STRING VAR(head)(STRING str)
 {
   if unlikely(!*str) throw_error("empty string is invalid");
-  return GC_STRNDUP(str, mblen(str, MB_CUR_MAX));
+  return gc_strndup((char*)str, mblen(str, MB_CUR_MAX));
 }
 
 STRING VAR(tail)(STRING str)
@@ -123,7 +122,7 @@ LIST VAR(push)(ANY a, LIST b)
 {
   // Pushes an object from the stack onto the list's first element. O(1).
   // TODO: Better name? Inconsistent with List where pushing to the stack adds to the END.
-  cognate_list* lst = GC_NEW (cognate_list);
+  cognate_list* lst = gc_new (cognate_list);
   lst->object = a;
   lst->next   = b;
   return lst;
@@ -145,20 +144,18 @@ LIST VAR(list)(BLOCK expr)
   // Eval expr
   expr();
   // Move to a list.
-  cognate_list* lstarr = NULL;
+  cognate_list* lst = NULL;
+  flush_stack_cache();
   size_t len = stack_length();
-  if (!len) goto end;
-  lstarr = GC_MALLOC(len * sizeof(cognate_list));
   for (size_t i = 0; i < len; ++i)
   {
-    lstarr[i].object = pop();
-    lstarr[i].next = lstarr + i + 1;
+    cognate_list* l = gc_new(cognate_list);
+    l->object = stack.start[i];
+    l->next = lst;
+    lst = l;
   }
-  lstarr[len - 1].next = NULL;
-  // Restore the stack.
-end:
   stack = temp_stack;
-  return lstarr;
+  return lst;
 }
 
 /*
@@ -169,8 +166,8 @@ LIST VAR(characters)() {
   for (size_t i = 0; *str ; ++i)
   {
     size_t char_len = mblen(str, MB_CUR_MAX);
-    LIST* tmp = GC_NEW (LIST);
-    tmp->object = (cognate_object) {.type=string, .string=GC_STRNDUP(str, char_len)};
+    LIST* tmp = gc_new (LIST);
+    tmp->object = (cognate_object) {.type=string, .string=gc_strndup(str, char_len)};
     tmp->next = lst;
     lst = tmp;
     str += char_len;
@@ -188,13 +185,13 @@ LIST VAR(split)() {
   const char* str = pop(string);
   size_t length = 1;
     for (const char* temp = str; (temp = strstr(temp, delimiter) + delim_size) - delim_size; ++length);
-  LIST* const lst = GC_NEW(LIST);
-  lst->top = lst->start   = (cognate_object*) GC_MALLOC (sizeof(cognate_object) * length);
+  LIST* const lst = gc_new(LIST);
+  lst->top = lst->start   = (cognate_object*) gc_malloc (sizeof(cognate_object) * length);
   lst->top += length;
   size_t i = 0;
   for (const char* c; (c = strstr(str, delimiter)); i++)
   {
-    lst->start[i] = (cognate_object) {.type=string, .string=GC_STRNDUP(str, c - str)};
+    lst->start[i] = (cognate_object) {.type=string, .string=gc_strndup(str, c - str)};
     str = c + delim_size;
   }
   lst->start[i] = (cognate_object) {.type=string, .string=str};
@@ -217,7 +214,7 @@ STRING VAR(join)(NUMBER n)
     strings[i] = str;
     result_size += strlen(str);
   }
-  char* const result = GC_MALLOC_ATOMIC(result_size);
+  char* const result = gc_malloc(result_size);
   result[0] = '\0';
   for (size_t i = 0; i < n1; ++i)
   {
@@ -261,7 +258,7 @@ STRING VAR(substring)(NUMBER startf, NUMBER endf, STRING str)
     // We don't need to make a new string here.
     return str;
   }
-  return GC_STRNDUP(str, str_size);
+  return gc_strndup((char*)str, str_size + 1);
 invalid_range:
   throw_error_fmt("invalid range %.14g..%.14g", startf, endf);
 }
@@ -273,7 +270,7 @@ STRING VAR(input)()
   size_t size = 0;
   char* buf;
   size_t chars = getline(&buf, &size, stdin);
-  char* ret = GC_STRNDUP(buf, chars-1); // Don't copy trailing newline.
+  char* ret = gc_strndup(buf, chars-1); // Don't copy trailing newline.
   free(buf);
   return ret;
 }
@@ -285,7 +282,7 @@ STRING VAR(read)(STRING filename)
   if unlikely(fp == NULL) throw_error_fmt("cannot open file '%s'", filename);
   struct stat st;
   fstat(fileno(fp), &st);
-  char* const text = GC_MALLOC_ATOMIC (st.st_size + 1);
+  char* const text = gc_malloc (st.st_size + 1);
   if (fread(text, sizeof(char), st.st_size, fp) != (unsigned long)st.st_size)
     throw_error_fmt("error reading file '%s'", filename);
   fclose(fp);
@@ -313,24 +310,18 @@ STRING VAR(path)()
   {
     throw_error("cannot get working directory");
   }
-  char* ret = GC_STRDUP(buf);
+  char* ret = gc_strdup(buf);
   return ret;
 }
 
 LIST VAR(stack)()
 {
   LIST lst = NULL;
+  flush_stack_cache();
   for (size_t i = 0; i + stack.start < stack.top; ++i)
   {
-    cognate_list* tmp = GC_NEW (cognate_list);
+    cognate_list* tmp = gc_new (cognate_list);
     tmp -> object = stack.start[i];
-    tmp -> next = lst;
-    lst = tmp;
-  }
-  if (stack.cache != NIL_OBJ)
-  {
-    cognate_list* tmp = GC_NEW (cognate_list);
-    tmp -> object = stack.cache;
     tmp -> next = lst;
     lst = tmp;
   }
@@ -400,7 +391,7 @@ NUMBER VAR(ordinal)(STRING str)
 STRING VAR(character)(NUMBER d)
 {
   const wchar_t i = d;
-  char* const str = GC_MALLOC_ATOMIC (MB_CUR_MAX + 1);
+  char* const str = gc_malloc (MB_CUR_MAX + 1);
   if unlikely(i != d || wctomb(str, i) == -1)
     throw_error_fmt("Cannot convert %.14g to UTF8 character", d);
   str[mblen(str, MB_CUR_MAX)] = '\0';
@@ -443,7 +434,7 @@ LIST VAR(map)(BLOCK blk, LIST lst)
   {
     push(lst->object);
     blk();
-    cognate_list* new = GC_NEW(cognate_list);
+    cognate_list* new = gc_new(cognate_list);
     new->object = pop();
     new->next = NULL;
     ptr->next = new;
@@ -463,7 +454,7 @@ LIST VAR(filter)(BLOCK blk, LIST lst)
     blk();
     if (unbox_boolean(pop()))
     {
-      cognate_list* new = GC_NEW(cognate_list);
+      cognate_list* new = gc_new(cognate_list);
       new->object = lst->object;
       new->next = NULL;
       ptr->next = new;
@@ -490,7 +481,7 @@ LIST VAR(range)(NUMBER start, NUMBER end, NUMBER step)
   LIST lst = NULL;
   for (; start * step <= end * step; end -= step)
   {
-    cognate_list* node = GC_NEW(cognate_list);
+    cognate_list* node = gc_new(cognate_list);
     node->object = box_number(end);
     node->next = lst;
     lst = node;
@@ -501,13 +492,14 @@ LIST VAR(range)(NUMBER start, NUMBER end, NUMBER step)
 GROUP VAR(group)(BLOCK init)
 {
   // Move the stack to temporary storage
-  const cognate_stack temp_stack = stack;
+  volatile cognate_stack temp_stack = stack;
   // Allocate a list as the stack
   init_stack();
   // Eval expr
   init();
+  flush_stack_cache();
   const size_t len = stack_length();
-  GROUP g = GC_MALLOC (sizeof *g + len * sizeof g->items[0]);
+  GROUP g = gc_malloc (sizeof g->len + len * sizeof g->items[0]);
   g->len = len;
   for (size_t i = 0; i < len; ++i) g->items[i].name = unbox_symbol(pop());
   stack = temp_stack;
@@ -517,19 +509,16 @@ GROUP VAR(group)(BLOCK init)
 
 ANY VAR(the)(SYMBOL key, GROUP g)
 {
-  size_t index = SIZE_MAX;
   for (size_t i = 0; i < g->len; ++i)
-    index += (i + 1) * (g->items[i].name == key);
-  if unlikely(index == SIZE_MAX) throw_error_fmt("cannot find \\%.32s in record", key);
-  return g->items[index].object;
+    if (g->items[i].name == key) return g->items[i].object;
+  throw_error_fmt("cannot find \\%.32s in record", key);
 }
 
 BOOLEAN VAR(has)(SYMBOL key, GROUP g)
 {
-  size_t has = 0;
   for (size_t i = 0; i < g->len; ++i)
-    has += g->items[i].name == key;
-  return has;
+    if (g->items[i].name == key) return 1;
+  return 0;
 }
 
 ANY VAR(index)(NUMBER ind, LIST lst)
@@ -567,7 +556,7 @@ static cognate_stack* parallel_precompute_helper(BLOCK blk)
   set_function_stack_start();
   init_stack();
   blk();
-  cognate_stack* s = GC_NEW(cognate_stack);
+  cognate_stack* s = gc_new(cognate_stack);
   *s = stack;
   return s;
 }

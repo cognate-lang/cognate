@@ -224,6 +224,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
   yylloc.first_column = tree->col; // This lets us use yyerror()
   yylloc.first_line = tree->line;
   if (!release) fprintf(outfile, "\n#line %zi\n", tree->line);
+  fprintf(outfile, "\ngc_collect();\n");
   switch (tree->type)
   {
     case identifier:
@@ -443,7 +444,7 @@ int main(int argc, char** argv)
   compile(full_ast, NULL, predeclare(full_ast, builtins()));
   fputs("cleanup();}\n", outfile);
   char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-L/usr/local/lib", "-l:libcognate.a", "-lBlocksRuntime",
-                   "-lpthread", "-lgc", release ? "-Ofast" : "-O1", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
+                   "-lpthread", release ? "-Ofast" : "-O1", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
                    "-std=c11", "-lm", "-g0", "-flto", release ? "-s" : "-ggdb3", "-fuse-ld=lld", NULL };
   fflush(outfile);
   if (fork() == 0) execvp(args[0], args); else wait(NULL);

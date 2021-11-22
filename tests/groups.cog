@@ -10,8 +10,8 @@ Print If (Test-group 1 2 3; == Test-group2 2 3 1)
   'FAIL: Comparing identical records';
 
 Print If (The \bar in Test-group 1 2 3; == 2)
-  'PASS: Theting a value from a record'
-  'FAIL: Theting a value from a record';
+  'PASS: Getting a value from a record'
+  'FAIL: Getting a value from a record';
 
 Print If (Test-group 1 2 3; Has \baz)
   'PASS: Checking that a record has a key'

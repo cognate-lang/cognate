@@ -10,7 +10,7 @@
 #include <time.h>
 #include <math.h>
 #include <threads.h>
-#include <gc/gc.h>
+#include <sys/mman.h>
 
 static const char *lookup_type(cognate_type);
 static _Bool compare_lists(LIST, LIST);
@@ -23,24 +23,28 @@ LIST cmdline_parameters = NULL;
 const char* restrict word_name = NULL;
 int line_num = -1;
 
-thread_local static const char* restrict function_stack_top;
-static ptrdiff_t function_stack_size;
+thread_local const char* restrict function_stack_top;
+thread_local const char* restrict function_stack_start;
+ptrdiff_t function_stack_size;
 
 
 void init(int argc, char** argv)
 {
+  char a;
   struct rlimit stack_limit;
   if unlikely(getrlimit(RLIMIT_STACK, &stack_limit) == -1)
     throw_error("cannot get return stack limit");
   function_stack_size = stack_limit.rlim_cur;
-  set_function_stack_start();
+  function_stack_start = &a;
+  function_stack_top = function_stack_start - function_stack_size;
+  //set_function_stack_start();
   // Set locale for strings.
   if unlikely(setlocale(LC_ALL, "") == NULL)
   {
     throw_error("cannot set locale");
   }
   // Init GC
-  GC_INIT();
+  gc_init();
   // Seed the random number generator properly.
   struct timespec ts;
   if unlikely(clock_gettime(CLOCK_REALTIME, &ts) == -1)
@@ -51,7 +55,7 @@ void init(int argc, char** argv)
   // Load parameters
   while (argc --> 1)
   {
-    cognate_list* const tmp = GC_NEW (cognate_list);
+    cognate_list* const tmp = gc_new (cognate_list);
     tmp->object = box_string(argv[argc]);
     tmp->next = cmdline_parameters;
     cmdline_parameters = tmp;
@@ -63,7 +67,7 @@ void init(int argc, char** argv)
   init_stack();
 }
 
-void set_function_stack_start()
+__attribute__((always_inline)) void set_function_stack_start()
 {
   // Get function stack limit
   char a;
@@ -208,7 +212,7 @@ void print_object (const ANY object, FILE* out, const _Bool quotes)
 void init_stack()
 {
   stack.size = INITIAL_LIST_SIZE;
-  stack.top = stack.start = GC_MALLOC (INITIAL_LIST_SIZE * sizeof(ANY));
+  stack.top = stack.start = mmap(0, 1024l*1024l*1024l*1024l, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
   stack.cache = NIL_OBJ;
 }
 
@@ -234,6 +238,13 @@ ANY peek()
   return *(stack.top - 1);
 }
 
+void flush_stack_cache()
+{
+  if (stack.cache == NIL_OBJ) return;
+  push(stack.cache);
+  pop();
+}
+
 int stack_length()
 {
   return stack.top - stack.start + (stack.cache != NIL_OBJ);
@@ -242,7 +253,7 @@ int stack_length()
 void expand_stack()
 {
   // Assumes that stack is currently of length stack.size.
-  stack.start = (ANY*) GC_REALLOC (stack.start, stack.size * LIST_GROWTH_FACTOR * sizeof(ANY));
+  stack.start = (ANY*) gc_realloc (stack.start, stack.size * LIST_GROWTH_FACTOR * sizeof(ANY));
   stack.top = stack.start + stack.size;
   stack.size *= LIST_GROWTH_FACTOR;
 }

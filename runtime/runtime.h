@@ -88,6 +88,10 @@ extern LIST cmdline_parameters;
 extern const char* restrict word_name;
 extern int line_num;
 
+extern thread_local const char* restrict function_stack_top;
+extern thread_local const char* restrict function_stack_start;
+extern ptrdiff_t function_stack_size;
+
 // Variables and  needed by functions.c defined in runtime.c
 void init_stack();
 void set_function_stack_start();
@@ -96,6 +100,15 @@ void print_object(const ANY object, FILE *, const _Bool);
 void _Noreturn __attribute__((format(printf, 1, 2))) throw_error_fmt(const char* restrict const, ...);
 void _Noreturn throw_error(const char* restrict const);
 _Bool compare_objects(ANY, ANY);
+
+void* gc_malloc(size_t);
+void* gc_realloc(void*, size_t);
+void gc_collect();
+void gc_init();
+char* gc_strdup(char*);
+char* gc_strndup(char*, size_t);
+
+#define gc_new(t) (t*) gc_malloc (sizeof(t))
 
 // Variables and functions needed by compiled source file defined in runtime.c
 cognate_type get_type(ANY);
@@ -119,6 +132,7 @@ void cleanup();
 void push(ANY);
 ANY pop();
 ANY peek();
+void flush_stack_cache();
 int stack_length();
 void check_function_stack_size();
 void set_word_name(const char* restrict const);

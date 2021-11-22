@@ -19,10 +19,11 @@ uninstall:
 cognac: compiler/lexer.c compiler/parser.c compiler/parser.h compiler/cognac.c compiler/builtins.c compiler/cognac.h
 	$(CC) compiler/lexer.c compiler/parser.c compiler/cognac.c -o cognac -lgc $(CFLAGS)
 
-libcognate.a: runtime/runtime.c runtime/functions.c runtime/runtime.h
+libcognate.a: runtime/runtime.c runtime/functions.c runtime/gc.c runtime/runtime.h
 	$(CC) -c $(CFLAGS) -o runtime.o runtime/runtime.c
 	$(CC) -c $(CFLAGS) -o functions.o runtime/functions.c
-	llvm-ar rvs libcognate.a runtime.o functions.o
+	$(CC) -c $(CFLAGS) -o gc.o runtime/gc.c
+	llvm-ar rvs libcognate.a runtime.o functions.o gc.o
 
 compiler/lexer.c: compiler/lexer.l
 	flex -o compiler/lexer.c compiler/lexer.l
