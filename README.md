@@ -34,7 +34,7 @@ If that succeeds, install the compiler with the following command:
 ```
 sudo make install
 ```
-This installs cognate to the /usr/local prefix. To install to a different directory, use this command
+This installs cognate to the /usr/local prefix. To install to a different directory, use this command:
 ```
 sudo make PREFIX=/my/prefix/dir install
 ```

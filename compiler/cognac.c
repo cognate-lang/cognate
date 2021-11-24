@@ -443,7 +443,7 @@ int main(int argc, char** argv)
   add_symbols(full_ast);
   compile(full_ast, NULL, predeclare(full_ast, builtins()));
   fputs("cleanup();}\n", outfile);
-  char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-L/usr/local/lib", "-l:libcognate.a", "-lBlocksRuntime",
+  char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-I"INCLUDEDIR, "-L"LIBDIR, "-l:libcognate.a", "-lBlocksRuntime",
                    "-lpthread", release ? "-Ofast" : "-O1", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
                    "-std=c11", "-lm", "-g0", "-flto", release ? "-s" : "-ggdb3", "-fuse-ld=lld", NULL };
   fflush(outfile);

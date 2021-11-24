@@ -8,16 +8,16 @@ BINDIR=$(PREFIX)/bin
 build: cognac libcognate.a
 
 install: build
-	mkdir -p $(PREFIX)/include/cognate
+	mkdir -p $(INCLUDEDIR) $(LIBDIR) $(BINDIR)
 	cp runtime/runtime.h $(INCLUDEDIR)/runtime.h
-	cp libcognate.a $(LIBDIR)/libcognate.a
-	cp cognac $(BINDIR)/cognac
+	cp libcognate.a      $(LIBDIR)/libcognate.a
+	cp cognac            $(BINDIR)/cognac
 
 uninstall:
 	rm -rf $(INCLUDEDIR) $(LIBDIR)/libcognate.a $(BINDIR)/cognac
 
 cognac: compiler/lexer.c compiler/parser.c compiler/parser.h compiler/cognac.c compiler/builtins.c compiler/cognac.h
-	$(CC) compiler/lexer.c compiler/parser.c compiler/cognac.c -o cognac -lgc $(CFLAGS)
+	$(CC) compiler/lexer.c compiler/parser.c compiler/cognac.c -o cognac -DLIBDIR=\"$(LIBDIR)\" -DINCLUDEDIR=\"$(INCLUDEDIR)\" -lgc $(CFLAGS)
 
 libcognate.a: runtime/runtime.c runtime/functions.c runtime/gc.c runtime/runtime.h
 	$(CC) -c $(CFLAGS) -o runtime.o runtime/runtime.c
