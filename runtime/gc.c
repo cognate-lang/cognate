@@ -3,12 +3,15 @@
 #include <string.h>
 #include <sys/mman.h>
 #include "runtime.h"
+#include <limits.h>
 
 #define MAP_SIZE 0x10000000000
 
-#define BITMAP_EMPTY 0
-#define BITMAP_ALLOC 1
-#define BITMAP_FREE  2
+#define BITMAP_EMPTY 0x0
+#define BITMAP_ALLOC 0x1
+#define BITMAP_FREE  0x2
+
+#define BITMAP_CLEAR_ALLOCS 0xAAAAAAAAAAAAAAAA
 
 /*
  * Cognate's Garbage Collector
@@ -23,50 +26,47 @@
  *  - Make valgrind shut up.
  */
 
-static char* bitmap = NULL;
+static char* bitmap;
 static uintptr_t* heap_start;
 static uintptr_t* heap_top;
+static char* bitmap_search_start;
 
 void gc_set_bitmap(uintptr_t* ptr, char bit)
 {
-  bitmap[(ptr - heap_start) % MAP_SIZE] = bit;
-}
-
-void gc_init()
-{
-  bitmap =                mmap(0, MAP_SIZE/32, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
-  heap_start = heap_top = mmap(0, MAP_SIZE,    PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
-  gc_set_bitmap(heap_start, BITMAP_FREE);
+  bitmap[ptr - heap_start] = bit;
 }
 
 char gc_get_bitmap(uintptr_t* ptr)
 {
-  return bitmap[(ptr - heap_start) % MAP_SIZE];
+  return bitmap[ptr - heap_start];
+}
+
+void gc_init()
+{
+  bitmap = bitmap_search_start = mmap(0, MAP_SIZE/32, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
+  heap_start = heap_top        = mmap(0, MAP_SIZE,    PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
+  gc_set_bitmap(heap_start, BITMAP_FREE);
 }
 
 void* gc_malloc(size_t bytes)
 {
-  size_t longs = (bytes + 7) / sizeof(uintptr_t);
-  size_t slots = 0;
-  for (uintptr_t* p = (uintptr_t*)heap_start ;; ++p)
+  ptrdiff_t longs = (bytes + 7) / sizeof(uintptr_t);
+  char* free_start = bitmap_search_start = memchr(bitmap_search_start, BITMAP_FREE, ULONG_MAX);
+  for (char* ptr = bitmap_search_start ;; )
   {
-    // TODO bitwise vector bitmap stuff here would be really cool.
-    // THIS is the performance bottleneck.
-    char map = gc_get_bitmap(p);
-    if (!slots && map == BITMAP_FREE) slots = 1;
-    else if (map == BITMAP_ALLOC) slots = 0;
-    else if (slots && map != BITMAP_ALLOC) slots++;
-    if (slots == longs)
+    char* free_end = memchr(free_start, BITMAP_ALLOC, longs);
+    if (free_end)
     {
-      uintptr_t* buf = p - slots + 1;
-      uintptr_t* next = p + 1;
-      if (!gc_get_bitmap(p + 1)) gc_set_bitmap(next, BITMAP_FREE);
-      if (heap_top < p + 1) heap_top = next;
-      gc_set_bitmap(buf, BITMAP_ALLOC);
-      for (uintptr_t* q = buf + 1; q < next; ++q)
-        gc_set_bitmap(q, BITMAP_EMPTY);
-      return buf;
+      ptr = free_end;
+      free_start = memchr(ptr, BITMAP_FREE, ULONG_MAX);
+      continue;
     }
+    free_end = free_start + longs;
+    *free_end = BITMAP_FREE;
+    if (heap_top - heap_start < free_end - bitmap) heap_top = heap_start + (free_end - bitmap);
+    *free_start = BITMAP_ALLOC;
+    memset(free_start + 1, 0, free_end - free_start - 1);
+    return heap_start + (free_start - bitmap);
   }
 }
 
@@ -84,17 +84,16 @@ static void collect_root(uintptr_t object)
    || gc_get_bitmap(ptr) != BITMAP_FREE) return;
   gc_set_bitmap(ptr, BITMAP_ALLOC);
   collect_root(ptr[0]);
-  // Funky bitmap operation to determine number of children??? TODO
+  // No need to optmize the bitmap addressing, since it's O(n) anyways.
   for (size_t i = 1; !gc_get_bitmap(ptr + i); ++i)
     collect_root(ptr[i]);
 }
 
 __attribute__((noinline)) void gc_collect()
 {
-  // TODO clearing the allocated bits can be done much easier using bitwise AND over longs.
-  for (uintptr_t* p = (uintptr_t*)heap_start; p < heap_top; ++p)
-    if (gc_get_bitmap(p) == BITMAP_ALLOC)
-      gc_set_bitmap(p, BITMAP_FREE);
+  for (uintptr_t* p = (uintptr_t*)bitmap; (char*)p < (char*)bitmap + (heap_top - heap_start); ++p)
+    *p &= BITMAP_CLEAR_ALLOCS;
+  bitmap_search_start = bitmap;
   __attribute__((unused)) volatile cognate_stack s = stack;
   jmp_buf a;
   setjmp(a);
