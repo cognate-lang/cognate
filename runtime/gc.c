@@ -11,8 +11,6 @@
 #define BITMAP_ALLOC 0x1
 #define BITMAP_FREE  0x2
 
-#define BITMAP_CLEAR_ALLOCS 0xAAAAAAAAAAAAAAAA
-
 /*
  * Cognate's Garbage Collector
  *
@@ -26,17 +24,17 @@
  *  - Make valgrind shut up.
  */
 
-static char* bitmap;
-static uintptr_t* heap_start;
-static uintptr_t* heap_top;
-static char* bitmap_search_start;
+static char* restrict bitmap;
+static uint64_t* restrict heap_start;
+static uint64_t* restrict heap_top;
+static char* restrict bitmap_search_start;
 
-void gc_set_bitmap(uintptr_t* ptr, char bit)
+void gc_set_bitmap(uint64_t* restrict ptr, char bit)
 {
   bitmap[ptr - heap_start] = bit;
 }
 
-char gc_get_bitmap(uintptr_t* ptr)
+char gc_get_bitmap(uint64_t* restrict ptr)
 {
   return bitmap[ptr - heap_start];
 }
@@ -48,58 +46,69 @@ void gc_init()
   gc_set_bitmap(heap_start, BITMAP_FREE);
 }
 
-void* gc_malloc(size_t bytes)
+void print_bitmap()
 {
-  ptrdiff_t longs = (bytes + 7) / sizeof(uintptr_t);
-  char* free_start = bitmap_search_start = memchr(bitmap_search_start, BITMAP_FREE, ULONG_MAX);
-  for (char* ptr = bitmap_search_start ;; )
+  for (uint64_t* restrict i = heap_start; i < heap_top + 5; ++i)
   {
-    char* free_end = memchr(free_start, BITMAP_ALLOC, longs);
-    if (free_end)
-    {
-      ptr = free_end;
-      free_start = memchr(ptr, BITMAP_FREE, ULONG_MAX);
-      continue;
-    }
-    free_end = free_start + longs;
-    *free_end = BITMAP_FREE;
-    if (heap_top - heap_start < free_end - bitmap) heap_top = heap_start + (free_end - bitmap);
-    *free_start = BITMAP_ALLOC;
-    memset(free_start + 1, 0, free_end - free_start - 1);
-    return heap_start + (free_start - bitmap);
+    printf("%x ", gc_get_bitmap(i));
   }
+  puts("");
 }
 
-void* gc_realloc(void* src, size_t sz)
+void* gc_malloc(size_t bytes)
+{
+  static int byte_count = 0;
+  byte_count += bytes;
+  if unlikely(byte_count > 1024 * 1024 * 128)
+  {
+    gc_collect();
+    byte_count = 0;
+  }
+  const size_t longs = (bytes + 7) / sizeof(uint64_t);
+  char* restrict free_start = bitmap_search_start = memchr(bitmap_search_start, BITMAP_FREE, ULONG_MAX);
+  for (char* free_end; (free_end = memchr(free_start, BITMAP_ALLOC, longs));)
+    free_start = memchr(free_end, BITMAP_FREE, ULONG_MAX);
+  char* free_end = free_start + longs;
+  *free_end   = BITMAP_FREE;
+  *free_start = BITMAP_ALLOC;
+  memset(free_start + 1, BITMAP_EMPTY, free_end - free_start - 1);
+  if unlikely(heap_top - heap_start < free_end - bitmap)
+    heap_top = heap_start + (free_end - bitmap);
+  return heap_start + (free_start - bitmap);
+}
+
+void* gc_realloc(void* restrict src, size_t sz)
 {
   void* buf = gc_malloc(sz);
   return memcpy(buf, src, sz);
 }
 
-static void collect_root(uintptr_t object)
+static void collect_root(uint64_t object)
 {
-  uintptr_t* ptr = (uintptr_t*)(object & PTR_MASK);
+  uint64_t* restrict ptr = (uint64_t*)(object & PTR_MASK);
   if ((object & ~PTR_MASK && (object & NAN_MASK) != NAN_MASK)
    || ptr < heap_start || ptr >= heap_top
    || gc_get_bitmap(ptr) != BITMAP_FREE) return;
   gc_set_bitmap(ptr, BITMAP_ALLOC);
-  collect_root(ptr[0]);
   // No need to optmize the bitmap addressing, since it's O(n) anyways.
-  for (size_t i = 1; !gc_get_bitmap(ptr + i); ++i)
+  for (ptrdiff_t i = 1; !gc_get_bitmap(ptr + i); ++i)
     collect_root(ptr[i]);
+  collect_root(ptr[0]);
 }
 
 __attribute__((noinline)) void gc_collect()
 {
-  for (uintptr_t* p = (uintptr_t*)bitmap; (char*)p < (char*)bitmap + (heap_top - heap_start); ++p)
-    *p &= BITMAP_CLEAR_ALLOCS;
+  printf("collect heap of size %zi\n", heap_top - heap_start);
+  for (uint64_t* restrict p = heap_start; p < heap_top; ++p)
+    if (gc_get_bitmap(p) == BITMAP_ALLOC) gc_set_bitmap(p, BITMAP_FREE);
   bitmap_search_start = bitmap;
   __attribute__((unused)) volatile cognate_stack s = stack;
   jmp_buf a;
   setjmp(a);
-  uintptr_t* sp = (uintptr_t*)&sp;
-  for (uintptr_t* root = sp + 1; root < (uintptr_t*)function_stack_start; ++root)
+  uint64_t* sp = (uint64_t*)&sp;
+  for (uint64_t* root = sp + 1; root < (uint64_t*)function_stack_start; ++root)
     collect_root(*root);
+  puts("done");
 }
 
 char* gc_strdup(char* src)

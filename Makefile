@@ -32,4 +32,4 @@ compiler/parser.c compiler/parser.h: compiler/parser.y
 	bison compiler/parser.y --defines=compiler/parser.h -o compiler/parser.c
 
 clean:
-	rm -f compiler/lexer.c compiler/parser.h compiler/parser.c cognac libcognate.a runtime.o functions.o
+	rm -f compiler/lexer.c compiler/parser.h compiler/parser.c cognac libcognate.a runtime.o functions.o gc.o

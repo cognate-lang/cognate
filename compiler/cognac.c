@@ -224,7 +224,6 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
   yylloc.first_column = tree->col; // This lets us use yyerror()
   yylloc.first_line = tree->line;
   if (!release) fprintf(outfile, "\n#line %zi\n", tree->line);
-  fprintf(outfile, "\ngc_collect();\n");
   switch (tree->type)
   {
     case identifier:
