@@ -30,14 +30,11 @@ ptrdiff_t function_stack_size;
 
 void init(int argc, char** argv)
 {
-  char a;
   struct rlimit stack_limit;
   if unlikely(getrlimit(RLIMIT_STACK, &stack_limit) == -1)
     throw_error("cannot get return stack limit");
   function_stack_size = stack_limit.rlim_cur;
-  function_stack_start = &a;
-  function_stack_top = function_stack_start - function_stack_size;
-  //set_function_stack_start();
+  set_function_stack_start();
   // Set locale for strings.
   if unlikely(setlocale(LC_ALL, "") == NULL)
   {
@@ -70,8 +67,7 @@ void init(int argc, char** argv)
 __attribute__((always_inline)) void set_function_stack_start()
 {
   // Get function stack limit
-  char a;
-  function_stack_top = &a - function_stack_size;
+  function_stack_top = (char*)__builtin_frame_address(0) - function_stack_size;
 }
 
 void cleanup()
@@ -211,7 +207,7 @@ void print_object (const ANY object, FILE* out, const _Bool quotes)
 
 void init_stack()
 {
-  stack.size = INITIAL_LIST_SIZE;
+  stack.size = INITIAL_STACK_SIZE;
   stack.top = stack.start = mmap(0, 1024l*1024l*1024l*1024l, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
   stack.cache = NIL_OBJ;
 }

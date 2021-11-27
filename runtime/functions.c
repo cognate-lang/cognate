@@ -123,8 +123,7 @@ LIST VAR(push)(ANY a, LIST b)
   // Pushes an object from the stack onto the list's first element. O(1).
   // TODO: Better name? Inconsistent with List where pushing to the stack adds to the END.
   cognate_list* lst = gc_new (cognate_list);
-  lst->object = a;
-  lst->next   = b;
+  *lst = (cognate_list) {.object = a, .next = b};
   return lst;
 }
 

@@ -9,7 +9,7 @@
 #include <Block.h>
 
 #define INITIAL_READ_SIZE  64
-#define INITIAL_LIST_SIZE  16
+#define INITIAL_STACK_SIZE 64
 #define LIST_GROWTH_FACTOR 1.5
 #define STACK_MARGIN_KB    50
 
