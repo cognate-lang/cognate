@@ -45,15 +45,14 @@ void* gc_malloc(size_t bytes)
   byte_count += bytes;
   if unlikely(byte_count > 1024 * 1024) gc_collect(), byte_count = 0;
   const size_t longs = (bytes + 7) / sizeof(uintptr_t);
-  for (uint8_t* restrict free_end; unlikely(free_end = memchr(free_start, BITMAP_ALLOC, longs)); )
-    free_start = memchr(free_end, BITMAP_FREE, LONG_MAX);
+  for (uint8_t* restrict free_end; unlikely(free_end = memchr(free_start + 1, BITMAP_ALLOC, longs)); )
+    free_start = memchr(free_end + 1, BITMAP_FREE, LONG_MAX);
   uint8_t* restrict free_end = free_start + longs;
   uintptr_t* buf = heap_start + (free_start - bitmap);
   *free_end   = BITMAP_FREE;
   *free_start = BITMAP_ALLOC;
   memset(free_start + 1, BITMAP_EMPTY, longs - 1);
-  if unlikely(heap_top < buf)
-    heap_top = buf;
+  if unlikely(heap_top < buf) heap_top = buf;
   free_start = free_end;
   return buf;
 }
@@ -72,9 +71,9 @@ static void gc_collect_root(uintptr_t object)
    || BITMAP_INDEX(ptr) != BITMAP_FREE) return;
   BITMAP_INDEX(ptr) = BITMAP_ALLOC;
   // No need to optimize the bitmap addressing, since it's O(n) anyways.
-  for (ptrdiff_t i = 1; BITMAP_INDEX(ptr + i) == BITMAP_EMPTY; ++i)
-    gc_collect_root(ptr[i]);
-  gc_collect_root(ptr[0]);
+  for (uintptr_t* p = ptr + 1; BITMAP_INDEX(p) == BITMAP_EMPTY; ++p)
+    gc_collect_root(*p);
+  gc_collect_root(*ptr);
 }
 
 __attribute__((noinline)) void gc_collect()
