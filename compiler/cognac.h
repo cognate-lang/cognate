@@ -68,7 +68,7 @@ char* restrict_chars(char*);
 decl_list* builtins(void);
 decl_list* lookup_word(char*, decl_list*);
 reg_list* emit_register(value_type, reg_list*);
-void compile(ast*, reg_list*, decl_list*); // TODO output file arg.
+void compile(ast*, decl_list*); // TODO output file arg.
 void print_cognate_string(char*);
 decl_list* predefine(ast*, decl_list*);
 void check_for_mutation(ast*, decl_list*);
