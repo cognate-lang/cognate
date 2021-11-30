@@ -34,8 +34,8 @@ static uint8_t* restrict free_start;
 
 void gc_init()
 {
-  heap_start = heap_top = mmap(0, MAP_SIZE * 33 / 32,    PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
-  heap_start = heap_top = (uintptr_t*)(bitmap + MAP_SIZE/32);
+  bitmap = free_start   = mmap(0, MAP_SIZE/32, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
+  heap_start = heap_top = mmap(0, MAP_SIZE,    PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
   BITMAP_INDEX(heap_start) = BITMAP_FREE;
 }
 
