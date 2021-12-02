@@ -13,7 +13,6 @@ size_t current_register = 0;
 sym_list* declared_symbols = NULL;
 ast* full_ast;
 bool release = false;
-reg_list* registers = NULL;
 bool gc_test = false;
 
 char* restrict_chars(char* in)
@@ -215,10 +214,11 @@ reg_list* add_register(value_type type, reg_list* next)
   return r;
 }
 
-void compile(ast* tree, decl_list* defs)
+void compile(ast* tree, reg_list* registers, decl_list* defs)
 {
   if (!tree)
   {
+    assert_registers(0, 0, registers);
     return;
   }
   const char* footer = "";
@@ -266,7 +266,6 @@ void compile(ast* tree, decl_list* defs)
     break;
     case value:
     {
-      // Peephole optimisation for Do If statements
       if (tree->val_type == block && tree->next && tree->next->type == value && tree->next->val_type == block
         && tree->next->next && tree->next->next->type == value && tree->next->next->val_type == block
         && tree->next->next->next && tree->next->next->next->type == identifier
@@ -277,18 +276,14 @@ void compile(ast* tree, decl_list* defs)
         if (ifdef && ifdef->builtin && strcmp(ifdef->name, "if") == 0
          && dodef && dodef->builtin && strcmp(dodef->name, "do") == 0)
         {
+          registers = assert_registers(0, 0, registers);
           fputs("{", outfile);
-          compile(tree->next->next->data, predeclare(tree->next->next->data, defs));
-          registers = assert_registers(1, 1, registers);
-          fputs("if(", outfile);
-          registers = emit_register(boolean, registers);
-          fputs("){", outfile);
-          compile(tree->next->data, predeclare(tree->next->data, defs));
-          registers = assert_registers(0, 0, registers);
+          compile(tree->next->next->data, NULL, predeclare(tree->next->next->data, defs));
+          fputs("}if(unbox_boolean(pop())){", outfile);
+          compile(tree->next->data, NULL, predeclare(tree->next->data, defs));
           fputs("}else{", outfile);
-          compile(tree->data, predeclare(tree->data, defs));
-          registers = assert_registers(0, 0, registers);
-          fputs("}}", outfile);
+          compile(tree->data, NULL, predeclare(tree->next->next->data, defs));
+          fputs("}", outfile);
           tree = tree->next->next->next->next;
         }
         break;
@@ -298,8 +293,7 @@ void compile(ast* tree, decl_list* defs)
       {
         case block:
           fputs("^{check_function_stack_size();", outfile);
-          compile(tree->data, predeclare(tree->data, defs));
-          registers = assert_registers(0, 0, registers);
+          compile(tree->data, NULL, predeclare(tree->data, defs));
           fputc('}', outfile);
           break;
         case string:
@@ -367,7 +361,7 @@ void compile(ast* tree, decl_list* defs)
     }
   }
   // Free the ast node.
-  compile(tree->next, defs);
+  compile(tree->next, registers, defs);
   fputs(footer, outfile);
 }
 
@@ -452,8 +446,7 @@ int main(int argc, char** argv)
   if (!release) fprintf(outfile, "#line 1 \"%s\"\n", source_file_path);
   fputs("int main(int argc,char** argv){init(argc,argv);",outfile);
   add_symbols(full_ast);
-  compile(full_ast, predeclare(full_ast, builtins()));
-  registers = assert_registers(0, 0, registers);
+  compile(full_ast, NULL, predeclare(full_ast, builtins()));
   fputs("cleanup();}\n", outfile);
   char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-I"INCLUDEDIR, "-L"LIBDIR, "-l:libcognate.a", "-lBlocksRuntime",
                    "-lpthread", release ? "-Ofast" : "-O1", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
