@@ -34,7 +34,7 @@ void init(int argc, char** argv)
   if unlikely(getrlimit(RLIMIT_STACK, &stack_limit) == -1)
     throw_error("cannot get return stack limit");
   function_stack_size = stack_limit.rlim_cur;
-  set_function_stack_start();
+  SET_FUNCTION_STACK_START();
   // Set locale for strings.
   if unlikely(setlocale(LC_ALL, "") == NULL)
   {
@@ -62,12 +62,6 @@ void init(int argc, char** argv)
   for (size_t i = 0; i < sizeof(signals); ++i) signal(signals[i], handle_error_signal);
   // Initialize the stack.
   init_stack();
-}
-
-__attribute__((always_inline)) void set_function_stack_start()
-{
-  // Get function stack limit
-  function_stack_top = (char*)__builtin_frame_address(0) - function_stack_size;
 }
 
 void cleanup()
@@ -208,7 +202,7 @@ void print_object (const ANY object, FILE* out, const _Bool quotes)
 void init_stack()
 {
   stack.size = INITIAL_STACK_SIZE;
-  stack.top = stack.start = mmap(0, 1024l*1024l*1024l*1024l, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
+  stack.top = stack.start = gc_malloc(INITIAL_STACK_SIZE);
   stack.cache = NIL_OBJ;
 }
 
@@ -249,7 +243,8 @@ int stack_length()
 void expand_stack()
 {
   // Assumes that stack is currently of length stack.size.
-  stack.start = (ANY*) gc_realloc (stack.start, stack.size * LIST_GROWTH_FACTOR * sizeof(ANY));
+  size_t new_size = stack.size * LIST_GROWTH_FACTOR;
+  stack.start = memcpy(gc_malloc(new_size * sizeof(ANY)), stack.start, new_size);
   stack.top = stack.start + stack.size;
   stack.size *= LIST_GROWTH_FACTOR;
 }

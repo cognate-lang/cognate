@@ -70,6 +70,10 @@ typedef struct cognate_stack
 #define TYP_MASK 0x0007000000000000
 #define NIL_OBJ  NAN_MASK
 
+#define SET_FUNCTION_STACK_START() \
+  function_stack_start = __builtin_frame_address(0); \
+  function_stack_top = function_stack_start - function_stack_size;
+
 #define VAR(name) ___##name
 #define SYM(name) ____##name
 #define CALL(name, args) VAR(name) args
@@ -102,7 +106,6 @@ void _Noreturn throw_error(const char* restrict const);
 _Bool compare_objects(ANY, ANY);
 
 void* gc_malloc(size_t);
-void* gc_realloc(void*, size_t);
 void gc_collect();
 void gc_init();
 char* gc_strdup(char*);

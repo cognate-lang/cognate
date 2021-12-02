@@ -14,6 +14,7 @@ sym_list* declared_symbols = NULL;
 ast* full_ast;
 bool release = false;
 reg_list* registers = NULL;
+bool gc_test = false;
 
 char* restrict_chars(char* in)
 {
@@ -224,6 +225,11 @@ void compile(ast* tree, decl_list* defs)
   yylloc.first_column = tree->col; // This lets us use yyerror()
   yylloc.first_line = tree->line;
   if (!release) fprintf(outfile, "\n#line %zi\n", tree->line);
+  if (gc_test)
+  {
+    fprintf(outfile, "gc_collect();");
+    registers = assert_registers(0, 0, registers);
+  }
   switch (tree->type)
   {
     case identifier:

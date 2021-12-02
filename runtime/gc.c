@@ -39,28 +39,35 @@ void gc_init()
   BITMAP_INDEX(heap_start) = BITMAP_FREE;
 }
 
+/*
+void print_bitmap()
+{
+  for (uintptr_t* i = heap_start; i < heap_top; ++i)
+  {
+    printf("%x ", BITMAP_INDEX(i));
+  }
+  puts("");
+}
+*/
+
+__attribute__((malloc, hot, assume_aligned(sizeof(uint64_t)), alloc_size(1), returns_nonnull))
 void* gc_malloc(size_t bytes)
 {
   static int byte_count = 0;
   byte_count += bytes;
   if unlikely(byte_count > 1024 * 1024) gc_collect(), byte_count = 0;
   const size_t longs = (bytes + 7) / sizeof(uintptr_t);
-  for (uint8_t* restrict free_end; unlikely(free_end = memchr(free_start + 1, BITMAP_ALLOC, longs)); )
+  free_start = memchr(free_start, BITMAP_FREE, LONG_MAX);
+  for (uint8_t* restrict free_end; unlikely(free_end = memchr(free_start + 1, BITMAP_ALLOC, longs - 1)); )
     free_start = memchr(free_end + 1, BITMAP_FREE, LONG_MAX);
+  memset(free_start + 1, BITMAP_EMPTY, longs - 1);
   uint8_t* restrict free_end = free_start + longs;
   uintptr_t* buf = heap_start + (free_start - bitmap);
-  *free_end   = BITMAP_FREE;
   *free_start = BITMAP_ALLOC;
-  memset(free_start + 1, BITMAP_EMPTY, longs - 1);
-  if unlikely(heap_top < buf) heap_top = buf;
+  if (heap_top < buf + longs) heap_top = buf + longs;
+  if (*free_end != BITMAP_ALLOC) *free_end = BITMAP_FREE;
   free_start = free_end;
   return buf;
-}
-
-void* gc_realloc(void* restrict src, size_t sz)
-{
-  void* buf = gc_malloc(sz);
-  return memcpy(buf, src, sz);
 }
 
 static void gc_collect_root(uintptr_t object)
@@ -80,20 +87,19 @@ __attribute__((noinline)) void gc_collect()
 {
   for (uintptr_t* restrict p = (uintptr_t*)bitmap; (uint8_t*)p < bitmap + (heap_top - heap_start); ++p)
     *p &= 0x5555555555555555;
-  __attribute__((unused)) volatile cognate_stack s = stack;
+  volatile ANY s = (ANY)stack.start;
   jmp_buf a;
   setjmp(a);
   uintptr_t* sp = (uintptr_t*)&sp;
-  for (uintptr_t* root = sp + 1; root < (uintptr_t*)function_stack_start; ++root)
+  for (uintptr_t* root = sp + 1; root <= (uintptr_t*)function_stack_start; ++root)
     gc_collect_root(*root);
-  free_start = memchr(bitmap, BITMAP_FREE, LONG_MAX);
+  free_start = bitmap;
 }
 
 char* gc_strdup(char* src)
 {
   const size_t len = strlen(src);
-  char* dest = gc_malloc(len + 1);
-  return memcpy(dest, src, len + 1);
+  return memcpy(gc_malloc(len + 1), src, len + 1);
 }
 
 char* gc_strndup(char* src, size_t bytes)

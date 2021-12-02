@@ -552,7 +552,7 @@ BLOCK VAR(precompute)(BLOCK blk)
 
 static cognate_stack* parallel_precompute_helper(BLOCK blk)
 {
-  set_function_stack_start();
+  SET_FUNCTION_STACK_START();
   init_stack();
   blk();
   cognate_stack* s = gc_new(cognate_stack);
