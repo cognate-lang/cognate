@@ -39,16 +39,20 @@ void gc_init()
   BITMAP_INDEX(heap_start) = BITMAP_FREE;
 }
 
-/*
-void print_bitmap()
+void show_heap_usage()
 {
+  char state;
   for (uintptr_t* i = heap_start; i < heap_top; ++i)
   {
-    printf("%x ", BITMAP_INDEX(i));
+    switch(BITMAP_INDEX(i))
+    {
+      case BITMAP_ALLOC: state = '#'; break;
+      case BITMAP_FREE:  state = '-'; break;
+    }
+    putc(state, stdout);
   }
-  puts("");
+  putc('\n', stdout);
 }
-*/
 
 __attribute__((malloc, hot, assume_aligned(sizeof(uint64_t)), alloc_size(1), returns_nonnull))
 void* gc_malloc(size_t bytes)
