@@ -58,7 +58,7 @@ void init(int argc, char** argv)
     cmdline_parameters = tmp;
   }
   // Bind error signals.
-  char signals[] = { SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGABRT, SIGBUS, SIGFPE, SIGSEGV, SIGPIPE, SIGTERM, SIGCHLD };
+  char signals[] = { SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGABRT, SIGBUS, SIGFPE, SIGPIPE, SIGTERM, SIGCHLD };
   for (size_t i = 0; i < sizeof(signals); ++i) signal(signals[i], handle_error_signal);
   // Initialize the stack.
   init_stack();
@@ -86,7 +86,7 @@ void set_line_num(int num) { line_num=num; } // Need this to avoid unsequenced e
 _Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(const char* restrict const fmt, ...)
 {
   const _Bool debug = word_name && line_num != -1;
-  int offset = 0;
+  int offset = -2;
   fputc('\n', stderr);
   if (debug)
   {
@@ -99,7 +99,6 @@ _Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(const char*
   va_start(args, fmt);
   vfprintf(stderr, fmt, args);
   fputc('\n', stderr);
-  if (errno)
   {
     const char* str = strerror(errno);
     fprintf(stderr, "%*s\033[0;2m%c%s\n", offset + 2, "", tolower(*str), str+1);
@@ -111,7 +110,7 @@ _Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(const char*
 _Noreturn void throw_error(const char* restrict const msg)
 {
   const _Bool debug = word_name && line_num != -1;
-  int offset = 0;
+  int offset = -2;
   fputc('\n', stderr);
   if (debug)
   {

@@ -1,9 +1,12 @@
 #include <setjmp.h>
 #include <stdint.h>
 #include <string.h>
+#include <signal.h>
 #include <sys/mman.h>
 #include <limits.h>
 #include "runtime.h"
+
+#define PAGE_SIZE 4096
 
 #define MAP_SIZE 0x10000000000
 
@@ -32,10 +35,20 @@ static uintptr_t* restrict heap_top;
 static uint8_t* restrict bitmap;
 static uint8_t* restrict free_start;
 
+static void handle_segfault()
+{
+  mprotect((void*)((uintptr_t)heap_top & ~(PAGE_SIZE-1)), PAGE_SIZE, PROT_READ | PROT_WRITE);
+  gc_collect();
+}
+
 void gc_init()
 {
   bitmap = free_start   = mmap(0, MAP_SIZE/32, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
-  heap_start = heap_top = mmap(0, MAP_SIZE,    PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
+  heap_start = heap_top = mmap(0, MAP_SIZE,    PROT_NONE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
+  if (heap_start == MAP_FAILED || bitmap == MAP_FAILED)
+    throw_error("memory map failure - are you trying to use valgrind?");
+  signal(SIGSEGV, handle_segfault);
+  mprotect(heap_start, PAGE_SIZE, PROT_READ | PROT_WRITE);
   BITMAP_INDEX(heap_start) = BITMAP_FREE;
 }
 
@@ -57,9 +70,6 @@ void show_heap_usage()
 __attribute__((malloc, hot, assume_aligned(sizeof(uint64_t)), alloc_size(1), returns_nonnull))
 void* gc_malloc(size_t bytes)
 {
-  static int byte_count = 0;
-  byte_count += bytes;
-  if unlikely(byte_count > 1024 * 1024) gc_collect(), byte_count = 0;
   const size_t longs = (bytes + 7) / sizeof(uintptr_t);
   free_start = memchr(free_start, BITMAP_FREE, LONG_MAX);
   for (uint8_t* restrict free_end; unlikely(free_end = memchr(free_start + 1, BITMAP_ALLOC, longs - 1)); )
@@ -91,7 +101,7 @@ __attribute__((noinline)) void gc_collect()
 {
   for (uintptr_t* restrict p = (uintptr_t*)bitmap; (uint8_t*)p < bitmap + (heap_top - heap_start); ++p)
     *p &= 0x5555555555555555;
-  volatile ANY s = (ANY)stack.start;
+  __attribute__((unused)) volatile ANY s = (ANY)stack.start;
   jmp_buf a;
   setjmp(a);
   uintptr_t* sp = (uintptr_t*)&sp;
