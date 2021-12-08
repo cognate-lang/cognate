@@ -43,8 +43,8 @@ static void handle_segfault()
 
 void gc_init()
 {
-  bitmap = free_start   = mmap(0, MAP_SIZE/32, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
-  heap_start = heap_top = mmap(0, MAP_SIZE,    PROT_NONE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
+  bitmap = free_start   = mmap(0, MAP_SIZE/8, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
+  heap_start = heap_top = mmap(0, MAP_SIZE,   PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
   if (heap_start == MAP_FAILED || bitmap == MAP_FAILED)
     throw_error("memory map failure - are you trying to use valgrind?");
   signal(SIGSEGV, handle_segfault);
@@ -52,8 +52,9 @@ void gc_init()
   BITMAP_INDEX(heap_start) = BITMAP_FREE;
 }
 
-void show_heap_usage()
+static void show_heap_usage()
 {
+  printf("%p -> %p\n", (void*)heap_start, (void*)heap_top);
   char state;
   for (uintptr_t* i = heap_start; i < heap_top; ++i)
   {
@@ -70,12 +71,9 @@ void show_heap_usage()
 __attribute__((malloc, hot, assume_aligned(sizeof(uint64_t)), alloc_size(1), returns_nonnull))
 void* gc_malloc(size_t bytes)
 {
-<<<<<<< HEAD
-=======
   thread_local static int byte_count = 0;
   byte_count += bytes;
   if unlikely(byte_count > 1024 * 1024) gc_collect(), byte_count = 0;
->>>>>>> e3c996d (Made the garbage collector thread local)
   const size_t longs = (bytes + 7) / sizeof(uintptr_t);
   free_start = memchr(free_start, BITMAP_FREE, LONG_MAX);
   for (uint8_t* restrict free_end; unlikely(free_end = memchr(free_start + 1, BITMAP_ALLOC, longs - 1)); )
