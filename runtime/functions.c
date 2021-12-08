@@ -556,9 +556,8 @@ static cognate_stack* parallel_precompute_helper(BLOCK blk)
   gc_init();
   init_stack();
   blk();
-  cognate_stack* s = gc_new(cognate_stack);
-  *s = stack;
-  return s;
+  // We might need to copy the stack somewhere.
+  return &stack;
 }
 
 BLOCK VAR(parallelDASHprecompute)(BLOCK blk)
@@ -570,12 +569,12 @@ BLOCK VAR(parallelDASHprecompute)(BLOCK blk)
    * a scheduler so TODO.
    */
   pthread_t id;
-  pthread_create(&id, NULL, (void*(*)(void *))parallel_precompute_helper, blk);
+  pthread_create(&id, NULL, (void*(*)(void *))parallel_precompute_helper, Block_copy(blk));
   return Block_copy(^{
     cognate_stack* s;
     pthread_join(id, (void*)&s);
     const size_t l = s->top - s->start;
     for (size_t i = 0; i < l; ++i) push(s->start[i]);
-    if (s->cache != NIL_OBJ)        push(s->cache);
+    if (s->cache != NIL_OBJ)       push(s->cache);
   });
 }

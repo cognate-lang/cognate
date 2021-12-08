@@ -52,7 +52,7 @@ void gc_init()
   BITMAP_INDEX(heap_start) = BITMAP_FREE;
 }
 
-static void show_heap_usage()
+static void __attribute__((unused)) show_heap_usage()
 {
   printf("%p -> %p\n", (void*)heap_start, (void*)heap_top);
   char state;
