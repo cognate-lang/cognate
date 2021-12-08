@@ -1,7 +1,6 @@
 #include <setjmp.h>
 #include <stdint.h>
 #include <string.h>
-#include <signal.h>
 #include <sys/mman.h>
 #include <limits.h>
 #include "runtime.h"
@@ -26,7 +25,10 @@
  * TODO:
  *  - Make the bitmap only use 2 bits per long like it should, instead of a byte.
  *  - Use vector intrinsics to speed up bitmap checking/modifying.
- *  - Make valgrind shut up.
+ *
+ * FIXME:
+ *  - Doesn't work under valgrind.
+ *  - An object will be deallocated if only referenced from other threads(!)
  */
 
 thread_local static uintptr_t* restrict heap_start;
@@ -35,20 +37,12 @@ thread_local static uintptr_t* restrict heap_top;
 thread_local static uint8_t* restrict bitmap;
 thread_local static uint8_t* restrict free_start;
 
-static void handle_segfault()
-{
-  mprotect((void*)((uintptr_t)heap_top & ~(PAGE_SIZE-1)), PAGE_SIZE, PROT_READ | PROT_WRITE);
-  gc_collect();
-}
-
 void gc_init()
 {
   bitmap = free_start   = mmap(0, MAP_SIZE/8, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
   heap_start = heap_top = mmap(0, MAP_SIZE,   PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
   if (heap_start == MAP_FAILED || bitmap == MAP_FAILED)
     throw_error("memory map failure - are you trying to use valgrind?");
-  signal(SIGSEGV, handle_segfault);
-  mprotect(heap_start, PAGE_SIZE, PROT_READ | PROT_WRITE);
   BITMAP_INDEX(heap_start) = BITMAP_FREE;
 }
 
