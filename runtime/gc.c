@@ -29,11 +29,11 @@
  *  - Make valgrind shut up.
  */
 
-static uintptr_t* restrict heap_start;
-static uintptr_t* restrict heap_top;
+thread_local static uintptr_t* restrict heap_start;
+thread_local static uintptr_t* restrict heap_top;
 
-static uint8_t* restrict bitmap;
-static uint8_t* restrict free_start;
+thread_local static uint8_t* restrict bitmap;
+thread_local static uint8_t* restrict free_start;
 
 static void handle_segfault()
 {
@@ -70,6 +70,12 @@ void show_heap_usage()
 __attribute__((malloc, hot, assume_aligned(sizeof(uint64_t)), alloc_size(1), returns_nonnull))
 void* gc_malloc(size_t bytes)
 {
+<<<<<<< HEAD
+=======
+  thread_local static int byte_count = 0;
+  byte_count += bytes;
+  if unlikely(byte_count > 1024 * 1024) gc_collect(), byte_count = 0;
+>>>>>>> e3c996d (Made the garbage collector thread local)
   const size_t longs = (bytes + 7) / sizeof(uintptr_t);
   free_start = memchr(free_start, BITMAP_FREE, LONG_MAX);
   for (uint8_t* restrict free_end; unlikely(free_end = memchr(free_start + 1, BITMAP_ALLOC, longs - 1)); )
