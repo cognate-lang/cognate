@@ -211,3 +211,4 @@ void VAR(prints)(BLOCK);
 BLOCK VAR(precompute)(BLOCK);
 BLOCK VAR(parallelDASHprecompute)(BLOCK);
 void VAR(wait)(NUMBER);
+void VAR(lock)(BLOCK);

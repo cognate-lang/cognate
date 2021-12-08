@@ -71,3 +71,4 @@
 {.name="parallel-precompute", .type=func, .argc=1, .args={block}, .rets=true, .ret=block},
 {.name="wait", .type=func, .argc=1, .args={number}, .rets=false},
 {.name="stop"},
+{.name="lock", .type=func, .argc=1, .args={block}, .rets=false, .needs_stack=true},

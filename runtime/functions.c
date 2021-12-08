@@ -578,3 +578,13 @@ BLOCK VAR(parallelDASHprecompute)(BLOCK blk)
     if (s->cache != NIL_OBJ)       push(s->cache);
   });
 }
+
+void VAR(lock)(BLOCK blk)
+{
+  static pthread_mutex_t mut;
+  static _Bool needs_init = 1;
+  if (needs_init) needs_init = 0, pthread_mutex_init(&mut, NULL);
+  pthread_mutex_lock(&mut);
+  blk();
+  pthread_mutex_unlock(&mut);
+}
