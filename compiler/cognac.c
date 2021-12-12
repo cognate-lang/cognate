@@ -49,7 +49,7 @@ br:;
 
 char* type_as_str[8][2] =
 {
-  [any]     = {  "any",    "ANY"     },
+  [any]     = { "any",     "ANY"     },
   [block]   = { "block",   "BLOCK"   },
   [string]  = { "string",  "STRING"  },
   [number]  = { "number",  "NUMBER"  },
@@ -448,9 +448,10 @@ int main(int argc, char** argv)
   add_symbols(full_ast);
   compile(full_ast, NULL, predeclare(full_ast, builtins()));
   fputs("cleanup();}\n", outfile);
-  char* args[] = { "clang", c_file_path, "-o", binary_file_path, "-fblocks", "-I"INCLUDEDIR, "-L"LIBDIR, "-l:libcognate.a", "-lBlocksRuntime",
+  char* args[] = { "clang", "-static", c_file_path, "-o", binary_file_path, "-fblocks", "-I"INCLUDEDIR, "-L"LIBDIR, "-l:libcognate.a", "-lBlocksRuntime",
                    "-lpthread", release ? "-Ofast" : "-O1", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
-                   "-std=c11", "-lm", "-g0", "-flto", release ? "-s" : "-ggdb3", "-fuse-ld=lld", NULL };
+                   "-std=c11", "-lm", "-g0", "-flto", release ? "-s" : "-ggdb3", "-fuse-ld=lld", "-fdata-sections", "-ffunction-sections",
+                   "-Wl,--gc-sections", NULL };
   fflush(outfile);
   if (fork() == 0) execvp(args[0], args); else wait(NULL);
   if (!run) return EXIT_SUCCESS;
