@@ -63,7 +63,6 @@ void init(int argc, char** argv)
   // Initialize the stack.
   init_stack();
 }
-
 void cleanup()
 {
   if unlikely(stack.top != stack.start || stack.cache != NIL_OBJ)
@@ -117,7 +116,8 @@ _Noreturn void throw_error(const char* restrict const msg)
     int line_num_digits = 1;
     for (int tmp = line_num; tmp /= 10; ++line_num_digits);
     offset = strlen("Line: ... ") + line_num_digits + strlen(word_name);
-    fprintf(stderr, "\033[0;2mLine %i: \033[0;1m... %c%s ...\n%*s\033[31;1m↳ ", line_num, toupper(*word_name), word_name + 1, offset, "");
+    fprintf(stderr, "\033[0;2mLine %i: \033[0;1m... %c%s ...\n%*s\033[31;1m↳ ",
+        line_num, toupper(*word_name), word_name + 1, offset, "");
   } else fputs("\033[31;1m", stderr);
   fputs(msg, stderr);
   fputc('\n', stderr);
@@ -142,7 +142,7 @@ void print_object (const ANY object, FILE* out, const _Bool quotes)
   {
     // Double precision float has 15sf precision.
     // Switch to scientific notation after 10 digits to eliminate rounding errors.
-    case number: fprintf(out, "%.14g", unbox_number(object));  return;
+    case number: fprintf(out, "%.14g", unbox_number(object)); return;
     case string:
     {
       // Quotes is whether or not to print strings with quotes.
