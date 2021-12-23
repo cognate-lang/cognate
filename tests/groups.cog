@@ -1,4 +1,4 @@
-Define Test-group as  ( Group (\foo \bar \baz) );
+Define Test-group  as ( Group (\foo \bar \baz) );
 Define Test-group2 as ( Group (\bar \baz \foo) );
 
 Print If (Test-group 1 2 3; == Test-group 1 2 3)

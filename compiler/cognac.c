@@ -285,8 +285,8 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
           compile(tree->data, NULL, predeclare(tree->next->next->data, defs));
           fputs("}", outfile);
           tree = tree->next->next->next->next;
+          break;
         }
-        break;
       }
       reg_list* return_register = add_register(tree->val_type, registers);
       switch (tree->val_type)

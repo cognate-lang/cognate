@@ -98,7 +98,7 @@ _Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(const char*
   va_start(args, fmt);
   vfprintf(stderr, fmt, args);
   fputc('\n', stderr);
-  {
+  if (errno) {
     const char* str = strerror(errno);
     fprintf(stderr, "%*s\033[0;2m%c%s\n", offset + 2, "", tolower(*str), str+1);
   }
