@@ -63,7 +63,7 @@ void init(int argc, char** argv)
   // Initialize the stack.
   init_stack();
 }
-void cleanup()
+void cleanup(void)
 {
   if unlikely(stack.top != stack.start || stack.cache != NIL_OBJ)
   {
@@ -72,7 +72,7 @@ void cleanup()
   }
 }
 
-void check_function_stack_size()
+void check_function_stack_size(void)
 {
   const char sp;
   if unlikely(&sp < function_stack_top + STACK_MARGIN_KB * 1024)
@@ -198,7 +198,7 @@ void print_object (const ANY object, FILE* out, const _Bool quotes)
   }
 }
 
-void init_stack()
+void init_stack(void)
 {
   stack.size = INITIAL_STACK_SIZE;
   stack.top = stack.start = gc_malloc(INITIAL_STACK_SIZE);
@@ -213,33 +213,33 @@ void push(ANY object)
   stack.cache = object;
 }
 
-ANY pop()
+ANY pop(void)
 {
   if likely(stack.cache != NIL_OBJ) { const ANY a = stack.cache; stack.cache = NIL_OBJ; return a; }
   if unlikely(stack.top == stack.start) throw_error("stack underflow");
   return *--stack.top;
 }
 
-ANY peek()
+ANY peek(void)
 {
   if likely(stack.cache != NIL_OBJ) return stack.cache;
   if unlikely(stack.top == stack.start) throw_error("stack underflow");
   return *(stack.top - 1);
 }
 
-void flush_stack_cache()
+void flush_stack_cache(void)
 {
   if (stack.cache == NIL_OBJ) return;
   push(stack.cache);
   pop();
 }
 
-int stack_length()
+int stack_length(void)
 {
   return stack.top - stack.start + (stack.cache != NIL_OBJ);
 }
 
-void expand_stack()
+void expand_stack(void)
 {
   // Assumes that stack is currently of length stack.size.
   size_t new_size = stack.size * LIST_GROWTH_FACTOR;

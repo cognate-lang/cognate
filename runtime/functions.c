@@ -49,9 +49,7 @@ NUMBER VAR(modulo)(NUMBER a, NUMBER b)
 NUMBER VAR(random)(NUMBER low, NUMBER high, NUMBER step)
 {
   if unlikely((high - low) * step < 0 || !step)
-  {
     throw_error_fmt("invalid range %.14g..%.14g step %.14g", low, high, step);
-  }
   else if ((high - low) / step < 1)
   {
     return low;
@@ -67,7 +65,7 @@ NUMBER VAR(random)(NUMBER low, NUMBER high, NUMBER step)
   return low + (NUMBER)(num % (unsigned long)((high - low) / step)) * step;
 }
 
-void VAR(clear)() { stack.cache = NIL_OBJ; stack.top=stack.start; }
+void VAR(clear)(void) { stack.cache = NIL_OBJ; stack.top=stack.start; }
 
 BOOLEAN VAR(true) =  1;
 BOOLEAN VAR(false) = 0;
@@ -157,48 +155,6 @@ LIST VAR(list)(BLOCK expr)
   return lst;
 }
 
-/*
-LIST VAR(characters)() {
-  // Can be rewritten using substring, albeit O(n^2)
-  const char* str = pop(string);
-  const LIST* lst = NULL;
-  for (size_t i = 0; *str ; ++i)
-  {
-    size_t char_len = mblen(str, MB_CUR_MAX);
-    LIST* tmp = gc_new (LIST);
-    tmp->object = (cognate_object) {.type=string, .string=gc_strndup(str, char_len)};
-    tmp->next = lst;
-    lst = tmp;
-    str += char_len;
-  }
-  return NULL;
-  // TODO: Currently returning list backwards.
-}
-*/
-/*
-LIST VAR(split)() {
-  // Can be rewritten using Substring.
-  const char* const delimiter = pop(string);
-  const size_t delim_size     = strlen(delimiter);
-  if unlikely(!delim_size) throw_error("Cannot Split a string with a zero-length delimiter!");
-  const char* str = pop(string);
-  size_t length = 1;
-    for (const char* temp = str; (temp = strstr(temp, delimiter) + delim_size) - delim_size; ++length);
-  LIST* const lst = gc_new(LIST);
-  lst->top = lst->start   = (cognate_object*) gc_malloc (sizeof(cognate_object) * length);
-  lst->top += length;
-  size_t i = 0;
-  for (const char* c; (c = strstr(str, delimiter)); i++)
-  {
-    lst->start[i] = (cognate_object) {.type=string, .string=gc_strndup(str, c - str)};
-    str = c + delim_size;
-  }
-  lst->start[i] = (cognate_object) {.type=string, .string=str};
-  push(list, lst);
-  return NULL;
-}
-*/
-
 STRING VAR(join)(NUMBER n)
 {
   // Joins a string to the end of another string.
@@ -263,7 +219,7 @@ invalid_range:
 }
 
 
-STRING VAR(input)()
+STRING VAR(input)(void)
 {
   // Read user input to a string.
   size_t size = 0;
@@ -295,25 +251,20 @@ NUMBER VAR(number)(STRING str)
   // casts string to number.
   char* end;
   NUMBER num = strtod(str, &end);
-  if (end == str || *end != '\0')
-  {
-    throw_error_fmt("cannot parse '%.32s' to a number", str);
-  }
+  if (end == str || *end != '\0') throw_error_fmt("cannot parse '%.32s' to a number", str);
   return num;
 }
 
-STRING VAR(path)()
+STRING VAR(path)(void)
 {
   char buf[FILENAME_MAX];
   if (!getcwd(buf, FILENAME_MAX))
-  {
     throw_error("cannot get working directory");
-  }
   char* ret = gc_strdup(buf);
   return ret;
 }
 
-LIST VAR(stack)()
+LIST VAR(stack)(void)
 {
   LIST lst = NULL;
   flush_stack_cache();
@@ -336,12 +287,12 @@ void VAR(write)(STRING filename, ANY obj)
   fclose(fp);
 }
 
-LIST VAR(parameters)()
+LIST VAR(parameters)(void)
 {
   return cmdline_parameters; // TODO should be a variable, and allow mutation and stuff
 }
 
-void VAR(stop)()
+void VAR(stop)(void)
 {
   // Don't check stack length, because it probably wont be empty.
   exit(EXIT_SUCCESS);
@@ -415,9 +366,7 @@ NUMBER VAR(ceiling)(NUMBER a)
 void VAR(assert)(STRING name, BOOLEAN result)
 {
   if unlikely(!result)
-  {
     throw_error_fmt("failed assertion '%s'", name);
-  }
 }
 
 void VAR(error)(STRING str)

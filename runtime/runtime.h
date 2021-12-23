@@ -35,12 +35,6 @@ typedef enum cognate_type
   number  = -1,
 } cognate_type;
 
-typedef struct type_punning
-{
-  double d;
-  long l;
-} type_punning;
-
 typedef struct cognate_list
 {
   LIST next;
@@ -97,17 +91,17 @@ extern thread_local const char* restrict function_stack_start;
 extern ptrdiff_t function_stack_size;
 
 // Variables and  needed by functions.c defined in runtime.c
-void init_stack();
-void set_function_stack_start();
-void expand_stack();
+void init_stack(void);
+void set_function_stack_start(void);
+void expand_stack(void);
 void print_object(const ANY object, FILE *, const _Bool);
 void _Noreturn __attribute__((format(printf, 1, 2))) throw_error_fmt(const char* restrict const, ...);
 void _Noreturn throw_error(const char* restrict const);
 _Bool compare_objects(ANY, ANY);
 
 void* gc_malloc(size_t);
-void gc_collect();
-void gc_init();
+void gc_collect(void);
+void gc_init(void);
 char* gc_strdup(char*);
 char* gc_strndup(char*, size_t);
 
@@ -131,13 +125,13 @@ BLOCK unbox_block(ANY);
 ANY box_block(BLOCK);
 
 void init(int, char **);
-void cleanup();
+void cleanup(void);
 void push(ANY);
-ANY pop();
-ANY peek();
-void flush_stack_cache();
-int stack_length();
-void check_function_stack_size();
+ANY pop(void);
+ANY peek(void);
+void flush_stack_cache(void);
+int stack_length(void);
+void check_function_stack_size(void);
 void set_word_name(const char* restrict const);
 void set_line_num(int);
 
@@ -153,7 +147,7 @@ NUMBER VAR(SUB)(NUMBER, NUMBER);
 NUMBER VAR(DIV)(NUMBER, NUMBER);
 NUMBER VAR(modulo)(NUMBER, NUMBER);
 NUMBER VAR(random)(NUMBER, NUMBER, NUMBER);
-void VAR(clear)();
+void VAR(clear)(void);
 extern BOOLEAN VAR(true);
 extern BOOLEAN VAR(false);
 BOOLEAN VAR(either)(BOOLEAN, BOOLEAN);
@@ -182,14 +176,14 @@ LIST VAR(list)(BLOCK);
 STRING VAR(join)(NUMBER);
 NUMBER VAR(stringDASHlength)(STRING);
 STRING VAR(substring)(NUMBER, NUMBER, STRING);
-STRING VAR(input)();
+STRING VAR(input)(void);
 STRING VAR(read)(STRING);
 NUMBER VAR(number)(STRING);
-STRING VAR(path)();
-LIST VAR(stack)();
+STRING VAR(path)(void);
+LIST VAR(stack)(void);
 void VAR(write)(STRING, ANY);
-LIST VAR(parameters)();
-void VAR(stop)();
+LIST VAR(parameters)(void);
+void VAR(stop)(void);
 BOOLEAN VAR(match)(STRING, STRING);
 NUMBER VAR(ordinal)(STRING);
 STRING VAR(character)(NUMBER);

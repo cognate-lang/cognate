@@ -37,7 +37,7 @@ thread_local static uintptr_t* restrict heap_top;
 thread_local static uint8_t* restrict bitmap;
 thread_local static uint8_t* restrict free_start;
 
-void gc_init()
+void gc_init(void)
 {
   bitmap = free_start   = mmap(0, MAP_SIZE/8, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
   heap_start = heap_top = mmap(0, MAP_SIZE,   PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
@@ -46,7 +46,7 @@ void gc_init()
   BITMAP_INDEX(heap_start) = BITMAP_FREE;
 }
 
-static void __attribute__((unused)) show_heap_usage()
+static void __attribute__((unused)) show_heap_usage(void)
 {
   printf("%p -> %p\n", (void*)heap_start, (void*)heap_top);
   char state;
@@ -95,7 +95,7 @@ static void gc_collect_root(uintptr_t object)
   gc_collect_root(*ptr);
 }
 
-__attribute__((noinline)) void gc_collect()
+__attribute__((noinline)) void gc_collect(void)
 {
   for (uintptr_t* restrict p = (uintptr_t*)bitmap; (uint8_t*)p < bitmap + (heap_top - heap_start); ++p)
     *p &= 0x5555555555555555;
