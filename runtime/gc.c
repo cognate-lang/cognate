@@ -88,6 +88,9 @@ static void gc_collect_root(uintptr_t object)
   if ((object & ~PTR_MASK && (object & NAN_MASK) != NAN_MASK)
    || ptr < heap_start || ptr >= heap_top
    || BITMAP_INDEX(ptr) != BITMAP_FREE) return;
+  /* Cognate does not use pointers to the middle of gc objects,
+   * but if in future it does, then the garbage collector will
+   * need to iterate back through the bitmap if ptr is empty. */
   BITMAP_INDEX(ptr) = BITMAP_ALLOC;
   // No need to optimize the bitmap addressing, since it's O(n) anyways.
   for (uintptr_t* p = ptr + 1; BITMAP_INDEX(p) == BITMAP_EMPTY; ++p)
@@ -97,13 +100,14 @@ static void gc_collect_root(uintptr_t object)
 
 __attribute__((noinline)) void gc_collect(void)
 {
-  for (uintptr_t* restrict p = (uintptr_t*)bitmap; (uint8_t*)p < bitmap + (heap_top - heap_start); ++p)
+  for (uintptr_t* restrict p = (uintptr_t*)bitmap;
+      (uint8_t*)p < bitmap + (heap_top - heap_start); ++p)
     *p &= 0x5555555555555555;
-  __attribute__((unused)) volatile ANY s = (ANY)stack.start;
   jmp_buf a;
   setjmp(a);
-  uintptr_t* sp = (uintptr_t*)&sp;
-  for (uintptr_t* root = sp + 1; root <= (uintptr_t*)function_stack_start; ++root)
+  volatile ANY s = (ANY)stack.start;
+  uintptr_t* sp = (uintptr_t*)&s;
+  for (uintptr_t* root = sp; root <= (uintptr_t*)function_stack_start; ++root)
     gc_collect_root(*root);
   free_start = bitmap;
 }
