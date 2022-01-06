@@ -135,67 +135,70 @@ void handle_error_signal(int sig)
   throw_error_fmt("recieved signal %i (%s)", sig, strsignal(sig));
 }
 
-void print_object (const ANY object, FILE* out, const _Bool quotes)
+char* show_object (const ANY object, const _Bool raw_strings)
 {
-  // TODO I want to be able to print_object to a string, so that i can have a Show function.
+  // Virtual memory vastly simplfies this function.
+  static char* buffer = NULL;
+  if (!buffer)
+    buffer = mmap(0, 1024l*1024l*1024l*1024l, PROT_READ | PROT_WRITE,
+        MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
+  char* buffer_start = buffer;
   switch (get_type(object))
   {
-    // Double precision float has 15sf precision.
-    // Switch to scientific notation after 10 digits to eliminate rounding errors.
-    case number: fprintf(out, "%.14g", unbox_number(object)); return;
-    case string:
-    {
-      // Quotes is whether or not to print strings with quotes.
-      if (!quotes)
-      {
-        fputs(unbox_string(object), out);
-        return;
-      }
-      fputc('\'', out);
-      char c;
-      for (const char* restrict ptr = unbox_string(object); (c = *ptr) != '\0'; ++ptr)
-      {
-        if (c >= '\a' && c <= '\r')
-        {
-          fputc('\\', out);
-          fputc("abtnvfr"[c-'\a'], out);
-        }
-        else if (c == '\\') fputs("\\\\", out);
-        else if (c == '\'') fputs("\\\'", out);
-        else fputc(c, out);
-      }
-      fputc('\'', out);
-      return;
-    }
-    case list:
-    {
-      fputc('(', out);
-      for (LIST i = unbox_list(object); i ; i = i->next)
-      {
-        print_object(i->object, out, 1);
-        if likely(i->next) fputc(' ', out);
-      }
-      fputc(')', out);
-      return;
-    }
-    case group:
-    {
-      GROUP g = unbox_group(object);
-      fputc('(', out);
-      for (size_t i = 0; i < g->len; ++i)
-      {
-        fprintf(out, "%s: ", g->items[i].name);
-        print_object(g->items[i].object, out, 1);
-        if likely(i + 1 < g->len) fputs(", ", out);
-      }
-      fputc(')', out);
-      return;
-    }
-    case boolean: fputs(unbox_boolean(object) ? "True" : "False", out); return;
-    case block: fprintf(out, "<Block %p>", (void*)unbox_block(object)); return;
-    case symbol: fputs(unbox_symbol(object), out); return;
+    case number: sprintf(buffer, "%.14g", unbox_number(object)); break;
+    case string: if (raw_strings) strcpy(buffer, unbox_string(object));
+                 else {
+                   *buffer++ = '\'';
+                   for (const char* str = unbox_string(object) ; *str ; ++str)
+                   {
+                     char c = *str;
+                     if unlikely(c >= '\a' && c <= '\r')
+                     {
+                       *buffer++ = '\\';
+                       *buffer++ = "abtnvfr"[c-'\a'];
+                     }
+                     else if (c == '\\') { *buffer++ = '\\'; *buffer++ = '\\'; }
+                     else if (c == '\'') { *buffer++ = '\\'; *buffer++ = '\''; }
+                     else *(buffer++) = c;
+                   }
+                   *buffer++ = '\'';
+                   *buffer++ = '\0';
+                 }
+                 break;
+    case list: *buffer++ = '(';
+               for (LIST l = unbox_list(object) ;; l = l->next)
+               {
+                 buffer += strlen(show_object(l->object, 0));
+                 if (!l->next) break;
+                 *buffer++ = ',';
+                 *buffer++ = ' ';
+               }
+               *buffer++ = ')';
+               *buffer++ = '\0';
+               break;
+    case group: {
+                  GROUP g = unbox_group(object);
+                  for (size_t i = 0 ;; ++i)
+                  {
+                    buffer += strlen(strcpy(buffer, g->items[i].name));
+                    *buffer++ = ':';
+                    *buffer++ = ' ';
+                    buffer += strlen(show_object(g->items[i].object, 0));
+                    if (i + 1 == g->len) break;
+                    *buffer++ = ',';
+                    *buffer++ = ' ';
+                  }
+                  *buffer++ = ')';
+                  *buffer++ = '\0';
+                }
+                break;
+    case boolean: strcpy(buffer, unbox_boolean(object) ? "True" : "False");  break;
+    case symbol:  strcpy(buffer, unbox_symbol(object));                      break;
+    case block:   sprintf(buffer, "<block %p>", (void*)unbox_block(object)); break;
     case NOTHING: __builtin_trap();
   }
+  buffer = buffer_start;
+  return buffer;
 }
 
 void init_stack(void)
@@ -253,12 +256,12 @@ const char* lookup_type(cognate_type type)
   switch(type)
   {
     case NOTHING: return "NOTHING";
-    case string:  return "String";
-    case number:  return "Number";
-    case list:    return "List";
-    case block:   return "Block";
-    case group:   return "Group";
-    case symbol:  return "Symbol";
+    case string:  return "string";
+    case number:  return "number";
+    case list:    return "list";
+    case block:   return "block";
+    case group:   return "group";
+    case symbol:  return "symbol";
     default: __builtin_trap();
   }
 }
@@ -338,7 +341,7 @@ cognate_type get_type(ANY box)
 NUMBER unbox_number(ANY box)
 {
   if unlikely(is_nan(box))
-    throw_error_fmt("expected Number got %s", lookup_type(get_type(box)));
+    throw_error_fmt("expected a Number but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
   return *(NUMBER*)&box;
 }
 
@@ -350,7 +353,7 @@ ANY box_number(NUMBER num)
 BOOLEAN unbox_boolean(ANY box)
 {
   if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)boolean << 48)
-    throw_error_fmt("expected Boolean got %s", lookup_type(get_type(box)));
+    throw_error_fmt("expected a Boolean but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
   return (STRING)(PTR_MASK & box);
 }
 
@@ -362,7 +365,7 @@ ANY box_boolean(BOOLEAN b)
 STRING unbox_string(ANY box)
 {
   if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)string << 48)
-    throw_error_fmt("expected String got %s", lookup_type(get_type(box)));
+    throw_error_fmt("expected a String but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
   return (STRING)(PTR_MASK & box);
 }
 
@@ -374,7 +377,7 @@ ANY box_string(STRING s)
 LIST unbox_list(ANY box)
 {
   if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)list << 48)
-    throw_error_fmt("expected List got %s", lookup_type(get_type(box)));
+    throw_error_fmt("expected a List but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
   return (LIST)(PTR_MASK & box);
 }
 
@@ -386,7 +389,7 @@ ANY box_list(LIST s)
 GROUP unbox_group(ANY box)
 {
   if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)group << 48)
-    throw_error_fmt("expected Group got %s", lookup_type(get_type(box)));
+    throw_error_fmt("expected a Group but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
   return (GROUP)(PTR_MASK & box);
 }
 
@@ -398,7 +401,7 @@ ANY box_group(GROUP s)
 SYMBOL unbox_symbol(ANY box)
 {
   if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)symbol << 48)
-    throw_error_fmt("expected Symbol got %s", lookup_type(get_type(box)));
+    throw_error_fmt("expected a Symbol but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
   return (SYMBOL)(PTR_MASK & box);
 }
 
@@ -410,7 +413,7 @@ ANY box_symbol(SYMBOL s)
 BLOCK unbox_block(ANY box)
 {
   if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)block << 48)
-    throw_error_fmt("expected Block got %s", lookup_type(get_type(box)));
+    throw_error_fmt("expected a Block but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
   return (BLOCK)(PTR_MASK & box);
 }
 

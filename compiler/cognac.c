@@ -200,7 +200,7 @@ reg_list* emit_register(value_type type, reg_list* regs)
   else
   {
     char error_msg[256];
-    sprintf(error_msg, "expected %s got %s", type_as_str[type][false], type_as_str[regs->type][false]);
+    sprintf(error_msg, "expected a %s but got a %s", type_as_str[type][false], type_as_str[regs->type][false]);
     yyerror(error_msg);
   }
   return drop_register(regs);

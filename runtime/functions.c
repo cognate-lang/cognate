@@ -29,8 +29,8 @@ void VAR(while)(BLOCK cond, BLOCK body)
 
 void VAR(do)(BLOCK blk) { blk(); }
 
-void VAR(put)(ANY a)   { print_object(a, stdout, 0); fflush(stdout); }
-void VAR(print)(ANY a) { print_object(a, stdout, 0); putc('\n', stdout); }
+void VAR(put)(ANY a)   { fputs(show_object(a, 1), stdout); fflush(stdout); }
+void VAR(print)(ANY a) { puts(show_object(a, 1)); }
 
 void VAR(puts)(BLOCK b)   { VAR(for)(VAR(list)(b), ^{VAR(put)(pop()); }); }
 void VAR(prints)(BLOCK b) { VAR(for)(VAR(list)(b), ^{VAR(put)(pop()); }); putc('\n', stdout); }
@@ -283,7 +283,7 @@ void VAR(write)(STRING filename, ANY obj)
   // Write object to end of file, without a newline.
   FILE* const fp = fopen(filename, "a");
   if unlikely(fp == NULL) throw_error_fmt("cannot open file '%s'", filename);
-  print_object(obj, fp, 0);
+  fputs(show_object(obj, 1), fp);
   fclose(fp);
 }
 
@@ -536,4 +536,9 @@ void VAR(lock)(BLOCK blk)
   pthread_mutex_lock(&mut);
   blk();
   pthread_mutex_unlock(&mut);
+}
+
+STRING VAR(show)(ANY o)
+{
+  return show_object(o, 0);
 }

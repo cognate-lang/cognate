@@ -81,7 +81,7 @@ typedef struct cognate_stack
 #define likely(expr)   (__builtin_expect((_Bool)(expr), 1))
 
 // Global variables
-thread_local extern cognate_stack stack;
+extern thread_local cognate_stack stack;
 extern LIST cmdline_parameters;
 extern const char* restrict word_name;
 extern int line_num;
@@ -94,7 +94,7 @@ extern ptrdiff_t function_stack_size;
 void init_stack(void);
 void set_function_stack_start(void);
 void expand_stack(void);
-void print_object(const ANY object, FILE *, const _Bool);
+char* show_object(const ANY object, const _Bool);
 void _Noreturn __attribute__((format(printf, 1, 2))) throw_error_fmt(const char* restrict const, ...);
 void _Noreturn throw_error(const char* restrict const);
 _Bool compare_objects(ANY, ANY);
@@ -184,6 +184,7 @@ LIST VAR(stack)(void);
 void VAR(write)(STRING, ANY);
 LIST VAR(parameters)(void);
 void VAR(stop)(void);
+STRING VAR(show)(ANY);
 BOOLEAN VAR(match)(STRING, STRING);
 NUMBER VAR(ordinal)(STRING);
 STRING VAR(character)(NUMBER);
