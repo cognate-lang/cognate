@@ -29,6 +29,10 @@
  * FIXME:
  *  - Doesn't work under valgrind.
  *  - An object will be deallocated if only referenced from other threads(!)
+ *    > Collector either needs to iterate over parent threads' stacks, or a
+ *    > thread-global collector iterates over all threads stacks. Second
+ *    > method seems simpler and uses less memory but would also require
+ *    > locks on gc_malloc().
  */
 
 thread_local static uintptr_t* restrict heap_start;
@@ -76,8 +80,8 @@ void* gc_malloc(size_t bytes)
   uint8_t* restrict free_end = free_start + longs;
   uintptr_t* buf = heap_start + (free_start - bitmap);
   *free_start = BITMAP_ALLOC;
-  if (heap_top < buf + longs) heap_top = buf + longs;
-  if (*free_end != BITMAP_ALLOC) *free_end = BITMAP_FREE;
+  if unlikely(heap_top < buf + longs) heap_top = buf + longs;
+  if (*free_end == BITMAP_EMPTY) *free_end = BITMAP_FREE;
   free_start = free_end;
   return buf;
 }
