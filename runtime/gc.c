@@ -23,6 +23,10 @@
  * Well under 100 SLOC is also ridiculously small for a garbage collector.
  *
  * TODO:
+ *  - Remove consequetive GC_FREEs after doing gc as then we don't have to
+ *    memset the bitmap when we allocate.
+ *  - Use a free list / free stack for allocating as this will improve
+ *    performance
  *  - Make the bitmap only use 2 bits per long like it should, instead of a byte.
  *  - Use vector intrinsics to speed up bitmap checking/modifying.
  *
@@ -53,15 +57,14 @@ void gc_init(void)
 static void __attribute__((unused)) show_heap_usage(void)
 {
   printf("%p -> %p\n", (void*)heap_start, (void*)heap_top);
-  char state;
   for (uintptr_t* i = heap_start; i < heap_top; ++i)
   {
     switch(BITMAP_INDEX(i))
     {
-      case BITMAP_ALLOC: state = '#'; break;
-      case BITMAP_FREE:  state = '-'; break;
+      case BITMAP_ALLOC: putc('#', stdout); break;
+      case BITMAP_FREE:  putc('-', stdout); break;
+      default:           putc('?', stdout);
     }
-    putc(state, stdout);
   }
   putc('\n', stdout);
 }
@@ -89,7 +92,7 @@ void* gc_malloc(size_t bytes)
 static void gc_collect_root(uintptr_t object)
 {
   uintptr_t* restrict ptr = (uintptr_t*)(object & PTR_MASK);
-  if ((object & ~PTR_MASK && (object & NAN_MASK) != NAN_MASK)
+  if likely((object != (uintptr_t)ptr && !is_nan(object))
    || ptr < heap_start || ptr >= heap_top
    || BITMAP_INDEX(ptr) != BITMAP_FREE) return;
   /* Cognate does not use pointers to the middle of gc objects,

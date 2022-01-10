@@ -109,6 +109,7 @@ char* gc_strndup(char*, size_t);
 
 // Variables and functions needed by compiled source file defined in runtime.c
 cognate_type get_type(ANY);
+_Bool is_nan(ANY);
 NUMBER unbox_number(ANY);
 ANY box_number(NUMBER);
 BOOLEAN unbox_boolean(ANY);

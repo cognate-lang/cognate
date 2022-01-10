@@ -326,7 +326,7 @@ _Bool compare_objects(ANY ob1, ANY ob2)
   }
 }
 
-static _Bool is_nan(ANY box)
+_Bool is_nan(ANY box)
 {
   // Works with -ffast-math
   return (signed long)box > (signed long)NAN_MASK;
