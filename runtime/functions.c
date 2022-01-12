@@ -84,11 +84,14 @@ BOOLEAN VAR(GTE)(NUMBER a, NUMBER b) { return a >= b; }
 BOOLEAN VAR(LTE)(NUMBER a, NUMBER b) { return a <= b; }
 
 BOOLEAN VAR(numberQMARK)(ANY a)  { return get_type(a)==number; }
-BOOLEAN VAR(listQMARK)(ANY a)    { return get_type(a)==number; }
+BOOLEAN VAR(listQMARK)(ANY a)    { return get_type(a)==list; }
 BOOLEAN VAR(stringQMARK)(ANY a)  { return get_type(a)==string; }
 BOOLEAN VAR(blockQMARK)(ANY a)   { return get_type(a)==block;  }
 BOOLEAN VAR(booleanQMARK)(ANY a) { return get_type(a)==boolean;}
+BOOLEAN VAR(symbolQMARK)(ANY a)  { return get_type(a)==symbol; }
 BOOLEAN VAR(integerQMARK)(ANY a) { return VAR(numberQMARK)(a) && unbox_number(a) == floor(unbox_number(a)); }
+
+BOOLEAN VAR(match)(ANY patt, ANY obj)  { return match_objects(patt,obj); }
 
 ANY VAR(first)(LIST lst)
 {
@@ -298,7 +301,7 @@ void VAR(stop)(void)
   exit(EXIT_SUCCESS);
 }
 
-BOOLEAN VAR(match)(STRING reg_str, STRING str)
+BOOLEAN VAR(matchDASHregex)(STRING reg_str, STRING str)
 {
   // Returns true if string matches regex.
   static const char* old_str = NULL;

@@ -15,6 +15,8 @@
 static const char *lookup_type(cognate_type);
 static _Bool compare_lists(LIST, LIST);
 static _Bool compare_groups(GROUP, GROUP);
+static _Bool match_lists(LIST, LIST);
+static _Bool match_groups(GROUP, GROUP);
 static void handle_error_signal(int);
 
 thread_local cognate_stack stack;
@@ -307,21 +309,83 @@ static _Bool compare_groups(GROUP g1, GROUP g2)
   return 1;
 }
 
+
 _Bool compare_objects(ANY ob1, ANY ob2)
 {
-  if (!(get_type(ob1) == get_type(ob2)))
-  {
-    return 0; // Not equal if differing types. None of this javascript rubbish.
-  }
+  if (get_type(ob1) != get_type(ob2)) return 0;
   switch (get_type(ob1))
   {
-    case number  : return fabs(unbox_number(ob1) - unbox_number(ob2)) <= 0.5e-14 * fabs(unbox_number(ob1));
+    case number  : return fabs(unbox_number(ob1) - unbox_number(ob2))
+                            <= 0.5e-14 * fabs(unbox_number(ob1));
     case boolean : return unbox_boolean(ob1) == unbox_boolean(ob2);
-    case string  : return strcmp(unbox_string(ob1), unbox_string(ob2)) == 0;
+    case string  : return !strcmp(unbox_string(ob1), unbox_string(ob2));
     case symbol  : return unbox_symbol(ob1) == unbox_symbol(ob2);
     case list    : return compare_lists(unbox_list(ob1), unbox_list(ob2));
     case block   : throw_error("cannot compare blocks");
     case group   : return compare_groups(unbox_group(ob1), unbox_group(ob2));
+    default      : __builtin_trap();
+  }
+}
+
+_Bool match_lists(LIST lst1, LIST lst2)
+{
+  if (!lst1) return !lst2;
+  if (!lst2) return 0;
+  while (match_objects(lst1->object, lst2->object))
+  {
+    if (!lst1->next) return !lst2->next;
+    if (!lst2->next) return 0;
+    lst1 = lst1 -> next;
+    lst2 = lst2 -> next;
+  }
+  return 0;
+}
+
+static _Bool match_groups(GROUP g1, GROUP g2)
+{
+  if (g1->len != g2->len) return 0;
+  size_t len = g1->len;
+  for (size_t i = 0; i < len; ++i)
+  {
+    SYMBOL name = g1->items[i].name;
+    size_t index1 = i;
+    size_t index2 = 0;
+    if (name == g2->items[i].name) index2 = i;
+    else
+    {
+      _Bool found = 0;
+      for (size_t ii = 0; ii < len; ++ii)
+      {
+        const _Bool eq = name == g2->items[ii].name;
+        found |= eq;
+        index2 += ii * eq;
+      }
+      if (!found) return 0;
+    }
+    if (!match_objects(g1->items[index1].object, g2->items[index2].object))
+      return 0;
+  }
+  return 1;
+}
+
+_Bool match_objects(ANY patt, ANY obj)
+{
+  if (get_type(patt) == block)
+  {
+    push(obj);
+    unbox_block(patt)();
+    return unbox_boolean(pop());
+  }
+  else if (get_type(patt) != get_type(obj)) return 0;
+  switch (get_type(patt))
+  {
+    case number  : return fabs(unbox_number(patt) - unbox_number(obj))
+                            <= 0.5e-14 * fabs(unbox_number(patt));
+    case boolean : return unbox_boolean(patt) == unbox_boolean(obj);
+    case string  : return !strcmp(unbox_string(patt), unbox_string(obj));
+    case symbol  : return unbox_symbol(patt) == unbox_symbol(obj);
+    case list    : return match_lists(unbox_list(patt), unbox_list(obj));
+    case group   : return match_groups(unbox_group(patt), unbox_group(obj));
     default      : __builtin_trap();
   }
 }
