@@ -9,7 +9,7 @@
 #include <sys/resource.h>
 #include <time.h>
 #include <math.h>
-#include <threads.h>
+#include <pthread.h>
 #include <sys/mman.h>
 
 static const char *lookup_type(cognate_type);
@@ -19,14 +19,14 @@ static _Bool match_lists(LIST, LIST);
 static _Bool match_groups(GROUP, GROUP);
 static void handle_error_signal(int);
 
-thread_local cognate_stack stack;
+__thread cognate_stack stack;
 LIST cmdline_parameters = NULL;
 
 const char* restrict word_name = NULL;
 int line_num = -1;
 
-thread_local const char* restrict function_stack_top;
-thread_local const char* restrict function_stack_start;
+__thread const char* restrict function_stack_top;
+__thread const char* restrict function_stack_start;
 ptrdiff_t function_stack_size;
 
 

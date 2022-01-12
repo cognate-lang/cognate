@@ -39,11 +39,11 @@
  *    > locks on gc_malloc().
  */
 
-thread_local static uintptr_t* restrict heap_start;
-thread_local static uintptr_t* restrict heap_top;
+static __thread uintptr_t* restrict heap_start;
+static __thread uintptr_t* restrict heap_top;
 
-thread_local static uint8_t* restrict bitmap;
-thread_local static uint8_t* restrict free_start;
+static __thread uint8_t* restrict bitmap;
+static __thread uint8_t* restrict free_start;
 
 void gc_init(void)
 {
@@ -72,7 +72,7 @@ static void __attribute__((unused)) show_heap_usage(void)
 __attribute__((malloc, hot, assume_aligned(sizeof(uint64_t)), alloc_size(1), returns_nonnull))
 void* gc_malloc(size_t bytes)
 {
-  thread_local static int byte_count = 0;
+  static __thread int byte_count = 0;
   byte_count += bytes;
   if unlikely(byte_count > 1024 * 1024) gc_collect(), byte_count = 0;
   const size_t longs = (bytes + 7) / sizeof(uintptr_t);

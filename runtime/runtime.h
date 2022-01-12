@@ -5,7 +5,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
-#include <threads.h>
+#include <pthread.h>
 #include <Block.h>
 
 #define INITIAL_READ_SIZE  64
@@ -81,13 +81,13 @@ typedef struct cognate_stack
 #define likely(expr)   (__builtin_expect((_Bool)(expr), 1))
 
 // Global variables
-extern thread_local cognate_stack stack;
+extern __thread cognate_stack stack;
 extern LIST cmdline_parameters;
 extern const char* restrict word_name;
 extern int line_num;
 
-extern thread_local const char* restrict function_stack_top;
-extern thread_local const char* restrict function_stack_start;
+extern __thread const char* restrict function_stack_top;
+extern __thread const char* restrict function_stack_start;
 extern ptrdiff_t function_stack_size;
 
 // Variables and  needed by functions.c defined in runtime.c
