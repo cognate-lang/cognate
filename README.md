@@ -40,7 +40,7 @@ sudo make PREFIX=/my/prefix/dir install
 ```
 You should then run the test script to test Cognate's functionality. This should work regardless of operating system.
 ```
-./TEST
+make test
 ```
 If the tests all pass (they should!), you can then try running some of the included demo programs like this:
 ```

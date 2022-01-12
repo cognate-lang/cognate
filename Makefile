@@ -4,6 +4,7 @@ PREFIX=/usr/local
 INCLUDEDIR=$(PREFIX)/include/cognate
 LIBDIR=$(PREFIX)/lib
 BINDIR=$(PREFIX)/bin
+TESTS = block booleans filter for functions groups if io lists map maths parallel parsing regex stack strings symbols variables
 
 build: cognac libcognate.a
 
@@ -33,3 +34,13 @@ compiler/parser.c compiler/parser.h: compiler/parser.y
 
 clean:
 	rm -f compiler/lexer.c compiler/parser.h compiler/parser.c cognac libcognate.a runtime.o functions.o gc.o
+
+test: build $(TESTS)
+	@grep -E "^(PASS|FAIL)" tests/*.log --color
+	@echo "****************************** TESTS THAT PASSED ******************************"
+	@grep -c "^PASS" tests/*.log --color || true
+	@echo "****************************** TESTS THAT FAILED ******************************"
+	@! grep -c "^FAIL" tests/*.log --color
+
+$(TESTS):
+	cognac tests/$@.cog -run > tests/$@.log
