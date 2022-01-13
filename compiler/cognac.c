@@ -303,7 +303,10 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
           fprintf(outfile, "SYM(%s)", restrict_chars(tree->text));
           break;
         case number:
-          fprintf(outfile, "%sl", tree->text);
+          if (strchr(tree->text, '.'))
+            fprintf(outfile, "%sl", tree->text);
+          else
+            fprintf(outfile, "%s.0l", tree->text);
           break;
         default:
           fputs(tree->text, outfile);
