@@ -110,10 +110,12 @@ __attribute__((noinline)) void gc_collect(void)
   for (uintptr_t* restrict p = (uintptr_t*)bitmap;
       (uint8_t*)p < bitmap + (heap_top - heap_start); ++p)
     *p &= 0x5555555555555555;
+  for (uintptr_t* root = stack.absolute_start; root < stack.top; ++root)
+    gc_collect_root(*root);
+  gc_collect_root(stack.cache);
   jmp_buf a;
   setjmp(a);
-  volatile ANY s = (ANY)stack.start;
-  uintptr_t* sp = (uintptr_t*)&s;
+  uintptr_t* sp = (uintptr_t*)&sp + 1;
   for (uintptr_t* root = sp; root <= (uintptr_t*)function_stack_start; ++root)
     gc_collect_root(*root);
   free_start = bitmap;

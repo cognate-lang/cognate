@@ -8,10 +8,9 @@
 #include <pthread.h>
 #include <Block.h>
 
-#define INITIAL_READ_SIZE  64
-#define INITIAL_STACK_SIZE 64
-#define LIST_GROWTH_FACTOR 1.5
-#define STACK_MARGIN_KB    50
+#define INITIAL_READ_SIZE 64
+#define STACK_MARGIN_KB   50
+#define STK_SIZE          0x10000000000
 
 typedef unsigned long ANY;
 typedef ANY* restrict ANYPTR;
@@ -56,6 +55,7 @@ typedef struct cognate_stack
   ANYPTR start; // Pointer to start.
   ANYPTR top;   // Pointer to top.
   ANY cache;
+  ANYPTR absolute_start; // For the garbage collector
 } cognate_stack;
 
 #define NAN_MASK 0x7ff8000000000000

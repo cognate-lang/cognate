@@ -205,7 +205,8 @@ char* show_object (const ANY object, const _Bool raw_strings)
 
 void init_stack(void)
 {
-  stack.top = stack.start = mmap(0, 1000000,   PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
+  stack.absolute_start = stack.top = stack.start
+    = mmap(0, STK_SIZE, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
   stack.cache = NIL_OBJ;
 }
 
