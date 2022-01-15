@@ -142,7 +142,7 @@ char* show_object (const ANY object, const _Bool raw_strings)
   // Virtual memory vastly simplfies this function.
   static char* buffer = NULL;
   if (!buffer)
-    buffer = mmap(0, 1024l*1024l*1024l*1024l, PROT_READ | PROT_WRITE,
+    buffer = mmap(0, SHOW_BUF_SIZE, PROT_READ | PROT_WRITE,
         MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
   char* buffer_start = buffer;
   switch (get_type(object))

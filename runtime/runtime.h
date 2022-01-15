@@ -10,7 +10,11 @@
 
 #define INITIAL_READ_SIZE 64
 #define STACK_MARGIN_KB   50
-#define STK_SIZE          0x10000000000
+#define GIGABYTE 0x40000000l
+#define STK_SIZE      GIGABYTE
+#define SHOW_BUF_SIZE GIGABYTE
+#define GC_BITMAP_SIZE GIGABYTE * 1022 / 9
+#define GC_HEAP_SIZE   GC_BITMAP_SIZE * 8
 
 typedef unsigned long ANY;
 typedef ANY* restrict ANYPTR;

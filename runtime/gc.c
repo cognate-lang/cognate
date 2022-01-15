@@ -7,8 +7,6 @@
 
 #define PAGE_SIZE 4096
 
-#define MAP_SIZE 0x10000000000
-
 #define BITMAP_EMPTY 0x0
 #define BITMAP_FREE  0x1
 #define BITMAP_ALLOC 0x3
@@ -47,8 +45,8 @@ static __thread uint8_t* restrict free_start;
 
 void gc_init(void)
 {
-  bitmap = free_start   = mmap(0, MAP_SIZE/8, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
-  heap_start = heap_top = mmap(0, MAP_SIZE,   PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
+  bitmap = free_start   = mmap(0, GC_BITMAP_SIZE, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
+  heap_start = heap_top = mmap(0, GC_HEAP_SIZE,   PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
   if (heap_start == MAP_FAILED || bitmap == MAP_FAILED)
     throw_error("memory map failure - are you trying to use valgrind?");
   BITMAP_INDEX(heap_start) = BITMAP_FREE;
