@@ -205,15 +205,13 @@ char* show_object (const ANY object, const _Bool raw_strings)
 
 void init_stack(void)
 {
-  stack.size = INITIAL_STACK_SIZE;
-  stack.top = stack.start = gc_malloc(INITIAL_STACK_SIZE);
+  stack.top = stack.start = mmap(0, 1000000,   PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
   stack.cache = NIL_OBJ;
 }
 
 void push(ANY object)
 {
   if likely(stack.cache == NIL_OBJ) { stack.cache = object; return; }
-  if unlikely(stack.start + stack.size == stack.top) expand_stack();
   *stack.top++ = stack.cache;
   stack.cache = object;
 }
@@ -242,15 +240,6 @@ void flush_stack_cache(void)
 int stack_length(void)
 {
   return stack.top - stack.start + (stack.cache != NIL_OBJ);
-}
-
-void expand_stack(void)
-{
-  // Assumes that stack is currently of length stack.size.
-  size_t new_size = stack.size * LIST_GROWTH_FACTOR;
-  stack.start = memcpy(gc_malloc(new_size * sizeof(ANY)), stack.start, new_size);
-  stack.top = stack.start + stack.size;
-  stack.size *= LIST_GROWTH_FACTOR;
 }
 
 const char* lookup_type(cognate_type type)

@@ -137,10 +137,9 @@ BOOLEAN VAR(emptyQMARK)(LIST lst)
 
 LIST VAR(list)(BLOCK expr)
 {
-  // Move the stack to temporary storage
-  const cognate_stack temp_stack = stack;
-  // Allocate a list as the stack
-  init_stack();
+  flush_stack_cache();
+  ANYPTR tmp_stack_start = stack.start;
+  stack.start = stack.top;
   // Eval expr
   expr();
   // Move to a list.
@@ -154,7 +153,8 @@ LIST VAR(list)(BLOCK expr)
     l->next = lst;
     lst = l;
   }
-  stack = temp_stack;
+  stack.top = stack.start;
+  stack.start = tmp_stack_start;
   return lst;
 }
 
@@ -443,17 +443,18 @@ LIST VAR(range)(NUMBER start, NUMBER end, NUMBER step)
 GROUP VAR(group)(BLOCK init)
 {
   // Move the stack to temporary storage
-  volatile cognate_stack temp_stack = stack;
+  flush_stack_cache();
+  ANYPTR tmp_stack_start = stack.start;
+  stack.start = stack.top;
   // Allocate a list as the stack
-  init_stack();
-  // Eval expr
   init();
   flush_stack_cache();
   const size_t len = stack_length();
   GROUP g = gc_malloc (sizeof g->len + len * sizeof g->items[0]);
   g->len = len;
   for (size_t i = 0; i < len; ++i) g->items[i].name = unbox_symbol(pop());
-  stack = temp_stack;
+  stack.top = stack.start;
+  stack.start = tmp_stack_start;
   for (size_t i = 0; i < len; ++i) g->items[i].object = pop();
   return g;
 }
@@ -490,15 +491,20 @@ void VAR(wait)(NUMBER seconds)
 
 BLOCK VAR(precompute)(BLOCK blk)
 {
-  const cognate_stack temp_stack = stack;
-  init_stack();
+  flush_stack_cache();
+  ANYPTR tmp_stack_start = stack.start;
+  stack.start = stack.top;
   blk();
-  const cognate_stack s = stack;
-  stack = temp_stack;
+  const size_t len = stack_length();
+  if (!len) return Block_copy(^{});
+  ANYPTR ret_data = gc_malloc(len * sizeof *ret_data);
+  for (size_t i = 0; i < len; ++i)
+    ret_data[len] = stack.start[i];
+  stack.top = stack.start;
+  stack.start = tmp_stack_start;
   return Block_copy(^{
-    const size_t l = s.top - s.start;
-    for (size_t i = 0; i < l; ++i) push(s.start[i]);
-    if (s.cache != NIL_OBJ)        push(s.cache);
+    for (size_t i = 0; i < len; ++i)
+      push(ret_data[i]);
   });
 }
 

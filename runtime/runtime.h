@@ -55,7 +55,6 @@ typedef struct cognate_stack
 {
   ANYPTR start; // Pointer to start.
   ANYPTR top;   // Pointer to top.
-  ptrdiff_t size;  // Allocated size of the stack.
   ANY cache;
 } cognate_stack;
 
