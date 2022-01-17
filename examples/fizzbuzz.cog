@@ -1,11 +1,10 @@
-~~ See www.wikipedia.org/wiki/Fizz_buzz
-Define FizzBuzz
-( Let N be a number;
+Define FizzBuzz as (
+  Let N;
   Define Multiple (Let X; Modulo X N; == 0);
-  Print If (Multiple of 15) then 'FizzBuzz'
-        If (Multiple of 3)  then 'Fizz'
-        If (Multiple of 5)  then 'Buzz'
+  Print If (Multiple of 15) then \fizzbuzz
+        If (Multiple of 3)  then \fizz
+        If (Multiple of 5)  then \buzz
                             else N
 );
 
-(FizzBuzz); For each in Range from 1 to 100 step 1;
+For each in Range from 1 to 100 by 1 do (Fizzbuzz);
