@@ -35,7 +35,7 @@ typedef enum cognate_type
   group   = 4,
   block   = 5,
   symbol  = 6,
-  number  = -1,
+  number  = 8,
 } cognate_type;
 
 typedef struct cognate_list
@@ -62,10 +62,11 @@ typedef struct cognate_stack
   ANYPTR absolute_start; // For the garbage collector
 } cognate_stack;
 
-#define NAN_MASK 0x7ff8000000000000
+#define NAN_MASK 0x7ff0000000000000
+#define REALNAN_MASK 0x7ff8000000000000
 #define PTR_MASK 0x0000ffffffffffff
-#define TYP_MASK 0x0007000000000000
-#define NIL_OBJ  NAN_MASK
+#define TYP_MASK 0x000f000000000000
+#define NIL_OBJ  0x7ff0000000000001
 
 #define SET_FUNCTION_STACK_START() \
   function_stack_start = __builtin_frame_address(0); \

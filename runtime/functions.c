@@ -38,12 +38,12 @@ void VAR(prints)(BLOCK b) { VAR(for)(VAR(list)(b), ^{VAR(put)(pop()); }); putc('
 NUMBER VAR(ADD)(NUMBER a, NUMBER b) { return a + b; }
 NUMBER VAR(MUL)(NUMBER a, NUMBER b) { return a * b; }
 NUMBER VAR(SUB)(NUMBER a, NUMBER b) { return b - a; }
-NUMBER VAR(DIV)(NUMBER a, NUMBER b) { if likely(a) return b / a; throw_error_fmt("division of %.14g by zero", b); }
+NUMBER VAR(DIV)(NUMBER a, NUMBER b) { return b / a; /*throw_error_fmt("division of %.14g by zero", b);*/ }
 
 NUMBER VAR(modulo)(NUMBER a, NUMBER b)
 {
-  if likely(a) return b - a * floor(b / a);
-  throw_error_fmt("modulo of %.14g by zero", b);
+  return b - a * floor(b / a);
+  //throw_error_fmt("modulo of %.14g by zero", b);
 }
 
 NUMBER VAR(random)(NUMBER low, NUMBER high, NUMBER step)

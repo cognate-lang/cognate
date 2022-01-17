@@ -386,6 +386,11 @@ _Bool is_nan(ANY box)
   return (signed long)box > (signed long)NAN_MASK;
 }
 
+_Bool is_real_nan(ANY box)
+{
+  return (signed long)box >= (signed long)REALNAN_MASK;
+}
+
 cognate_type get_type(ANY box)
 {
   if (is_nan(box)) return (TYP_MASK & box) >> 48;
