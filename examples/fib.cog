@@ -1,11 +1,9 @@
 Define Fib ~~ Calculate the Nth fibonacci number.
 ( Let N;
-  Do If (N; < 2) (
-    return 1
-  ) else (
-    + Fib of - 1 N and
-      Fib of - 2 N
-  )
+  Do If (< 2 N)
+     then (1)
+     else (+ Fib of - 1 N and
+             Fib of - 2 N)
 );
 
 Put 'The 35th fibonacci number is... ';

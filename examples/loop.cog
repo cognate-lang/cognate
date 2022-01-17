@@ -1,1 +1,8 @@
-(Print); For each in List (1 2 3 4 5 6 7 8 9);
+Define Until as (
+  Do If () then (Break) else ();
+);
+
+Loop (
+  Put 'Do you want to exit the loop? [Y/N] ';
+  Until == 'Y' Input;
+);

@@ -214,3 +214,5 @@ BLOCK VAR(precompute)(BLOCK);
 BLOCK VAR(parallelDASHprecompute)(BLOCK);
 void VAR(wait)(NUMBER);
 void VAR(lock)(BLOCK);
+void VAR(loop)(BLOCK);
+void VAR(break)(void);
