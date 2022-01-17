@@ -35,25 +35,43 @@ void VAR(print)(ANY a) { puts(show_object(a, 1)); }
 void VAR(puts)(BLOCK b)   { VAR(for)(VAR(list)(b), ^{VAR(put)(pop()); }); }
 void VAR(prints)(BLOCK b) { VAR(for)(VAR(list)(b), ^{VAR(put)(pop()); }); putc('\n', stdout); }
 
-NUMBER VAR(ADD)(NUMBER a, NUMBER b) { return a + b; }
-NUMBER VAR(MUL)(NUMBER a, NUMBER b) { return a * b; }
-NUMBER VAR(SUB)(NUMBER a, NUMBER b) { return b - a; }
-NUMBER VAR(DIV)(NUMBER a, NUMBER b) { return b / a; /*throw_error_fmt("division of %.14g by zero", b);*/ }
+NUMBER VAR(ADD)(NUMBER a, NUMBER b) { return a + b; } // Add cannot produce NaN.
+
+NUMBER VAR(MUL)(NUMBER a, NUMBER b)
+{
+  const double r = a * b;
+  if unlikely(is_nan(*(long*)&r))
+    throw_error_fmt("multiplication by %.14g of %.14g yields invalid result", a, b);
+  return r;
+}
+NUMBER VAR(SUB)(NUMBER a, NUMBER b)
+{
+  const double r = b - a;
+  if unlikely(is_nan(*(long*)&r))
+    throw_error_fmt("subtraction of %.14g from %.14g yields invalid result", a, b);
+  return r;
+}
+
+NUMBER VAR(DIV)(NUMBER a, NUMBER b)
+{
+  const double r = b / a;
+  if unlikely(is_nan(*(long*)&r))
+    throw_error_fmt("division by %.14g of %.14g yields invalid result", a, b);
+  return r;
+}
 
 NUMBER VAR(modulo)(NUMBER a, NUMBER b)
 {
-  return b - a * floor(b / a);
-  //throw_error_fmt("modulo of %.14g by zero", b);
+  const double r = b - a * floor(b / a);
+  if unlikely(is_nan(*(long*)&r))
+    throw_error_fmt("modulo by %.14g of %.14g yields invalid result", a, b);
+  return r;
 }
 
 NUMBER VAR(random)(NUMBER low, NUMBER high, NUMBER step)
 {
-  if unlikely((high - low) * step < 0 || !step)
-    throw_error_fmt("invalid range %.14g..%.14g step %.14g", low, high, step);
-  else if ((high - low) / step < 1)
-  {
-    return low;
-  }
+  if unlikely((high - low) * step < 0 || !step) goto invalid_range;
+  else if ((high - low) / step < 1) return low;
   // This is not cryptographically secure btw.
   // Since RAND_MAX may only be 2^15, we need to do this:
   const long num
@@ -62,7 +80,11 @@ NUMBER VAR(random)(NUMBER low, NUMBER high, NUMBER step)
     | ((long)(short)rand() << 30)
     | ((long)(short)rand() << 45)
     | ((long)       rand() << 60);
-  return low + (NUMBER)(num % (unsigned long)((high - low) / step)) * step;
+  const double r = low + (NUMBER)(num % (unsigned long)((high - low) / step)) * step;
+  if unlikely(is_nan(*(long*)&r)) goto invalid_range;
+  return r;
+invalid_range:
+  throw_error_fmt("invalid range %.14g..%.14g step %.14g", low, high, step);
 }
 
 void VAR(clear)(void) { stack.cache = NIL_OBJ; stack.top=stack.start; }
@@ -254,8 +276,12 @@ NUMBER VAR(number)(STRING str)
   // casts string to number.
   char* end;
   NUMBER num = strtod(str, &end);
-  if (end == str || *end != '\0') throw_error_fmt("cannot parse '%.32s' to a number", str);
+  if (end == str || *end != '\0') goto cannot_parse;
+  if unlikely(is_nan(*(long*)&num))
+    goto cannot_parse;
   return num;
+cannot_parse:
+  throw_error_fmt("cannot parse '%.32s' to a number", str);
 }
 
 STRING VAR(path)(void)

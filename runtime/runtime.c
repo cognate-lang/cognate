@@ -383,12 +383,7 @@ _Bool match_objects(ANY patt, ANY obj)
 _Bool is_nan(ANY box)
 {
   // Works with -ffast-math
-  return (signed long)box > (signed long)NAN_MASK;
-}
-
-_Bool is_real_nan(ANY box)
-{
-  return (signed long)box >= (signed long)REALNAN_MASK;
+  return (unsigned long)box >= (unsigned long)NAN_MASK;
 }
 
 cognate_type get_type(ANY box)
@@ -400,7 +395,7 @@ cognate_type get_type(ANY box)
 NUMBER unbox_number(ANY box)
 {
   if unlikely(is_nan(box))
-    throw_error_fmt("expected a Number but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+    throw_error_fmt("expected a number but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
   return *(NUMBER*)&box;
 }
 
@@ -412,7 +407,7 @@ ANY box_number(NUMBER num)
 BOOLEAN unbox_boolean(ANY box)
 {
   if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)boolean << 48)
-    throw_error_fmt("expected a Boolean but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+    throw_error_fmt("expected a boolean but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
   return (STRING)(PTR_MASK & box);
 }
 
@@ -424,7 +419,7 @@ ANY box_boolean(BOOLEAN b)
 STRING unbox_string(ANY box)
 {
   if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)string << 48)
-    throw_error_fmt("expected a String but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+    throw_error_fmt("expected a string but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
   return (STRING)(PTR_MASK & box);
 }
 
@@ -436,7 +431,7 @@ ANY box_string(STRING s)
 LIST unbox_list(ANY box)
 {
   if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)list << 48)
-    throw_error_fmt("expected a List but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+    throw_error_fmt("expected a list but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
   return (LIST)(PTR_MASK & box);
 }
 
@@ -448,7 +443,7 @@ ANY box_list(LIST s)
 GROUP unbox_group(ANY box)
 {
   if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)group << 48)
-    throw_error_fmt("expected a Group but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+    throw_error_fmt("expected a group but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
   return (GROUP)(PTR_MASK & box);
 }
 
@@ -460,7 +455,7 @@ ANY box_group(GROUP s)
 SYMBOL unbox_symbol(ANY box)
 {
   if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)symbol << 48)
-    throw_error_fmt("expected a Symbol but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+    throw_error_fmt("expected a symbol but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
   return (SYMBOL)(PTR_MASK & box);
 }
 
@@ -472,7 +467,7 @@ ANY box_symbol(SYMBOL s)
 BLOCK unbox_block(ANY box)
 {
   if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)block << 48)
-    throw_error_fmt("expected a Block but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+    throw_error_fmt("expected a block but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
   return (BLOCK)(PTR_MASK & box);
 }
 
