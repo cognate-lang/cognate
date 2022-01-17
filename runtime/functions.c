@@ -455,7 +455,7 @@ LIST VAR(range)(NUMBER start, NUMBER end, NUMBER step)
 {
   if ((end - start) * step < 0)
     throw_error_fmt("invalid range %.14g..%.14g step %.14g", start, end, step);
-  end = start + step * (int)((end - start) / step) - step;
+  end = start + step * (size_t)((end - start) / step) - step;
   LIST lst = NULL;
   for (; start * step <= end * step; end -= step)
   {
