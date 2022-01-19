@@ -32,7 +32,7 @@ ast* alloc_ast(token_type type, value_type val_type, void* data)
        <text> IDENTIFIER
        <text> STRING
        <text> SYMBOL
-       DEFINE
+       DEF
        LET
        SET
        ';'
@@ -68,7 +68,7 @@ TOKEN: // Tokens should be converted to ast nodes in the lexer.
   | NUMBER             { $$ = alloc_ast(value, number,   $1); }
   | STRING             { $$ = alloc_ast(value, string,   $1); }
   | SYMBOL             { $$ = alloc_ast(value, symbol,   $1); }
-  | DEFINE IDENTIFIER  { $$ = alloc_ast(define, any,     $2); }
+  | DEF IDENTIFIER     { $$ = alloc_ast(def, any,        $2); }
   | LET IDENTIFIER     { $$ = alloc_ast(let, any,        $2); }
   | SET IDENTIFIER     { $$ = alloc_ast(set, any,        $2); }
   ;

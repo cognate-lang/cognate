@@ -10,7 +10,7 @@
 // OR types so we can do bitwise typechecking? TODO?
 typedef enum {block, string, number, symbol, boolean, list, group, any} value_type;
 
-typedef enum {identifier, value, define, let, set} token_type;
+typedef enum {identifier, value, def, let, set} token_type;
 
 typedef enum {func, var, stack_op} decl_type;
 

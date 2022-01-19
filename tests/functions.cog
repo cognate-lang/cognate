@@ -1,4 +1,4 @@
-Define Foo as (+ 1);
+Def Foo as (+ 1);
 
 Print If (Foo 4; == 5)
   'PASS: Function call and return'
@@ -6,7 +6,7 @@ else
   'FAIL: Function call and return';
 
 Do (
-  Define Foo as (+ 3);
+  Def Foo as (+ 3);
 
   Print If (Foo 5; == 8)
     'PASS: Function shadowing 1'
@@ -21,7 +21,7 @@ else
 
 ~~ Mutation is TODO
 ~~Let Recurred be False;
-~~Define Bar as
+~~Def Bar as
 ~~(
 ~~  Do If (== 0) (
 ~~    Set Recurred to True;
@@ -38,13 +38,13 @@ else
 
 ~~ Put binary recursion test here when I implement binary recursion.
 
-Define Binrec1
+Def Binrec1
 ( Let X;
   Do If (X; > 1000) (Print 'PASS: Binary recursion')
      else (Binrec2 with + 1 X);
 );
 
-Define Binrec2
+Def Binrec2
 (
   Binrec1 with + 1;
 );

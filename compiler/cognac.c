@@ -144,7 +144,7 @@ decl_list* predeclare(ast* head, decl_list* defs)
   {
     yylloc.first_column = tree->col;
     yylloc.first_line = tree->line;
-    if (tree->type == define)
+    if (tree->type == def)
     {
       if (lookup_word(tree->text, already_predeclared)) yyerror("already defined in this block");
       // We are leaking memory here.
@@ -168,26 +168,26 @@ decl_list* predeclare(ast* head, decl_list* defs)
   return defs;
 }
 
-bool is_mutated(ast* tree, decl_list def)
+bool is_mutated(ast* tree, decl_list v)
 {
   for (; tree ; tree = tree->next)
   {
     switch(tree->type)
     {
-      case set: if (!strcmp(def.name, tree->text)) return true; break;
-      case let: case define: if (!strcmp(def.name, tree->text)) return false; break;
-      case value: if (tree->val_type == block && is_mutated(tree->child, def)) return true; break;
+      case set: if (!strcmp(v.name, tree->text)) return true; break;
+      case let: case def: if (!strcmp(v.name, tree->text)) return false; break;
+      case value: if (tree->val_type == block && is_mutated(tree->child, v)) return true; break;
       default:;
     }
   }
   return false;
 }
 
-bool needs_block_tag(ast* tree, decl_list def)
+bool needs_block_tag(ast* tree, decl_list v)
 {
   for (; tree ; tree = tree->next)
   {
-    if (tree->type == value && tree->val_type == block && is_mutated(tree->child, def)) return true;
+    if (tree->type == value && tree->val_type == block && is_mutated(tree->child, v)) return true;
   }
   return false;
 }
@@ -234,30 +234,30 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
   {
     case identifier:
     {
-      decl_list* def = lookup_word(tree->text, defs);
+      decl_list* d = lookup_word(tree->text, defs);
       reg_list* return_register = NULL;
-      if (!def) yyerror("undefined word");
-      registers = assert_registers(def->argc, def->needs_stack ? def->argc : LONG_MAX, registers);
-      if (def->rets) return_register = add_register(def->ret, NULL);
-      switch(def->type)
+      if (!d) yyerror("undefined word");
+      registers = assert_registers(d->argc, d->needs_stack ? d->argc : LONG_MAX, registers);
+      if (d->rets) return_register = add_register(d->ret, NULL);
+      switch(d->type)
       {
         case func:
-          fprintf(outfile,"%s(%s,(", release ? "CALL" : "CALLDEBUG", restrict_chars(def->name));
-          for (unsigned short i = 0; i < def->argc; ++i)
+          fprintf(outfile,"%s(%s,(", release ? "CALL" : "CALLDEBUG", restrict_chars(d->name));
+          for (unsigned short i = 0; i < d->argc; ++i)
           {
-            registers = emit_register(def->args[i], registers);
-            if (i + 1 < def->argc) fputc(',', outfile);
+            registers = emit_register(d->args[i], registers);
+            if (i + 1 < d->argc) fputc(',', outfile);
           }
           fputs("));", outfile);
           break;
         case var:
-          fprintf(outfile, "VAR(%s);", restrict_chars(def->name));
+          fprintf(outfile, "VAR(%s);", restrict_chars(d->name));
           break;
         case stack_op:
-          registers = def->stack_shuffle(registers);
+          registers = d->stack_shuffle(registers);
           break;
       }
-      if (def->rets)
+      if (d->rets)
       {
         return_register->next = registers;
         registers = return_register;
@@ -341,7 +341,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
       footer = "}";
     }
     break;
-    case define:
+    case def:
     {
       decl_list* d = lookup_word(tree->text, defs);
       d -> predecl = false;

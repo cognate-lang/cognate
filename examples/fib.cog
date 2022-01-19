@@ -1,5 +1,5 @@
-Define Fib ~~ Calculate the Nth fibonacci number.
-( Let N;
+Def Fib (
+  Let N;
   Do If (< 2 N)
      then (1)
      else (+ Fib of - 1 N and

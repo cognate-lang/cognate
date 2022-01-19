@@ -1,4 +1,4 @@
-Define Until as (
+Def Until as (
   Do If () then (Break) else ();
 );
 

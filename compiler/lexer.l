@@ -50,9 +50,9 @@ int last_openbrace_col;
 ALLOWCHAR [A-Za-z0-9\-\?\!]
 
 %%
-D[eE][fF][iI][nN][eE] return DEFINE;
-L[eE][tT]             return LET;
-S[eE][tT]             return SET;
+D[eE][fF] return DEF;
+L[eE][tT] return LET;
+S[eE][tT] return SET;
 
 [A-Z]{ALLOWCHAR}*    yylval.text=lc(GC_STRDUP(yytext));   return IDENTIFIER;
 \\{ALLOWCHAR}+       yylval.text=lc(GC_STRDUP(yytext+1)); return SYMBOL;
