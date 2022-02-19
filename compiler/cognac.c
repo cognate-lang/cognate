@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <locale.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <limits.h>
@@ -123,10 +124,41 @@ void add_symbols(ast* tree)
 void print_cognate_string(char* str)
 {
   fputc('"', outfile);
-  for (size_t i = 1; str[i + 1] != '\0'; ++i)
+  for (size_t i = 1; str[i+1] != '\0';)
   {
-    if (str[i] == '"') fputc('\\', outfile);
-    fputc(str[i], outfile);
+    int len = mblen(str + i, MB_CUR_MAX);
+    if (len == -1) yyerror("string processing error");
+    if (len != 1) goto utf8;
+    switch (str[i])
+    {
+      case '\\':
+        switch (str[i+1])
+        {
+          case 'n': fputs("\\n", outfile); break;
+          case 'r': fputs("\\r", outfile); break;
+          case 't': fputs("\\t", outfile); break;
+          case 'v': fputs("\\v", outfile); break;
+          case '\\': fputs("\\\\", outfile); break;
+          case '\'': fputs("'", outfile); break;
+          default: yyerror("invalid escape sequence");
+        }
+        i+=2;
+        break;
+      case '\n':
+        fputs("\\n", outfile);
+        str++;
+        break;
+      case '"':
+        fputc('\\', outfile);
+        fputc(str[i], outfile);
+        str++;
+        break;
+      default:
+utf8:
+        fprintf(outfile, "%.*s", len, str + i);
+        str += len;
+        break;
+    }
   }
   fputc('"', outfile);
 }
@@ -424,6 +456,7 @@ decl_list* builtins(void)
 
 int main(int argc, char** argv)
 {
+  setlocale(LC_ALL, "");
   if (argc < 2 || !strchr(argv[1], '.') || strcmp(".cog", strchr(argv[1], '.'))) // Will not work with ./ or ../ filepaths TODO
   {
     fprintf(stderr, "Usage: %s filename.cog -option1 -option2\n", argv[0]);

@@ -57,7 +57,7 @@ S[eE][tT] return SET;
 [A-Z]{ALLOWCHAR}*    yylval.text=lc(GC_STRDUP(yytext));   return IDENTIFIER;
 \\{ALLOWCHAR}+       yylval.text=lc(GC_STRDUP(yytext+1)); return SYMBOL;
 \-?[0-9]+(\.[0-9]+)? yylval.text=GC_STRDUP(yytext);       return NUMBER;
-\'(\\.|[^'\\])*\'    yylval.text=GC_STRDUP(yytext);       return STRING;
+\'(\\.|[^\n'\\])*\'  yylval.text=GC_STRDUP(yytext);       return STRING;
 \'                   yyerror("unterminated string"); // TODO error message is printing with wrong column.
 
 ">"  yylval.text=GC_STRDUP("GT");  return IDENTIFIER;
