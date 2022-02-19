@@ -460,6 +460,7 @@ LIST VAR(range)(NUMBER start, NUMBER end, NUMBER step)
   for (; start * step <= end * step; end -= step)
   {
     cognate_list* node = gc_new(cognate_list);
+    printf("%lf\n", end);
     node->object = box_number(end);
     node->next = lst;
     lst = node;
