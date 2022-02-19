@@ -168,7 +168,7 @@ char* show_object (const ANY object, const _Bool raw_strings)
                  }
                  break;
     case list: *buffer++ = '(';
-               for (LIST l = unbox_list(object) ;; l = l->next)
+               for (LIST l = unbox_list(object) ; l ; l = l->next)
                {
                  buffer += strlen(show_object(l->object, 0));
                  if (!l->next) break;
