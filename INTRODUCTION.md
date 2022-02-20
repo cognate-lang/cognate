@@ -231,7 +231,7 @@ Cognate also has Map, which applies a block to each list element and creates a r
 Map (* 2) over the List (1 2 3 4);
 Print;
 
-Map (> 5) over the List (1 2 3 4 5 6 7 8 9 10);
+Filter (> 5) over the List (1 2 3 4 5 6 7 8 9 10);
 Print;
 ```
 
