@@ -77,3 +77,4 @@
 {.name="lock", .type=func, .argc=1, .args={block}, .rets=false, .needs_stack=true},
 {.name="loop", .type=func, .argc=1, .args={block}, .rets=false, .needs_stack=true},
 {.name="break", .type=func, .argc=0, .rets=false, .needs_stack=true},
+{.name="case", .type=func, .argc=3, .args={any, block, block}, .rets=true, .ret=block},

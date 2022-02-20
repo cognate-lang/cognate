@@ -116,6 +116,11 @@ BOOLEAN VAR(integerQMARK)(ANY a) { return VAR(numberQMARK)(a) && unbox_number(a)
 
 BOOLEAN VAR(match)(ANY patt, ANY obj)  { return match_objects(patt,obj); }
 
+BLOCK VAR(case)(ANY patt, BLOCK if_match, BLOCK if_not_match)
+{
+  return Block_copy(^{if (match_objects(patt, peek())) if_match(); else if_not_match();});
+}
+
 ANY VAR(first)(LIST lst)
 {
   // Returns the first element of a list. O(1).
