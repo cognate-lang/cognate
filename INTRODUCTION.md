@@ -24,7 +24,7 @@ make test
 Print the string 'hello world!' to the screen;
 ```
 
-Now to seems rather verbose doesn't it - except is isn't. Cognate ignores all words starting with lower-case letters in what is called "informal syntax". The above programs are all equivalent to this:
+Now to seems rather verbose doesn't it? Except is isn't. Cognate ignores all words starting with lower-case letters in what is called "informal syntax". The above programs are all equivalent to this:
 
 ```
 Print 'hello world!';
@@ -51,9 +51,9 @@ Print 'hello';   ~~ This is the first statement
 Print 'goodbye'; ~~ This is the second statement
 ```
 
-Multiple statements can be put on the same line. Cognate evaluates statements in order, from top to bottom, left to write, as expected. However, the statements themselves are evaluated right to left. The statement "Print 'hello world';" would first evaluate 'hello world' by pushing it to the stack, and then call Print.
+Multiple statements can be put on the same line. The statements themselves are evaluated right to left, such that the statement `Print 'hello world';` would first evaluate `'hello world'` by pushing it to the stack, and then call `Print`.
 
-But what is the stack? The stack is where Cognate stores intermediary values between expressions. When I write a constant such as 'hello world', it is put on top of the stack. When I call a function such as Print, it removes (pops) the value on the top of the stack and prints it. The stack persists between statements, allowing me to write:
+But what is the stack? The stack is where Cognate stores intermediary values between expressions. When I write a constant such as `'hello world'`, it is put on top of the stack. When I call a function such as `Print`, it removes (pops) the value on the top of the stack and prints it. The stack persists between statements, allowing me to write:
 
 ```
 put 'hello world' on top of the stack;
@@ -70,7 +70,7 @@ Cognate supports other data structures than strings - numbers for a start. Try w
 Print the number 12.5;
 ```
 
-Cognate arithmetic functions are not implemented traditionally as infix operators, but instead they are functions like Print.
+Cognate arithmetic functions are not implemented traditionally as infix operators, but instead they are functions like `Print`.
 
 ```
 Print + 1 2;  ~~ Adds 1 and 2, prints
@@ -83,7 +83,7 @@ This may feel unintuitive at first, but this notation means that we don't need o
 
 ### Variables
 
-Cognate allows binding lexically-scopes variables with Let, which removed a value from the stack as an initialiser.
+Cognate allows binding lexically-scopes variables with `Let`, which removed a value from the stack as an initialiser.
 
 ```
 Let X be 'hello, I am a variable!';
@@ -99,7 +99,7 @@ Let X be 42;
 Print X again;
 ```
 
-Cognate also allows (but discourages) mutating variables with Set.
+Cognate also allows (but discourages) mutating variables with `Set`.
 
 ```
 Let X be 'hello';
@@ -110,7 +110,7 @@ Print X again;
 
 ### Blocks
 
-Cognate allows creating anonymous functions (closures) by wrapping them in braces. A block can be evaluated with the Do function.
+Cognate allows creating anonymous functions (closures) by wrapping them in braces. A block can be evaluated with the `Do` function.
 
 ```
 Do (
@@ -132,7 +132,7 @@ Notice that the last statement in a block does not require a terminating semicol
 
 ### Functions
 
-Functions are defined with Def, which acts like Let, but requires a block as an argument.
+Functions are defined with `Def`, which acts like `Let`, but requires a block as an argument.
 
 ```
 Def Say-hello as (
@@ -163,7 +163,7 @@ Print Multiply-by-three 4;
 
 ### If statements
 
-Before we understand if statements, you should probably know that True and False represent Cognate's booleans respectively.
+Before we understand if statements, you should probably know that `True` and `False` represent Cognate's booleans respectively.
 
 ```
 Print True;
@@ -175,7 +175,7 @@ Print == 1 2; ~~ Prints True if 2 is equal to 1, False otherwise
 Print /= 1 2; ~~ Prints True if 2 is not equal to 1, False otherwise
 ```
 
-If is in fact a function, it takes three arguments. The first is a block that returns a boolean (soon this will not have to be wrapped in a block), the second is a value to return if the block evaluates to True, the third is a value to return if the block evaluates to False. The above program will print the larger of the two variables X and Y.
+`If` is in fact a function, it takes three arguments. The first is a block that returns a boolean (soon this will not have to be wrapped in a block), the second is a value to return if the block evaluates to `True`, the third is a value to return if the block evaluates to `False`. The above program will print the larger of the two variables `X` and `Y`.
 
 ```
 Let X be 4;
@@ -184,7 +184,7 @@ Let Y be 9;
 Print If (< X Y) then X else Y;
 ```
 
-We can also chain If statements together.
+We can also chain `If` statements together.
 
 ```
 Print If (== X Y) then 'X is equal to Y'
@@ -192,7 +192,7 @@ Print If (== X Y) then 'X is equal to Y'
       else        then 'X is greater than Y';
 ```
 
-We can then use blocks and Do to have conditional execution.
+We can then use blocks and `Do` to have conditional execution.
 
 ```
 Do If (== 2 3) then ( Print '2 is equal to 3')
@@ -201,7 +201,7 @@ Do If (== 2 3) then ( Print '2 is equal to 3')
 
 ### Lists
 
-The function List takes a block as an argument, and returns a list of the stack after executing it. This can be seen as a more powerful version of python's list comprehension.
+The function `List` takes a block as an argument, and returns a list of the stack after executing it. This can be seen as a more powerful version of python's list comprehension.
 
 ```
 Print List (1 2 3 4);
@@ -225,7 +225,7 @@ Empty? List (1 2 3 4);
 Print;
 ```
 
-Cognate also has Map, which applies a block to each list element and creates a resulting list, and Filter which applies a block to each elements and removes it from the list if it returns False.
+Cognate also has `Map`, which applies a block to each list element and creates a resulting list, and `Filter` which applies a block to each elements and removes it from the list if it returns `False`.
 
 ```
 Map (* 2) over the List (1 2 3 4);
@@ -235,7 +235,7 @@ Filter (> 5) over the List (1 2 3 4 5 6 7 8 9 10);
 Print;
 ```
 
-For is like Map in that it applies a block to each list element, but it does not form a resulting list. Range creates a list of numbers. These functions together can be used to make a traditional for loop.
+`For` is like `Map` in that it applies a block to each list element, but it does not form a resulting list. `Range` creates a list of numbers. These functions together can be used to make a traditional for loop.
 
 ```
 For each in Range 0 to 30 step 1 (
@@ -259,4 +259,4 @@ Feel free to ask me about anything you do not understand or anything this tutori
 - stack manipulation functions
 - pattern matching
 
-There are example programs in the examples/ directory, and others in the tests/ directory. There is also a list of all functions in compiler/builtins.c
+There are example programs in the `examples` directory, and others in the `tests` directory. There is also a list of all functions in `compiler/builtins.c`.
