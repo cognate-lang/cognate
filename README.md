@@ -46,3 +46,5 @@ If the tests all pass (they should!), you can then try running some of the inclu
 ```
 cognac examples/fizzbuzz.cog -run
 ```
+
+[Here](INTRODUCTION.md) is an small introduction to the language.
