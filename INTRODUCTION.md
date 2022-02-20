@@ -74,7 +74,7 @@ Cognate arithmetic functions are not implemented traditionally as infix operator
 
 ```
 Print + 1 2;  ~~ Adds 1 and 2, prints
-Print * 3 4;  ~~ Multiples 3 by 4, prints
+Print * 3 4;  ~~ Multiplies 3 by 4, prints
 Print / 7 49; ~~ Divides 49 by 7
 Print - 9 18; ~~ Subtracts 9 from 18
 ```
@@ -145,7 +145,7 @@ Say-hello;
 Function arguments and return values are passed on the stack.
 
 ```
-Def Multiple-by-three as (
+Def Multiply-by-three as (
   Let N be from the stack;
   return * 3 N;
 );
