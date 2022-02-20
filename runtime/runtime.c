@@ -180,6 +180,7 @@ char* show_object (const ANY object, const _Bool raw_strings)
                break;
     case group: {
                   GROUP g = unbox_group(object);
+                  *buffer++ = '(';
                   for (size_t i = 0 ;; ++i)
                   {
                     buffer += strlen(strcpy(buffer, g->items[i].name));
