@@ -215,14 +215,6 @@ bool is_mutated(ast* tree, decl_list v)
   return false;
 }
 
-bool needs_block_tag(ast* tree, decl_list v)
-{
-  for (; tree ; tree = tree->next)
-  {
-    if (tree->type == value && tree->val_type == block && is_mutated(tree->child, v)) return true;
-  }
-  return false;
-}
 
 reg_list* emit_register(value_type type, reg_list* regs)
 {
@@ -362,8 +354,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
         .builtin = false
       };
       char* tag = "const";
-      if (is_mutated(tree->next, *d)) d->ret = any, tag = "";
-      if (needs_block_tag(tree->next, *d)) tag = "__block";
+      if (is_mutated(tree->next, *d)) d->ret = any, tag = "__block";
       fprintf(outfile, "%s %s VAR(%s)=", tag, type_as_str[d->ret][true], restrict_chars(d->name));
       if (d->ret == block) fputs("Block_copy(", outfile);
       registers = emit_register(d->ret, registers);

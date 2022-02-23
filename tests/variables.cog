@@ -29,3 +29,8 @@ Print If (X; == 3)
   'PASS: Variable modification in block'
 else
   'FAIL: Variable modification in block';
+
+Let X be 'FAIL: Mutating variable referenced by block';
+Let S be (Print X);
+Set X to 'PASS: Mutating variable referenced by block';
+Do S;
