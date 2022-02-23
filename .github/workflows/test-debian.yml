@@ -1,29 +1,29 @@
 name: Test Cognate on Debian
 on:
-	push:
-		branches: [ master ]
-	pull_request:
-		branches: [ master ]
-	workflow_dispatch:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
 jobs:
-	tests:
-		runs-on: ubuntu-latest
-		steps:
-			- uses: actions/checkout@v2
-			- name: Aquire dependencies and compile
-				shell: bash
-				run: |
-					sudo apt install flex bison libgc-dev clang llvm libblocksruntime-dev -y
-					cd $GITHUB_WORKSPACE
-					sudo make install
-			- name: Run test script
-				shell: bash
-				run: |
-					cd $GITHUB_WORKSPACE
-					make test
-			- name: Upload test output
-				if: failure()
-				uses: actions/upload-artifact@v2
-				with:
-					name: tests-debian
-					path: tests/*.*
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Aquire dependencies and compile
+        shell: bash
+        run: |
+          sudo apt install flex bison libgc-dev clang llvm libblocksruntime-dev -y
+          cd $GITHUB_WORKSPACE
+          sudo make install
+      - name: Run test script
+        shell: bash
+        run: |
+          cd $GITHUB_WORKSPACE
+          make test
+      - name: Upload test output
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: tests-debian
+          path: tests/*.*
