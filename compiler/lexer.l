@@ -10,34 +10,34 @@
 
 char* lc(char* s)
 {
-  for (int i = 0; s[i] != '\0'; ++i) s[i] = tolower(s[i]);
-  return s;
+	for (int i = 0; s[i] != '\0'; ++i) s[i] = tolower(s[i]);
+	return s;
 }
 
 void yyerror(char* str)
 {
-  char header[20];
-  int line_n = yylloc.first_line;
-  sprintf(header, "Line %d: ", line_n);
-  int col_n = yylloc.first_column + strlen(header) - 1;
-  fprintf(stderr, "\033[0;2m%s", header);
-  char* line = NULL;
-  rewind(yyin);
-  while (--line_n)
-  {
-    char c;
-    do { c = fgetc(yyin); } while (c != '\n');
-  }
-  size_t n = SIZE_MAX;
-  getline(&line, &n, yyin);
-  int whitespace = 0;
-  while (isspace(line[whitespace])) whitespace++;
-  line += whitespace;
-  col_n -= whitespace;
-  fprintf(stderr, "\033[0;1m%s", line);
-  while (--col_n) fputc(' ', stderr);
-  fprintf(stderr, "\033[31;1m↳ %s\033[0m\n", str);
-  exit(EXIT_FAILURE);
+	char header[20];
+	int line_n = yylloc.first_line;
+	sprintf(header, "Line %d: ", line_n);
+	int col_n = yylloc.first_column + strlen(header) - 1;
+	fprintf(stderr, "\033[0;2m%s", header);
+	char* line = NULL;
+	rewind(yyin);
+	while (--line_n)
+	{
+		char c;
+		do { c = fgetc(yyin); } while (c != '\n');
+	}
+	size_t n = SIZE_MAX;
+	getline(&line, &n, yyin);
+	int whitespace = 0;
+	while (isspace(line[whitespace])) whitespace++;
+	line += whitespace;
+	col_n -= whitespace;
+	fprintf(stderr, "\033[0;1m%s", line);
+	while (--col_n) fputc(' ', stderr);
+	fprintf(stderr, "\033[31;1m↳ %s\033[0m\n", str);
+	exit(EXIT_FAILURE);
 }
 
 int brace_depth = 0;
@@ -72,23 +72,23 @@ S[eE][tT] return SET;
 "/"  yylval.text=GC_STRDUP("DIV"); return IDENTIFIER;
 
 ; return ';';
-\(  brace_depth++; last_openbrace_line = yylloc.first_line; last_openbrace_col = yylloc.first_column; return '(';
+\( brace_depth++; last_openbrace_line = yylloc.first_line; last_openbrace_col = yylloc.first_column; return '(';
 
-\)  if (brace_depth--) return ')'; yyerror("unbalanced brace");
+\) if (brace_depth--) return ')'; yyerror("unbalanced brace");
 
 <<EOF>> if (brace_depth) { yylloc.first_line = last_openbrace_line;
-                           yylloc.first_column = last_openbrace_col;
-                           yyerror("unbalanced brace"); } else yyterminate();
+	yylloc.first_column = last_openbrace_col;
+	yyerror("unbalanced brace"); } else yyterminate();
 
 \n yylloc.first_line++; yylloc.first_column = 1;
 
-[a-z][A-Za-z_0-9]*  /* Ignore informal syntax */
-[[:space:]]         /* Ignore whitespace      */
-\~\~.*              /* Ignore line comments   */
+[a-z][A-Za-z_0-9]* /* Ignore informal syntax */
+[[:space:]]        /* Ignore whitespace      */
+\~\~.*             /* Ignore line comments   */
 
-\~                 BEGIN(BLOCK_COMMENT);
-<BLOCK_COMMENT>\~  BEGIN(INITIAL);
-<BLOCK_COMMENT>\n  yylloc.first_line++; yylloc.first_column = 1;
+\~                BEGIN(BLOCK_COMMENT);
+<BLOCK_COMMENT>\~ BEGIN(INITIAL);
+<BLOCK_COMMENT>\n yylloc.first_line++; yylloc.first_column = 1;
 <BLOCK_COMMENT>.
 
 . yyerror("invalid token");

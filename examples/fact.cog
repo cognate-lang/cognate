@@ -1,8 +1,8 @@
 Def Factorial as (
-  Let X;
-  Do If (== 0 X)
-     then (1)
-     else (* X Factorial - 1 X)
+	Let X;
+	Do If (== 0 X)
+		then (1)
+		else (* X Factorial - 1 X)
 );
 
 Put 'Enter an integer: ';

@@ -1,21 +1,18 @@
-Def Baz as
-(
-  Let Z;
-  (Do Z);
+Def Baz as (
+	Let Z;
+	(Do Z);
 );
 
 
-Def Bar as
-(
-  Let Y;
-  Baz (Do Y);
+Def Bar as (
+	Let Y;
+	Baz (Do Y);
 );
 
-Def Foo as
-(
-  Let X;
-  Set X to X;
-  Bar (Print X);
+Def Foo as (
+	Let X;
+	Set X to X;
+	Bar (Print X);
 );
 
 
@@ -26,10 +23,9 @@ Drop; Do;
 
 Let Y be ();
 
-Def Foo2 as
-(
-  Let X;
-  Set Y to (Print X);
+Def Foo2 as (
+	Let X;
+	Set Y to (Print X);
 );
 
 
@@ -38,18 +34,18 @@ Foo2 'FAIL: Implicit block copying with mutation'; Let W be Y;
 Do Z;
 Drop W;
 
-Def A
-( Let B;
-  Let Foo as (Print B);
-  return (Do Foo);
+Def A as (
+	Let B;
+	Let Foo as (Print B);
+	return (Do Foo);
 );
 
 Do A 'PASS: Another block copying test';
 
-Def B
-( Let B;
-  Def Foo as (Print B);
-  return (Foo);
+Def B as (
+	Let B;
+	Def Foo as (Print B);
+	return (Foo);
 );
 
 Do B 'PASS: Another block copying test again';

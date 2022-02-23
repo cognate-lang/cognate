@@ -1,39 +1,39 @@
 Print If (Join the 3 strings 'Hello' ' world' ' ☺'; == 'Hello world ☺')
-  'PASS: Converting list of strings to combined string'
+	'PASS: Converting list of strings to combined string'
 else
-  'FAIL: Converting list of characters to combined string';
+	'FAIL: Converting list of characters to combined string';
 
 Print If (Ordinal of '☺'; == 9786)
-  'PASS: Converting string to UTF8 value with Ordinal'
+	'PASS: Converting string to UTF8 value with Ordinal'
 else
-  'PASS: Converting string to UTF8 value with Ordinal';
+	'PASS: Converting string to UTF8 value with Ordinal';
 
 Print If (Character with value 9786; == '☺')
-  'PASS: Converting UTF8 value to string'
+	'PASS: Converting UTF8 value to string'
 else
-  'FAIL: Converting UTF8 value to string';
+	'FAIL: Converting UTF8 value to string';
 
 Print If (Number '123.4'; == 123.4)
-  'PASS: Casting strings to numbers'
+	'PASS: Casting strings to numbers'
 else
-  'PASS: Casting strings to numbers';
+	'PASS: Casting strings to numbers';
 
 Print If (Head of 'Hello'; == 'H')
-  'PASS: Getting Head of string'
+	'PASS: Getting Head of string'
 else
-  'FAIL: Getting Head of string';
+	'FAIL: Getting Head of string';
 
 Print If (Head of 'e'; == 'e')
-  'PASS: Getting Head of single-character string'
+	'PASS: Getting Head of single-character string'
 else
-  'FAIL: Getting Head of single-character string';
+	'FAIL: Getting Head of single-character string';
 
 Print If (Tail of 'Hello'; == 'ello')
-  'PASS: Getting Tail of string'
+	'PASS: Getting Tail of string'
 else
-  'FAIL: Getting Tail of string';
+	'FAIL: Getting Tail of string';
 
 Print If (Tail of 'e'; == '')
-  'PASS: Getting Tail of single-character string'
+	'PASS: Getting Tail of single-character string'
 else
-  'FAIL: Getting Tail of single-character string';
+	'FAIL: Getting Tail of single-character string';

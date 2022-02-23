@@ -16,47 +16,47 @@ typedef enum {func, var, stack_op} decl_type;
 
 typedef struct reg_list
 {
-  size_t id;
-  struct reg_list* next;
-  value_type type;
+	size_t id;
+	struct reg_list* next;
+	value_type type;
 } reg_list;
 
 typedef struct sym_list
 {
-  char* name;
-  struct sym_list* next;
+	char* name;
+	struct sym_list* next;
 } sym_list;
 
 typedef struct decl_list
 {
-  struct decl_list* next;
-  char* name;
-  value_type args[3];
-  value_type ret;
-  unsigned short argc;
-  bool predecl;
-  bool needs_stack;
-  bool rets;
-  bool builtin;
-  enum {immutable, mutable} mut;
-  reg_list* (*stack_shuffle)(reg_list*);
-  decl_type type;
-  // TODO flags and a bitmask for boolean things?
+	struct decl_list* next;
+	char* name;
+	value_type args[3];
+	value_type ret;
+	unsigned short argc;
+	bool predecl;
+	bool needs_stack;
+	bool rets;
+	bool builtin;
+	enum {immutable, mutable} mut;
+	reg_list* (*stack_shuffle)(reg_list*);
+	decl_type type;
+	// TODO flags and a bitmask for boolean things?
 } decl_list;
 
 typedef struct ast
 {
-  union
-  {
-    char* text;
-    struct ast* child;
-    void* data;
-  };
-  size_t line;
-  size_t col;
-  struct ast* next;
-  token_type type;
-  value_type val_type;
+	union
+	{
+		char* text;
+		struct ast* child;
+		void* data;
+	};
+	size_t line;
+	size_t col;
+	struct ast* next;
+	token_type type;
+	value_type val_type;
 } ast;
 
 extern FILE* yyin;

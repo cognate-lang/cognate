@@ -9,12 +9,12 @@
 #include <Block.h>
 
 #define INITIAL_READ_SIZE 64
-#define STACK_MARGIN_KB   50
+#define STACK_MARGIN_KB		50
 #define GIGABYTE 0x40000000l
-#define STK_SIZE      GIGABYTE
+#define STK_SIZE GIGABYTE
 #define SHOW_BUF_SIZE GIGABYTE
 #define GC_BITMAP_SIZE GIGABYTE * 1022 / 9
-#define GC_HEAP_SIZE   GC_BITMAP_SIZE * 8
+#define GC_HEAP_SIZE GC_BITMAP_SIZE * 8
 
 typedef unsigned long ANY;
 typedef ANY* restrict ANYPTR;
@@ -28,38 +28,38 @@ typedef const char* restrict SYMBOL;
 
 typedef enum cognate_type
 {
-  NOTHING = 0,
-  boolean = 1,
-  string  = 2,
-  list    = 3,
-  group   = 4,
-  block   = 5,
-  symbol  = 6,
-  number  = 8,
+	NOTHING = 0,
+	boolean = 1,
+	string  = 2,
+	list    = 3,
+	group   = 4,
+	block   = 5,
+	symbol  = 6,
+	number  = 8,
 } cognate_type;
 
 typedef struct cognate_list
 {
-  LIST next;
-  ANY object;
+	LIST next;
+	ANY object;
 } cognate_list;
 
 typedef struct cognate_group
 {
-  size_t len;
-  struct
-  {
-    SYMBOL name;
-    ANY object;
-  } items [1];
+	size_t len;
+	struct
+	{
+		SYMBOL name;
+		ANY object;
+	} items [1];
 } cognate_group;
 
 typedef struct cognate_stack
 {
-  ANYPTR start; // Pointer to start.
-  ANYPTR top;   // Pointer to top.
-  ANY cache;
-  ANYPTR absolute_start; // For the garbage collector
+	ANYPTR start; // Pointer to start.
+	ANYPTR top;   // Pointer to top.
+	ANY cache;
+	ANYPTR absolute_start; // For the garbage collector
 } cognate_stack;
 
 #define NAN_MASK 0x7ff8000000000000
@@ -68,8 +68,8 @@ typedef struct cognate_stack
 #define NIL_OBJ  0x7ff8000000000000
 
 #define SET_FUNCTION_STACK_START() \
-  function_stack_start = __builtin_frame_address(0); \
-  function_stack_top = function_stack_start - function_stack_size;
+	function_stack_start = __builtin_frame_address(0); \
+	function_stack_top = function_stack_start - function_stack_size;
 
 #define VAR(name) ___##name
 #define SYM(name) ____##name
@@ -81,7 +81,7 @@ typedef struct cognate_stack
 #define SET(name, val) VAR(name) = val;
 
 #define unlikely(expr) (__builtin_expect((_Bool)(expr), 0))
-#define likely(expr)   (__builtin_expect((_Bool)(expr), 1))
+#define likely(expr)	 (__builtin_expect((_Bool)(expr), 1))
 
 // Global variables
 extern __thread cognate_stack stack;
@@ -93,7 +93,7 @@ extern __thread const char* restrict function_stack_top;
 extern __thread const char* restrict function_stack_start;
 extern ptrdiff_t function_stack_size;
 
-// Variables and  needed by functions.c defined in runtime.c
+// Variables and	needed by functions.c defined in runtime.c
 void init_stack(void);
 void set_function_stack_start(void);
 void expand_stack(void);

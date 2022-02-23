@@ -1,5 +1,5 @@
 Def Fib as
-  Case (< 2) then ()
-  else then (Let N ; Fib - 1 N ; + Fib - 2 N);
+	Case (< 2) then ()
+	else then (Let N ; Fib - 1 N ; + Fib - 2 N);
 
 Prints ('The 35th fibonacci number is ' Fib 35);

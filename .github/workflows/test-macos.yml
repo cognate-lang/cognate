@@ -1,26 +1,26 @@
 name: Test Cognate on macOS
 on:
-  workflow_dispatch:
+	workflow_dispatch:
 jobs:
-  tests:
-    runs-on: macOS-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Aquire dependencies and compile
-        shell: bash
-        run: |
-          brew install bdw-gc
-          brew install llvm
-          cd $GITHUB_WORKSPACE
-          sudo make install
-      - name: Run test script
-        shell: bash
-        run: |
-          cd $GITHUB_WORKSPACE
-          make test
-      - name: Upload test output
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          name: tests-macOS
-          path: tests/*.*
+	tests:
+		runs-on: macOS-latest
+		steps:
+			- uses: actions/checkout@v2
+			- name: Aquire dependencies and compile
+				shell: bash
+				run: |
+					brew install bdw-gc
+					brew install llvm
+					cd $GITHUB_WORKSPACE
+					sudo make install
+			- name: Run test script
+				shell: bash
+				run: |
+					cd $GITHUB_WORKSPACE
+					make test
+			- name: Upload test output
+				if: failure()
+				uses: actions/upload-artifact@v2
+				with:
+					name: tests-macOS
+					path: tests/*.*
