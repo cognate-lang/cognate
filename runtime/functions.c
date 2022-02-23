@@ -103,8 +103,8 @@ BOOLEAN VAR(EQ)(ANY a, ANY b)  { return compare_objects(a,b); }
 BOOLEAN VAR(NEQ)(ANY a, ANY b) { return !compare_objects(a,b); }
 BOOLEAN VAR(GT)(NUMBER a, NUMBER b)  { return a < b; }
 BOOLEAN VAR(LT)(NUMBER a, NUMBER b)  { return a > b; }
-BOOLEAN VAR(GTE)(NUMBER a, NUMBER b) { return a >= b; }
-BOOLEAN VAR(LTE)(NUMBER a, NUMBER b) { return a <= b; }
+BOOLEAN VAR(GTE)(NUMBER a, NUMBER b) { return a <= b; }
+BOOLEAN VAR(LTE)(NUMBER a, NUMBER b) { return a >= b; }
 
 BOOLEAN VAR(numberQMARK)(ANY a)  { return get_type(a)==number; }
 BOOLEAN VAR(listQMARK)(ANY a)    { return get_type(a)==list; }
