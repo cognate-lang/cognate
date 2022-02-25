@@ -390,7 +390,7 @@ _Bool match_objects(ANY patt, ANY obj)
 _Bool is_nan(ANY box)
 {
 	// Mostly works with -ffast-math
-	return (signed long)box >= (signed long)NAN_MASK;
+	return (unsigned long)box >= (unsigned long)NAN_MASK;
 }
 
 cognate_type get_type(ANY box)
