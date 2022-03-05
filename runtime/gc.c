@@ -45,7 +45,7 @@ static __thread uint8_t* restrict free_start;
 
 void gc_init(void)
 {
-	bitmap = free_start		= mmap(0, GC_BITMAP_SIZE, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
+	bitmap = free_start   = mmap(0, GC_BITMAP_SIZE, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
 	heap_start = heap_top = mmap(0, GC_HEAP_SIZE,		PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
 	if (heap_start == MAP_FAILED || bitmap == MAP_FAILED)
 		throw_error("memory map failure - are you trying to use valgrind?");
@@ -72,7 +72,7 @@ void* gc_malloc(size_t bytes)
 {
 	static __thread int byte_count = 0;
 	byte_count += bytes;
-	if unlikely(byte_count > 1024 * 1024) gc_collect(), byte_count = 0;
+	if unlikely(byte_count > 1024l * 1024l * 10) gc_collect(), byte_count = 0;
 	const size_t longs = (bytes + 7) / sizeof(uintptr_t);
 	free_start = memchr(free_start, BITMAP_FREE, LONG_MAX);
 	for (uint8_t* restrict free_end; unlikely(free_end = memchr(free_start + 1, BITMAP_ALLOC, longs - 1)); )
