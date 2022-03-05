@@ -9,10 +9,10 @@ As the above program shows, words starting with lower-case letters are ignored b
 ### Cognate is fast
 CognaC compiles Cognate directly to C. This produces very efficient binaries and allows Cognate to run much faster than many interpreted languages such as Python. However, it is easily outpaced by other compiled languages like Haskell and C++ that optimise more aggressively. However, Cognate has a huge potential for optimisation. In future, I will be able to implement many of these optimisations and make Cognate even faster. It is also worth noting that CognaC produces very small binaries. This could make Cognate a candidate for a scripting language in embedded environments.
 
-|                    | Python 3 | Lua   | Ruby  | Lisp (SBCL) | Gforth | CognaC | Haskell (GHC) | Lua (JIT) | Go     | C++ (G++) | C (GCC) | GFortran |
-|--------------------|----------|-------|-------|-------------|--------|--------|---------------|-----------|--------|-----------|---------|----------|
-| fib(35) runtime    | 3.15s    | 1.33s | 1.32s | 0.19s       | 0.19s  | 0.18s  | 0.11s         | 0.14s     | 0.07s  | 0.03s     | 0.03s   | 0.03s    |
-| static binary size | N/A      | N/A   | N/A   | N/A         | N/A    | 20k    | 896k          | N/A       | 1.7M   | 20k       | 20k     | 20k      |
+|                    | *Cognate* | Python 3 | Lua   | Ruby  | Node.js | Lisp (SBCL) | Gforth | Lua (JIT) | Haskell (GHC) | Go     | C++ (G++) | C (GCC) | GFortran |
+|--------------------|-----------|----------|-------|-------|---------|-------------|--------|-----------|---------------|--------|-----------|---------|----------|
+| fib(35) runtime    | *0.18s*   | 3.15s    | 1.33s | 1.32s | 0.26s   | 0.19s       | 0.19s  | 0.14s     | 0.11s         | 0.07s  | 0.03s     | 0.03s   | 0.03s    |
+| static binary size | *20k*     | N/A      | N/A   | N/A   | N/A     | N/A         | N/A    | N/A       | 896k          | 1.7M   | 20k       | 20k     | 20k      |
 
 (If newer language versions produce different results, please submit an issue so I can update this table)
 
