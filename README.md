@@ -1,40 +1,46 @@
 ## The Cognate programming language
-Cognate is a stack oriented, dynamically typed, functional programming language designed to help programmers specify their intent. Cognate uses optional syntax in order to help programmers write statements that are (mostly) readable in plain English and to include extra information about what statements are for, not just what they do and how they work. This leads to more maintainable codebases. Cognate's syntax is much simpler than other languages that aim for readability such as python, making the language consistent and simple to implement. This repository contains CognaC - the Cognate Compiler.
+Cognate is a small dynamic quasi-concatenative language for functional programming. Cognate aims to express complex programs in a simple and readable way through its unique syntax, which emphasises embedding comments into statements. This makes programs very readable and helps a programmer better express their intentions.
 
 ![FizzBuzz in Cognate](fizzbuzz.png?raw=true)
 
+![Towers of Hanoi in Cognate](hanoi.png?raw=true)
+
 ### Cognate is readable
-As the above program shows, words starting with lower-case letters are ignored by the compiler (and are not highlighted). This allows comments and code to be easily bundled together, enhancing readability and allowing programmers to more easily express their intentions. While this means that Cognate can be very verbose, verbosity can be a good thing - this 'informal syntax' gives extra information to anyone reading the source.
+Cognate's compiler ignores words beginning with lowercase letters, allowing comments and code to be interwoven. This 'informal syntax' being optional allows Cognate to be verbose where detail is needed and concise where it isn't.
+
+![Comparison of Cognate with Python](comparison.png?raw=true)
 
 ### Cognate is fast
-CognaC compiles Cognate directly to C. This produces very efficient binaries and allows Cognate to run much faster than many interpreted languages such as Python. However, it is easily outpaced by other compiled languages like Haskell and C++ that optimise more aggressively. However, Cognate has a huge potential for optimisation. In future, I will be able to implement many of these optimisations and make Cognate even faster. It is also worth noting that CognaC produces very small binaries. This could make Cognate a candidate for a scripting language in embedded environments.
+CognaC (the Cognate Compiler) compiles Cognate sources directly into C. This produces very small and efficient binaries, allowing Cognate to outperform most dynamic languages. This also makes Cognate a candidate for scripting in embedded environments, such as microcontrollers.
 
 |                    | *Cognate* | Python 3 | Lua   | Ruby  | Node.js | Lisp (SBCL) | Gforth | Lua (JIT) | Haskell (GHC) | Go     | C++ (G++) | C (GCC) | GFortran |
 |--------------------|-----------|----------|-------|-------|---------|-------------|--------|-----------|---------------|--------|-----------|---------|----------|
 | fib(35) runtime    | *0.18s*   | 3.15s    | 1.33s | 1.32s | 0.26s   | 0.19s       | 0.19s  | 0.14s     | 0.11s         | 0.07s  | 0.03s     | 0.03s   | 0.03s    |
-| static binary size | *20k*     | N/A      | N/A   | N/A   | N/A     | N/A         | N/A    | N/A       | 896k          | 1.7M   | 20k       | 20k     | 20k      |
-
-(If newer language versions produce different results, please submit an issue so I can update this table)
+| binary size | *20k*     | N/A      | N/A   | N/A   | N/A     | N/A         | N/A    | N/A       | 896k          | 1.7M   | 20k       | 20k     | 20k      |
 
 ### Cognate is simple
-Cognate has only a handful of syntax elements. In future, this will allow me to elegantly introduce compile time macros and reflection, similar to those found in lisp dialects, that manipulate the syntax tree directly. I am also looking at implementing Forth-style code metaprogramming with immediate words, etc.
+Cognate has only a handful of syntax elements. This makes the language very consistent and easy to learn. In future this will allow me to elegantly introduce metaprogramming constructs.
 
 ### Cognate is functional
-Cognate is optimised for functional programming - not complicated static-typed functional programming with monads and applicative functors as you might see in a Haskell program, but the more simplistic dynamically typed functional programming often seen in scheme dialects. In Cognate, a bracketed expression (known as a Block) represents a closure - an anonymous function that inherits variables from where it was defined. These allow functions to be passed as arguments and returned from other functions. Cognate also discourages variable mutation in favour of shadowing variables instead and limiting side-effects.
+Cognate is designed for functional programming - but does not require a PhD in discrete mathematics to use. While Cognate is oriented around first-class functions, no restrictions are placed on IO - making debugging and refactoring less headache-inducing.
 
 ### Cognate is powerful
-The stack, around which cognate is designed, allows Cognate to do things which many other languages cannot. One example is multiple return values. While other languages - such as python - require the use of tuples or lists to return multiple values, Cognate uses the stack to achieve this without the use of any data structures. Cognate also uses the stack to allow any expression to be written in point-free notation.
+Cognate is a stack-oriented programming language. This means that all intermediary values reside in a stack data structure. This allows powerful features such as:
+
+* Multiple return values
+* Point-free functions
+* Operation chaining
 
 ### Building Cognate
-Currently, Cognate will run on Linux and MacOS systems. If you use Windows 10, then you can install Cognate on the Windows Subsystem for Linux. To build Cognate, you will need make, flex, bison, clang, llvm, libblocksruntime-dev, and libgc. After installing dependencies, simply run this command to build the compiler and runtime.
+Currently, Cognate will run on Linux and MacOS systems. If you use Windows, then you can install Cognate on the Windows Subsystem for Linux. To build Cognate, you will need `make`, `flex`, `bison`, `clang`, `llvm`, and `libblocksruntime-dev`. After installing dependencies, simply run:
 ```
 make
 ```
-If that succeeds, install the compiler with the following command:
+If that succeeds, install the compiler with:
 ```
 sudo make install
 ```
-This installs cognate to the /usr/local prefix. To install to a different directory, use this command:
+This installs cognate to the /usr/local prefix. To install to a different directory:
 ```
 sudo make PREFIX=/my/prefix/dir install
 ```
@@ -42,9 +48,9 @@ You should then run the test script to test Cognate's functionality. This should
 ```
 make test
 ```
-If the tests all pass (they should!), you can then try running some of the included demo programs like this:
+If the tests all pass (they should!), you can then try running some of the included demo programs:
 ```
 cognac examples/fizzbuzz.cog -run
 ```
 
-[Here](INTRODUCTION.md) is an small introduction to the language.
+[Here](INTRODUCTION.md) is an work-in-progress introduction to the language.

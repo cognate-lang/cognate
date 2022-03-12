@@ -1,12 +1,6 @@
-Def Factorial as (
-	Let X;
-	Do If (== 0 X)
-		then (1)
-		else (* X Factorial - 1 X)
-);
+Def Factorial as
+	Case 0     is (+ 1)
+	Case (> 0) is (Twin ; - 1 ; * Factorial)
+	otherwise  is (Error 'invalid input');
 
-Put 'Enter an integer: ';
-Input; cast to Number; Twin;
-Assert 'Input is an integer' Integer?;
-Put 'It\'s factorial is... ';
-Print the Factorial;
+Print the Factorial of 10;
