@@ -8,6 +8,8 @@ TESTS = block booleans filter for functions groups if io lists map maths paralle
 
 build: cognac libcognate.a
 
+io-disabled: cognac-io-disabled libcognate.a
+
 install: build
 	mkdir -p $(INCLUDEDIR) $(LIBDIR) $(BINDIR)
 	cp runtime/runtime.h $(INCLUDEDIR)/runtime.h
@@ -19,6 +21,9 @@ uninstall:
 
 cognac: compiler/lexer.c compiler/parser.c compiler/parser.h compiler/cognac.c compiler/builtins.c compiler/cognac.h
 	$(CC) compiler/lexer.c compiler/parser.c compiler/cognac.c -o cognac -DLIBDIR=\"$(LIBDIR)\" -DINCLUDEDIR=\"$(INCLUDEDIR)\" $(CFLAGS)
+
+cognac-io-disabled: compiler/lexer.c compiler/parser.c compiler/parser.h compiler/cognac.c compiler/builtins.c compiler/cognac.h
+	$(CC) compiler/lexer.c compiler/parser.c compiler/cognac.c -o cognac -DLIBDIR=\"$(LIBDIR)\" -DINCLUDEDIR=\"$(INCLUDEDIR)\" -DDISABLEIO $(CFLAGS)
 
 libcognate.a: runtime/runtime.c runtime/functions.c runtime/gc.c runtime/runtime.h
 	$(CC) -c $(CFLAGS) -o runtime.o runtime/runtime.c

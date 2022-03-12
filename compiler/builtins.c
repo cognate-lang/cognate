@@ -53,12 +53,7 @@
 {.name="ceiling", .type=func, .argc=1, .args={number}, .rets=true, .ret=number},
 {.name="assert", .type=func, .argc=2, .args={string,boolean}},
 {.name="error", .type=func, .argc=1, .args={string}},
-{.name="path", .type=func, .rets=true, .ret=string},
 {.name="stack", .type=func, .rets=true, .ret=list, .needs_stack=true},
-{.name="parameters", .type=func, .rets=true, .ret=list},
-{.name="input", .type=func, .rets=true, .ret=string},
-{.name="read", .type=func, .argc=1, .args={string}, .rets=true, .ret=string},
-{.name="write", .type=func, .argc=1, .args={string,any}},
 {.name="list", .type=func, .argc=1, .args={block}, .rets=true, .ret=list, .needs_stack=true},
 {.name="number", .type=func, .argc=1, .args={string}, .rets=true, .ret=number},
 {.name="map", .type=func, .argc=2, .args={block, list}, .rets=true, .ret=list, .needs_stack=true},
@@ -78,3 +73,10 @@
 {.name="loop", .type=func, .argc=1, .args={block}, .rets=false, .needs_stack=true},
 {.name="break", .type=func, .argc=0, .rets=false, .needs_stack=true},
 {.name="case", .type=func, .argc=3, .args={any, block, block}, .rets=true, .ret=block},
+#ifndef DISABLEIO
+{.name="parameters", .type=func, .rets=true, .ret=list},
+{.name="input", .type=func, .rets=true, .ret=string},
+{.name="read", .type=func, .argc=1, .args={string}, .rets=true, .ret=string},
+{.name="write", .type=func, .argc=1, .args={string,any}},
+{.name="path", .type=func, .rets=true, .ret=string},
+#endif
