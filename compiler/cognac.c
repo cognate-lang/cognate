@@ -31,7 +31,7 @@ char* restrict_chars(char* in)
 			else ++sz;
 		}
 	}
-	char* out = GC_MALLOC(sz);
+	char* out = malloc (sz);
 	for (char* ptr = in; *ptr; ++ptr)
 	{
 		for (size_t i = 0; i < sizeof replace; ++i)
@@ -107,7 +107,7 @@ void add_symbols(ast* tree)
 				if (!already_declared)
 				{
 					fprintf(outfile, "const SYMBOL SYM(%s)=\"%s\";", restrict_chars(tree->text), tree->text);
-					sym_list* s = GC_NEW(sym_list);
+					sym_list* s = malloc(sizeof *s);
 					s->name = tree->text;
 					s->next = declared_symbols;
 					declared_symbols = s;
@@ -182,8 +182,8 @@ decl_list* predeclare(ast* head, decl_list* defs)
 			if (lookup_word(tree->text, already_predeclared)) yyerror("already defined in this block");
 			// We are leaking memory here.
 			// This could be stack memory with alloca() is we moved the allocation.
-			decl_list* def	= GC_NEW(decl_list);
-			decl_list* def2 = GC_NEW(decl_list);
+			decl_list* def	=  malloc(sizeof *def);
+			decl_list* def2 = malloc(sizeof *def);
 			*def = (decl_list){
 				.type=(tree->type == let) ? var : func,
 				.next = defs, .name = tree->text,
@@ -234,7 +234,7 @@ reg_list* emit_register(value_type type, reg_list* regs)
 
 reg_list* add_register(value_type type, reg_list* next)
 {
-	reg_list* r = GC_NEW(reg_list);
+	reg_list* r = malloc(sizeof *r);
 	*r = (reg_list){.type = type, .id = current_register++, .next=next};
 	fprintf(outfile, "const %s r%zi=", type_as_str[r->type][true], r->id);
 	return r;
@@ -345,7 +345,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 		case let:
 		{
 			registers = assert_registers(1, LONG_MAX, registers);
-			decl_list* d = GC_NEW(decl_list);
+			decl_list* d = malloc(sizeof *d);
 			*d = (decl_list)
 			{
 				.name = tree->text,
@@ -396,7 +396,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 reg_list* twin_register(reg_list* registers)
 {
 	registers = assert_registers(1, LONG_MAX, registers);
-	reg_list* r1 = GC_NEW(reg_list);
+	reg_list* r1 = malloc(sizeof *r1);
 	*r1 = *registers;
 	r1->next = registers;
 	return r1;
@@ -412,8 +412,8 @@ reg_list* drop_register(reg_list* registers)
 reg_list* triplet_register(reg_list* registers)
 {
 	registers = assert_registers(1, LONG_MAX, registers);
-	reg_list* r1 = GC_NEW(reg_list);
-	reg_list* r2 = GC_NEW(reg_list);
+	reg_list* r1 = malloc(sizeof *r1);
+	reg_list* r2 = malloc(sizeof *r2);
 	*r1 = *registers;
 	*r2 = *registers;
 	r1->next = registers;
@@ -458,8 +458,8 @@ int main(int argc, char** argv)
 	bool run = false;
 	char* source_file_path = argv[1];
 	size_t len = strlen(source_file_path);
-	char* c_file_path			 = GC_STRDUP(source_file_path); c_file_path[len-2] = '\0';
-	char* binary_file_path = GC_STRDUP(source_file_path); binary_file_path[len-4] = '\0';
+	char* c_file_path		  = strdup(source_file_path); c_file_path[len-2] = '\0';
+	char* binary_file_path = strdup(source_file_path); binary_file_path[len-4] = '\0';
 	outfile = fopen(c_file_path, "w");
 	yyin = fopen(source_file_path, "r");
 	if (!yyin) { fprintf(stderr, "File %s not found\n", source_file_path); return EXIT_FAILURE; }

@@ -1,7 +1,6 @@
 %{
 #include "cognac.h"
 #include <stdlib.h>
-#include <gc/gc.h>
 
 ast* ast_join(ast* a, ast* b)
 {
@@ -14,7 +13,7 @@ ast* ast_join(ast* a, ast* b)
 
 ast* alloc_ast(token_type type, value_type val_type, void* data)
 {
-	ast* a = GC_NEW(ast);
+	ast* a = malloc (sizeof *a);
 	*a = (ast){.type=type, .val_type=val_type, .data=data, .line=yylloc.first_line, .col=yylloc.first_column, .next=NULL};
 	return a;
 }

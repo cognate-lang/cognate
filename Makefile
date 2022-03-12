@@ -18,7 +18,7 @@ uninstall:
 	rm -rf $(INCLUDEDIR) $(LIBDIR)/libcognate.a $(BINDIR)/cognac
 
 cognac: compiler/lexer.c compiler/parser.c compiler/parser.h compiler/cognac.c compiler/builtins.c compiler/cognac.h
-	$(CC) compiler/lexer.c compiler/parser.c compiler/cognac.c -o cognac -DLIBDIR=\"$(LIBDIR)\" -DINCLUDEDIR=\"$(INCLUDEDIR)\" -lgc $(CFLAGS)
+	$(CC) compiler/lexer.c compiler/parser.c compiler/cognac.c -o cognac -DLIBDIR=\"$(LIBDIR)\" -DINCLUDEDIR=\"$(INCLUDEDIR)\" $(CFLAGS)
 
 libcognate.a: runtime/runtime.c runtime/functions.c runtime/gc.c runtime/runtime.h
 	$(CC) -c $(CFLAGS) -o runtime.o runtime/runtime.c
