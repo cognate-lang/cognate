@@ -12,7 +12,7 @@ Def Move discs as (
 		Prints ('Move dics ' N ' from ' A ' to ' C);
 
 		Move - 1 N discs from B via A to C;
-	);
+	)
 );
 
 Move 5 discs from \a via \b to \c
