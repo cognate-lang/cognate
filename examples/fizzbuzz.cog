@@ -1,3 +1,5 @@
+~~ Fizzbuzz in Cognate
+
 Def FizzBuzz as (
 	Let N;
 	Def Multiple as (Let X; Modulo X N; == 0);

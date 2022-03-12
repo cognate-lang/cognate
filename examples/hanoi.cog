@@ -1,3 +1,5 @@
+~~ Towers of Hanoi in Cognate
+
 Def Move discs as (
 
 	Let N be number of discs;
