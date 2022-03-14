@@ -584,18 +584,3 @@ STRING VAR(show)(ANY o)
 {
 	return show_object(o, 0);
 }
-
-static jmp_buf exit_loop;
-
-void VAR(loop)(BLOCK b)
-{
-	jmp_buf a;
-	memcpy(a, exit_loop, sizeof exit_loop);
-	if (!setjmp(exit_loop)) for (;;) b();
-	memcpy(exit_loop, a, sizeof a);
-}
-
-void VAR(break)(void)
-{
-	longjmp(exit_loop, 1);
-}
