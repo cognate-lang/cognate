@@ -11,7 +11,7 @@ Def Move discs as (
 
 		Move - 1 N discs from A via C to B;
 
-		Prints ('Move dics ' N ' from ' A ' to ' C);
+		Prints ('Move disc ' N ' from ' A ' to ' C);
 
 		Move - 1 N discs from B via A to C;
 	)
