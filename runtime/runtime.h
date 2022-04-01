@@ -215,3 +215,4 @@ BLOCK VAR(parallelDASHprecompute)(BLOCK);
 void VAR(wait)(NUMBER);
 void VAR(lock)(BLOCK);
 BLOCK VAR(case)(ANY, BLOCK, BLOCK);
+SYMBOL VAR(haltsQMARK)(BLOCK);
