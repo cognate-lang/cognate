@@ -584,11 +584,3 @@ STRING VAR(show)(ANY o)
 {
 	return show_object(o, 0);
 }
-
-SYMBOL VAR(haltsQMARK)(BLOCK b)
-{
-	int r = rand() % 16;
-	(void)b;
-	SYMBOL arr[16] = {"maybe", "yes", "no", "probably", "definitely not", "how long is a piece of string?", "april fools!", "segmentation fault", "42", "unsure", "file not found", "expected type Monad but got type Burrito", "dunno", "?", "definitely", "this proof is trivial and is left to the reader"};
-	return arr[r];
-}

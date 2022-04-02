@@ -71,7 +71,6 @@
 {.name="show", .type=func, .argc=1, .args={any}, .rets=true, .ret=string},
 {.name="lock", .type=func, .argc=1, .args={block}, .rets=false, .needs_stack=true},
 {.name="case", .type=func, .argc=3, .args={any, block, block}, .rets=true, .ret=block},
-{.name="halts?", .type=func, .argc=1, .args={block}, .rets=true, .ret=symbol},
 #ifndef DISABLEIO
 {.name="parameters", .type=func, .rets=true, .ret=list},
 {.name="input", .type=func, .rets=true, .ret=string},
