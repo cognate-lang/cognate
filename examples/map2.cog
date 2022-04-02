@@ -1,0 +1,6 @@
+Def Even? as (Modulo 2 ; == 0);
+
+Print Map
+	Case (Even?) then (Twin)
+	             else (Drop)
+	over the Range from 1 to 20 by 1;

@@ -412,18 +412,27 @@ void VAR(error)(STRING str)
 
 LIST VAR(map)(BLOCK blk, LIST lst)
 {
+	flush_stack_cache();
+	ANYPTR tmp_stack_start = stack.start;
+	stack.start = stack.top;
 	cognate_list start = {0};
 	cognate_list* ptr = &start;
 	for (; lst ; lst = lst->next)
 	{
 		push(lst->object);
 		blk();
-		cognate_list* new = gc_new(cognate_list);
-		new->object = pop();
-		new->next = NULL;
-		ptr->next = new;
-		ptr = new;
+		flush_stack_cache();
+		while (stack.top != stack.start)
+		{
+			cognate_list* new = gc_new(cognate_list);
+			new->object = pop();
+			new->next = NULL;
+			ptr->next = new;
+			ptr = new;
+		}
 	}
+	stack.top = stack.start;
+	stack.start = tmp_stack_start;
 	return start.next;
 
 }
