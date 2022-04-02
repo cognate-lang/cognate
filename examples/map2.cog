@@ -1,6 +1,7 @@
-Def Even? as (Modulo 2 ; == 0);
+Def Multiple as (== 0 Modulo);
 
 Print Map
-	Case (Even?) then (Twin)
-	             else (Drop)
+	Case (Multiple of 3) then (Triplet)
+	Case (Multiple of 2) then (Twin)
+	                     else (Drop)
 	over the Range from 1 to 20 by 1;
