@@ -7,7 +7,7 @@ Def Move discs as (
 	Let B be temporary location;
 	Let C be ending location;
 
-	Do If (== 0 N) then () else (
+	Do If == 0 N then () else (
 
 		Move - 1 N discs from A via C to B;
 

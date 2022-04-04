@@ -1,21 +1,21 @@
 ~~ This simple regex matches hexadecimal integers.
 ~~ ^ and $ are needed else it will only match part of the string.
 Let Regex1 be '^[0-9A-Fa-f]*$';
-Print If (Both Match-regex Regex1 '12EFab' and Not Match-regex Regex1 'foo123')
+Print If Both Match-regex Regex1 '12EFab' and Not Match-regex Regex1 'foo123'
   'PASS: Simple regex to identify hex integers'
 else
   'FAIL: Simple regex to identify hex integers';
 
 ~~ Same regex as before; but with POSIX character classes
 Let Regex2 be '^[[:xdigit:]]*$';
-Print If (Both Match-regex Regex2 '12EFab' and Not Match-regex Regex2 'foo123')
+Print If Both Match-regex Regex2 '12EFab' and Not Match-regex Regex2 'foo123'
   'PASS: Regex to identify hex integers (character class)'
 else
   'FAIL: Regex to identify hex integers (character class)';
 
 ~~ This regex matches decimal numbers (d.p can be dot or comma)
 Let Regex3 be '^(-)?([0-9]+)((;|.)([0-9]+))?$';
-Print If (Both Match-regex Regex3 '1.234' and Not Match-regex Regex3 'Hello world')
+Print If Both Match-regex Regex3 '1.234' and Not Match-regex Regex3 'Hello world'
   'PASS: Extended regex to identify decimal numbers'
 else
   'FAIL: Extended regex to identify decimal numbers';

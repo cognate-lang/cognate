@@ -2,7 +2,7 @@
 Let A be 5; ~~ Let A be 4; ~ Let A be 4; ~
 ~ Let A be 4; ~ ~~ Let A be 4;
 
-Print If (A; == 5)
+Print If == 5 A
  'PASS: Comments'
 else
  'FAIL: Comments';
@@ -14,12 +14,12 @@ Let B be 5; '' 'Let B be 4;'
 ' Let B be 4; \'  Let B be 4 ';
 Clear;
 
-Print If (B; == 5)
+Print If == 5 B
   'PASS: Strings'
 else
   'FAIL: Strings';
 
-Print If (1.5; == / 2 3)
+Print If == 1.5 / 2 3
   'PASS: Floating point numbers'
 else
   'FAIL: Floating point numbers';

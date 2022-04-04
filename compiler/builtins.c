@@ -9,7 +9,7 @@
 {.name="EQ",  .type=func, .argc=2, .args={any, any},       .rets=true, .ret=boolean},
 {.name="NEQ", .type=func, .argc=2, .args={any, any},       .rets=true, .ret=boolean},
 {.name="match", .type=func, .argc=2, .args={any, any},     .rets=true, .ret=boolean},
-{.name="if",    .type=func, .argc=3, .args={block, any, any},.rets=true, .ret=any, .needs_stack=true},
+{.name="if",    .type=func, .argc=3, .args={boolean, any, any},.rets=true, .ret=any, .needs_stack=true},
 {.name="while", .type=func, .argc=2, .args={block, block}, .needs_stack=true},
 {.name="print", .type=func, .argc=1, .args={any}},
 {.name="put",   .type=func, .argc=1, .args={any}},

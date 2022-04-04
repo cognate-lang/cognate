@@ -1,8 +1,0 @@
-Def Until as (
-	Do If () then (Break) else ();
-);
-
-Loop (
-	Put 'Do you want to exit the loop? [Y/N] ';
-	Until == 'Y' Input;
-);

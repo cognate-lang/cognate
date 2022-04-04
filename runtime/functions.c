@@ -9,13 +9,9 @@
 #include <pthread.h>
 #include <setjmp.h>
 
-ANY VAR(if)(BLOCK cond, ANY a, ANY b)
+ANY VAR(if)(BOOLEAN cond, ANY a, ANY b)
 {
-	cond();
-	if (unbox_boolean(pop()))
-		return a;
-	else
-		return b;
+	return cond ? a : b;
 }
 
 void VAR(while)(BLOCK cond, BLOCK body)

@@ -141,7 +141,7 @@ void set_word_name(const char* restrict const);
 void set_line_num(int);
 
 // Builtin functions needed by compiled source file defined in functions.c
-ANY VAR(if)(BLOCK, ANY, ANY);
+ANY VAR(if)(BOOLEAN, ANY, ANY);
 void VAR(while)(BLOCK, BLOCK);
 void VAR(do)(BLOCK);
 void VAR(put)(ANY);

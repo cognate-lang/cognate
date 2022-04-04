@@ -1,9 +1,9 @@
-Print If (True)
+Print If True
 	'PASS: If True'
 else
 	'FAIL: If True';
 
-Print If (False)
+Print If False
 	'FAIL: If False'
 else
 	'PASS: If False';

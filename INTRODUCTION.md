@@ -175,28 +175,28 @@ Print == 1 2; ~~ Prints True if 2 is equal to 1, False otherwise
 Print /= 1 2; ~~ Prints True if 2 is not equal to 1, False otherwise
 ```
 
-`If` is in fact a function, it takes three arguments. The first is a block that returns a boolean (soon this will not have to be wrapped in a block), the second is a value to return if the block evaluates to `True`, the third is a value to return if the block evaluates to `False`. The above program will print the larger of the two variables `X` and `Y`.
+`If` is in fact a function, it takes three arguments. The first is a boolean, the second is a value to return if the boolean is `True`, the third is a value to return if the boolean is `False`. The below program will print the larger of the two variables `X` and `Y`.
 
 ```
 Let X be 4;
 Let Y be 9;
 
-Print If (< X Y) then X else Y;
+Print If < X Y then X else Y;
 ```
 
 We can also chain `If` statements together.
 
 ```
-Print If (== X Y) then 'X is equal to Y'
-      If (>  X Y) then 'Y is greater than X'
-      else        then 'X is greater than Y';
+Print If == X Y then 'X is equal to Y'
+      If >  X Y then 'Y is greater than X'
+      else      then 'X is greater than Y';
 ```
 
 We can then use blocks and `Do` to have conditional execution.
 
 ```
-Do If (== 2 3) then ( Print '2 is equal to 3')
-               else ( Print '2 is not equal to 3' );
+Do If == 2 3 then (Print '2 is equal to 3')
+             else (Print '2 is not equal to 3');
 ```
 
 ### Lists

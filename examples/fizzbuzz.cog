@@ -4,10 +4,10 @@ Def FizzBuzz as (
 	Let N;
 	Def Multiple as (Let X; Modulo X N; == 0);
 	Print
-		If (Multiple of 15) then \fizzbuzz
-		If (Multiple of 3)  then \fizz
-		If (Multiple of 5)  then \buzz
-		                    else N
+		If Multiple of 15 then \fizzbuzz
+		If Multiple of 3  then \fizz
+		If Multiple of 5  then \buzz
+		                  else N
 );
 
 For each in Range from 1 to 100 by 1 do (Fizzbuzz);

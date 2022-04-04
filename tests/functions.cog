@@ -1,6 +1,6 @@
 Def Foo as (+ 1);
 
-Print If (Foo 4; == 5)
+Print If == 5 Foo 4
 	'PASS: Function call and return'
 else
 	'FAIL: Function call and return';
@@ -8,40 +8,39 @@ else
 Do (
 	Def Foo as (+ 3);
 
-	Print If (Foo 5; == 8)
+	Print If == 8 Foo 5
 		'PASS: Function shadowing 1'
 	else
 		'FAIL: Function shadowing 1';
 );
 
-Print If (Foo 7; == 8)
+Print If == 8 Foo 7
 	'PASS: Function shadowing 2'
 else
 	'FAIL: Function shadowing 2';
 
-~~ Mutation is TODO
-~~Let Recurred be False;
-~~Def Bar as
-~~(
-~~	Do If (== 0) (
-~~		Set Recurred to True;
-~~	) else (
-~~		Bar with 0;
-~~	);
-~~);
+Let Recurred be False;
+Def Bar as
+(
+	Let N;
+	Do If == 0 N then (
+		Set Recurred to True;
+	) else (
+		Bar with 0;
+	);
+);
 
-~~call Bar with 10;
-~~Print If (Recurred)
-~~	'PASS: Recursion'
-~~else
-~~	'FAIL: Recursion';
-
-~~ Put binary recursion test here when I implement binary recursion.
+call Bar with 10;
+Print If Recurred
+	'PASS: Recursion'
+else
+	'FAIL: Recursion';
 
 Def Binrec1
 ( Let X;
-	Do If (X; > 1000) (Print 'PASS: Binary recursion')
-	else (Binrec2 with + 1 X);
+	Do If > 1000 X
+		then (Print 'PASS: Binary recursion')
+		else (Binrec2 with + 1 X);
 );
 
 Def Binrec2
