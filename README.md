@@ -10,13 +10,8 @@ Cognate's compiler ignores words beginning with lowercase letters, allowing comm
 
 ![Comparison of Cognate with Python](comparison.png?raw=true)
 
-### Cognate is fast
-CognaC (the Cognate Compiler) compiles Cognate sources directly into C. This produces very small and efficient binaries, allowing Cognate to outperform most dynamic languages. This also makes Cognate a candidate for scripting in embedded environments, such as microcontrollers.
-
-|                    | *Cognate* | Python 3 | Lua   | Ruby  | Node.js | Lisp (SBCL) | Gforth | Lua (JIT) | Haskell (GHC) | Go     | C++ (G++) | C (GCC) | GFortran |
-|--------------------|-----------|----------|-------|-------|---------|-------------|--------|-----------|---------------|--------|-----------|---------|----------|
-| fib(35) runtime    | *0.18s*   | 3.15s    | 1.33s | 1.32s | 0.26s   | 0.19s       | 0.19s  | 0.14s     | 0.11s         | 0.07s  | 0.03s     | 0.03s   | 0.03s    |
-| binary size | *20k*     | N/A      | N/A   | N/A   | N/A     | N/A         | N/A    | N/A       | 896k          | 1.7M   | 20k       | 20k     | 20k      |
+### Cognate is efficient
+CognaC (the Cognate Compiler) compiles Cognate sources directly into C. This produces very small and rather fast binaries, allowing Cognate to outperform most dynamic languages. This also makes Cognate a candidate for scripting in embedded environments, such as microcontrollers.
 
 ### Cognate is simple
 Cognate has only a handful of syntax elements. This makes the language very consistent and easy to learn. In future this will allow me to elegantly introduce metaprogramming constructs.
