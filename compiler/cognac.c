@@ -458,7 +458,7 @@ int main(int argc, char** argv)
 	{
 		"clang", c_file_path, "-o", binary_file_path, "-fblocks", "-I"INCLUDEDIR, "-L"LIBDIR, "-l:libcognate.a", "-l:libBlocksRuntime.a",
 		"-lpthread", release ? "-Ofast" : "-O1", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
-		"-std=c11", "-lm", "-g0", "-flto", release ? "-s" : "-ggdb3", "-fuse-ld=lld", "-fdata-sections", "-ffunction-sections",
+		"-std=c11", "-lm", "-g0", "-flto", release ? "-s" : "-ggdb3", "-fdata-sections", "-ffunction-sections",
 		"-Wl,--gc-sections", NULL
 	};
 	fflush(outfile);
