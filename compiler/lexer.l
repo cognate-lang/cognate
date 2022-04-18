@@ -5,7 +5,6 @@
 #include "cognac.h"
 #include <ctype.h>
 #include <stdlib.h>
-#include <gc/gc.h>
 #include <limits.h>
 
 char* lc(char* s)

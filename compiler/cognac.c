@@ -7,7 +7,6 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <limits.h>
-#include <gc/gc.h>
 
 FILE* outfile;
 size_t current_register = 0;
