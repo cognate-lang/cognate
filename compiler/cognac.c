@@ -219,7 +219,8 @@ bool is_mutated(ast* tree, decl_list v)
 
 reg_list* emit_register(value_type type, reg_list* regs)
 {
-	if (regs->type == type)     fprintf(outfile, "r%zi", regs->id);
+	if (!regs) __builtin_trap();
+	else if (regs->type == type)fprintf(outfile, "r%zi", regs->id);
 	else if (regs->type == any) fprintf(outfile, "unbox_%s(r%zi)", type_as_str[type][false], regs->id);
 	else if (type == any)       fprintf(outfile, "box_%s(r%zi)", type_as_str[regs->type][false], regs->id);
 	else
@@ -263,6 +264,21 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 			reg_list* return_register = NULL;
 			if (!d) yyerror("undefined word");
 			registers = assert_registers(d->argc, d->needs_stack ? d->argc : LONG_MAX, registers);
+			if (d->builtin && !strcmp(tree->text, "if") && registers && registers->next && registers->next->next
+					&& registers->next->type == registers->next->next->type)
+			{
+				value_type t = registers->next->type;
+				return_register = add_register(t, NULL);
+				registers = emit_register(boolean, registers);
+				fputs("?", outfile);
+				registers = emit_register(t, registers);
+				fputs(":", outfile);
+				registers = emit_register(t, registers);
+				fputs(";", outfile);
+				return_register->next = registers;
+				registers = return_register;
+				break;
+			}
 			if (d->rets) return_register = add_register(d->ret, NULL);
 			switch(d->type)
 			{
