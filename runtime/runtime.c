@@ -14,9 +14,9 @@
 
 static const char *lookup_type(cognate_type);
 static _Bool compare_lists(LIST, LIST);
-static _Bool compare_groups(GROUP, GROUP);
+static _Bool compare_records(RECORD, RECORD);
+static _Bool match_records(RECORD, RECORD);
 static _Bool match_lists(LIST, LIST);
-static _Bool match_groups(GROUP, GROUP);
 static void handle_error_signal(int);
 
 __thread cognate_stack stack;
@@ -181,27 +181,30 @@ char* show_object (const ANY object, const _Bool raw_strings)
 			*buffer++ = ')';
 			*buffer++ = '\0';
 			break;
-		case group:
+		case boolean: strcpy(buffer, unbox_boolean(object) ? "True" : "False");  break;
+		case symbol:  strcpy(buffer, unbox_symbol(object)); break;
+		case block:	  sprintf(buffer, "<block %p>", (void*)unbox_block(object)); break;
+		case record:
 		{
-			GROUP g = unbox_group(object);
-			*buffer++ = '(';
-			for (size_t i = 0 ;; ++i)
+			RECORD r = unbox_record(object);
+			*buffer++ = '<';
+			buffer += strlen(strcpy(buffer, record_info[r->id][0]));
+			*buffer++ = ':';
+			*buffer++ = ' ';
+			for (size_t i = 0;;++i)
 			{
-				buffer += strlen(strcpy(buffer, g->items[i].name));
-				*buffer++ = ':';
+				if (record_info[r->id][i+1])
+					buffer+=strlen(strcpy(buffer, record_info[r->id][i+1]));
+				else break;
 				*buffer++ = ' ';
-				buffer += strlen(show_object(g->items[i].object, 0));
-				if (i + 1 == g->len) break;
-				*buffer++ = ',';
+				buffer += strlen(show_object(r->items[i], 0));
+				if (!record_info[r->id][i+2]) break;
 				*buffer++ = ' ';
 			}
-			*buffer++ = ')';
+			*buffer++ = '>';
 			*buffer++ = '\0';
-			break;
 		}
-		case boolean: strcpy(buffer, unbox_boolean(object) ? "True" : "False");  break;
-		case symbol:	strcpy(buffer, unbox_symbol(object)); break;
-		case block:		sprintf(buffer, "<block %p>", (void*)unbox_block(object)); break;
+		break;
 		case NOTHING: __builtin_trap();
 	}
 	buffer = buffer_start;
@@ -257,13 +260,13 @@ const char* lookup_type(cognate_type type)
 		case number:  return "number";
 		case list:    return "list";
 		case block:   return "block";
-		case group:   return "group";
+		case record:   return "record";
 		case symbol:  return "symbol";
 		default: __builtin_trap();
 	}
 }
 
-_Bool compare_lists(LIST lst1, LIST lst2)
+static _Bool compare_lists(LIST lst1, LIST lst2)
 {
 	if (!lst1) return !lst2;
 	if (!lst2) return 0;
@@ -277,29 +280,22 @@ _Bool compare_lists(LIST lst1, LIST lst2)
 	return 0;
 }
 
-static _Bool compare_groups(GROUP g1, GROUP g2)
+static _Bool compare_records(RECORD r1, RECORD r2)
 {
-	if (g1->len != g2->len) return 0;
-	size_t len = g1->len;
-	for (size_t i = 0; i < len; ++i)
+	if (r1->id != r2->id) return 0;
+	for (size_t i = 0; record_info[r1->id][i+1]; ++i)
 	{
-		SYMBOL name = g1->items[i].name;
-		size_t index1 = i;
-		size_t index2 = 0;
-		if (name == g2->items[i].name) index2 = i;
-		else
-		{
-			_Bool found = 0;
-			for (size_t ii = 0; ii < len; ++ii)
-			{
-				const _Bool eq = name == g2->items[ii].name;
-				found |= eq;
-				index2 += ii * eq;
-			}
-			if (!found) return 0;
-		}
-		if (!compare_objects(g1->items[index1].object, g2->items[index2].object))
-			return 0;
+		if (!compare_objects(r1->items[i], r2->items[i])) return 0;
+	}
+	return 1;
+}
+
+static _Bool match_records(RECORD patt, RECORD obj)
+{
+	if (patt->id != obj->id) return 0;
+	for (size_t i = 0; record_info[patt->id][i+1]; ++i)
+	{
+		if (!match_objects(patt->items[i], obj->items[i])) return 0;
 	}
 	return 1;
 }
@@ -317,7 +313,7 @@ _Bool compare_objects(ANY ob1, ANY ob2)
 		case string:  return !strcmp(unbox_string(ob1), unbox_string(ob2));
 		case symbol:  return unbox_symbol(ob1) == unbox_symbol(ob2);
 		case list:    return compare_lists(unbox_list(ob1), unbox_list(ob2));
-		case group:   return compare_groups(unbox_group(ob1), unbox_group(ob2));
+		case record:  return compare_records(unbox_record(ob1), unbox_record(ob2));
 		case block: throw_error("cannot compare blocks");
 		default: __builtin_trap();
 	}
@@ -335,33 +331,6 @@ _Bool match_lists(LIST lst1, LIST lst2)
 		lst2 = lst2 -> next;
 	}
 	return 0;
-}
-
-static _Bool match_groups(GROUP g1, GROUP g2)
-{
-	if (g1->len != g2->len) return 0;
-	size_t len = g1->len;
-	for (size_t i = 0; i < len; ++i)
-	{
-		SYMBOL name = g1->items[i].name;
-		size_t index1 = i;
-		size_t index2 = 0;
-		if (name == g2->items[i].name) index2 = i;
-		else
-		{
-			_Bool found = 0;
-			for (size_t ii = 0; ii < len; ++ii)
-			{
-				const _Bool eq = name == g2->items[ii].name;
-				found |= eq;
-				index2 += ii * eq;
-			}
-			if (!found) return 0;
-		}
-		if (!match_objects(g1->items[index1].object, g2->items[index2].object))
-			return 0;
-	}
-	return 1;
 }
 
 _Bool match_objects(ANY patt, ANY obj)
@@ -382,7 +351,7 @@ _Bool match_objects(ANY patt, ANY obj)
 		case string:  return !strcmp(unbox_string(patt), unbox_string(obj));
 		case symbol:  return unbox_symbol(patt) == unbox_symbol(obj);
 		case list:    return match_lists(unbox_list(patt), unbox_list(obj));
-		case group:   return match_groups(unbox_group(patt), unbox_group(obj));
+		case record:  return match_records(unbox_record(patt), unbox_record(obj));
 		default: __builtin_trap();
 	}
 }
@@ -447,16 +416,16 @@ ANY box_list(LIST s)
 	return NAN_MASK | ((long)list << 48) | (long)s;
 }
 
-GROUP unbox_group(ANY box)
+RECORD unbox_record(ANY box)
 {
-	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)group << 48)
-		throw_error_fmt("expected a group but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
-	return (GROUP)(PTR_MASK & box);
+	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)record << 48)
+		throw_error_fmt("expected a record but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+	return (RECORD)(PTR_MASK & box);
 }
 
-ANY box_group(GROUP s)
+ANY box_record(RECORD s)
 {
-	return NAN_MASK | ((long)group << 48) | (long)s;
+	return NAN_MASK | ((long)record << 48) | (long)s;
 }
 
 SYMBOL unbox_symbol(ANY box)
@@ -481,4 +450,11 @@ BLOCK unbox_block(ANY box)
 ANY box_block(BLOCK s)
 {
 	return NAN_MASK | ((long)block << 48) | (long)Block_copy(s);
+}
+
+void check_record_id(size_t i, RECORD r)
+{
+	if unlikely(i != r->id)
+		throw_error_fmt("expected a %.64s but got %.64s which is a %s", record_info[i][0], show_object(box_record(r), 0), record_info[r->id][0]);
+
 }

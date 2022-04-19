@@ -8,6 +8,8 @@
 #include <sys/wait.h>
 #include <limits.h>
 
+int record_id = 0;
+
 FILE* outfile;
 size_t current_register = 0;
 sym_list* declared_symbols = NULL;
@@ -49,14 +51,14 @@ br:;
 
 char* type_as_str[8][2] =
 {
-	[any]     = { "any",		 "ANY"		 },
+	[any]     = { "any",		 "ANY"	 },
 	[block]   = { "block",	 "BLOCK"	 },
-	[string]  = { "string",  "STRING"  },
-	[number]  = { "number",  "NUMBER"  },
-	[symbol]  = { "symbol",  "SYMBOL"  },
-	[boolean] = { "boolean", "BOOLEAN" },
-	[list]    = { "list",		 "LIST"		 },
-	[group]   = { "group",	 "GROUP"	 },
+	[string]  = { "string",  "STRING" },
+	[number]  = { "number",  "NUMBER" },
+	[symbol]  = { "symbol",  "SYMBOL" },
+	[boolean] = { "boolean", "BOOLEAN"},
+	[list]    = { "list",	 "LIST"	 },
+	[record]  = { "record",	 "RECORD" },
 };
 
 reg_list* assert_registers(size_t lower, size_t upper, reg_list* registers)
@@ -163,6 +165,22 @@ utf8:
 	fputc('"', outfile);
 }
 
+void emit_record_info(ast* tree)
+{
+	for (;tree;tree=tree->next)
+	{
+		if (tree->type==value&&tree->val_type==block) emit_record_info(tree->child);
+		else if (tree->type == type)
+		{
+			record_t* r = tree->record;
+			fputs("{",outfile);
+			for (;r;r=r->next)
+				fprintf(outfile,"\"%s\",", r->name);
+			fputs("NULL},",outfile);
+		}
+	}
+}
+
 decl_list* predeclare(ast* head, decl_list* defs)
 {
 	/*
@@ -258,6 +276,56 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 	}
 	switch (tree->type)
 	{
+		case type:
+		{
+			decl_list* cons = malloc(sizeof *cons);
+			*cons = (decl_list)
+			{
+				.name = tree->record->name,
+				.next = defs,
+				.type = func,
+				.needs_stack = true,
+				.rets = true,
+				.ret = record,
+				.builtin = false,
+				.argc = 0 // This could be faster if we took real args TODO
+			};
+			int i = 0;
+			for (record_t*f=tree->record->next;f;f=f->next) ++i;
+
+			fprintf(outfile,"RECORD(^VAR(%s))()=Block_copy(^{RECORD R=ALLOC_RECORD(%i);R->id=%i;",
+				cons->name,i,record_id);
+
+			for (int j = 0; j < i; ++j)
+				fprintf(outfile, "R->items[%i]=pop();", j);
+
+			fputs("return R;});", outfile);
+
+			defs = cons;
+
+			int j = 0;
+			for (record_t*f=tree->record->next;f;f=f->next)
+			{
+				decl_list* field = malloc(sizeof *field);
+				*field = (decl_list)
+				{
+					.name = f->name,
+					.next = defs,
+					.type = func,
+					.ret = any,
+					.rets = true,
+					.builtin = false,
+					.argc = 1,
+					.args = {record}
+				};
+				fprintf(outfile,"ANY(^VAR(%s))(RECORD)=Block_copy(^(RECORD R){check_record_id(%i,R);return R->items[%i];});", f->name,record_id,j);
+				defs = field;
+				++j;
+			}
+			record_id++;
+
+		}
+		break;
 		case identifier:
 		{
 			decl_list* d = lookup_word(tree->text, defs);
@@ -313,7 +381,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 				case block:
 					fputs("^{check_function_stack_size();", outfile);
 					compile(tree->data, NULL, predeclare(tree->data, defs));
-					fputc('}', outfile);
+					fputs("}", outfile);
 					break;
 				case string:
 					print_cognate_string(tree->text);
@@ -362,6 +430,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 		case def:
 		{
 			decl_list* d = lookup_word(tree->text, defs);
+			if (!d->predecl) yyerror("already defined in this block");
 			d -> predecl = false;
 			registers = assert_registers(1, LONG_MAX, registers);
 			fprintf(outfile, "VAR(%s)=Block_copy(", restrict_chars(tree->text));
@@ -465,6 +534,9 @@ int main(int argc, char** argv)
 	}
 	yyparse();
 	fputs("#include<cognate/runtime.h>\n",outfile);
+	fputs("char* record_info[][64] = {", outfile);
+	emit_record_info(full_ast);
+	fputs("{NULL}};\n", outfile);
 	if (!release) fprintf(outfile, "#line 1 \"%s\"\n", source_file_path);
 	fputs("int main(int argc,char** argv){init(argc,argv);",outfile);
 	add_symbols(full_ast);

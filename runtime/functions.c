@@ -105,6 +105,7 @@ BOOLEAN VAR(LTE)(NUMBER a, NUMBER b) { return a >= b; }
 BOOLEAN VAR(numberQMARK)(ANY a)  { return get_type(a)==number; }
 BOOLEAN VAR(listQMARK)(ANY a)    { return get_type(a)==list;   }
 BOOLEAN VAR(stringQMARK)(ANY a)  { return get_type(a)==string; }
+BOOLEAN VAR(anyQMARK)(ANY a)     { (void)a; return 1; }
 BOOLEAN VAR(blockQMARK)(ANY a)   { return get_type(a)==block;  }
 BOOLEAN VAR(booleanQMARK)(ANY a) { return get_type(a)==boolean;}
 BOOLEAN VAR(symbolQMARK)(ANY a)  { return get_type(a)==symbol; }
@@ -478,38 +479,7 @@ LIST VAR(range)(NUMBER start, NUMBER end, NUMBER step)
 	return lst;
 }
 
-GROUP VAR(group)(BLOCK init)
-{
-	// Move the stack to temporary storage
-	flush_stack_cache();
-	ANYPTR tmp_stack_start = stack.start;
-	stack.start = stack.top;
-	// Allocate a list as the stack
-	init();
-	flush_stack_cache();
-	const size_t len = stack_length();
-	GROUP g = gc_malloc (sizeof g->len + len * sizeof g->items[0]);
-	g->len = len;
-	for (size_t i = 0; i < len; ++i) g->items[i].name = unbox_symbol(pop());
-	stack.top = stack.start;
-	stack.start = tmp_stack_start;
-	for (size_t i = 0; i < len; ++i) g->items[i].object = pop();
-	return g;
-}
 
-ANY VAR(the)(SYMBOL key, GROUP g)
-{
-	for (size_t i = 0; i < g->len; ++i)
-		if (g->items[i].name == key) return g->items[i].object;
-	throw_error_fmt("cannot find \\%.32s in record", key);
-}
-
-BOOLEAN VAR(has)(SYMBOL key, GROUP g)
-{
-	for (size_t i = 0; i < g->len; ++i)
-		if (g->items[i].name == key) return 1;
-	return 0;
-}
 
 ANY VAR(index)(NUMBER ind, LIST lst)
 {

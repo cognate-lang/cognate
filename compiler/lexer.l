@@ -52,6 +52,7 @@ ALLOWCHAR [A-Za-z0-9\-\?\!]
 D[eE][fF] return DEF;
 L[eE][tT] return LET;
 S[eE][tT] return SET;
+T[yY][pP][eE] return TYPE;
 
 [A-Z]{ALLOWCHAR}*    yylval.text=lc(strdup(yytext));   return IDENTIFIER;
 \\{ALLOWCHAR}+       yylval.text=lc(strdup(yytext+1)); return SYMBOL;

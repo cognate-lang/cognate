@@ -23,8 +23,8 @@ typedef _Bool BOOLEAN;
 typedef double NUMBER;
 typedef const char* restrict STRING;
 typedef const struct cognate_list* restrict LIST;
-typedef struct cognate_group* restrict GROUP;
 typedef const char* restrict SYMBOL;
+typedef struct cognate_record* restrict RECORD;
 
 typedef enum cognate_type
 {
@@ -32,27 +32,23 @@ typedef enum cognate_type
 	boolean = 1,
 	string  = 2,
 	list    = 3,
-	group   = 4,
+	record  = 4,
 	block   = 5,
 	symbol  = 6,
 	number  = 8,
 } cognate_type;
+
+typedef struct cognate_record
+{
+	size_t id;
+	ANY items[1];
+} cognate_record;
 
 typedef struct cognate_list
 {
 	LIST next;
 	ANY object;
 } cognate_list;
-
-typedef struct cognate_group
-{
-	size_t len;
-	struct
-	{
-		SYMBOL name;
-		ANY object;
-	} items [1];
-} cognate_group;
 
 typedef struct cognate_stack
 {
@@ -83,11 +79,15 @@ typedef struct cognate_stack
 #define unlikely(expr) (__builtin_expect((_Bool)(expr), 0))
 #define likely(expr)	 (__builtin_expect((_Bool)(expr), 1))
 
+#define ALLOC_RECORD(n) (gc_malloc(sizeof(size_t)+n*sizeof(ANY)))
+
 // Global variables
 extern __thread cognate_stack stack;
 extern LIST cmdline_parameters;
 extern const char* restrict word_name;
 extern int line_num;
+
+extern char *record_info[][64];
 
 extern __thread const char* restrict function_stack_top;
 extern __thread const char* restrict function_stack_start;
@@ -95,6 +95,7 @@ extern ptrdiff_t function_stack_size;
 
 // Variables and	needed by functions.c defined in runtime.c
 void init_stack(void);
+void check_record_id(size_t, RECORD);
 void set_function_stack_start(void);
 void expand_stack(void);
 char* show_object(const ANY object, const _Bool);
@@ -122,8 +123,8 @@ STRING unbox_string(ANY);
 ANY box_string(STRING);
 LIST unbox_list(ANY);
 ANY box_list(LIST);
-GROUP unbox_group(ANY);
-ANY box_group(GROUP);
+RECORD unbox_record(ANY);
+ANY box_record(RECORD);
 SYMBOL unbox_symbol(ANY);
 ANY box_symbol(SYMBOL);
 BLOCK unbox_block(ANY);
@@ -166,6 +167,7 @@ BOOLEAN VAR(GT)(NUMBER, NUMBER);
 BOOLEAN VAR(LTE)(NUMBER, NUMBER);
 BOOLEAN VAR(GTE)(NUMBER, NUMBER);
 BOOLEAN VAR(match)(ANY, ANY);
+BOOLEAN VAR(anyQMARK)(ANY);
 BOOLEAN VAR(numberQMARK)(ANY);
 BOOLEAN VAR(symbolQMARK)(ANY);
 BOOLEAN VAR(listQMARK)(ANY);
@@ -204,9 +206,6 @@ LIST VAR(map)(BLOCK, LIST);
 LIST VAR(filter)(BLOCK, LIST);
 void VAR(for)(LIST, BLOCK);
 LIST VAR(range)(NUMBER, NUMBER, NUMBER);
-GROUP VAR(group)(BLOCK);
-ANY VAR(the)(SYMBOL, GROUP);
-BOOLEAN VAR(has)(SYMBOL, GROUP);
 ANY VAR(index)(NUMBER, LIST);
 void VAR(puts)(BLOCK);
 void VAR(prints)(BLOCK);

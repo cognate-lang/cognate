@@ -17,6 +17,13 @@ ast* alloc_ast(token_type type, value_type val_type, void* data)
 	*a = (ast){.type=type, .val_type=val_type, .data=data, .line=yylloc.first_line, .col=yylloc.first_column, .next=NULL};
 	return a;
 }
+
+record_t* alloc_record(char* name, record_t* next)
+{
+  record_t* r = malloc(sizeof *r);
+  *r = (record_t){.name=name, .next=next};
+  return r;
+}
 %}
 
 %locations
@@ -24,7 +31,7 @@ ast* alloc_ast(token_type type, value_type val_type, void* data)
 %union {
 	char* text;
 	struct ast* tree;
-	// TODO special type for tokens so we can have line numbers.
+	struct record_t* record;
 }
 
 %token
@@ -32,6 +39,7 @@ ast* alloc_ast(token_type type, value_type val_type, void* data)
 	<text> IDENTIFIER
 	<text> STRING
 	<text> SYMBOL
+	TYPE
 	DEF
 	LET
 	SET
@@ -43,18 +51,24 @@ ast* alloc_ast(token_type type, value_type val_type, void* data)
 %type <tree> STATEMENT;
 %type <tree> EXPRESSION;
 %type <tree> TOKEN;
+%type <record> TYPEBODY;
 
 %start ENTRY;
-// TODO: Declarations need to be compiled here.
 %%
 
 ENTRY:
 	  EXPRESSION { full_ast = $1; }
 	;
 
+TYPEBODY:
+	  IDENTIFIER          { $$ = alloc_record($1, NULL); }
+	| IDENTIFIER TYPEBODY { $$ = alloc_record($1, $2); }
+	;
+
 EXPRESSION:
-	  STATEMENT ';' EXPRESSION { $$ = ast_join($1, $3); }
-	| STATEMENT                { $$ = $1;               }
+	  STATEMENT ';' EXPRESSION     { $$ = ast_join($1, $3);         }
+	| TYPE TYPEBODY ';' EXPRESSION { $$ = ast_join(alloc_ast(type, any, $2), $4); }
+	| STATEMENT                    { $$ = $1;                       }
 	;
 
 STATEMENT:
@@ -62,8 +76,8 @@ STATEMENT:
 	| /* Empty */     { $$ = NULL;             }
 	;
 
-TOKEN: // Tokens should be converted to ast nodes in the lexer.
-	  IDENTIFIER          { $$ = alloc_ast(identifier, any, $1); }
+TOKEN:
+	  IDENTIFIER         { $$ = alloc_ast(identifier, any, $1); }
 	| '(' EXPRESSION ')' { $$ = alloc_ast(value, block,    $2); }
 	| NUMBER             { $$ = alloc_ast(value, number,   $1); }
 	| STRING             { $$ = alloc_ast(value, string,   $1); }

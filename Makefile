@@ -1,10 +1,10 @@
 CC=clang
-CFLAGS=-Wall -Wextra -pedantic -fblocks -Ofast -flto
+CFLAGS=-Wall -Wextra -pedantic -fblocks -g -ggdb3 -O2 -flto
 PREFIX=/usr/local
 INCLUDEDIR=$(PREFIX)/include/cognate
 LIBDIR=$(PREFIX)/lib
 BINDIR=$(PREFIX)/bin
-TESTS = block booleans filter for functions groups if io lists map maths parallel parsing regex stack strings symbols variables
+TESTS = block booleans filter for functions if io lists map maths parallel parsing regex stack strings symbols variables
 
 build: cognac libcognate.a
 

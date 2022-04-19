@@ -8,9 +8,9 @@
 #include <stdbool.h>
 
 // OR types so we can do bitwise typechecking? TODO?
-typedef enum {block, string, number, symbol, boolean, list, group, any} value_type;
+typedef enum {record, block, string, number, symbol, boolean, list, any} value_type;
 
-typedef enum {identifier, value, def, let, set} token_type;
+typedef enum {identifier, value, def, let, set, type} token_type;
 
 typedef enum {func, var, stack_op} decl_type;
 
@@ -31,7 +31,7 @@ typedef struct decl_list
 {
 	struct decl_list* next;
 	char* name;
-	value_type args[3];
+	value_type args[64];
 	value_type ret;
 	unsigned short argc;
 	bool predecl;
@@ -44,12 +44,19 @@ typedef struct decl_list
 	// TODO flags and a bitmask for boolean things?
 } decl_list;
 
+typedef struct record_t
+{
+	char* name;
+	struct record_t* next;
+} record_t;
+
 typedef struct ast
 {
 	union
 	{
 		char* text;
 		struct ast* child;
+		struct record_t* record;
 		void* data;
 	};
 	size_t line;
