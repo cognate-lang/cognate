@@ -544,7 +544,7 @@ int main(int argc, char** argv)
 	fputs("cleanup();}\n", outfile);
 	char* args[] =
 	{
-		"clang", c_file_path, "-o", binary_file_path, "-fblocks", "-I"INCLUDEDIR, "-L"LIBDIR, "-l:libcognate.a", "-l:libBlocksRuntime.a",
+		"clang", c_file_path, "-o", binary_file_path, "-fblocks", "-I"INCLUDEDIR, "-L"LIBDIR, "-l:libcognate.a", "-lBlocksRuntime",
 		"-lpthread", release ? "-Ofast" : "-O1", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
 		"-std=c11", "-lm", "-g0", "-flto", release ? "-s" : "-ggdb3", "-fdata-sections", "-ffunction-sections",
 		"-Wl,--gc-sections", NULL
