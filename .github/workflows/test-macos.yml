@@ -12,7 +12,7 @@ jobs:
           brew install bdw-gc
           brew install llvm
           cd $GITHUB_WORKSPACE
-          sudo make install
+          make install
       - name: Run test script
         shell: bash
         run: |

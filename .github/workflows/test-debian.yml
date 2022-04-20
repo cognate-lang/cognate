@@ -15,7 +15,7 @@ jobs:
         run: |
           sudo apt install flex bison libgc-dev clang llvm libblocksruntime-dev -y
           cd $GITHUB_WORKSPACE
-          sudo make install
+          make install
       - name: Run test script
         shell: bash
         run: |
