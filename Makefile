@@ -1,45 +1,36 @@
 CC=clang
-FLTO=-flto
-CFLAGS=-Wall -Wextra -pedantic -fblocks -Ofast $(FLTO)
+CFLAGS=-Wall -Wextra -pedantic -fblocks -Ofast
 PREFIX=`echo ~`/.local
 INCLUDEDIR=$(PREFIX)/include
-LIBDIR=$(PREFIX)/lib
 BINDIR=$(PREFIX)/bin
 TESTS=block booleans filter for functions if io lists map maths parallel parsing regex stack strings symbols variables
 
-build: cognac libcognate.a
+build: cognac
 
-io-disabled: cognac-io-disabled libcognate.a
+io-disabled: cognac-io-disabled
 
 install: build
-	mkdir -p $(INCLUDEDIR)/cognate $(LIBDIR) $(BINDIR)
-	cp runtime/runtime.h $(INCLUDEDIR)/cognate/runtime.h
-	cp libcognate.a      $(LIBDIR)/libcognate.a
-	cp cognac            $(BINDIR)/cognac
+	mkdir -p $(INCLUDEDIR) $(LIBDIR) $(BINDIR)
+	cp src/cognate.h $(INCLUDEDIR)/cognate.h
+	cp cognac        $(BINDIR)/cognac
 
 uninstall:
-	rm -rf $(INCLUDEDIR)/cognate $(LIBDIR)/libcognate.a $(BINDIR)/cognac
+	rm -rf $(INCLUDEDIR)/cognate.h $(BINDIR)/cognac
 
-cognac: compiler/lexer.c compiler/parser.c compiler/parser.h compiler/cognac.c compiler/builtins.c compiler/cognac.h
-	$(CC) compiler/lexer.c compiler/parser.c compiler/cognac.c -o cognac -DLIBDIR=\"$(LIBDIR)\" -DINCLUDEDIR=\"$(INCLUDEDIR)\" -DFLTO=\"$(FLTO)\" $(CFLAGS)
+cognac: src/lexer.c src/parser.c src/parser.h src/cognac.c src/builtins.c src/cognac.h
+	$(CC) src/lexer.c src/parser.c src/cognac.c -o cognac -DINCLUDEDIR=\"$(INCLUDEDIR)\" $(CFLAGS)
 
-cognac-io-disabled: compiler/lexer.c compiler/parser.c compiler/parser.h compiler/cognac.c compiler/builtins.c compiler/cognac.h
-	$(CC) compiler/lexer.c compiler/parser.c compiler/cognac.c -o cognac -DLIBDIR=\"$(LIBDIR)\" -DINCLUDEDIR=\"$(INCLUDEDIR)\" -DDISABLEIO -DFLTO=\"$(FLTO)\" $(CFLAGS)
+cognac-io-disabled: src/lexer.c src/parser.c src/parser.h src/cognac.c src/builtins.c src/cognac.h
+	$(CC) src/lexer.c src/parser.c src/cognac.c -o cognac -DINCLUDEDIR=\"$(INCLUDEDIR)\" -DDISABLEIO $(CFLAGS)
 
-libcognate.a: runtime/runtime.c runtime/functions.c runtime/gc.c runtime/runtime.h
-	$(CC) -c $(CFLAGS) -o runtime.o runtime/runtime.c
-	$(CC) -c $(CFLAGS) -o functions.o runtime/functions.c
-	$(CC) -c $(CFLAGS) -o gc.o runtime/gc.c
-	llvm-ar rvs libcognate.a runtime.o functions.o gc.o
+src/lexer.c: src/lexer.l
+	flex -o src/lexer.c src/lexer.l
 
-compiler/lexer.c: compiler/lexer.l
-	flex -o compiler/lexer.c compiler/lexer.l
-
-compiler/parser.c compiler/parser.h: compiler/parser.y
-	bison compiler/parser.y --defines=compiler/parser.h -o compiler/parser.c
+src/parser.c src/parser.h: src/parser.y
+	bison src/parser.y --defines=src/parser.h -o src/parser.c
 
 clean:
-	rm -f compiler/lexer.c compiler/parser.h compiler/parser.c cognac libcognate.a runtime.o functions.o gc.o
+	rm -f src/lexer.c src/parser.h src/parser.c cognac
 
 test: build $(TESTS)
 	@grep -E "^(PASS|FAIL)" tests/*.log --color
