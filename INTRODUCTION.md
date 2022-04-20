@@ -7,11 +7,11 @@ make
 ```
 If that succeeds, install the compiler with the following command:
 ```
-sudo make install
+make install
 ```
-This installs cognate to the /usr/local prefix. To install to a different directory, use this command:
+This installs cognate to the `.local/` prefix. To install to a different directory, use this command:
 ```
-sudo make PREFIX=/my/prefix/dir install
+make PREFIX=/my/prefix/dir install
 ```
 You should then run the test script to test Cognate's functionality. This should work regardless of operating system.
 ```

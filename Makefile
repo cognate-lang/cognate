@@ -1,23 +1,23 @@
 CC=clang
-CFLAGS=-Wall -Wextra -pedantic -fblocks -g -ggdb3 -O2 -flto
-PREFIX=/usr/local
-INCLUDEDIR=$(PREFIX)/include/cognate
+CFLAGS=-Wall -Wextra -pedantic -fblocks -Ofast -flto
+PREFIX=`echo ~`/.local
+INCLUDEDIR=$(PREFIX)/include
 LIBDIR=$(PREFIX)/lib
 BINDIR=$(PREFIX)/bin
-TESTS = block booleans filter for functions if io lists map maths parallel parsing regex stack strings symbols variables
+TESTS=block booleans filter for functions if io lists map maths parallel parsing regex stack strings symbols variables
 
 build: cognac libcognate.a
 
 io-disabled: cognac-io-disabled libcognate.a
 
 install: build
-	mkdir -p $(INCLUDEDIR) $(LIBDIR) $(BINDIR)
-	cp runtime/runtime.h $(INCLUDEDIR)/runtime.h
+	mkdir -p $(INCLUDEDIR)/cognate $(LIBDIR) $(BINDIR)
+	cp runtime/runtime.h $(INCLUDEDIR)/cognate/runtime.h
 	cp libcognate.a      $(LIBDIR)/libcognate.a
 	cp cognac            $(BINDIR)/cognac
 
 uninstall:
-	rm -rf $(INCLUDEDIR) $(LIBDIR)/libcognate.a $(BINDIR)/cognac
+	rm -rf $(INCLUDEDIR)/cognate $(LIBDIR)/libcognate.a $(BINDIR)/cognac
 
 cognac: compiler/lexer.c compiler/parser.c compiler/parser.h compiler/cognac.c compiler/builtins.c compiler/cognac.h
 	$(CC) compiler/lexer.c compiler/parser.c compiler/cognac.c -o cognac -DLIBDIR=\"$(LIBDIR)\" -DINCLUDEDIR=\"$(INCLUDEDIR)\" $(CFLAGS)
