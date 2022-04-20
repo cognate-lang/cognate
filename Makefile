@@ -1,5 +1,6 @@
 CC=clang
-CFLAGS=-Wall -Wextra -pedantic -fblocks -Ofast -flto
+FLTO=-flto
+CFLAGS=-Wall -Wextra -pedantic -fblocks -Ofast $(FLTO)
 PREFIX=`echo ~`/.local
 INCLUDEDIR=$(PREFIX)/include
 LIBDIR=$(PREFIX)/lib
@@ -20,10 +21,10 @@ uninstall:
 	rm -rf $(INCLUDEDIR)/cognate $(LIBDIR)/libcognate.a $(BINDIR)/cognac
 
 cognac: compiler/lexer.c compiler/parser.c compiler/parser.h compiler/cognac.c compiler/builtins.c compiler/cognac.h
-	$(CC) compiler/lexer.c compiler/parser.c compiler/cognac.c -o cognac -DLIBDIR=\"$(LIBDIR)\" -DINCLUDEDIR=\"$(INCLUDEDIR)\" $(CFLAGS)
+	$(CC) compiler/lexer.c compiler/parser.c compiler/cognac.c -o cognac -DLIBDIR=\"$(LIBDIR)\" -DINCLUDEDIR=\"$(INCLUDEDIR)\" -DFLTO=\"$(FLTO)\" $(CFLAGS)
 
 cognac-io-disabled: compiler/lexer.c compiler/parser.c compiler/parser.h compiler/cognac.c compiler/builtins.c compiler/cognac.h
-	$(CC) compiler/lexer.c compiler/parser.c compiler/cognac.c -o cognac -DLIBDIR=\"$(LIBDIR)\" -DINCLUDEDIR=\"$(INCLUDEDIR)\" -DDISABLEIO $(CFLAGS)
+	$(CC) compiler/lexer.c compiler/parser.c compiler/cognac.c -o cognac -DLIBDIR=\"$(LIBDIR)\" -DINCLUDEDIR=\"$(INCLUDEDIR)\" -DDISABLEIO -DFLTO=\"$(FLTO)\" $(CFLAGS)
 
 libcognate.a: runtime/runtime.c runtime/functions.c runtime/gc.c runtime/runtime.h
 	$(CC) -c $(CFLAGS) -o runtime.o runtime/runtime.c
