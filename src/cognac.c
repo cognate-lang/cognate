@@ -546,7 +546,7 @@ int main(int argc, char** argv)
 	{
 		"clang", c_file_path, "-o", binary_file_path, "-fblocks", "-I"INCLUDEDIR, "-lBlocksRuntime",
 		"-lpthread", release ? "-Ofast" : "-O1", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
-		"-std=c11", "-lm", "-g0", "-flto", release ? "-s" : "-ggdb3", "-fuse-ld=lld", NULL
+		"-std=c11", "-lm", "-g0", release ? "-s" : "-ggdb3", "-fuse-ld=lld", NULL
 	};
 	fflush(outfile);
 	if (fork() == 0) execvp(args[0], args); else wait(NULL);
