@@ -1,49 +1,49 @@
 Print If == 11 + 5 6
-	'PASS: Addition'
+	"PASS: Addition"
 else
-	'FAIL: Addition';
+	"FAIL: Addition";
 
 Print If == 9 - 10 19
-	'PASS: Subtraction'
+	"PASS: Subtraction"
 else
-	'FAIL: Subtraction';
+	"FAIL: Subtraction";
 
 Print If == 72 * 9 8
-	'PASS: Multiplication'
+	"PASS: Multiplication"
 else
-	'FAIL: Multiplication';
+	"FAIL: Multiplication";
 
 Print If == 6 / 7 42
-	'PASS: Division'
+	"PASS: Division"
 else
-	'FAIL: Division';
+	"FAIL: Division";
 
 Print If == 1 Modulo by 3 of 10
-	'PASS: Modulus'
+	"PASS: Modulus"
 else
-	'FAIL: Modulus';
+	"FAIL: Modulus";
 
 Print If == 4 Floor 4.7
-	'PASS: Floor'
+	"PASS: Floor"
 else
-	'FAIL: Floor';
+	"FAIL: Floor";
 
 Print If == 5 Ceiling 4.3
-	'PASS: Ceiling'
+	"PASS: Ceiling"
 else
-	'FAIL: Ceiling';
+	"FAIL: Ceiling";
 
 Print If == 5 Round 4.7
-	'PASS: Round'
+	"PASS: Round"
 else
-	'FAIL: Round';
+	"FAIL: Round";
 
 Print If == 0.3 + 0.1 0.2
-	'PASS: Floating point error'
+	"PASS: Floating point error"
 else
-	'FAIL: Floating point error';
+	"FAIL: Floating point error";
 
 Print If == 1 + 0.1 * 3 0.3
-	'PASS: Floating point error 2'
+	"PASS: Floating point error 2"
 else
-	'FAIL: Floating point error 2';
+	"FAIL: Floating point error 2";

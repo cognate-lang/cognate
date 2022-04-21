@@ -21,21 +21,21 @@ make test
 ### First program
 
 ```
-Print the string 'hello world!' to the screen;
+Print the string "hello world!" to the screen;
 ```
 
 Now to seems rather verbose doesn't it? Except is isn't. Cognate ignores all words starting with lower-case letters in what is called "informal syntax". The above programs are all equivalent to this:
 
 ```
-Print 'hello world!';
+Print "hello world!";
 ```
 
 ```
-please Print 'hello world!' thank you;
+please Print "hello world!" thank you;
 ```
 
 ```
-jlkfdajlf Print djklsajlk 'hello world' jdklsajdsja;
+jlkfdajlf Print djklsajlk "hello world" jdklsajdsja;
 ```
 
 This feature is intended to allow you to embed comments into your statements, making code self documenting and more readable. Of course for simple programs like hello world, this documentation is unnecessary.
@@ -47,16 +47,16 @@ A Cognate program is divided into 'statements', separated by semicolons. This ma
 ```
 ~~ This is a comment by the way
 
-Print 'hello';   ~~ This is the first statement
-Print 'goodbye'; ~~ This is the second statement
+Print "hello";   ~~ This is the first statement
+Print "goodbye"; ~~ This is the second statement
 ```
 
-Multiple statements can be put on the same line. The statements themselves are evaluated right to left, such that the statement `Print 'hello world';` would first evaluate `'hello world'` by pushing it to the stack, and then call `Print`.
+Multiple statements can be put on the same line. The statements themselves are evaluated right to left, such that the statement `Print "hello world";` would first evaluate `"hello world"` by pushing it to the stack, and then call `Print`.
 
-But what is the stack? The stack is where Cognate stores intermediary values between expressions. When I write a constant such as `'hello world'`, it is put on top of the stack. When I call a function such as `Print`, it removes (pops) the value on the top of the stack and prints it. The stack persists between statements, allowing me to write:
+But what is the stack? The stack is where Cognate stores intermediary values between expressions. When I write a constant such as `"hello world"`, it is put on top of the stack. When I call a function such as `Print`, it removes (pops) the value on the top of the stack and prints it. The stack persists between statements, allowing me to write:
 
 ```
-put 'hello world' on top of the stack;
+put "hello world" on top of the stack;
 Print it;
 ```
 
@@ -86,7 +86,7 @@ This may feel unintuitive at first, but this notation means that we don't need o
 Cognate allows binding lexically-scopes variables with `Let`, which removed a value from the stack as an initialiser.
 
 ```
-Let X be 'hello, I am a variable!';
+Let X be "hello, I am a variable!";
 Print X;
 ```
 
@@ -102,9 +102,9 @@ Print X again;
 Cognate also allows (but discourages) mutating variables with `Set`.
 
 ```
-Let X be 'hello';
+Let X be "hello";
 Print X;
-Set X to 'mutated';
+Set X to "mutated";
 Print X again;
 ```
 
@@ -114,7 +114,7 @@ Cognate allows creating anonymous functions (closures) by wrapping them in brace
 
 ```
 Do (
-  Print 'hello from inside a block!'
+  Print "hello from inside a block!"
 );
 ```
 
@@ -136,7 +136,7 @@ Functions are defined with `Def`, which acts like `Let`, but requires a block as
 
 ```
 Def Say-hello as (
-  Print 'hello from a function!'
+  Print "hello from a function!"
 );
 
 Say-hello;
@@ -187,16 +187,16 @@ Print If < X Y then X else Y;
 We can also chain `If` statements together.
 
 ```
-Print If == X Y then 'X is equal to Y'
-      If >  X Y then 'Y is greater than X'
-      else      then 'X is greater than Y';
+Print If == X Y then "X is equal to Y"
+      If >  X Y then "Y is greater than X"
+      else      then "X is greater than Y";
 ```
 
 We can then use blocks and `Do` to have conditional execution.
 
 ```
-Do If == 2 3 then (Print '2 is equal to 3')
-             else (Print '2 is not equal to 3');
+Do If == 2 3 then (Print "2 is equal to 3")
+             else (Print "2 is not equal to 3");
 ```
 
 ### Lists
@@ -206,7 +206,7 @@ The function `List` takes a block as an argument, and returns a list of the stac
 ```
 Print List (1 2 3 4);
 Print List (+ 1 2 and * 3 4);
-Print List (Print 'hello world'; 5);
+Print List (Print "hello world"; 5);
 ```
 
 Cognate has many list functions

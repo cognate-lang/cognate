@@ -16,8 +16,8 @@ Def Foo as (
 );
 
 
-Foo 'PASS: Implicit block copying';
-Foo 'FAIL: Implicit block copying';
+Foo "PASS: Implicit block copying";
+Foo "FAIL: Implicit block copying";
 Drop; Do;
 
 
@@ -29,8 +29,8 @@ Def Foo2 as (
 );
 
 
-Foo2 'PASS: Implicit block copying with mutation'; Let Z be Y;
-Foo2 'FAIL: Implicit block copying with mutation'; Let W be Y;
+Foo2 "PASS: Implicit block copying with mutation"; Let Z be Y;
+Foo2 "FAIL: Implicit block copying with mutation"; Let W be Y;
 Do Z;
 Drop W;
 
@@ -40,7 +40,7 @@ Def A as (
 	return (Do Foo);
 );
 
-Do A 'PASS: Another block copying test';
+Do A "PASS: Another block copying test";
 
 Def B as (
 	Let B;
@@ -48,4 +48,4 @@ Def B as (
 	return (Foo);
 );
 
-Do B 'PASS: Another block copying test again';
+Do B "PASS: Another block copying test again";

@@ -3,23 +3,23 @@ Let A be 5; ~~ Let A be 4; ~ Let A be 4; ~
 ~ Let A be 4; ~ ~~ Let A be 4;
 
 Print If == 5 A
- 'PASS: Comments'
+ "PASS: Comments"
 else
- 'FAIL: Comments';
+ "FAIL: Comments";
 
-~~ The syntax highlighter can't handle this next bit.
+~~ The syntax highlighter can"t handle this next bit.
 
-' \' Let B be 4; \' ' ' " Let B be 4; " '
-Let B be 5; '' 'Let B be 4;'
-' Let B be 4; \'  Let B be 4 ';
+" \" Let B be 4; \" " " " Let B be 4; " "
+Let B be 5; "" "Let B be 4;"
+" Let B be 4; \"  Let B be 4 ";
 Clear;
 
 Print If == 5 B
-  'PASS: Strings'
+  "PASS: Strings"
 else
-  'FAIL: Strings';
+  "FAIL: Strings";
 
 Print If == 1.5 / 2 3
-  'PASS: Floating point numbers'
+  "PASS: Floating point numbers"
 else
-  'FAIL: Floating point numbers';
+  "FAIL: Floating point numbers";

@@ -1,9 +1,9 @@
 Print If True
-	'PASS: If True'
+	"PASS: If True"
 else
-	'FAIL: If True';
+	"FAIL: If True";
 
 Print If False
-	'FAIL: If False'
+	"FAIL: If False"
 else
-	'PASS: If False';
+	"PASS: If False";

@@ -1,6 +1,6 @@
-Put 'Enter a number: ';
+Put "Enter a number: ";
 Let Num1 be Number Input;
-Put 'Enter another number: ';
+Put "Enter another number: ";
 Let Num2 be Number Input;
-Put 'The sum of those numbers is ';
+Put "The sum of those numbers is ";
 Print + Num1 Num2;

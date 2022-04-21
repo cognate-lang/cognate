@@ -4,13 +4,13 @@ Let X be True;
 Let Odds be Filter (Drop ; X ; Set X to Not X) over the List (1 2 3 4 5);
 
 Print If == Evens List (2 4)
-	then 'PASS: Filtering a list'
-	else 'FAIL: Filtering a list';
+	then "PASS: Filtering a list"
+	else "FAIL: Filtering a list";
 
 Print If == Empty List ()
-	then 'PASS: Filtering an empty list'
-	else 'FAIL: Filtering an empty list';
+	then "PASS: Filtering an empty list"
+	else "FAIL: Filtering an empty list";
 
 Print If == Odds List (1 3 5)
-	then 'PASS: Filtering a list in order'
-	else 'FAIL: Filtering a list in order';
+	then "PASS: Filtering a list in order"
+	else "FAIL: Filtering a list in order";

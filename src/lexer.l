@@ -57,8 +57,8 @@ T[yY][pP][eE] return TYPE;
 [A-Z]{ALLOWCHAR}*    yylval.text=lc(strdup(yytext));   return IDENTIFIER;
 \\{ALLOWCHAR}+       yylval.text=lc(strdup(yytext+1)); return SYMBOL;
 \-?[0-9]+(\.[0-9]+)? yylval.text=strdup(yytext);       return NUMBER;
-\'(\\.|[^\n'\\])*\'  yylval.text=strdup(yytext);       return STRING;
-\'                   yyerror("unterminated string"); // TODO error message is printing with wrong column.
+\"(\\.|[^\n"\\])*\"  yylval.text=strdup(yytext);       return STRING;
+\"                   yyerror("unterminated string"); // TODO error message is printing with wrong column.
 
 ">"  yylval.text=strdup("GT");  return IDENTIFIER;
 ">=" yylval.text=strdup("GTE"); return IDENTIFIER;
@@ -82,9 +82,9 @@ T[yY][pP][eE] return TYPE;
 
 \n yylloc.first_line++; yylloc.first_column = 1;
 
-[a-z][A-Za-z_0-9]* /* Ignore informal syntax */
-[[:space:]]        /* Ignore whitespace      */
-\~\~.*             /* Ignore line comments   */
+[a-z][a-z0-9\'\-\?\!\.]* /* Ignore informal syntax */
+[[:space:]]              /* Ignore whitespace      */
+\~\~.*                   /* Ignore line comments   */
 
 \~                BEGIN(BLOCK_COMMENT);
 <BLOCK_COMMENT>\~ BEGIN(INITIAL);

@@ -1,6 +1,6 @@
 Def Factorial as
 	Case 0     is (+ 1)
 	Case (> 0) is (Twin ; - 1 ; * Factorial)
-	otherwise  is (Error 'invalid input');
+	otherwise  is (Error "invalid input");
 
 Print the Factorial of 10;

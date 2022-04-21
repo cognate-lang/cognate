@@ -1,23 +1,23 @@
 Def Foo as (+ 1);
 
 Print If == 5 Foo 4
-	'PASS: Function call and return'
+	"PASS: Function call and return"
 else
-	'FAIL: Function call and return';
+	"FAIL: Function call and return";
 
 Do (
 	Def Foo as (+ 3);
 
 	Print If == 8 Foo 5
-		'PASS: Function shadowing 1'
+		"PASS: Function shadowing 1"
 	else
-		'FAIL: Function shadowing 1';
+		"FAIL: Function shadowing 1";
 );
 
 Print If == 8 Foo 7
-	'PASS: Function shadowing 2'
+	"PASS: Function shadowing 2"
 else
-	'FAIL: Function shadowing 2';
+	"FAIL: Function shadowing 2";
 
 Let Recurred be False;
 Def Bar as
@@ -32,14 +32,14 @@ Def Bar as
 
 call Bar with 10;
 Print If Recurred
-	'PASS: Recursion'
+	"PASS: Recursion"
 else
-	'FAIL: Recursion';
+	"FAIL: Recursion";
 
 Def Binrec1
 ( Let X;
 	Do If > 1000 X
-		then (Print 'PASS: Binary recursion')
+		then (Print "PASS: Binary recursion")
 		else (Binrec2 with + 1 X);
 );
 

@@ -1,56 +1,56 @@
 Print If == 2 Drop 3 2
-  'PASS: Drop'
+  "PASS: Drop"
 else
-  'FAIL: Drop';
+  "FAIL: Drop";
 
 Print If == 6 Drop Swap 6 5
-  'PASS: Swap'
+  "PASS: Swap"
 else
-  'FAIL: Swap';
+  "FAIL: Swap";
 
 Print If == 4 Drop Twin 4
-  'PASS: Twin'
+  "PASS: Twin"
 else
-  'FAIL: Twin';
+  "FAIL: Twin";
 
 Print If == 7 Drop Drop Triplet 7
-  'PASS: Triplet'
+  "PASS: Triplet"
 else
-  'FAIL: Triplet';
+  "FAIL: Triplet";
 
 Print If == 2 Do (Drop) 3 2
-  'PASS: Drop (runtime stack)'
+  "PASS: Drop (runtime stack)"
 else
-  'FAIL: Drop (runtime stack)';
+  "FAIL: Drop (runtime stack)";
 
 Print If == 6 Drop Do (Swap) 6 5
-  'PASS: Swap (runtime stack)'
+  "PASS: Swap (runtime stack)"
 else
-  'FAIL: Swap (runtime stack)';
+  "FAIL: Swap (runtime stack)";
 
 Print If == 4 Drop Do (Twin) 4
-  'PASS: Twin (runtime stack)'
+  "PASS: Twin (runtime stack)"
 else
-  'FAIL: Twin (runtime stack)';
+  "FAIL: Twin (runtime stack)";
 
 Print If == 7 Drop Drop Do (Triplet) 7
-  'PASS: Triplet (runtime stack)'
+  "PASS: Triplet (runtime stack)"
 else
-  'FAIL: Triplet (runtime stack)';
+  "FAIL: Triplet (runtime stack)";
 
 Let X be == List (1 2 3) Stack 1 2 3;
 Drop Drop Drop;
 
 Print If X
-  'PASS: Stack as list'
+  "PASS: Stack as list"
 else
-  'FAIL: Stack as list';
+  "FAIL: Stack as list";
 
 1 2 3 4 5;
 
 Let X be == List() Stack Clear;
 
 Print If X
-  'PASS: Clearing the stack'
+  "PASS: Clearing the stack"
 else
-  'FAIL: Clearing the stack';
+  "FAIL: Clearing the stack";
