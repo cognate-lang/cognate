@@ -42,5 +42,3 @@ Print If == List ("Hello" "world!") Split on " " with "Hello world!"
 	"PASS: Splitting a string"
 else
 	"FAIL: Splitting a string"
-
-Print Split on "" with "abcdefg";
