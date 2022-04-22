@@ -240,6 +240,7 @@ void VAR(wait)(NUMBER);
 void VAR(lock)(BLOCK);
 BLOCK VAR(case)(ANY, BLOCK, BLOCK);
 LIST VAR(split)(STRING, STRING);
+NUMBER VAR(length)(LIST);
 
 static const char *lookup_type(cognate_type);
 static _Bool compare_lists(LIST, LIST);
@@ -1392,4 +1393,11 @@ LIST VAR(split)(STRING sep, STRING str)
 		curr = next;
 	}
 	return prev;
+}
+
+NUMBER VAR(length)(LIST lst) {
+	size_t len = 0;
+	for (; lst; lst = lst->next)
+		len++;
+	return len;
 }
