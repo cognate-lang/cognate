@@ -239,6 +239,7 @@ BLOCK VAR(parallelDASHprecompute)(BLOCK);
 void VAR(wait)(NUMBER);
 void VAR(lock)(BLOCK);
 BLOCK VAR(case)(ANY, BLOCK, BLOCK);
+LIST VAR(split)(STRING, STRING);
 
 static const char *lookup_type(cognate_type);
 static _Bool compare_lists(LIST, LIST);
@@ -1365,4 +1366,30 @@ void VAR(lock)(BLOCK blk)
 STRING VAR(show)(ANY o)
 {
 	return show_object(o, 0);
+}
+
+LIST VAR(split)(STRING sep, STRING str)
+{
+	if (!*sep) throw_error("empty separator");
+	LIST lst = NULL;
+	char *p = strtok(gc_strdup((char*)str), sep);
+	while (p != NULL)
+	{
+		p = gc_strdup(p);
+		cognate_list* node = gc_new(cognate_list);
+		node->object = box_string(p);
+		node->next = lst;
+		p = strtok(NULL, sep);
+		lst = node;
+	}
+	cognate_list* prev = NULL;
+	cognate_list* curr = (cognate_list*)lst;
+	while (curr)
+	{
+		cognate_list* next = (cognate_list*)curr->next;
+		curr->next = prev;
+		prev = curr;
+		curr = next;
+	}
+	return prev;
 }

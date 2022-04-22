@@ -37,3 +37,8 @@ Print If == "" Tail of "e"
 	"PASS: Getting Tail of single-character string"
 else
 	"FAIL: Getting Tail of single-character string";
+
+Print If == List ("Hello" "world!") Split on " " with "Hello world!"
+	"PASS: Splitting a string"
+else
+	"FAIL: Splitting a string"

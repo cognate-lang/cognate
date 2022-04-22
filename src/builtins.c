@@ -47,6 +47,7 @@
 {.name="match-regex",         .type=func, .argc=2, .args={string, string},         .rets=true, .ret=boolean},
 {.name="ordinal",             .type=func, .argc=1, .args={string}, .rets=true, .ret=number},
 {.name="character",           .type=func, .argc=1, .args={number}, .rets=true, .ret=string},
+{.name="split",               .type=func, .argc=2, .args={string, string}, .rets=true, .ret=list},
 {.name="floor",               .type=func, .argc=1, .args={number}, .rets=true, .ret=number},
 {.name="round",               .type=func, .argc=1, .args={number}, .rets=true, .ret=number},
 {.name="ceiling",             .type=func, .argc=1, .args={number}, .rets=true, .ret=number},
@@ -76,6 +77,7 @@
 {.name="swap",                .type=stack_op, .stack_shuffle=&swap_register},
 
 /* Builtin IO */
+
 #ifndef DISABLEIO
 {.name="parameters",          .type=func, .rets=true, .ret=list},
 {.name="input",               .type=func, .rets=true, .ret=string},
