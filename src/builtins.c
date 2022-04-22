@@ -69,6 +69,7 @@
 {.name="case",                .type=func, .argc=3, .args={any, block, block}, .rets=true, .ret=block},
 {.name="stack",               .type=func, .rets=true, .ret=list, .needs_stack=true},
 {.name="clear",               .type=func, .argc=0, .needs_stack=true},
+{.name="length",              .type=func, .argc=1, .args={list},    .rets=true, .ret=number},
 
 /* Builtin stack operations */
 {.name="drop",                .type=stack_op, .stack_shuffle=&drop_register},
