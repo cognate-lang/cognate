@@ -453,6 +453,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 		{
 			char* name = restrict_chars(tree->text);
 			decl_list* d = lookup_word(tree->text, defs);
+			if (!d) yyerror("mutating undefined word");
 			if (d -> type == stack_op || d -> type == func) { yyerror("cannot mutate function"); }
 			if (d -> predecl) fprintf(outfile, "VAR(%s);", name);
 			registers = assert_registers(1, LONG_MAX, registers);
