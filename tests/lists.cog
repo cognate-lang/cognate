@@ -52,3 +52,7 @@ Print If == 4 Index 3 of List (1 2 3 4 5)
 Print If == 3 Length of List (1 2 3) 
 	"PASS: Getting length of list"
 	"FAIL: Getting length of list";
+<<<<<<< HEAD
+=======
+	
+>>>>>>> 7105ef0 (added length function for lists with test)
