@@ -535,9 +535,9 @@ int main(int argc, char** argv)
 	size_t len = strlen(source_file_path);
 	char* c_file_path		  = strdup(source_file_path); c_file_path[len-2] = '\0';
 	char* binary_file_path = strdup(source_file_path); binary_file_path[len-4] = '\0';
-	outfile = fopen(c_file_path, "w");
 	yyin = fopen(source_file_path, "r");
 	if (!yyin) { fprintf(stderr, "File %s not found\n", source_file_path); return EXIT_FAILURE; }
+	outfile = fopen(c_file_path, "w");
 	for (argv += 2 ; *argv ; argv++)
 	{
 		if			(!strcmp(*argv, "-output")) { binary_file_path = argv[1]; argv++; }
