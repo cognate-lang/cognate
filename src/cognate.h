@@ -1151,6 +1151,7 @@ BOOLEAN VAR(matchDASHregex)(STRING reg_str, STRING str)
 		regfree(&reg); // Apparently freeing an unallocated regex is fine.
 		if unlikely(!*reg_str) throw_error("cannot match empty regex");
 		const int status = regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE | REG_NOSUB);
+		errno = 0; // Hmmm
 		if unlikely(status)
 		{
 			char reg_err[256];
