@@ -23,7 +23,6 @@ Def Math-op as (
 		Print "Error: Stack Underflow";
 		Stack
 	);
-	Print Twin;
 );
 
 
