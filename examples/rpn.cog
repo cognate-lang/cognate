@@ -3,44 +3,58 @@
 ~~ in: 2 5 + 3 * 1 - 4 /
 ~~ out: 5
 
+Let Error? be False;
+
 Def Math-op as (
-    Let Op;
-    Let Stack;
-    Let A be First of Stack; 
-    Let B be First of Rest of Stack;
-    Let R be If == Op "+" then + A B
-             If == Op "-" then - A B
-             If == Op "*" then * A B
-             If == Op "/" then / A B
-             else 0;
-    Push R to the Rest of Rest of Stack;
+	Let Op;
+	Let Stack;
+	Do If >= 2 Length Stack then (
+		Let A be Index 0 of Stack;
+		Let B be Index 1 of Stack;
+		Let R be
+			If == Op "+" then + A B
+			If == Op "-" then - A B
+			If == Op "*" then * A B
+			If == Op "/" then / A B
+			             else 0;
+		Push R to Rest Rest Stack;
+	) else (
+		Set Error? to True;
+		Print "Error: Stack Underflow";
+		Stack
+	);
+	Print Twin;
 );
 
-Def Stack-valid? as (>= 2 Length);
 
 Def Eval as (
-    Let Expr;
-    Let Tokens be Split on " " with Expr;
-    Let Error be False;
-    Def Handle-error as (Let Op; Let Stack; Do If Not Stack-valid? Stack (Set Error to True) else (Math-op Op Stack));
-    List ();
-    For each in Tokens
-        Case (Match-regex "[-]?[0-9]+") (Let N be Number; Push N)
-        Case "+" (Handle-error)
-        Case "*" (Handle-error)
-        Case "-" (Handle-error)
-        Case "/" (Handle-error)
-        else (Set Error to True; Put "Error: Unknown Token "; Print);
-    Do If Not Error (Print First) ();
+	Let Expr;
+	Let Tokens be Split on " " Expr;
+
+	Set Error? to Empty? Tokens;
+
+	push List ();
+	For each in Tokens
+		Case (Match-regex "^[-]?[0-9]+$") (Push Number)
+		Case "+" (Math-op)
+		Case "*" (Math-op)
+		Case "-" (Math-op)
+		Case "/" (Math-op)
+		else (
+			Set Error? to True;
+			Put "Error: Unknown Token ";
+			Print the token
+		);
+	Do If Not Error? (Print First) else ();
 );
 
 Print "Welcome to CogCalc, a simple RPN Calculator!";
 Print "Entering REPL (type 'done' to exit):";
 Put "> "; Input;
-While (/= "done" Triplet)
+While (/= "done" Twin)
 (
-    Eval the expr Twin;
+    Eval;
     Put "> "; Input;
 );
+Drop;
 Print "Bye!";
-Clear;
