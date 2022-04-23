@@ -83,6 +83,6 @@
 {.name="parameters",          .type=func, .rets=true, .ret=list},
 {.name="input",               .type=func, .rets=true, .ret=string},
 {.name="read",                .type=func, .argc=1, .args={string}, .rets=true, .ret=string},
-{.name="write",               .type=func, .argc=1, .args={string,any}},
+{.name="write",               .type=func, .argc=2, .args={string,any}},
 {.name="path",                .type=func, .rets=true, .ret=string},
 #endif
