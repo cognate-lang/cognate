@@ -22,7 +22,7 @@ Def Math-op as (
 		Set Error? to True;
 		Print "Error: Stack Underflow";
 		Stack
-	);
+	)
 );
 
 
