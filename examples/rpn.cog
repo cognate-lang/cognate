@@ -55,5 +55,5 @@ While (/= "done" Twin)
     Eval;
     Put "> "; Input;
 );
-Drop;
+Clear;
 Print "Bye!";
