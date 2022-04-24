@@ -247,6 +247,8 @@ void VAR(lock)(BLOCK);
 BLOCK VAR(case)(ANY, BLOCK, BLOCK);
 LIST VAR(split)(STRING, STRING);
 NUMBER VAR(length)(LIST);
+LIST VAR(take)(NUMBER,LIST);
+LIST VAR(discard)(NUMBER,LIST);
 
 static const char *lookup_type(cognate_type);
 static _Bool compare_lists(LIST, LIST);
@@ -377,12 +379,14 @@ void handle_error_signal(int sig)
 
 char* show_object (const ANY object, const _Bool raw_strings)
 {
-	// Virtual memory vastly simplfies this function.
-	char* buffer = (char*)heap_top;
-	char* buffer_start = buffer;
+	static char* buffer;
+	static size_t depth = 0;
+	if (depth++ == 0) buffer = (char*)heap_top;
 	switch (get_type(object))
 	{
-		case number: sprintf(buffer, "%.14g", unbox_number(object)); break;
+		case number: sprintf(buffer, "%.14g", unbox_number(object));
+						 buffer += strlen(buffer);
+						 break;
 		case string:
 			if (raw_strings) strcpy(buffer, unbox_string(object));
 			else
@@ -408,7 +412,7 @@ char* show_object (const ANY object, const _Bool raw_strings)
 			*buffer++ = '(';
 			for (LIST l = unbox_list(object) ; l ; l = l->next)
 			{
-				buffer += strlen(show_object(l->object, 0));
+				show_object(l->object, 0);
 				if (!l->next) break;
 				*buffer++ = ',';
 				*buffer++ = ' ';
@@ -432,7 +436,7 @@ char* show_object (const ANY object, const _Bool raw_strings)
 					buffer+=strlen(strcpy(buffer, record_info[r->id][i+1]));
 				else break;
 				*buffer++ = ' ';
-				buffer += strlen(show_object(r->items[i], 0));
+				show_object(r->items[i], 0);
 				if (!record_info[r->id][i+2]) break;
 				*buffer++ = ' ';
 			}
@@ -442,8 +446,8 @@ char* show_object (const ANY object, const _Bool raw_strings)
 		break;
 		case NOTHING: __builtin_trap();
 	}
-	buffer = buffer_start;
-	return buffer;
+	depth--;
+	return strdup((char*)heap_top);
 }
 
 void init_stack(void)
@@ -1413,3 +1417,34 @@ NUMBER VAR(length)(LIST lst) {
 	return len;
 }
 
+
+LIST VAR(take)(NUMBER n, LIST l) {
+	if unlikely(n != (unsigned long)n) throw_error_fmt("cannot take %.14g elements", n);
+	LIST r = NULL;
+	while (n --> 0)
+	{
+		if unlikely(!l) throw_error("list too small");
+		cognate_list* a = gc_new(cognate_list);
+		a->object = l->object;
+		a->next = r;
+		r = a;
+		l = l->next;
+	}
+	cognate_list* prev = NULL;
+	cognate_list* curr = (cognate_list*)r;
+	while (curr)
+	{
+		cognate_list* next = (cognate_list*)curr->next;
+		curr->next = prev;
+		prev = curr;
+		curr = next;
+	}
+	return prev;
+}
+
+LIST VAR(discard)(NUMBER n, LIST l) {
+	if unlikely(n != (unsigned long)n) throw_error_fmt("cannot discard %.14g elements", n);
+	for (;n-->0;l=l->next)
+		if unlikely(!l) throw_error("list too small");
+	return l;
+}

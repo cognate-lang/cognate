@@ -73,6 +73,8 @@
 {.name="stack",               .type=func, .rets=true, .ret=list, .needs_stack=true},
 {.name="clear",               .type=func, .argc=0, .needs_stack=true},
 {.name="length",              .type=func, .argc=1, .args={list},    .rets=true, .ret=number},
+{.name="take",                .type=func, .argc=2, .args={number, list}, .rets=true, .ret=list},
+{.name="discard",             .type=func, .argc=2, .args={number, list}, .rets=true, .ret=list},
 
 /* Builtin stack operations */
 {.name="drop",                .type=stack_op, .stack_shuffle=&drop_register},
