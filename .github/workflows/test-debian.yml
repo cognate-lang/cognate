@@ -1,4 +1,4 @@
-name: Test Cognate on Debian
+name: Build/test on Debian
 on:
   push:
     branches: [ master ]

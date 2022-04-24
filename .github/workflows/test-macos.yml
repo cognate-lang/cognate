@@ -1,4 +1,4 @@
-name: Test Cognate on macOS
+name: Build/test on MacOS
 on:
   workflow_dispatch:
 jobs:
