@@ -44,7 +44,7 @@ Def Eval as (
 			Put "Error: Unknown Token ";
 			Print the token
 		);
-	Do If Not Error? (Print First) else ();
+	Do If Not Error? (Print First) else (Drop);
 );
 
 Print "Welcome to CogCalc, a simple RPN Calculator!";
