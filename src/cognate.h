@@ -171,6 +171,8 @@ void set_line_num(int);
 
 // Builtin functions needed by compiled source file defined in functions.c
 ANY VAR(if)(BOOLEAN, ANY, ANY);
+void VAR(when)(BOOLEAN, BLOCK);
+void VAR(unless)(BOOLEAN, BLOCK);
 void VAR(while)(BLOCK, BLOCK);
 void VAR(do)(BLOCK);
 void VAR(put)(ANY);
@@ -203,6 +205,7 @@ BOOLEAN VAR(stringQMARK)(ANY);
 BOOLEAN VAR(blockQMARK)(ANY);
 BOOLEAN VAR(booleanQMARK)(ANY);
 BOOLEAN VAR(integerQMARK)(ANY);
+BOOLEAN VAR(zeroQMARK)(ANY);
 ANY VAR(first)(LIST);
 LIST VAR(rest)(LIST);
 STRING VAR(head)(STRING);
@@ -819,6 +822,16 @@ ANY VAR(if)(BOOLEAN cond, ANY a, ANY b)
 	return cond ? a : b;
 }
 
+void VAR(when)(BOOLEAN cond, BLOCK expr)
+{
+	if (cond) expr();
+}
+
+void VAR(unless)(BOOLEAN cond, BLOCK expr)
+{
+	if (!cond) expr();
+}
+
 void VAR(while)(BLOCK cond, BLOCK body)
 {
 	cond();
@@ -915,6 +928,7 @@ BOOLEAN VAR(blockQMARK)(ANY a)   { return get_type(a)==block;  }
 BOOLEAN VAR(booleanQMARK)(ANY a) { return get_type(a)==boolean;}
 BOOLEAN VAR(symbolQMARK)(ANY a)  { return get_type(a)==symbol; }
 BOOLEAN VAR(integerQMARK)(ANY a) { return VAR(numberQMARK)(a) && unbox_number(a) == floor(unbox_number(a)); }
+BOOLEAN VAR(zeroQMARK)(ANY a)    { return VAR(numberQMARK)(a) && unbox_number(a) == 0; }
 
 BOOLEAN VAR(match)(ANY patt, ANY obj) { return match_objects(patt,obj); }
 
@@ -1398,3 +1412,4 @@ NUMBER VAR(length)(LIST lst) {
 		len++;
 	return len;
 }
+
