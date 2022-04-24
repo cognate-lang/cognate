@@ -35,11 +35,6 @@
 
 #define INITIAL_READ_SIZE 64
 #define STACK_MARGIN_KB		50
-#define GIGABYTE 0x40000000l
-#define STK_SIZE GIGABYTE
-#define SHOW_BUF_SIZE GIGABYTE
-#define GC_BITMAP_SIZE GIGABYTE * 1022 / 9
-#define GC_HEAP_SIZE GC_BITMAP_SIZE * 8
 
 typedef unsigned long ANY;
 typedef ANY* restrict ANYPTR;
@@ -105,6 +100,14 @@ typedef struct cognate_stack
 #define likely(expr)	 (__builtin_expect((_Bool)(expr), 1))
 
 #define ALLOC_RECORD(n) (gc_malloc(sizeof(size_t)+n*sizeof(ANY)))
+
+static __thread uintptr_t* restrict heap_start;
+static __thread uintptr_t* restrict heap_top;
+
+static __thread uint8_t* restrict bitmap;
+static __thread uint8_t* restrict free_start;
+
+static size_t system_memory;
 
 // Global variables
 extern __thread cognate_stack stack;
@@ -272,6 +275,8 @@ void init(int argc, char** argv)
 	{
 		throw_error("cannot set locale");
 	}
+
+	system_memory = sysconf(_SC_PHYS_PAGES) * 4096;
 	// Init GC
 	gc_init();
 	// Seed the random number generator properly.
@@ -370,10 +375,7 @@ void handle_error_signal(int sig)
 char* show_object (const ANY object, const _Bool raw_strings)
 {
 	// Virtual memory vastly simplfies this function.
-	static char* buffer = NULL;
-	if (!buffer)
-		buffer = mmap(0, SHOW_BUF_SIZE, PROT_READ | PROT_WRITE,
-			MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
+	char* buffer = (char*)heap_top;
 	char* buffer_start = buffer;
 	switch (get_type(object))
 	{
@@ -444,7 +446,7 @@ char* show_object (const ANY object, const _Bool raw_strings)
 void init_stack(void)
 {
 	stack.absolute_start = stack.top = stack.start
-		= mmap(0, STK_SIZE, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
+		= mmap(0, system_memory/10, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
 	stack.cache = NIL_OBJ;
 }
 
@@ -721,16 +723,10 @@ void check_record_id(size_t i, RECORD r)
  *		> locks on gc_malloc().
  */
 
-static __thread uintptr_t* restrict heap_start;
-static __thread uintptr_t* restrict heap_top;
-
-static __thread uint8_t* restrict bitmap;
-static __thread uint8_t* restrict free_start;
-
 void gc_init(void)
 {
-	bitmap = free_start   = mmap(0, GC_BITMAP_SIZE, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
-	heap_start = heap_top = mmap(0, GC_HEAP_SIZE,		PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
+	bitmap = free_start   = mmap(0, (size_t)(system_memory*0.9/8), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
+	heap_start = heap_top = mmap(0, (size_t)(system_memory*0.9),   PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
 	if (heap_start == MAP_FAILED || bitmap == MAP_FAILED)
 		throw_error("memory map failure - are you trying to use valgrind?");
 	BITMAP_INDEX(heap_start) = BITMAP_FREE;
