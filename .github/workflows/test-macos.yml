@@ -12,7 +12,8 @@ jobs:
           brew install bdw-gc
           brew install llvm
           cd $GITHUB_WORKSPACE
-          make install
+          make
+          sudo make PREFIX=/usr install
       - name: Run test script
         shell: bash
         run: |
