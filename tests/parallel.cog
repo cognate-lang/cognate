@@ -1,4 +1,0 @@
-Do Precompute          (Print "PASS: Precompute block executes");
-Do Parallel-precompute (Print "PASS: Parallel-precompute block executes");
-
-~~ TODO Add tests here for race conditions and stuff.

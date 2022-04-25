@@ -5,7 +5,6 @@
 
 #include <stddef.h>
 #include <stdio.h>
-#include <pthread.h>
 #include <Block.h>
 #include <setjmp.h>
 #include <string.h>
@@ -21,7 +20,6 @@
 #include <sys/resource.h>
 #include <time.h>
 #include <math.h>
-#include <pthread.h>
 #include <sys/mman.h>
 #include <math.h>
 #include <regex.h>
@@ -30,7 +28,6 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <sys/stat.h>
-#include <pthread.h>
 #include <setjmp.h>
 
 #define INITIAL_READ_SIZE 64
@@ -101,24 +98,24 @@ typedef struct cognate_stack
 
 #define ALLOC_RECORD(n) (gc_malloc(sizeof(size_t)+n*sizeof(ANY)))
 
-static __thread uintptr_t* restrict heap_start;
-static __thread uintptr_t* restrict heap_top;
+static uintptr_t* restrict heap_start;
+static uintptr_t* restrict heap_top;
 
-static __thread uint8_t* restrict bitmap;
-static __thread uint8_t* restrict free_start;
+static uint8_t* restrict bitmap;
+static uint8_t* restrict free_start;
 
 static size_t system_memory;
 
 // Global variables
-extern __thread cognate_stack stack;
+extern cognate_stack stack;
 extern LIST cmdline_parameters;
 extern const char* restrict word_name;
 extern int line_num;
 
 extern char *record_info[][64];
 
-extern __thread const char* restrict function_stack_top;
-extern __thread const char* restrict function_stack_start;
+extern const char* restrict function_stack_top;
+extern const char* restrict function_stack_start;
 extern ptrdiff_t function_stack_size;
 
 // Variables and	needed by functions.c defined in runtime.c
@@ -241,9 +238,7 @@ ANY VAR(index)(NUMBER, LIST);
 void VAR(puts)(BLOCK);
 void VAR(prints)(BLOCK);
 BLOCK VAR(precompute)(BLOCK);
-BLOCK VAR(parallelDASHprecompute)(BLOCK);
 void VAR(wait)(NUMBER);
-void VAR(lock)(BLOCK);
 BLOCK VAR(case)(ANY, BLOCK, BLOCK);
 LIST VAR(split)(STRING, STRING);
 NUMBER VAR(length)(LIST);
@@ -257,14 +252,14 @@ static _Bool match_records(RECORD, RECORD);
 static _Bool match_lists(LIST, LIST);
 static void handle_error_signal(int);
 
-__thread cognate_stack stack;
+cognate_stack stack;
 LIST cmdline_parameters = NULL;
 
 const char* restrict word_name = NULL;
 int line_num = -1;
 
-__thread const char* restrict function_stack_top;
-__thread const char* restrict function_stack_start;
+const char* restrict function_stack_top;
+const char* restrict function_stack_start;
 ptrdiff_t function_stack_size;
 
 
@@ -757,7 +752,7 @@ static void __attribute__((unused)) show_heap_usage(void)
 __attribute__((malloc, hot, assume_aligned(sizeof(uint64_t)), alloc_size(1), returns_nonnull))
 void* gc_malloc(size_t bytes)
 {
-	static __thread int byte_count = 0;
+	static int byte_count = 0;
 	byte_count += bytes;
 	if unlikely(byte_count > 1024l * 1024l * 10) gc_collect(), byte_count = 0;
 	const size_t longs = (bytes + 7) / sizeof(uintptr_t);
@@ -1338,45 +1333,6 @@ BLOCK VAR(precompute)(BLOCK blk)
 		for (size_t i = 0; i < len; ++i)
 			push(ret_data[i]);
 	});
-}
-
-static cognate_stack* parallel_precompute_helper(BLOCK blk)
-{
-	SET_FUNCTION_STACK_START();
-	gc_init();
-	init_stack();
-	blk();
-	// We might need to copy the stack somewhere.
-	return &stack;
-}
-
-BLOCK VAR(parallelDASHprecompute)(BLOCK blk)
-{
-	/*
-	 * A clever implementation of this would do what Go does and use threads
-	 * managed by the runtime instead of the OS, which would startup much
-	 * faster, and use much less memory. However, that would require writing
-	 * a scheduler so TODO.
-	 */
-	pthread_t id;
-	pthread_create(&id, NULL, (void*(*)(void *))parallel_precompute_helper, Block_copy(blk));
-	return Block_copy(^{
-		cognate_stack* s;
-		pthread_join(id, (void*)&s);
-		const size_t l = s->top - s->start;
-		for (size_t i = 0; i < l; ++i) push(s->start[i]);
-		if (s->cache != NIL_OBJ) push(s->cache);
-	});
-}
-
-void VAR(lock)(BLOCK blk)
-{
-	static pthread_mutex_t mut;
-	static _Bool needs_init = 1;
-	if (needs_init) needs_init = 0, pthread_mutex_init(&mut, NULL);
-	pthread_mutex_lock(&mut);
-	blk();
-	pthread_mutex_unlock(&mut);
 }
 
 STRING VAR(show)(ANY o)
