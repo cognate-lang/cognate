@@ -3,7 +3,7 @@ CFLAGS=-Wall -Wextra -pedantic -fblocks -Ofast
 PREFIX=`echo ~`/.local
 INCLUDEDIR=$(PREFIX)/include
 BINDIR=$(PREFIX)/bin
-TESTS=block booleans filter for functions if io lists map maths parallel parsing regex stack strings symbols variables
+TESTS=block booleans filter for functions if io lists map maths parsing regex stack strings symbols variables
 
 build: cognac
 
