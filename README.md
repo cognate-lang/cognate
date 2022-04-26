@@ -1,6 +1,7 @@
 ## The Cognate programming language
 
 ![Build/test on Debian](https://github.com/stavromulabeta/cognate/actions/workflows/test-debian.yml/badge.svg)
+![License](https://img.shields.io/github/license/stavromulabeta/cognate.svg)
 
 Cognate is a small dynamic quasi-concatenative language for functional programming. Cognate aims to express complex programs in a simple and readable way through its unique syntax, which emphasises embedding comments into statements. This makes programs very readable and helps a programmer better express their intentions.
 
