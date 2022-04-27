@@ -33,6 +33,7 @@ char* restrict_chars(char* in)
 		}
 	}
 	char* out = malloc (sz);
+	*out = '\0';
 	for (char* ptr = in; *ptr; ++ptr)
 	{
 		for (size_t i = 0; i < sizeof replace; ++i)
@@ -72,7 +73,7 @@ reg_list* assert_registers(size_t lower, size_t upper, reg_list* registers)
 		}
 		assert_registers(0, 0, registers->next);
 		fputs("push(", outfile);
-		registers = emit_register(any, registers);
+		emit_register(any, registers);
 		fputs(");", outfile);
 	}
 	else if (lower)
@@ -107,7 +108,9 @@ void add_symbols(ast* tree)
 				}
 				if (!already_declared)
 				{
-					fprintf(outfile, "const SYMBOL SYM(%s)=\"%s\";", restrict_chars(tree->text), tree->text);
+					char* str = restrict_chars(tree->text);
+					fprintf(outfile, "const SYMBOL SYM(%s)=\"%s\";", str, tree->text);
+					free(str);
 					sym_list* s = malloc(sizeof *s);
 					s->name = tree->text;
 					s->next = declared_symbols;
@@ -202,7 +205,9 @@ decl_list* predeclare(ast* head, decl_list* defs)
 				.needs_stack = true,
 				.rets = false,
 				.ret = any, .predecl = true, .mut=mutable};
-			fprintf(outfile, "PREDEF(%s);", restrict_chars(tree->text));
+			char* str = restrict_chars(tree->text);
+			fprintf(outfile, "PREDEF(%s);", str);
+			free(str);
 			// We use already_predeclared to prevent shadowing.
 			*def2 = *def;
 			def2->next = already_predeclared;
@@ -233,9 +238,9 @@ bool is_mutated(ast* tree, decl_list v)
 reg_list* emit_register(value_type type, reg_list* regs)
 {
 	if (!regs) __builtin_trap();
-	else if (regs->type == type)fprintf(outfile, "r%zi", regs->id);
-	else if (regs->type == any) fprintf(outfile, "unbox_%s(r%zi)", type_as_str[type][false], regs->id);
-	else if (type == any)       fprintf(outfile, "box_%s(r%zi)", type_as_str[regs->type][false], regs->id);
+	else if (regs->type == type)fprintf(outfile, "r%zi", (size_t)regs->id);
+	else if (regs->type == any) fprintf(outfile, "unbox_%s(r%zi)", type_as_str[type][false], (size_t)regs->id);
+	else if (type == any)       fprintf(outfile, "box_%s(r%zi)", type_as_str[regs->type][false], (size_t)regs->id);
 	else
 	{
 		char error_msg[256];
@@ -249,7 +254,7 @@ reg_list* add_register(value_type type, reg_list* next)
 {
 	reg_list* r = malloc(sizeof *r);
 	*r = (reg_list){.type = type, .id = current_register++, .next=next};
-	fprintf(outfile, "const %s r%zi=", type_as_str[r->type][true], r->id);
+	fprintf(outfile, "const %s r%zi=", type_as_str[r->type][true], (size_t)->id);
 	return r;
 }
 
@@ -263,7 +268,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 	const char* footer = "";
 	yylloc.first_column = tree->col; // This lets us use yyerror()
 	yylloc.first_line = tree->line;
-	fprintf(outfile, "\n#line %zi\n", tree->line);
+	fprintf(outfile, "\n#line %zi\n", (size_t)tree->line);
 	if (gc_test)
 	{
 		fprintf(outfile, "gc_collect();");
@@ -343,10 +348,11 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 				break;
 			}
 			if (d->rets) return_register = add_register(d->ret, NULL);
+			char* res = restrict_chars(d->name);
 			switch(d->type)
 			{
 				case func:
-					fprintf(outfile,"%s(%s,(", release ? "CALL" : "CALLDEBUG", restrict_chars(d->name));
+					fprintf(outfile,"%s(%s,(", release ? "CALL" : "CALLDEBUG", res);
 					for (unsigned short i = 0; i < d->argc; ++i)
 					{
 						registers = emit_register(d->args[i], registers);
@@ -355,12 +361,13 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 					fputs("));", outfile);
 					break;
 				case var:
-					fprintf(outfile, "VAR(%s);", restrict_chars(d->name));
+					fprintf(outfile, "VAR(%s);", res);
 					break;
 				case stack_op:
 					registers = d->stack_shuffle(registers);
 					break;
 			}
+			free(res);
 			if (d->rets)
 			{
 				return_register->next = registers;
@@ -382,8 +389,12 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 					print_cognate_string(tree->text);
 					break;
 				case symbol:
-					fprintf(outfile, "SYM(%s)", restrict_chars(tree->text));
+				{
+					char* str = restrict_chars(tree->text);
+					fprintf(outfile, "SYM(%s)", str);
+					free(str);
 					break;
+				}
 				case number:
 					if (strchr(tree->text, '.'))
 						fprintf(outfile, "%sl", tree->text);
@@ -413,7 +424,9 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 			};
 			char* tag = "const";
 			if (is_mutated(tree->next, *d)) d->ret = any, tag = "__block";
-			fprintf(outfile, "%s %s VAR(%s)=", tag, type_as_str[d->ret][true], restrict_chars(d->name));
+			char* name = restrict_chars(d->name);
+			fprintf(outfile, "%s %s VAR(%s)=", tag, type_as_str[d->ret][true], name);
+			free(name);
 			if (d->ret == block) fputs("Block_copy(", outfile);
 			registers = emit_register(d->ret, registers);
 			if (d->ret == block) fputs(")", outfile);
@@ -428,7 +441,9 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 			if (!d->predecl) yyerror("already defined in this block");
 			d -> predecl = false;
 			registers = assert_registers(1, LONG_MAX, registers);
-			fprintf(outfile, "VAR(%s)=Block_copy(", restrict_chars(tree->text));
+			char* name = restrict_chars(tree->text);
+			fprintf(outfile, "VAR(%s)=Block_copy(", name);
+			free(name);
 			registers = emit_register(block, registers);
 			fputs(");{", outfile);
 			footer = "}";
@@ -436,11 +451,13 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 		break;
 		case set:
 		{
+			char* name = restrict_chars(tree->text);
 			decl_list* d = lookup_word(tree->text, defs);
 			if (d -> type == stack_op || d -> type == func) { yyerror("cannot mutate function"); }
-			if (d -> predecl) fprintf(outfile, "VAR(%s);", restrict_chars(tree->text));
+			if (d -> predecl) fprintf(outfile, "VAR(%s);", name);
 			registers = assert_registers(1, LONG_MAX, registers);
-			fprintf(outfile, "SET(%s,", restrict_chars(tree->text));
+			fprintf(outfile, "SET(%s,", name);
+			free(name);
 			registers = emit_register(any, registers);
 			fputs(");", outfile);
 		}
@@ -537,6 +554,7 @@ int main(int argc, char** argv)
 	add_symbols(full_ast);
 	compile(full_ast, NULL, predeclare(full_ast, builtins()));
 	fputs("cleanup();}\n", outfile);
+	fflush(outfile);
 	char* args[] =
 	{
 		"clang", c_file_path, "-o", binary_file_path, "-fblocks", "-I"INCLUDEDIR, "-lBlocksRuntime",
@@ -544,7 +562,6 @@ int main(int argc, char** argv)
 		"-std=c11", "-lm", "-g0", release ? "-s" : "-ggdb3", NULL
 		// "-flto" and "-fuse-ld=lld" give smaller binaries but make installation a pain
 	};
-	fflush(outfile);
 	if (fork() == 0) execvp(args[0], args); else wait(NULL);
 	if (!run) return EXIT_SUCCESS;
 	char prog_name[strlen(argv[0])+3];
