@@ -254,7 +254,7 @@ reg_list* add_register(value_type type, reg_list* next)
 {
 	reg_list* r = malloc(sizeof *r);
 	*r = (reg_list){.type = type, .id = current_register++, .next=next};
-	fprintf(outfile, "const %s r%zi=", type_as_str[r->type][true], (size_t)->id);
+	fprintf(outfile, "const %s r%zi=", type_as_str[r->type][true], (size_t)r->id);
 	return r;
 }
 
