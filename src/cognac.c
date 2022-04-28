@@ -546,7 +546,7 @@ int main(int argc, char** argv)
 		else { fprintf(stderr, "Invalid option: %s\n", *argv); return EXIT_FAILURE; }
 	}
 	yyparse();
-	fputs("#include<cognate.h>\n",outfile);
+	fputs("#include<cognate.c>\n",outfile);
 	fputs("char* record_info[][64] = {", outfile);
 	emit_record_info(full_ast);
 	fputs("{NULL}};\n", outfile);

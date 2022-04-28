@@ -11,11 +11,11 @@ io-disabled: cognac-io-disabled
 
 install: build
 	mkdir -p $(INCLUDEDIR) $(LIBDIR) $(BINDIR)
-	cp src/cognate.h $(INCLUDEDIR)/cognate.h
+	cp src/cognate.c $(INCLUDEDIR)/cognate.c
 	cp cognac        $(BINDIR)/cognac
 
 uninstall:
-	rm -rf $(INCLUDEDIR)/cognate.h $(BINDIR)/cognac
+	rm -rf $(INCLUDEDIR)/cognate.c $(BINDIR)/cognac
 
 cognac: src/lexer.c src/parser.c src/parser.h src/cognac.c src/builtins.c src/cognac.h
 	$(CC) src/lexer.c src/parser.c src/cognac.c -o cognac -DINCLUDEDIR=\"$(INCLUDEDIR)\" $(CFLAGS)
