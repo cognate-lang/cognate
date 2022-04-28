@@ -238,9 +238,9 @@ bool is_mutated(ast* tree, decl_list v)
 reg_list* emit_register(value_type type, reg_list* regs)
 {
 	if (!regs) __builtin_trap();
-	else if (regs->type == type)fprintf(outfile, "r%zi", (size_t)regs->id);
-	else if (regs->type == any) fprintf(outfile, "unbox_%s(r%zi)", type_as_str[type][false], (size_t)regs->id);
-	else if (type == any)       fprintf(outfile, "box_%s(r%zi)", type_as_str[regs->type][false], (size_t)regs->id);
+	else if (regs->type == type)fprintf(outfile, "r%zi", (ssize_t)regs->id);
+	else if (regs->type == any) fprintf(outfile, "unbox_%s(r%zi)", type_as_str[type][false], (ssize_t)regs->id);
+	else if (type == any)       fprintf(outfile, "box_%s(r%zi)", type_as_str[regs->type][false], (ssize_t)regs->id);
 	else
 	{
 		char error_msg[256];
@@ -254,7 +254,7 @@ reg_list* add_register(value_type type, reg_list* next)
 {
 	reg_list* r = malloc(sizeof *r);
 	*r = (reg_list){.type = type, .id = current_register++, .next=next};
-	fprintf(outfile, "const %s r%zi=", type_as_str[r->type][true], (size_t)r->id);
+	fprintf(outfile, "const %s r%zi=", type_as_str[r->type][true], (ssize_t)r->id);
 	return r;
 }
 
@@ -268,7 +268,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 	const char* footer = "";
 	yylloc.first_column = tree->col; // This lets us use yyerror()
 	yylloc.first_line = tree->line;
-	fprintf(outfile, "\n#line %zi\n", (size_t)tree->line);
+	fprintf(outfile, "\n#line %zi\n", (ssize_t)tree->line);
 	if (gc_test)
 	{
 		fprintf(outfile, "gc_collect();");
@@ -556,14 +556,18 @@ int main(int argc, char** argv)
 	compile(full_ast, NULL, predeclare(full_ast, builtins()));
 	fputs("cleanup();}\n", outfile);
 	fflush(outfile);
-	char* args[] =
+	if (fork() == 0)
 	{
-		"clang", c_file_path, "-o", binary_file_path, "-fblocks", "-I"INCLUDEDIR, "-lBlocksRuntime",
-		"-lpthread", release ? "-Ofast" : "-O1", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
-		"-std=c11", "-lm", "-g0", release ? "-s" : "-ggdb3", NULL
-		// "-flto" and "-fuse-ld=lld" give smaller binaries but make installation a pain
-	};
-	if (fork() == 0) execvp(args[0], args); else wait(NULL);
+		char* args[] =
+		{
+			"clang", c_file_path, "-o", binary_file_path, "-fblocks", "-I"INCLUDEDIR, "-lBlocksRuntime",
+			"-lpthread", release ? "-Ofast" : "-O1", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
+			"-std=c11", "-lm", "-g0", release ? "-s" : "-ggdb3", NULL
+			// "-flto" and "-fuse-ld=lld" give smaller binaries but make installation a pain
+		};
+		execvp(args[0], args);
+	}
+	else wait(NULL);
 	if (!run) return EXIT_SUCCESS;
 	char prog_name[strlen(argv[0])+3];
 	strcpy(prog_name, "./");
