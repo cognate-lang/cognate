@@ -1,6 +1,7 @@
 ## The Cognate programming language
 
 ![](https://github.com/stavromulabeta/cognate/actions/workflows/test-debian.yml/badge.svg)
+![](https://api.codiga.io/project/33196/score/svg)
 ![](https://api.codiga.io/project/33196/status/svg)
 ![](https://img.shields.io/github/license/stavromulabeta/cognate.svg)
 
