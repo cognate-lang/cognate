@@ -1,4 +1,4 @@
-Print If == "foo\nbar" Read "tests/io.txt"
+Print If == "foo\nbar\n" Read "tests/io.txt"
 	"PASS: Reading multi-line file to string"
 else
 	"FAIL: Reading multi-line file to string";

@@ -1087,7 +1087,7 @@ STRING VAR(read)(STRING filename)
 	if (fread(text, sizeof(char), st.st_size, fp) != (unsigned long)st.st_size)
 		throw_error_fmt("error reading file '%s'", filename);
 	fclose(fp);
-	text[st.st_size-1] = '\0'; // Remove trailing eof.
+	text[st.st_size] = '\0'; // Remove trailing eof.
 	return text;
 	// TODO: single line (or delimited) file read function for better IO performance
 }
