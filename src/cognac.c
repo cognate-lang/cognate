@@ -303,6 +303,30 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 
 			defs = cons;
 
+			char* predname = malloc(strlen(tree->record->name)+2);
+			predname[0]='\0';
+			strcpy(predname, tree->record->name);
+			strcat(predname, "?");
+			decl_list* pred = malloc(sizeof *pred);
+			*pred = (decl_list)
+			{
+				.name = predname,
+				.next = defs,
+				.type = func,
+				.needs_stack = false,
+				.rets = true,
+				.ret = boolean,
+				.builtin = false,
+				.argc = 1,
+				.args={any}
+			};
+
+
+			fprintf(outfile, "BOOLEAN(^VAR(%sQMARK))(ANY) = Block_copy(^BOOLEAN(ANY R){return get_type(R)==record&&unbox_record(R)->id==%i;});", cons->name, record_id);
+
+			defs = pred;
+
+
 			int j = 0;
 			for (record_t*f=tree->record->next;f;f=f->next)
 			{
