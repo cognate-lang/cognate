@@ -580,6 +580,7 @@ int main(int argc, char** argv)
 	compile(full_ast, NULL, predeclare(full_ast, builtins()));
 	fputs("cleanup();}\n", outfile);
 	fflush(outfile);
+	int status;
 	if (fork() == 0)
 	{
 		char* args[] =
@@ -591,8 +592,8 @@ int main(int argc, char** argv)
 		};
 		execvp(args[0], args);
 	}
-	else wait(NULL);
-	if (!run) return EXIT_SUCCESS;
+	else wait(&status);
+	if (!run || status) return status;
 	char prog_name[strlen(argv[0])+3];
 	strcpy(prog_name, "./");
 	strcpy(prog_name + 2, argv[0]);
