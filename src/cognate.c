@@ -91,12 +91,16 @@ typedef struct cognate_stack
 
 #define PREDEF(name) __block BLOCK VAR(name) = ^{ throw_error("Function '"#name"' called before definition!'"); };
 
-#define SET(name, val) VAR(name) = val;
+#define SET(name, val) \
+	if unlikely(pure) throw_error("cannot mutate variable in pure function"); \
+	VAR(name) = val;
 
 #define unlikely(expr) (__builtin_expect((_Bool)(expr), 0))
 #define likely(expr)	 (__builtin_expect((_Bool)(expr), 1))
 
 #define ALLOC_RECORD(n) (gc_malloc(sizeof(size_t)+n*sizeof(ANY)))
+
+static _Bool pure = 0;
 
 static uintptr_t* restrict heap_start;
 static uintptr_t* restrict heap_top;
@@ -252,6 +256,7 @@ static _Bool compare_records(RECORD, RECORD);
 static _Bool match_records(RECORD, RECORD);
 static _Bool match_lists(LIST, LIST);
 static void handle_error_signal(int);
+static void assert_impure();
 
 cognate_stack stack;
 LIST cmdline_parameters = NULL;
@@ -262,7 +267,6 @@ int line_num = -1;
 const char* restrict function_stack_top;
 const char* restrict function_stack_start;
 ptrdiff_t function_stack_size;
-
 
 void init(int argc, char** argv)
 {
@@ -319,6 +323,11 @@ void check_function_stack_size(void)
 
 void set_word_name(const char* restrict const name) { word_name=name; } // Need this to avoid unsequenced evaluation error.
 void set_line_num(int num) { line_num=num; } // Need this to avoid unsequenced evaluation error.
+
+void assert_impure()
+{
+	if unlikely(pure) throw_error("invalid operation for pure function");
+}
 
 _Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(const char* restrict const fmt, ...)
 {
@@ -844,11 +853,11 @@ void VAR(while)(BLOCK cond, BLOCK body)
 
 void VAR(do)(BLOCK blk) { blk(); }
 
-void VAR(put)(ANY a)	 { fputs(show_object(a, 1), stdout); fflush(stdout); }
-void VAR(print)(ANY a) { puts(show_object(a, 1)); }
+void VAR(put)(ANY a)	 { assert_impure(); fputs(show_object(a, 1), stdout); fflush(stdout); }
+void VAR(print)(ANY a) { assert_impure(); puts(show_object(a, 1)); }
 
-void VAR(puts)(BLOCK b)		{ VAR(for)(VAR(list)(b), ^{VAR(put)(pop()); }); }
-void VAR(prints)(BLOCK b) { VAR(for)(VAR(list)(b), ^{VAR(put)(pop()); }); putc('\n', stdout); }
+void VAR(puts)(BLOCK b)		{ assert_impure(); VAR(for)(VAR(list)(b), ^{VAR(put)(pop()); }); }
+void VAR(prints)(BLOCK b) { assert_impure(); VAR(for)(VAR(list)(b), ^{VAR(put)(pop()); }); putc('\n', stdout); }
 
 NUMBER VAR(ADD)(NUMBER a, NUMBER b) { return a + b; } // Add cannot produce NaN.
 
@@ -1069,6 +1078,7 @@ invalid_range:
 STRING VAR(input)(void)
 {
 	// Read user input to a string.
+	assert_impure();
 	size_t size = 0;
 	char* buf;
 	size_t chars = getline(&buf, &size, stdin);
@@ -1079,6 +1089,7 @@ STRING VAR(input)(void)
 
 STRING VAR(read)(STRING filename)
 {
+	assert_impure();
 	// Read a file to a string.
 	FILE *fp = fopen(filename, "ro");
 	if unlikely(fp == NULL) throw_error_fmt("cannot open file '%s'", filename);
@@ -1108,6 +1119,7 @@ cannot_parse:
 
 STRING VAR(path)(void)
 {
+	assert_impure();
 	char buf[FILENAME_MAX];
 	if (!getcwd(buf, FILENAME_MAX))
 		throw_error("cannot get working directory");
@@ -1131,6 +1143,7 @@ LIST VAR(stack)(void)
 
 void VAR(write)(STRING filename, ANY obj)
 {
+	assert_impure();
 	// Write object to end of file, without a newline.
 	FILE* const fp = fopen(filename, "a");
 	if unlikely(fp == NULL) throw_error_fmt("cannot open file '%s'", filename);
@@ -1145,6 +1158,7 @@ LIST VAR(parameters)(void)
 
 void VAR(stop)(void)
 {
+	assert_impure();
 	// Don't check stack length, because it probably wont be empty.
 	exit(EXIT_SUCCESS);
 }
@@ -1314,6 +1328,7 @@ ANY VAR(index)(NUMBER ind, LIST lst)
 
 void VAR(wait)(NUMBER seconds)
 {
+	assert_impure();
 	sleep(seconds);
 }
 
@@ -1430,5 +1445,14 @@ BLOCK VAR(memoize)(BLOCK b)
 			cache[i] = a;
 			cache[i+1] = c;
 		}
+	});
+}
+
+BLOCK VAR(pure)(BLOCK b)
+{
+	return Block_copy(^{
+		pure = 1;
+		b();
+		pure = 0;
 	});
 }
