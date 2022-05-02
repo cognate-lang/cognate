@@ -244,6 +244,7 @@ LIST VAR(split)(STRING, STRING);
 NUMBER VAR(length)(LIST);
 LIST VAR(take)(NUMBER,LIST);
 LIST VAR(discard)(NUMBER,LIST);
+BLOCK VAR(memoize)(BLOCK);
 
 static const char *lookup_type(cognate_type);
 static _Bool compare_lists(LIST, LIST);
@@ -1403,4 +1404,31 @@ LIST VAR(discard)(NUMBER n, LIST l) {
 	for (;n-->0;l=l->next)
 		if unlikely(!l) throw_error("list too small");
 	return l;
+}
+
+BLOCK VAR(memoize)(BLOCK b)
+{
+	// Naive memoization combinator.
+	// Only works for functions taking at least one argument and returning one result only.
+	// TODO
+	ANY* cache = gc_malloc(256 * sizeof *cache);
+	for (int i = 0; i < 256; ++i) cache[i] = NIL_OBJ;
+	return Block_copy(^{
+		ANY a = pop();
+		int i = 0;
+		for (; cache[i] != NIL_OBJ; i+=2)
+			if (cache[i] == a) // No time for compare_objects
+			{
+				push(cache[i+1]);
+				return;
+			}
+		push(a);
+		b();
+		ANY c = peek();
+		if (i < 254)
+		{
+			cache[i] = a;
+			cache[i+1] = c;
+		}
+	});
 }

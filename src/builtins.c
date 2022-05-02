@@ -73,6 +73,7 @@
 {.name="length",              .type=func, .argc=1, .args={list},    .rets=true, .ret=number},
 {.name="take",                .type=func, .argc=2, .args={number, list}, .rets=true, .ret=list},
 {.name="discard",             .type=func, .argc=2, .args={number, list}, .rets=true, .ret=list},
+{.name="memoize",             .type=func, .argc=1, .args={block},        .rets=true, .ret=block},
 
 /* Builtin stack operations */
 {.name="drop",                .type=stack_op, .stack_shuffle=&drop_register},
