@@ -1,0 +1,44 @@
+name: Nightly
+
+on:
+  push:
+    branches: 
+    - 'master'
+
+jobs:
+  nightly:
+    name: Deploy nightly releases
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+    env:
+    runs-on: ${{ matrix.os }}
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build asset
+      run: |
+        7z a cognate-nightly.zip cognate
+
+    - name: Set tag
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git tag -f -a nightly -m "Nightly update"
+        git push origin -f --follow-tags nightly
+
+    - name: Deploy release
+      uses: WebFreak001/deploy-nightly@v1.1.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: https://uploads.github.com/repos/StavromulaBeta/cognate/releases/65952394/assets{?name,label}
+        release_id: 65952394
+        asset_path: ./cognate-nightly.zip
+        asset_name: cognate-nightly-${{matrix.os}}-$$.zip
+        asset_content_type: application/zip
+        max_releases: 1
