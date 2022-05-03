@@ -21,7 +21,7 @@ jobs:
     - name: Build asset
       run: |
         make
-        7z a cognate-nightly.zip cognac cognate.c
+        7z a cognate-nightly.zip cognac src/cognate.c
 
     - name: Set tag
       if: ${{ matrix.os == 'ubuntu-latest' }}
