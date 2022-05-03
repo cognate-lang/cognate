@@ -248,7 +248,7 @@ LIST VAR(split)(STRING, STRING);
 NUMBER VAR(length)(LIST);
 LIST VAR(take)(NUMBER,LIST);
 LIST VAR(discard)(NUMBER,LIST);
-BLOCK VAR(memoize)(BLOCK);
+BLOCK VAR(remember)(BLOCK);
 
 static const char *lookup_type(cognate_type);
 static _Bool compare_lists(LIST, LIST);
@@ -1421,30 +1421,30 @@ LIST VAR(discard)(NUMBER n, LIST l) {
 	return l;
 }
 
-BLOCK VAR(memoize)(BLOCK b)
+BLOCK VAR(remember)(BLOCK b)
 {
-	// Naive memoization combinator.
-	// Only works for functions taking at least one argument and returning one result only.
-	// TODO
-	ANY* cache = gc_malloc(256 * sizeof *cache);
-	for (int i = 0; i < 256; ++i) cache[i] = NIL_OBJ;
+	// Only works for 1 -> 1 functions
+	struct memolist {
+		struct memolist* next;
+		ANY input;
+		ANY output;
+	};
+	__block struct memolist* memo = NULL;
 	return Block_copy(^{
 		ANY a = pop();
-		int i = 0;
-		for (; cache[i] != NIL_OBJ; i+=2)
-			if (cache[i] == a) // No time for compare_objects
+		for (struct memolist* l = memo ; l ; l = l->next)
+			if (l->input == a)
 			{
-				push(cache[i+1]);
+				push(l->output);
 				return;
 			}
 		push(a);
 		b();
-		ANY c = peek();
-		if (i < 254)
-		{
-			cache[i] = a;
-			cache[i+1] = c;
-		}
+		struct memolist* new = gc_malloc(sizeof *new);
+		new->input = a;
+		new->output = peek();
+		new->next = memo;
+		memo = new;
 	});
 }
 
