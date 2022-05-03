@@ -1,27 +1,20 @@
 CC=clang
-CFLAGS=-Wall -Wextra -pedantic -fblocks -Ofast
+CFLAGS=-Wall -Wextra -Wpedantic -Ofast
 PREFIX=`echo ~`/.local
-INCLUDEDIR=$(PREFIX)/include
 BINDIR=$(PREFIX)/bin
 TESTS=block booleans filter for functions if io lists map maths parsing regex stack strings symbols variables
 
 build: cognac
 
-io-disabled: cognac-io-disabled
-
 install: build
-	mkdir -p $(INCLUDEDIR) $(LIBDIR) $(BINDIR)
-	cp src/cognate.c $(INCLUDEDIR)/cognate.c
-	cp cognac        $(BINDIR)/cognac
+	mkdir -p $(BINDIR)
+	cp cognac $(BINDIR)/cognac
 
 uninstall:
-	rm -rf $(INCLUDEDIR)/cognate.c $(BINDIR)/cognac
+	rm -rf $(BINDIR)/cognac
 
-cognac: src/lexer.c src/parser.c src/parser.h src/cognac.c src/builtins.c src/cognac.h
-	$(CC) src/lexer.c src/parser.c src/cognac.c -o cognac -DINCLUDEDIR=\"$(INCLUDEDIR)\" $(CFLAGS)
-
-cognac-io-disabled: src/lexer.c src/parser.c src/parser.h src/cognac.c src/builtins.c src/cognac.h
-	$(CC) src/lexer.c src/parser.c src/cognac.c -o cognac -DINCLUDEDIR=\"$(INCLUDEDIR)\" -DDISABLEIO $(CFLAGS)
+cognac: src/lexer.c src/parser.c src/parser.h src/cognac.c src/builtins.c src/cognac.h src/
+	$(CC) src/lexer.c src/parser.c src/cognac.c -o cognac $(CFLAGS) -Wl,--format=binary -Wl,src/runtime.c -Wl,--format=default -Wno-language-extension-token
 
 src/lexer.c: src/lexer.l
 	flex -o src/lexer.c src/lexer.l
@@ -40,4 +33,4 @@ test: build $(TESTS)
 	@! grep -c "^FAIL" tests/*.log --color
 
 $(TESTS):
-	cognac tests/$@.cog -run > tests/$@.log
+	./cognac tests/$@.cog -run > tests/$@.log

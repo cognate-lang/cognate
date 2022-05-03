@@ -8,6 +8,8 @@
 #include <sys/wait.h>
 #include <limits.h>
 
+extern char _binary_src_runtime_c_start;
+
 int record_id = 0;
 
 FILE* outfile;
@@ -570,7 +572,8 @@ int main(int argc, char** argv)
 		else { fprintf(stderr, "Invalid option: %s\n", *argv); return EXIT_FAILURE; }
 	}
 	yyparse();
-	fputs("#include<cognate.c>\n",outfile);
+	//fputs("#include<cognate.c>\n",outfile);
+	fputs(&_binary_src_runtime_c_start, outfile);
 	fputs("char* record_info[][64] = {", outfile);
 	emit_record_info(full_ast);
 	fputs("{NULL}};\n", outfile);
@@ -585,7 +588,7 @@ int main(int argc, char** argv)
 	{
 		char* args[] =
 		{
-			"clang", c_file_path, "-o", binary_file_path, "-fblocks", "-I"INCLUDEDIR, "-lBlocksRuntime",
+			"clang", c_file_path, "-o", binary_file_path, "-fblocks", "-lBlocksRuntime",
 			"-lpthread", release ? "-Ofast" : "-O1", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
 			"-std=c11", "-lm", "-g0", release ? "-s" : "-ggdb3", NULL
 			// "-flto" and "-fuse-ld=lld" give smaller binaries but make installation a pain

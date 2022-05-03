@@ -1,5 +1,4 @@
-#pragma once
-
+// ---------- RUNTIME HEADER ----------
 #define _GNU_SOURCE
 #define _FORTIFY_SOURCE 2
 
@@ -1456,3 +1455,4 @@ BLOCK VAR(pure)(BLOCK b)
 		pure = 0;
 	});
 }
+// ---------- ACTUAL PROGRAM ----------
