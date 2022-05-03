@@ -21,6 +21,7 @@ jobs:
 
     - name: Build asset
       run: |
+        make
         7z a cognate-nightly.zip cognac cognate.c
 
     - name: Set tag
