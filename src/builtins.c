@@ -67,7 +67,7 @@
 {.name="wait",                .type=func, .argc=1, .args={number},  .rets=false},
 {.name="stop",                .type=func, .argc=0, .rets=false},
 {.name="show",                .type=func, .argc=1, .args={any},     .rets=true, .ret=string},
-{.name="case",                .type=func, .argc=3, .args={any, block, block}, .rets=true, .ret=block},
+{.name="case",                .type=func, .argc=3, .args={any, any, any}, .rets=true, .ret=block},
 {.name="stack",               .type=func, .rets=true, .ret=list, .needs_stack=true},
 {.name="clear",               .type=func, .argc=0, .needs_stack=true},
 {.name="length",              .type=func, .argc=1, .args={list},    .rets=true, .ret=number},
