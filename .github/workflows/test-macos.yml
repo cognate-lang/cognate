@@ -10,7 +10,6 @@ jobs:
       - name: Aquire dependencies and compile
         shell: bash
         run: |
-          brew install llvm
           cd $GITHUB_WORKSPACE
           make
       - name: Run test script
