@@ -8,7 +8,7 @@
 #include <sys/wait.h>
 #include <limits.h>
 
-extern char _binary_src_runtime_c_start;
+#include "runtime.h"
 
 int record_id = 0;
 
@@ -573,7 +573,7 @@ int main(int argc, char** argv)
 	}
 	yyparse();
 	//fputs("#include<cognate.c>\n",outfile);
-	fputs(&_binary_src_runtime_c_start, outfile);
+	fputs((char*)src_runtime_c, outfile);
 	fputs("char* record_info[][64] = {", outfile);
 	emit_record_info(full_ast);
 	fputs("{NULL}};\n", outfile);
