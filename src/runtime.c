@@ -1468,8 +1468,11 @@ BLOCK VAR(remember)(BLOCK b)
 				push(l->output);
 				return;
 			}
+		ANY* temp = stack.start;
+		stack.start = stack.top;
 		push(a);
 		b();
+		stack.start = temp;
 		struct memolist* new = gc_malloc(sizeof *new);
 		new->input = a;
 		new->output = peek();
