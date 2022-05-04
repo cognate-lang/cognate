@@ -14,7 +14,8 @@ uninstall:
 	rm -rf $(BINDIR)/cognac
 
 cognac: src/lexer.c src/parser.c src/parser.h src/cognac.c src/builtins.c src/cognac.h src/
-	$(CC) src/lexer.c src/parser.c src/cognac.c -o cognac $(CFLAGS) -Wl,--format=binary -Wl,src/runtime.c -Wl,--format=default -Wno-language-extension-token
+	xxd -i src/runtime.c > src/runtime.h
+	$(CC) src/lexer.c src/parser.c src/cognac.c -o cognac $(CFLAGS)
 
 src/lexer.c: src/lexer.l
 	flex -o src/lexer.c src/lexer.l
