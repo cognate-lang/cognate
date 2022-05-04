@@ -242,7 +242,7 @@ void VAR(puts)(BLOCK);
 void VAR(prints)(BLOCK);
 BLOCK VAR(precompute)(BLOCK);
 void VAR(wait)(NUMBER);
-BLOCK VAR(case)(ANY, BLOCK, BLOCK);
+BLOCK VAR(case)(ANY, ANY, ANY);
 LIST VAR(split)(STRING, STRING);
 NUMBER VAR(length)(LIST);
 LIST VAR(take)(NUMBER,LIST);
@@ -940,9 +940,40 @@ BOOLEAN VAR(zeroQMARK)(ANY a)    { return VAR(numberQMARK)(a) && unbox_number(a)
 
 BOOLEAN VAR(match)(ANY patt, ANY obj) { return match_objects(patt,obj); }
 
-BLOCK VAR(case)(ANY patt, BLOCK if_match, BLOCK if_not_match)
+BLOCK VAR(case)(ANY patt, ANY if_match, ANY if_not_match)
 {
-	return Block_copy(^{if (match_objects(patt, peek())) if_match(); else if_not_match();});
+	_Bool block1 = get_type(if_match) == block;
+	_Bool block2 = get_type(if_not_match) == block;
+	if (block1 && block2)
+	{
+		const BLOCK b1 = unbox_block(if_match);
+		const BLOCK b2 = unbox_block(if_not_match);
+		return Block_copy(^{
+			if (match_objects(patt, peek())) b1();
+			else b2();
+		});
+	}
+	if (block1)
+	{
+		const BLOCK b1 = unbox_block(if_match);
+		return Block_copy(^{
+			if (match_objects(patt, peek())) b1();
+			else { pop(); push(if_not_match); }
+		});
+	}
+	if (block2)
+	{
+		const BLOCK b2 = unbox_block(if_not_match);
+		return Block_copy(^{
+			if (match_objects(patt, peek())) { pop(); push(if_match); }
+			else b2();
+		});
+	}
+	else return Block_copy(^{
+		pop();
+		if (match_objects(patt, peek())) push(if_match);
+		else push(if_not_match);
+	});
 }
 
 ANY VAR(first)(LIST lst)
