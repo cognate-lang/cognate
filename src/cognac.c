@@ -22,7 +22,7 @@ bool gc_test = false;
 char * restrict_chars(char* in) {
     size_t len = strlen(in);
     char* out = strdup(in);
-    for (int index = 0; index < len; index++) {
+    for (size_t index = 0; index < len; index++) {
         switch(in[index]) {
         case '-':
             out[index] = 'D';
