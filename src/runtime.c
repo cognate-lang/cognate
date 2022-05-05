@@ -79,8 +79,7 @@ typedef struct cognate_stack
 #define TYP_MASK 0x0007000000000000
 #define NIL_OBJ  0x7ff8000000000000
 
-#define SET_FUNCTION_STACK_
-T() \
+#define SET_FUNCTION_STACK_START() \
 	function_stack_start = __builtin_frame_address(0); \
 	function_stack_top = function_stack_start - function_stack_size;
 
