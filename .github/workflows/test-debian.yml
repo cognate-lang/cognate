@@ -1,4 +1,4 @@
-name: Build/test on Debian
+name: Debian
 on:
   push:
     branches: [ master ]
