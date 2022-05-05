@@ -86,7 +86,6 @@ typedef struct cognate_stack
 #define VAR(name) ___##name
 #define SYM(name) ____##name
 #define CALL(name, args) VAR(name) args
-#define CALLDEBUG(name, args) (set_word_name(#name), set_line_num(__LINE__), VAR(name) args)
 
 #define PREDEF(name) __block BLOCK VAR(name) = ^{ throw_error("Function '"#name"' called before definition!'"); };
 
@@ -177,10 +176,10 @@ void VAR(while)(BLOCK, BLOCK);
 void VAR(do)(BLOCK);
 void VAR(put)(ANY);
 void VAR(print)(ANY);
-NUMBER VAR(ADD)(NUMBER, NUMBER);
-NUMBER VAR(MUL)(NUMBER, NUMBER);
-NUMBER VAR(SUB)(NUMBER, NUMBER);
-NUMBER VAR(DIV)(NUMBER, NUMBER);
+NUMBER VAR(P)(NUMBER, NUMBER);
+NUMBER VAR(M)(NUMBER, NUMBER);
+NUMBER VAR(D)(NUMBER, NUMBER);
+NUMBER VAR(S)(NUMBER, NUMBER);
 NUMBER VAR(modulo)(NUMBER, NUMBER);
 NUMBER VAR(random)(NUMBER, NUMBER, NUMBER);
 void VAR(clear)(void);
@@ -190,12 +189,12 @@ BOOLEAN VAR(either)(BOOLEAN, BOOLEAN);
 BOOLEAN VAR(both)(BOOLEAN, BOOLEAN);
 BOOLEAN VAR(oneDof)(BOOLEAN, BOOLEAN);
 BOOLEAN VAR(not)(BOOLEAN);
-BOOLEAN VAR(EQ)(ANY, ANY);
-BOOLEAN VAR(NEQ)(ANY, ANY);
-BOOLEAN VAR(LT)(NUMBER, NUMBER);
-BOOLEAN VAR(GT)(NUMBER, NUMBER);
-BOOLEAN VAR(LTE)(NUMBER, NUMBER);
-BOOLEAN VAR(GTE)(NUMBER, NUMBER);
+BOOLEAN VAR(EE)(ANY, ANY);
+BOOLEAN VAR(SE)(ANY, ANY);
+BOOLEAN VAR(L)(NUMBER, NUMBER);
+BOOLEAN VAR(G)(NUMBER, NUMBER);
+BOOLEAN VAR(LE)(NUMBER, NUMBER);
+BOOLEAN VAR(GE)(NUMBER, NUMBER);
 BOOLEAN VAR(match)(ANY, ANY);
 BOOLEAN VAR(anyQ)(ANY);
 BOOLEAN VAR(numberQ)(ANY);
@@ -858,16 +857,16 @@ void VAR(print)(ANY a) { assert_impure(); puts(show_object(a, 1)); }
 void VAR(puts)(BLOCK b)		{ assert_impure(); VAR(for)(VAR(list)(b), ^{VAR(put)(pop()); }); }
 void VAR(prints)(BLOCK b) { assert_impure(); VAR(for)(VAR(list)(b), ^{VAR(put)(pop()); }); putc('\n', stdout); }
 
-NUMBER VAR(ADD)(NUMBER a, NUMBER b) { return a + b; } // Add cannot produce NaN.
+NUMBER VAR(P)(NUMBER a, NUMBER b) { return a + b; } // Add cannot produce NaN.
 
-NUMBER VAR(MUL)(NUMBER a, NUMBER b)
+NUMBER VAR(M)(NUMBER a, NUMBER b)
 {
 	const double r = a * b;
 	if unlikely(is_nan(*(long*)&r))
 		throw_error_fmt("multiplication by %.14g of %.14g yields invalid result", a, b);
 	return r;
 }
-NUMBER VAR(SUB)(NUMBER a, NUMBER b)
+NUMBER VAR(D)(NUMBER a, NUMBER b)
 {
 	const double r = b - a;
 	if unlikely(is_nan(*(long*)&r))
@@ -875,7 +874,7 @@ NUMBER VAR(SUB)(NUMBER a, NUMBER b)
 	return r;
 }
 
-NUMBER VAR(DIV)(NUMBER a, NUMBER b)
+NUMBER VAR(S)(NUMBER a, NUMBER b)
 {
 	const double r = b / a;
 	if unlikely(is_nan(*(long*)&r))
@@ -921,12 +920,12 @@ BOOLEAN VAR(oneDof)(BOOLEAN a, BOOLEAN b) { return a ^ b;  }
 BOOLEAN VAR(not)(BOOLEAN a)                  { return !a;     }
 
 
-BOOLEAN VAR(EQ)(ANY a, ANY b)  { return compare_objects(a,b); }
-BOOLEAN VAR(NEQ)(ANY a, ANY b) { return !compare_objects(a,b); }
-BOOLEAN VAR(GT)(NUMBER a, NUMBER b)  { return a < b; }
-BOOLEAN VAR(LT)(NUMBER a, NUMBER b)  { return a > b; }
-BOOLEAN VAR(GTE)(NUMBER a, NUMBER b) { return a <= b; }
-BOOLEAN VAR(LTE)(NUMBER a, NUMBER b) { return a >= b; }
+BOOLEAN VAR(EE)(ANY a, ANY b)  { return compare_objects(a,b); }
+BOOLEAN VAR(SE)(ANY a, ANY b) { return !compare_objects(a,b); }
+BOOLEAN VAR(G)(NUMBER a, NUMBER b)  { return a < b; }
+BOOLEAN VAR(L)(NUMBER a, NUMBER b)  { return a > b; }
+BOOLEAN VAR(GE)(NUMBER a, NUMBER b) { return a <= b; }
+BOOLEAN VAR(LE)(NUMBER a, NUMBER b) { return a >= b; }
 
 BOOLEAN VAR(numberQ)(ANY a)  { return get_type(a)==number; }
 BOOLEAN VAR(listQ)(ANY a)    { return get_type(a)==list;   }
@@ -1490,3 +1489,4 @@ BLOCK VAR(pure)(BLOCK b)
 	});
 }
 // ---------- ACTUAL PROGRAM ----------
+
