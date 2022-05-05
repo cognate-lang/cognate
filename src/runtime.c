@@ -181,7 +181,7 @@ NUMBER VAR(M)(NUMBER, NUMBER);
 NUMBER VAR(D)(NUMBER, NUMBER);
 NUMBER VAR(S)(NUMBER, NUMBER);
 NUMBER VAR(modulo)(NUMBER, NUMBER);
-NUMBER VAR(random)(NUMBER, NUMBER, NUMBER);
+NUMBER VAR(random)(NUMBER, NUMBER);
 void VAR(clear)(void);
 extern BOOLEAN VAR(true);
 extern BOOLEAN VAR(false);
@@ -235,7 +235,7 @@ void VAR(error)(STRING);
 LIST VAR(map)(BLOCK, LIST);
 LIST VAR(filter)(BLOCK, LIST);
 void VAR(for)(LIST, BLOCK);
-LIST VAR(range)(NUMBER, NUMBER, NUMBER);
+LIST VAR(range)(NUMBER, NUMBER);
 ANY VAR(index)(NUMBER, LIST);
 void VAR(puts)(BLOCK);
 void VAR(prints)(BLOCK);
@@ -890,10 +890,11 @@ NUMBER VAR(modulo)(NUMBER a, NUMBER b)
 	return r;
 }
 
-NUMBER VAR(random)(NUMBER low, NUMBER high, NUMBER step)
+NUMBER VAR(random)(NUMBER low, NUMBER high)
 {
-	if unlikely((high - low) * step < 0 || !step) goto invalid_range;
-	else if ((high - low) / step < 1) return low;
+	NUMBER step = 1;
+	if unlikely((high - low) < 0) goto invalid_range;
+	else if (high - low < 1) return low;
 	// This is not cryptographically secure btw.
 	// Since RAND_MAX may only be 2^15, we need to do this:
 	const long num
@@ -902,11 +903,11 @@ NUMBER VAR(random)(NUMBER low, NUMBER high, NUMBER step)
 		| ((long)(short)rand() << 30)
 		| ((long)(short)rand() << 45)
 		| ((long)				rand() << 60);
-	const double r = low + (NUMBER)(num % (unsigned long)((high - low) / step)) * step;
+	const double r = low + (NUMBER)(num % (unsigned long)(high - low));
 	if unlikely(is_nan(*(long*)&r)) goto invalid_range;
 	return r;
 invalid_range:
-	throw_error_fmt("invalid range %.14g..%.14g step %.14g", low, high, step);
+	throw_error_fmt("invalid range %.14g..%.14g", low, high);
 }
 
 void VAR(clear)(void) { stack.cache = NIL_OBJ; stack.top=stack.start; }
@@ -914,10 +915,10 @@ void VAR(clear)(void) { stack.cache = NIL_OBJ; stack.top=stack.start; }
 BOOLEAN VAR(true) =  1;
 BOOLEAN VAR(false) = 0;
 
-BOOLEAN VAR(either)(BOOLEAN a, BOOLEAN b)    { return a || b; }
-BOOLEAN VAR(both)(BOOLEAN a, BOOLEAN b)      { return a && b; }
+BOOLEAN VAR(either)(BOOLEAN a, BOOLEAN b) { return a || b; }
+BOOLEAN VAR(both)(BOOLEAN a, BOOLEAN b)   { return a && b; }
 BOOLEAN VAR(oneDof)(BOOLEAN a, BOOLEAN b) { return a ^ b;  }
-BOOLEAN VAR(not)(BOOLEAN a)                  { return !a;     }
+BOOLEAN VAR(not)(BOOLEAN a)               { return !a;     }
 
 
 BOOLEAN VAR(EE)(ANY a, ANY b)  { return compare_objects(a,b); }
@@ -1326,13 +1327,13 @@ void VAR(for)(LIST lst, BLOCK blk)
 	}
 }
 
-LIST VAR(range)(NUMBER start, NUMBER end, NUMBER step)
+LIST VAR(range)(NUMBER start, NUMBER end)
 {
-	if ((end - start) * step < 0)
-		throw_error_fmt("invalid range %.14g..%.14g step %.14g", start, end, step);
-	end = start + step * (size_t)((end - start) / step) - step;
+	if (end < start)
+		throw_error_fmt("invalid range %.14g..%.14g", start, end);
+	end = start + (size_t)(end - start) - 1;
 	LIST lst = NULL;
-	for (; start * step <= end * step; end -= step)
+	for (; start <= end; end--)
 	{
 		cognate_list* node = gc_new(cognate_list);
 		node->object = box_number(end);

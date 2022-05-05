@@ -10,4 +10,4 @@ Def FizzBuzz as (
 	                             else N
 );
 
-For each in Range from 1 to 100 by 1 do (Fizzbuzz);
+For each in Range 1 to 100 do (Fizzbuzz);
