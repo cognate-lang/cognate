@@ -140,11 +140,16 @@ void print_cognate_string(char* str)
 			case '\\':
 				switch (str[i+1])
 				{
-					case 'n': fputs("\\n", outfile); break;
-					case 'r': fputs("\\r", outfile); break;
 					case 'e': fputs("\\033", outfile); break;
-					case 't': fputs("\\t", outfile); break;
-					case 'v': fputs("\\v", outfile); break;
+					case 'n': 
+					case 'r':
+					case 't':
+					case 'v':
+					case 'f':
+					case 'a':
+					case 'b':
+						fprintf(outfile, "\\%c", str[i+1]);
+						break;
 					case '\\': fputs("\\\\", outfile); break;
 					case '"': fputs("\\\"", outfile); break;
 					default: yyerror("invalid escape sequence");
