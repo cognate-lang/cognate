@@ -1,4 +1,4 @@
-name: Build/test on MacOS
+name: MacOS
 on:
   workflow_dispatch:
 jobs:
