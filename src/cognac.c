@@ -148,7 +148,7 @@ void print_cognate_string(char* str)
 					case 'f':
 					case 'a':
 					case 'b':
-						fprintf(outfile, "\\%c", str[i+1];
+						fprintf(outfile, "\\%c", str[i+1]);
 						break;
 					case '\\': fputs("\\\\", outfile); break;
 					case '"': fputs("\\\"", outfile); break;
