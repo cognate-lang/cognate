@@ -19,37 +19,43 @@ ast* full_ast;
 bool release = false;
 bool gc_test = false;
 
-char* restrict_chars(char* in)
-{
-	// Sanitise variable names so they won't upset the C compiler.
-	// This could be a lot faster
-	char replace[] = {'-', '!', '?', '=', '<', '>', '+', '*', '/'};
-	char* with[]	 = {"DASH", "XMARK", "QMARK", "EQ", "LT", "GT", "PLUS", "STAR", "SLASH"};
-	size_t sz = 1;
-	for (char* ptr = in; *ptr; ++ptr)
-	{
-		for (size_t i = 0; i < sizeof replace; ++i)
-		{
-			if (*ptr == replace[i]) sz += strlen(with[i]);
-			else ++sz;
-		}
-	}
-	char* out = malloc (sz);
-	*out = '\0';
-	for (char* ptr = in; *ptr; ++ptr)
-	{
-		for (size_t i = 0; i < sizeof replace; ++i)
-		{
-			if (*ptr == replace[i])
-			{
-				strcat(out, with[i]);
-				goto br;
-			}
-		}
-		strncat(out, ptr, 1);
-br:;
-	}
-	return out;
+char * restrict_chars(char* in) {
+    size_t len = strlen(in);
+    char* out = strdup(in);
+    for (size_t index = 0; index < len; index++) {
+        switch(in[index]) {
+        case '-':
+            out[index] = 'D';
+            break;
+	case '!':
+	    out[index] = 'X';
+	    break;
+	case '?':
+	    out[index] = 'Q';
+	    break;
+	case '=':
+	    out[index] = 'E';
+	    break;
+	case '<':
+	    out[index] = 'L';
+	    break;
+	case '>':
+	    out[index] = 'G';
+	    break;
+	case '+':
+	    out[index] = 'P';
+	    break;
+	case '*':
+	    out[index] = 'M';
+	    break;
+	case '/':
+	    out[index] = 'S';
+	    break;
+        default:
+	    break;
+        }
+    } 
+    return out;
 }
 
 char* type_as_str[8][2] =
