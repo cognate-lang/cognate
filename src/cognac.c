@@ -19,43 +19,46 @@ ast* full_ast;
 bool release = false;
 bool gc_test = false;
 
-char * restrict_chars(char* in) {
-    size_t len = strlen(in);
-    char* out = strdup(in);
-    for (size_t index = 0; index < len; index++) {
-        switch(in[index]) {
-        case '-':
-            out[index] = 'D';
-            break;
-	case '!':
-	    out[index] = 'X';
-	    break;
-	case '?':
-	    out[index] = 'Q';
-	    break;
-	case '=':
-	    out[index] = 'E';
-	    break;
-	case '<':
-	    out[index] = 'L';
-	    break;
-	case '>':
-	    out[index] = 'G';
-	    break;
-	case '+':
-	    out[index] = 'P';
-	    break;
-	case '*':
-	    out[index] = 'M';
-	    break;
-	case '/':
-	    out[index] = 'S';
-	    break;
-        default:
-	    break;
-        }
-    } 
-    return out;
+char * restrict_chars(char* in)
+{
+	size_t len = strlen(in);
+	char* out = strdup(in);
+	for (size_t index = 0; index < len; index++)
+	{
+		switch(in[index])
+		{
+			case '-':
+				out[index] = 'D';
+				break;
+			case '!':
+				out[index] = 'X';
+				break;
+			case '?':
+				out[index] = 'Q';
+				break;
+			case '=':
+				out[index] = 'E';
+				break;
+			case '<':
+				out[index] = 'L';
+				break;
+			case '>':
+				out[index] = 'G';
+				break;
+			case '+':
+				out[index] = 'P';
+				break;
+			case '*':
+				out[index] = 'M';
+				break;
+			case '/':
+				out[index] = 'S';
+				break;
+			default:
+				break;
+		}
+	}
+	return out;
 }
 
 char* type_as_str[8][2] =
@@ -147,7 +150,7 @@ void print_cognate_string(char* str)
 				switch (str[i+1])
 				{
 					case 'e': fputs("\\033", outfile); break;
-					case 'n': 
+					case 'n':
 					case 'r':
 					case 't':
 					case 'v':
@@ -389,12 +392,14 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 			switch(d->type)
 			{
 				case func:
-					fprintf(outfile,"%s(%s,(", release ? "CALL" : "CALLDEBUG", res);
+					if (!release) fprintf(outfile, "(set_word_name(\"%s\"),set_line_num(__LINE__),", d->name);
+					fprintf(outfile,"CALL(%s,(", res);
 					for (unsigned short i = 0; i < d->argc; ++i)
 					{
 						registers = emit_register(d->args[i], registers);
 						if (i + 1 < d->argc) fputc(',', outfile);
 					}
+					if (!release) fputs(")", outfile);
 					fputs("));", outfile);
 					break;
 				case var:
@@ -599,7 +604,7 @@ int main(int argc, char** argv)
 	{
 		char* args[] =
 		{
-			"clang", c_file_path, "-o", binary_file_path, "-fblocks", 
+			"clang", c_file_path, "-o", binary_file_path, "-fblocks",
 #ifndef __APPLE__
 			"-lBlocksRuntime",
 #endif
