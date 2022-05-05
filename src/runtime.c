@@ -79,7 +79,8 @@ typedef struct cognate_stack
 #define TYP_MASK 0x0007000000000000
 #define NIL_OBJ  0x7ff8000000000000
 
-#define SET_FUNCTION_STACK_START() \
+#define SET_FUNCTION_STACK_
+T() \
 	function_stack_start = __builtin_frame_address(0); \
 	function_stack_top = function_stack_start - function_stack_size;
 
@@ -188,7 +189,7 @@ extern BOOLEAN VAR(true);
 extern BOOLEAN VAR(false);
 BOOLEAN VAR(either)(BOOLEAN, BOOLEAN);
 BOOLEAN VAR(both)(BOOLEAN, BOOLEAN);
-BOOLEAN VAR(oneDASHof)(BOOLEAN, BOOLEAN);
+BOOLEAN VAR(oneDof)(BOOLEAN, BOOLEAN);
 BOOLEAN VAR(not)(BOOLEAN);
 BOOLEAN VAR(EQ)(ANY, ANY);
 BOOLEAN VAR(NEQ)(ANY, ANY);
@@ -197,24 +198,24 @@ BOOLEAN VAR(GT)(NUMBER, NUMBER);
 BOOLEAN VAR(LTE)(NUMBER, NUMBER);
 BOOLEAN VAR(GTE)(NUMBER, NUMBER);
 BOOLEAN VAR(match)(ANY, ANY);
-BOOLEAN VAR(anyQMARK)(ANY);
-BOOLEAN VAR(numberQMARK)(ANY);
-BOOLEAN VAR(symbolQMARK)(ANY);
-BOOLEAN VAR(listQMARK)(ANY);
-BOOLEAN VAR(stringQMARK)(ANY);
-BOOLEAN VAR(blockQMARK)(ANY);
-BOOLEAN VAR(booleanQMARK)(ANY);
-BOOLEAN VAR(integerQMARK)(ANY);
-BOOLEAN VAR(zeroQMARK)(ANY);
+BOOLEAN VAR(anyQ)(ANY);
+BOOLEAN VAR(numberQ)(ANY);
+BOOLEAN VAR(symbolQ)(ANY);
+BOOLEAN VAR(listQ)(ANY);
+BOOLEAN VAR(stringQ)(ANY);
+BOOLEAN VAR(blockQ)(ANY);
+BOOLEAN VAR(booleanQ)(ANY);
+BOOLEAN VAR(integerQ)(ANY);
+BOOLEAN VAR(zeroQ)(ANY);
 ANY VAR(first)(LIST);
 LIST VAR(rest)(LIST);
 STRING VAR(head)(STRING);
 STRING VAR(tail)(STRING);
 LIST VAR(push)(ANY, LIST);
-BOOLEAN VAR(emptyQMARK)(LIST);
+BOOLEAN VAR(emptyQ)(LIST);
 LIST VAR(list)(BLOCK);
 STRING VAR(join)(NUMBER);
-NUMBER VAR(stringDASHlength)(STRING);
+NUMBER VAR(stringDlength)(STRING);
 STRING VAR(substring)(NUMBER, NUMBER, STRING);
 STRING VAR(input)(void);
 STRING VAR(read)(STRING);
@@ -225,7 +226,7 @@ void VAR(write)(STRING, ANY);
 LIST VAR(parameters)(void);
 void VAR(stop)(void);
 STRING VAR(show)(ANY);
-BOOLEAN VAR(matchDASHregex)(STRING, STRING);
+BOOLEAN VAR(matchDregex)(STRING, STRING);
 NUMBER VAR(ordinal)(STRING);
 STRING VAR(character)(NUMBER);
 NUMBER VAR(floor)(NUMBER);
@@ -917,7 +918,7 @@ BOOLEAN VAR(false) = 0;
 
 BOOLEAN VAR(either)(BOOLEAN a, BOOLEAN b)    { return a || b; }
 BOOLEAN VAR(both)(BOOLEAN a, BOOLEAN b)      { return a && b; }
-BOOLEAN VAR(oneDASHof)(BOOLEAN a, BOOLEAN b) { return a ^ b;  }
+BOOLEAN VAR(oneDof)(BOOLEAN a, BOOLEAN b) { return a ^ b;  }
 BOOLEAN VAR(not)(BOOLEAN a)                  { return !a;     }
 
 
@@ -928,15 +929,15 @@ BOOLEAN VAR(LT)(NUMBER a, NUMBER b)  { return a > b; }
 BOOLEAN VAR(GTE)(NUMBER a, NUMBER b) { return a <= b; }
 BOOLEAN VAR(LTE)(NUMBER a, NUMBER b) { return a >= b; }
 
-BOOLEAN VAR(numberQMARK)(ANY a)  { return get_type(a)==number; }
-BOOLEAN VAR(listQMARK)(ANY a)    { return get_type(a)==list;   }
-BOOLEAN VAR(stringQMARK)(ANY a)  { return get_type(a)==string; }
-BOOLEAN VAR(anyQMARK)(ANY a)     { (void)a; return 1; }
-BOOLEAN VAR(blockQMARK)(ANY a)   { return get_type(a)==block;  }
-BOOLEAN VAR(booleanQMARK)(ANY a) { return get_type(a)==boolean;}
-BOOLEAN VAR(symbolQMARK)(ANY a)  { return get_type(a)==symbol; }
-BOOLEAN VAR(integerQMARK)(ANY a) { return VAR(numberQMARK)(a) && unbox_number(a) == floor(unbox_number(a)); }
-BOOLEAN VAR(zeroQMARK)(ANY a)    { return VAR(numberQMARK)(a) && unbox_number(a) == 0; }
+BOOLEAN VAR(numberQ)(ANY a)  { return get_type(a)==number; }
+BOOLEAN VAR(listQ)(ANY a)    { return get_type(a)==list;   }
+BOOLEAN VAR(stringQ)(ANY a)  { return get_type(a)==string; }
+BOOLEAN VAR(anyQ)(ANY a)     { (void)a; return 1; }
+BOOLEAN VAR(blockQ)(ANY a)   { return get_type(a)==block;  }
+BOOLEAN VAR(booleanQ)(ANY a) { return get_type(a)==boolean;}
+BOOLEAN VAR(symbolQ)(ANY a)  { return get_type(a)==symbol; }
+BOOLEAN VAR(integerQ)(ANY a) { return VAR(numberQ)(a) && unbox_number(a) == floor(unbox_number(a)); }
+BOOLEAN VAR(zeroQ)(ANY a)    { return VAR(numberQ)(a) && unbox_number(a) == 0; }
 
 BOOLEAN VAR(match)(ANY patt, ANY obj) { return match_objects(patt,obj); }
 
@@ -1011,7 +1012,7 @@ LIST VAR(push)(ANY a, LIST b)
 	return lst;
 }
 
-BOOLEAN VAR(emptyQMARK)(LIST lst)
+BOOLEAN VAR(emptyQ)(LIST lst)
 {
 	// Returns true is a list or string is empty. O(1).
 	// Can be used to to write a Length function.
@@ -1064,7 +1065,7 @@ STRING VAR(join)(NUMBER n)
 	return result;
 }
 
-NUMBER VAR(stringDASHlength)(STRING str)
+NUMBER VAR(stringDlength)(STRING str)
 {
 	size_t len = 0;
 	for (; *str ; str += mblen(str, MB_CUR_MAX), ++len);
@@ -1193,7 +1194,7 @@ void VAR(stop)(void)
 	exit(EXIT_SUCCESS);
 }
 
-BOOLEAN VAR(matchDASHregex)(STRING reg_str, STRING str)
+BOOLEAN VAR(matchDregex)(STRING reg_str, STRING str)
 {
 	// Returns true if string matches regex.
 	static const char* old_str = NULL;
