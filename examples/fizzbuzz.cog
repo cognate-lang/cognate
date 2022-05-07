@@ -1,15 +1,14 @@
+~~ Fizzbuzz in Cognate
 
-	~~ Fizzbuzz in Cognate
+Def Multiple as (Zero? Modulo);
 
-	Def Multiple as (Zero? Modulo);
+Def Fizzbuzz
+	Case (Multiple of 15) is "fizzbuzz"
+	Case (Multiple of 3)  is "fizz"
+	Case (Multiple of 5)  is "buzz"
+	otherwise ();
 
-	Def Fizzbuzz
-		Case (Multiple of 15) is "fizzbuzz"
-		Case (Multiple of 3)  is "fizz"
-		Case (Multiple of 5)  is "buzz"
-		otherwise ();
-
-	For each in Range 1 to 100 (Print Fizzbuzz)
+For each in Range 1 to 100 (Print Fizzbuzz)
 
 
 
