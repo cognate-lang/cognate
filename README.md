@@ -1,11 +1,11 @@
 
 <h1 align="center"> The Cognate programming language </h1>
 <p align="center">
-<img src="https://github.com/stavromulabeta/cognate/actions/workflows/test-debian.yml/badge.svg">
-<img src="https://github.com/stavromulabeta/cognate/actions/workflows/test-macos.yml/badge.svg">
-<img src="https://api.codiga.io/project/33196/score/svg">
-<img src="https://api.codiga.io/project/33196/status/svg">
-<img src="https://img.shields.io/github/license/stavromulabeta/cognate.svg">
+<img src="https://github.com/cognate-lang/cognate/actions/workflows/test-debian.yml/badge.svg">
+<img src="https://github.com/cognate-lang/cognate/actions/workflows/test-macos.yml/badge.svg">
+<img src="https://api.codiga.io/project/33284/score/svg">
+<img src="https://api.codiga.io/project/33284/status/svg">
+<img src="https://img.shields.io/github/license/cognate-lang/cognate.svg">
 </p>
 
 Cognate is a small dynamic quasi-concatenative language for functional programming. Cognate aims to express complex programs in a simple and readable way through its unique syntax, which emphasises embedding comments into statements. This makes programs very readable and helps a programmer better express their intentions.
