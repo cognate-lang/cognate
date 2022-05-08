@@ -151,7 +151,7 @@ Def Multiply-by-three as (
 Print Multiply-by-three 4;
 ```
 
-Of course, we can write this more simply without a variable in what is called point-free form.
+We can write this more simply without a variable in what is called point-free form.
 
 ```
 Def Multiply-by-three as (* 3);
@@ -210,17 +210,15 @@ Print List (Print "hello world"; 5);
 Cognate has many list functions
 
 ```
-Push 1 to List (2 3 4);
-Print;
+Print Push "hello" to List (1 2 3 4);
 
-First of List (1 2 3 4);
-Print;
+Print First of List (1 2 3 4);
 
-Rest of List (1 2 3 4);
-Print;
+Print Rest of List (1 2 3 4);
 
-Empty? List (1 2 3 4);
-Print;
+Print Empty? List (1 2 3 4);
+
+Print Length of List (1 2 3 4);
 ```
 
 Cognate also has `Map`, which applies a block to each list element and creates a resulting list, and `Filter` which applies a block to each elements and removes it from the list if it returns `False`.
