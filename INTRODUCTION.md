@@ -1,7 +1,9 @@
 ## Introduction to Cognate
 
+This introduction is unfinished - proper documentation will exist in future.
+
 ### Install
-Currently, Cognate will run on Linux and MacOS systems. If you use Windows 10, then you can install Cognate on the Windows Subsystem for Linux. To build Cognate, you will need make, flex, bison, clang, llvm, libblocksruntime-dev, and libgc. After installing dependencies, simply run this command to build the compiler and runtime.
+Currently, Cognate will run on Linux and MacOS systems. If you use Windows, then you can install Cognate onto the Windows Subsystem for Linux. To build Cognate, you will need `make`, `flex`, `bison`, `clang`, `llvm`, `xxd`, and `libblocksruntime-dev`. After installing dependencies, simply run this command to build the compiler and runtime.
 ```
 make
 ```
@@ -9,13 +11,9 @@ If that succeeds, install the compiler with the following command:
 ```
 make install
 ```
-This installs cognate to the `.local/` prefix. To install to a different directory, use this command:
+This installs cognate to the `~/.local/` prefix. To install to a different directory, use this command:
 ```
 make PREFIX=/my/prefix/dir install
-```
-You should then run the test script to test Cognate's functionality. This should work regardless of operating system.
-```
-make test
 ```
 
 ### First program
@@ -24,7 +22,7 @@ make test
 Print the string "hello world!" to the screen;
 ```
 
-Now to seems rather verbose doesn't it? Except is isn't. Cognate ignores all words starting with lower-case letters in what is called "informal syntax". The above programs are all equivalent to this:
+Now to seems rather verbose doesn't it? In reality it's not, since Cognate ignores all words starting with lower-case letters in what is called "informal syntax". These programs are all equivalent:
 
 ```
 Print "hello world!";
@@ -38,7 +36,7 @@ please Print "hello world!" thank you;
 jlkfdajlf Print djklsajlk "hello world" jdklsajdsja;
 ```
 
-This feature is intended to allow you to embed comments into your statements, making code self documenting and more readable. Of course for simple programs like hello world, this documentation is unnecessary.
+This feature allows you to embed comments into your statements, making code self documenting and more readable. Of course for simple programs like hello world, this documentation is unnecessary.
 
 ### Statements and the stack
 
@@ -53,7 +51,7 @@ Print "goodbye"; ~~ This is the second statement
 
 Multiple statements can be put on the same line. The statements themselves are evaluated right to left, such that the statement `Print "hello world";` would first evaluate `"hello world"` by pushing it to the stack, and then call `Print`.
 
-But what is the stack? The stack is where Cognate stores intermediary values between expressions. When I write a constant such as `"hello world"`, it is put on top of the stack. When I call a function such as `Print`, it removes (pops) the value on the top of the stack and prints it. The stack persists between statements, allowing me to write:
+But what is the stack? The stack is where Cognate stores intermediary values between expressions. When I write a constant such as `"hello world"`, it is put on top of the stack. When I call a function such as `Print`, it removes (pops) the value on the top of the stack and prints it. The stack persists between statements, allowing one to write:
 
 ```
 put "hello world" on top of the stack;
@@ -255,8 +253,8 @@ Cognate does not yet have functions for the length of a list, or getting the nth
 ### This tutorial is not finished!
 
 Feel free to ask me about anything you do not understand or anything this tutorial does not cover, such as:
-- groups
+- Combinators
 - stack manipulation functions
 - pattern matching
 
-There are example programs in the `examples` directory, and others in the `tests` directory. There is also a list of all functions in `compiler/builtins.c`.
+There are example programs in the `examples` directory, and some others in the `tests` directory. There is also a list of all built-in functions in `compiler/builtins.c`.
