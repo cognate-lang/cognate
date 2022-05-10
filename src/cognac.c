@@ -589,7 +589,7 @@ int main(int argc, char** argv)
 	}
 	yyparse();
 	//fputs("#include<cognate.c>\n",outfile);
-	fputs((char*)src_runtime_c, outfile);
+	fprintf(outfile, "%.*s", src_runtime_c_len, (char*)src_runtime_c);
 	fputs("char* record_info[][64] = {", outfile);
 	emit_record_info(full_ast);
 	fputs("{NULL}};\n", outfile);

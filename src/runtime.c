@@ -130,6 +130,9 @@ void _Noreturn __attribute__((format(printf, 1, 2))) throw_error_fmt(const char*
 void _Noreturn throw_error(const char* restrict const);
 _Bool compare_objects(ANY, ANY);
 _Bool match_objects(ANY, ANY);
+void destructure_lists(LIST, LIST);
+void destructure_records(RECORD, RECORD);
+void destructure_objects(ANY, ANY);
 
 void* gc_malloc(size_t);
 void gc_collect(void);
@@ -423,9 +426,15 @@ char* show_object (const ANY object, const _Bool raw_strings)
 			*buffer++ = ')';
 			*buffer++ = '\0';
 			break;
-		case boolean: strcpy(buffer, unbox_boolean(object) ? "True" : "False");  break;
-		case symbol:  strcpy(buffer, unbox_symbol(object)); break;
-		case block:	  sprintf(buffer, "<block %p>", (void*)unbox_block(object)); break;
+		case boolean: strcpy(buffer, unbox_boolean(object) ? "True" : "False");
+						  buffer += strlen(buffer);
+						  break;
+		case symbol:  strcpy(buffer, unbox_symbol(object));
+						  buffer += strlen(buffer);
+						  break;
+		case block:	  sprintf(buffer, "<block %p>", (void*)unbox_block(object));
+						  buffer += strlen(buffer);
+						  break;
 		case record:
 		{
 			RECORD r = unbox_record(object);
@@ -441,6 +450,7 @@ char* show_object (const ANY object, const _Bool raw_strings)
 				*buffer++ = ' ';
 				show_object(r->items[i], 0);
 				if (!record_info[r->id][i+2]) break;
+				*buffer++ = ',';
 				*buffer++ = ' ';
 			}
 			*buffer++ = '>';
@@ -596,6 +606,36 @@ _Bool match_objects(ANY patt, ANY obj)
 		case record:  return match_records(unbox_record(patt), unbox_record(obj));
 		default: __builtin_trap();
 	}
+}
+
+void destructure_lists(LIST patt, LIST obj)
+{
+	if (!patt) return;
+	destructure_lists(patt->next, obj->next);
+	destructure_objects(patt->object, obj->object);
+}
+
+void destructure_records(RECORD patt, RECORD obj)
+{
+	ssize_t i;
+	for (i = 0; record_info[patt->id][i+1]; ++i);
+	for (; i >= 0; --i) destructure_objects(patt->items[i], obj->items[i]);
+}
+
+void destructure_objects(ANY patt, ANY obj)
+{
+	if (get_type(patt) == block)
+	{
+		push(obj);
+		return;
+	}
+	switch (get_type(patt))
+	{
+		case list:   destructure_lists(unbox_list(patt), unbox_list(obj));
+		case record: destructure_records(unbox_record(patt), unbox_record(obj));
+		default:;
+	}
+
 }
 
 _Bool is_nan(ANY box)
@@ -949,7 +989,11 @@ BLOCK VAR(case)(ANY patt, ANY if_match, ANY if_not_match)
 		const BLOCK b1 = unbox_block(if_match);
 		const BLOCK b2 = unbox_block(if_not_match);
 		return Block_copy(^{
-			if (match_objects(patt, peek())) b1();
+			if (match_objects(patt, peek()))
+			{
+				destructure_objects(patt, pop());
+				b1();
+			}
 			else b2();
 		});
 	}
@@ -957,8 +1001,13 @@ BLOCK VAR(case)(ANY patt, ANY if_match, ANY if_not_match)
 	{
 		const BLOCK b1 = unbox_block(if_match);
 		return Block_copy(^{
-			if (match_objects(patt, peek())) b1();
-			else { pop(); push(if_not_match); }
+			ANY a = pop();
+			if (match_objects(patt, a))
+			{
+				destructure_objects(patt, a);
+				b1();
+			}
+			else push(if_not_match);
 		});
 	}
 	if (block2)
@@ -970,8 +1019,8 @@ BLOCK VAR(case)(ANY patt, ANY if_match, ANY if_not_match)
 		});
 	}
 	else return Block_copy(^{
-		pop();
-		if (match_objects(patt, peek())) push(if_match);
+		ANY a = pop();
+		if (match_objects(patt, a)) push(if_match);
 		else push(if_not_match);
 	});
 }
