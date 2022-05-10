@@ -46,8 +46,8 @@ int last_openbrace_col;
 
 %x BLOCK_COMMENT
 
-ALLOWCHAR [A-Za-z0-9\-\?\!\'\+\/\*]
-FORMAL    [A-Z\-\?\!\+\/\*]
+ALLOWCHAR [A-Za-z0-9\-\?\!\'\+\/\*\>\=\<]
+FORMAL    [A-Z\-\?\!\+\/\*\>\<\=]
 
 %%
 D[eE][fF] return DEF;
@@ -60,17 +60,6 @@ T[yY][pP][eE] return TYPE;
 \\{ALLOWCHAR}+       yylval.text=lc(strdup(yytext+1)); return SYMBOL;
 \"(\\.|[^\n"\\])*\"  yylval.text=strdup(yytext);       return STRING;
 \"                   yyerror("unterminated string"); // TODO error message is printing with wrong column.
-
-">"  yylval.text=strdup(">");  return IDENTIFIER;
-">=" yylval.text=strdup(">="); return IDENTIFIER;
-"<"  yylval.text=strdup("<");  return IDENTIFIER;
-"<=" yylval.text=strdup("<="); return IDENTIFIER;
-"==" yylval.text=strdup("=="); return IDENTIFIER;
-"/=" yylval.text=strdup("/="); return IDENTIFIER;
-"+"  yylval.text=strdup("+");  return IDENTIFIER;
-"-"  yylval.text=strdup("-");  return IDENTIFIER;
-"*"  yylval.text=strdup("*");  return IDENTIFIER;
-"/"  yylval.text=strdup("/");  return IDENTIFIER;
 
 ; return ';';
 \( brace_depth++; last_openbrace_line = yylloc.first_line; last_openbrace_col = yylloc.first_column; return '(';
