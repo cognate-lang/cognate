@@ -73,6 +73,7 @@
 {.name="clear",               .type=func, .argc=0, .needs_stack=true},
 {.name="length",              .type=func, .argc=1, .args={list},    .rets=true, .ret=number},
 {.name="take",                .type=func, .argc=2, .args={number, list}, .rets=true, .ret=list},
+{.name="take-while",          .type=func, .argc=2, .args={block, list}, .rets=true, .ret=list},
 {.name="discard",             .type=func, .argc=2, .args={number, list}, .rets=true, .ret=list},
 {.name="remember",            .type=func, .argc=1, .args={block},        .rets=true, .ret=block},
 {.name="pure",                .type=func, .argc=1, .args={block},        .rets=true, .ret=block},

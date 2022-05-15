@@ -249,6 +249,7 @@ BLOCK VAR(case)(ANY, ANY, ANY);
 LIST VAR(split)(STRING, STRING);
 NUMBER VAR(length)(LIST);
 LIST VAR(take)(NUMBER,LIST);
+LIST VAR(takeDwhile)(BLOCK,LIST);
 LIST VAR(discard)(NUMBER,LIST);
 BLOCK VAR(remember)(BLOCK);
 BOOLEAN VAR(all)(BLOCK,LIST);
@@ -1544,6 +1545,34 @@ BLOCK VAR(pure)(BLOCK b)
 		b();
 		pure = 0;
 	});
+}
+
+LIST VAR(takeDwhile)(BLOCK predicate, LIST lst)
+{
+	LIST r = NULL;
+	while (lst)
+	{
+		push (lst->object);
+		predicate();
+		int res = unbox_boolean(pop());
+		if (!res) break;
+		cognate_list* a = gc_new(cognate_list);
+		a->object = lst->object;
+		a->next = r;
+		r = a;
+		lst = lst->next;
+	}
+	cognate_list* prev = NULL;
+	cognate_list* curr = (cognate_list*)r;
+	while (curr)
+	{
+		cognate_list* next = (cognate_list*)curr->next;
+		curr->next = prev;
+		prev = curr;
+		curr = next;
+	}
+	return prev;
+
 }
 
 BOOLEAN VAR(all)(BLOCK predicate, LIST lst)
