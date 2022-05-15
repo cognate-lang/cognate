@@ -251,6 +251,7 @@ NUMBER VAR(length)(LIST);
 LIST VAR(take)(NUMBER,LIST);
 LIST VAR(discard)(NUMBER,LIST);
 BLOCK VAR(remember)(BLOCK);
+BOOLEAN VAR(all)(BLOCK,LIST);
 
 static const char *lookup_type(cognate_type);
 static _Bool compare_lists(LIST, LIST);
@@ -1543,6 +1544,17 @@ BLOCK VAR(pure)(BLOCK b)
 		b();
 		pure = 0;
 	});
+}
+
+BOOLEAN VAR(all)(BLOCK predicate, LIST lst)
+{
+	for (; lst ; lst = lst->next)
+	{
+		push(lst->object);
+		predicate();
+		if unlikely(!unbox_boolean(pop())) return 0;
+	}
+	return 1;
 }
 // ---------- ACTUAL PROGRAM ----------
 
