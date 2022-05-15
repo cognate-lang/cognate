@@ -44,6 +44,7 @@
 {.name="head",                .type=func, .argc=1, .args={string},    .rets=true, .ret=string},
 {.name="tail",                .type=func, .argc=1, .args={string},    .rets=true, .ret=string},
 {.name="push",                .type=func, .argc=2, .args={any, list}, .rets=true, .ret=list},
+{.name="append",              .type=func, .argc=2, .args={any, list}, .rets=true, .ret=list},
 {.name="empty?",              .type=func, .argc=1, .args={list},      .rets=true, .ret=boolean},
 {.name="join",                .type=func, .argc=1, .args={number},    .rets=true, .ret=string, .needs_stack=true},
 {.name="string-length",       .type=func, .argc=1, .args={string},    .rets=true, .ret=number},

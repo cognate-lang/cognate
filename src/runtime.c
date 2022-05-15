@@ -1585,5 +1585,20 @@ BOOLEAN VAR(all)(BLOCK predicate, LIST lst)
 	}
 	return 1;
 }
+
+LIST VAR(append)(ANY a, LIST l)
+{
+	// TODO iterative version.
+	cognate_list* ll = gc_malloc(sizeof(*l));
+	if (!l)
+	{
+		ll->next = NULL;
+		ll->object = a;
+		return ll;
+	}
+	ll->object = l->object;
+	ll->next = VAR(append)(a, l->next);
+	return ll;
+}
 // ---------- ACTUAL PROGRAM ----------
 
