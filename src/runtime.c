@@ -176,6 +176,7 @@ ANY VAR(if)(BOOLEAN, ANY, ANY);
 void VAR(when)(BOOLEAN, BLOCK);
 void VAR(unless)(BOOLEAN, BLOCK);
 void VAR(while)(BLOCK, BLOCK);
+void VAR(until)(BLOCK, BLOCK);
 void VAR(do)(BLOCK);
 void VAR(put)(ANY);
 void VAR(print)(ANY);
@@ -886,6 +887,16 @@ void VAR(while)(BLOCK cond, BLOCK body)
 {
 	cond();
 	while (unbox_boolean(pop()))
+	{
+		body();
+		cond();
+	}
+}
+
+void VAR(until)(BLOCK cond, BLOCK body)
+{
+	cond();
+	while (!unbox_boolean(pop()))
 	{
 		body();
 		cond();
