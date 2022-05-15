@@ -18,6 +18,7 @@
 {.name="when",                .type=func, .argc=2, .args={boolean, block},      .rets=false, .needs_stack=true},
 {.name="unless",              .type=func, .argc=2, .args={boolean, block},      .rets=false, .needs_stack=true},
 {.name="while",               .type=func, .argc=2, .args={block, block},        .needs_stack=true},
+{.name="until",               .type=func, .argc=2, .args={block, block},        .needs_stack=true},
 {.name="print",               .type=func, .argc=1, .args={any}},
 {.name="put",                 .type=func, .argc=1, .args={any}},
 {.name="prints",              .type=func, .argc=1, .args={block}},
