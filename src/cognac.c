@@ -363,6 +363,8 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 				++j;
 			}
 			record_id++;
+			fputs("{", outfile);
+			footer = "}";
 
 		}
 		break;

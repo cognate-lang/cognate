@@ -25,6 +25,7 @@
 {.name="do",                  .type=func, .argc=1, .args={block}, .needs_stack=true},
 {.name="random",              .type=func, .argc=3, .args={number, number},   .rets=true, .ret=number},
 {.name="modulo",              .type=func, .argc=2, .args={number, number},   .rets=true, .ret=number},
+{.name="sqrt",                .type=func, .argc=1, .args={number},           .rets=true, .ret=number},
 {.name="either",              .type=func, .argc=2, .args={boolean, boolean}, .rets=true, .ret=boolean},
 {.name="both",                .type=func, .argc=2, .args={boolean, boolean}, .rets=true, .ret=boolean},
 {.name="one-of",              .type=func, .argc=2, .args={boolean, boolean}, .rets=true, .ret=boolean},

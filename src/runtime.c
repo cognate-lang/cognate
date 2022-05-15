@@ -184,6 +184,7 @@ NUMBER VAR(M)(NUMBER, NUMBER);
 NUMBER VAR(D)(NUMBER, NUMBER);
 NUMBER VAR(S)(NUMBER, NUMBER);
 NUMBER VAR(modulo)(NUMBER, NUMBER);
+NUMBER VAR(sqrt)(NUMBER);
 NUMBER VAR(random)(NUMBER, NUMBER);
 void VAR(clear)(void);
 extern BOOLEAN VAR(true);
@@ -928,6 +929,11 @@ NUMBER VAR(modulo)(NUMBER a, NUMBER b)
 	if unlikely(is_nan(*(long*)&r))
 		throw_error_fmt("modulo by %.14g of %.14g yields invalid result", a, b);
 	return r;
+}
+
+NUMBER VAR(sqrt)(NUMBER a)
+{
+	return sqrt(a);
 }
 
 NUMBER VAR(random)(NUMBER low, NUMBER high)
