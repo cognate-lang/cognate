@@ -516,7 +516,7 @@ const char* lookup_type(cognate_type type)
 		case number:  return "number";
 		case list:    return "list";
 		case block:   return "block";
-		case record:   return "record";
+		case record:  return "record";
 		case symbol:  return "symbol";
 		default: __builtin_trap();
 	}
@@ -559,6 +559,7 @@ static _Bool match_records(RECORD patt, RECORD obj)
 
 _Bool compare_objects(ANY ob1, ANY ob2)
 {
+	if (ob1 == ob2) return 1;
 	if (get_type(ob1) != get_type(ob2)) return 0;
 	switch (get_type(ob1))
 	{
@@ -591,6 +592,7 @@ _Bool match_lists(LIST lst1, LIST lst2)
 
 _Bool match_objects(ANY patt, ANY obj)
 {
+	if (patt == obj) return 1;
 	if (get_type(patt) == block)
 	{
 		push(obj);
