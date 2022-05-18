@@ -42,7 +42,6 @@ record_t* alloc_record(char* name, record_t* next)
 	TYPE
 	DEF
 	LET
-	SET
 	';'
 	'('
 	')'
@@ -84,7 +83,6 @@ TOKEN:
 	| SYMBOL             { $$ = alloc_ast(value, symbol,   $1); }
 	| DEF IDENTIFIER     { $$ = alloc_ast(def, any,        $2); }
 	| LET IDENTIFIER     { $$ = alloc_ast(let, any,        $2); }
-	| SET IDENTIFIER     { $$ = alloc_ast(set, any,        $2); }
 	;
 
 %%

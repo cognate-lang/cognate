@@ -61,7 +61,7 @@ char * restrict_chars(char* in)
 	return out;
 }
 
-char* type_as_str[8][2] =
+char* type_as_str[9][2] =
 {
 	[any]     = { "any",		 "ANY"	 },
 	[block]   = { "block",	 "BLOCK"	 },
@@ -71,6 +71,7 @@ char* type_as_str[8][2] =
 	[boolean] = { "boolean", "BOOLEAN"},
 	[list]    = { "list",	 "LIST"	 },
 	[record]  = { "record",	 "RECORD" },
+	[box]     = { "box",		 "BOX"	 },
 };
 
 reg_list* assert_registers(size_t lower, size_t upper, reg_list* registers)
@@ -233,21 +234,6 @@ decl_list* predeclare(ast* head, decl_list* defs)
 	}
 	while (already_predeclared) already_predeclared = already_predeclared->next;
 	return defs;
-}
-
-bool is_mutated(ast* tree, decl_list v)
-{
-	for (; tree ; tree = tree->next)
-	{
-		switch(tree->type)
-		{
-			case set: if (!strcmp(v.name, tree->text)) return true; break;
-			case let: case def: if (!strcmp(v.name, tree->text)) return false; break;
-			case value: if (tree->val_type == block && is_mutated(tree->child, v)) return true; break;
-			default:;
-		}
-	}
-	return false;
 }
 
 
@@ -466,10 +452,8 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 				.rets = true,
 				.builtin = false
 			};
-			char* tag = "const";
-			if (is_mutated(tree->next, *d)) d->ret = any, tag = "__block";
 			char* name = restrict_chars(d->name);
-			fprintf(outfile, "%s %s VAR(%s)=", tag, type_as_str[d->ret][true], name);
+			fprintf(outfile, "const %s VAR(%s)=", type_as_str[d->ret][true], name);
 			free(name);
 			if (d->ret == block) fputs("Block_copy(", outfile);
 			registers = emit_register(d->ret, registers);
@@ -493,19 +477,6 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 			footer = "}";
 		}
 		break;
-		case set:
-		{
-			char* name = restrict_chars(tree->text);
-			decl_list* d = lookup_word(tree->text, defs);
-			if (!d) yyerror("mutating undefined word");
-			if (d -> type == stack_op || d -> type == func) { yyerror("cannot mutate function"); }
-			if (d -> predecl) fprintf(outfile, "VAR(%s);", name);
-			registers = assert_registers(1, LONG_MAX, registers);
-			fprintf(outfile, "SET(%s,", name);
-			free(name);
-			registers = emit_register(any, registers);
-			fputs(");", outfile);
-		}
 	}
 	// Free the ast node.
 	compile(tree->next, registers, defs);

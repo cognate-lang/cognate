@@ -52,7 +52,6 @@ FORMAL    [A-Z\-\?\!\+\/\*\>\<\=]
 %%
 D[eE][fF] return DEF;
 L[eE][tT] return LET;
-S[eE][tT] return SET;
 T[yY][pP][eE] return TYPE;
 
 \-?[0-9]+(\.[0-9]+)? yylval.text=strdup(yytext);       return NUMBER;
