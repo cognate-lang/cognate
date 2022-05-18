@@ -19,7 +19,7 @@ Print If == 8 Foo 7
 else
 	"FAIL: Function shadowing 2";
 
-Let Recurred be False;
+Let Recurred be Box False;
 Def Bar as
 (
 	Let N;
@@ -31,7 +31,7 @@ Def Bar as
 );
 
 call Bar with 10;
-Print If Recurred
+Print If Unbox Recurred
 	"PASS: Recursion"
 else
 	"FAIL: Recursion";

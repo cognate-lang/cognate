@@ -11,7 +11,6 @@ Def Bar as (
 
 Def Foo as (
 	Let X;
-	Set X to X;
 	Bar (Print X);
 );
 
@@ -21,7 +20,7 @@ Foo "FAIL: Implicit block copying";
 Drop; Do;
 
 
-Let Y be ();
+Let Y be Box ();
 
 Def Foo2 as (
 	Let X;
@@ -29,8 +28,8 @@ Def Foo2 as (
 );
 
 
-Foo2 "PASS: Implicit block copying with mutation"; Let Z be Y;
-Foo2 "FAIL: Implicit block copying with mutation"; Let W be Y;
+Foo2 "PASS: Implicit block copying with mutation"; Let Z be Unbox Y;
+Foo2 "FAIL: Implicit block copying with mutation"; Let W be Unbox Y;
 Do Z;
 Drop W;
 

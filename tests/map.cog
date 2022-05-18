@@ -6,7 +6,7 @@ Print If == List () Map (+ 1) over the List ()
 	then "PASS: Mapping over an empty list"
 	else "FAIL: Mapping over a list";
 
-Let X be 0;
-Print If == List (1 3 6) Map (+ X; Set X; X) over List (1 2 3)
+Let X be Box 0;
+Print If == List (1 3 6) Map (+ Unbox X; Set X; Unbox X) over List (1 2 3)
 	then "PASS: Mapping in order"
 	else "FAIL: Mapping in order";
