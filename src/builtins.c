@@ -80,6 +80,9 @@
 {.name="remember",            .type=func, .argc=1, .args={block},        .rets=true, .ret=block},
 {.name="pure",                .type=func, .argc=1, .args={block},        .rets=true, .ret=block},
 {.name="all",                 .type=func, .argc=2, .args={block, list}, .rets=true, .ret=boolean},
+{.name="box",                 .type=func, .argc=1, .args={any}, .rets=true, .ret=box},
+{.name="unbox",               .type=func, .argc=1, .args={box}, .rets=true, .ret=any},
+{.name="set",                 .type=func, .argc=2, .args={box, any}, .rets=false},
 
 /* Builtin stack operations */
 {.name="drop",                .type=stack_op, .stack_shuffle=&drop_register},

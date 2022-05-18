@@ -34,6 +34,7 @@
 
 typedef unsigned long ANY;
 typedef ANY* restrict ANYPTR;
+typedef ANY* restrict BOX;
 typedef void(^BLOCK)();
 typedef _Bool BOOLEAN;
 typedef double NUMBER;
@@ -44,7 +45,7 @@ typedef struct cognate_record* restrict RECORD;
 
 typedef enum cognate_type
 {
-	NOTHING = 0,
+	box     = 0,
 	boolean = 1,
 	string  = 2,
 	list    = 3,
@@ -146,6 +147,8 @@ char* gc_strndup(char*, size_t);
 cognate_type get_type(ANY);
 _Bool is_nan(ANY);
 NUMBER unbox_number(ANY);
+BOX unbox_box(ANY);
+ANY box_box(BOX);
 ANY box_number(NUMBER);
 BOOLEAN unbox_boolean(ANY);
 ANY box_boolean(BOOLEAN);
@@ -398,7 +401,8 @@ char* show_object (const ANY object, const _Bool raw_strings)
 						 buffer += strlen(buffer);
 						 break;
 		case string:
-			if (raw_strings) strcpy(buffer, unbox_string(object));
+			if (raw_strings)
+				buffer += strlen(strcpy(buffer, unbox_string(object)));
 			else
 			{
 				*buffer++ = '\'';
@@ -412,10 +416,9 @@ char* show_object (const ANY object, const _Bool raw_strings)
 					}
 					else if (c == '\\') { *buffer++ = '\\'; *buffer++ = '\\'; }
 					else if (c == '\'') { *buffer++ = '\\'; *buffer++ = '\''; }
-					else *(buffer++) = c;
+					else *buffer++ = c;
 				}
 				*buffer++ = '\'';
-				*buffer++ = '\0';
 			}
 			break;
 		case list:
@@ -428,7 +431,6 @@ char* show_object (const ANY object, const _Bool raw_strings)
 				*buffer++ = ' ';
 			}
 			*buffer++ = ')';
-			*buffer++ = '\0';
 			break;
 		case boolean: strcpy(buffer, unbox_boolean(object) ? "True" : "False");
 						  buffer += strlen(buffer);
@@ -458,12 +460,17 @@ char* show_object (const ANY object, const _Bool raw_strings)
 				*buffer++ = ' ';
 			}
 			*buffer++ = '>';
-			*buffer++ = '\0';
 		}
 		break;
-		case NOTHING: __builtin_trap();
+		case box:
+			//puts("test");
+			*buffer++ = '[';
+			show_object(*unbox_box(object), 0);
+			*buffer++ = ']';
+			break;
 	}
 	depth--;
+	if (!depth) *buffer++ = '\0';
 	return strdup((char*)heap_top);
 }
 
@@ -511,14 +518,14 @@ const char* lookup_type(cognate_type type)
 {
 	switch(type)
 	{
-		case NOTHING: return "NOTHING";
+		case box:     return "box";
 		case string:  return "string";
 		case number:  return "number";
 		case list:    return "list";
 		case block:   return "block";
 		case record:  return "record";
 		case symbol:  return "symbol";
-		default: __builtin_trap();
+		case boolean: return "boolean";
 	}
 }
 
@@ -571,8 +578,8 @@ _Bool compare_objects(ANY ob1, ANY ob2)
 		case symbol:  return unbox_symbol(ob1) == unbox_symbol(ob2);
 		case list:    return compare_lists(unbox_list(ob1), unbox_list(ob2));
 		case record:  return compare_records(unbox_record(ob1), unbox_record(ob2));
-		case block: throw_error("cannot compare blocks");
-		default: __builtin_trap();
+		case block:   throw_error("cannot compare blocks");
+		case box:     return compare_objects(*unbox_box(ob1), *unbox_box(ob2));
 	}
 }
 
@@ -593,12 +600,6 @@ _Bool match_lists(LIST lst1, LIST lst2)
 _Bool match_objects(ANY patt, ANY obj)
 {
 	if (patt == obj) return 1;
-	if (get_type(patt) == block)
-	{
-		push(obj);
-		unbox_block(patt)();
-		return unbox_boolean(pop());
-	}
 	else if (get_type(patt) != get_type(obj)) return 0;
 	switch (get_type(patt))
 	{
@@ -610,7 +611,11 @@ _Bool match_objects(ANY patt, ANY obj)
 		case symbol:  return unbox_symbol(patt) == unbox_symbol(obj);
 		case list:    return match_lists(unbox_list(patt), unbox_list(obj));
 		case record:  return match_records(unbox_record(patt), unbox_record(obj));
-		default: __builtin_trap();
+		case box:     return match_objects(*unbox_box(patt), *unbox_box(obj));
+		case block:
+			push (obj);
+			unbox_block(patt)();
+			return unbox_boolean(pop());
 	}
 }
 
@@ -639,6 +644,7 @@ void destructure_objects(ANY patt, ANY obj)
 	{
 		case list:   destructure_lists(unbox_list(patt), unbox_list(obj));
 		case record: destructure_records(unbox_record(patt), unbox_record(obj));
+		case box:    destructure_objects(*unbox_box(patt), *unbox_box(obj));
 		default:;
 	}
 
@@ -666,6 +672,18 @@ NUMBER unbox_number(ANY box)
 ANY box_number(NUMBER num)
 {
 	return *(ANY*)&num;
+}
+
+BOX unbox_box(ANY box)
+{
+	if unlikely(!is_nan(box) || (TYP_MASK & box) != 0)
+		throw_error_fmt("expected a box but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+	return (BOX)(PTR_MASK & box);
+}
+
+ANY box_box(BOX box)
+{
+	return NAN_MASK | ((long)box << 48) | (long)box;
 }
 
 BOOLEAN unbox_boolean(ANY box)
@@ -1612,6 +1630,23 @@ LIST VAR(append)(ANY a, LIST l)
 	ll->object = l->object;
 	ll->next = VAR(append)(a, l->next);
 	return ll;
+}
+
+BOX VAR(box)(ANY a)
+{
+	ANY* b = gc_malloc(sizeof *b);
+	*b = a;
+	return b;
+}
+
+ANY VAR(unbox)(BOX b)
+{
+	return *b;
+}
+
+void VAR(set)(BOX b, ANY a)
+{
+	*b = a;
 }
 // ---------- ACTUAL PROGRAM ----------
 

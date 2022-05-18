@@ -8,9 +8,9 @@
 #include <stdbool.h>
 
 // OR types so we can do bitwise typechecking? TODO?
-typedef enum {record, block, string, number, symbol, boolean, list, any} value_type;
+typedef enum {box, record, block, string, number, symbol, boolean, list, any} value_type;
 
-typedef enum {identifier, value, def, let, set, type} token_type;
+typedef enum {identifier, value, def, let, type} token_type;
 
 typedef enum {func, var, stack_op} decl_type;
 
