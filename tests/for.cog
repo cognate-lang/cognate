@@ -4,9 +4,9 @@ Print If == 120 R
 	then "PASS: Computing 5! using for loop"
 	else "FAIL: Computing 5! using for loop";
 
-Let X be 0;
+Let X be Box 0;
 For each in List (1 2 3 4 5) (Set X);
 
-Print If == 5 X
+Print If == 5 Unbox X
 	then "PASS: For loop executes in order"
 	else "FAIL: For loop executes in order";
