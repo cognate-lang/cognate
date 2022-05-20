@@ -268,6 +268,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 		return;
 	}
 	const char* footer = "";
+	const char* immediate_footer = "";
 	yylloc.first_column = tree->col; // This lets us use yyerror()
 	yylloc.first_line = tree->line;
 	fprintf(outfile, "\n#line %zi\n", (ssize_t)tree->line);
@@ -389,7 +390,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 					}
 					if (!release) fputs(")", outfile);
 					fputs("));", outfile);
-					footer = "backtrace_pop();";
+					immediate_footer = "backtrace_pop();";
 					break;
 				case var:
 					fprintf(outfile, "VAR(%s);", res);
@@ -480,6 +481,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 		break;
 	}
 	// Free the ast node.
+	fputs(immediate_footer, outfile);
 	compile(tree->next, registers, defs);
 	fputs(footer, outfile);
 }
