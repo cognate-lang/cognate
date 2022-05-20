@@ -380,7 +380,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 			switch(d->type)
 			{
 				case func:
-					if (!release) fprintf(outfile, "(set_word_name(\"%s\"),set_line_num(__LINE__),", d->name);
+					if (!release) fprintf(outfile, "(backtrace_push(\"%s\",%zi,%zi),", d->name,tree->line,tree->col);
 					fprintf(outfile,"CALL(%s,(", res);
 					for (unsigned short i = 0; i < d->argc; ++i)
 					{
@@ -389,6 +389,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 					}
 					if (!release) fputs(")", outfile);
 					fputs("));", outfile);
+					footer = "backtrace_pop();";
 					break;
 				case var:
 					fprintf(outfile, "VAR(%s);", res);
@@ -537,6 +538,40 @@ decl_list* builtins(void)
 	return b;
 }
 
+void emit_source_string(FILE* yyin)
+{
+	int buf_sz = 255;
+	char buf[buf_sz];
+
+	fputs("char* source_file_lines[]={", outfile);
+
+	rewind(yyin);
+	if (!release) while(fgets(buf, buf_sz, yyin)) {
+		fputs("\"", outfile);
+		for (size_t i = 0; buf[i] != '\n';)
+		{
+			int len = mblen(buf+i, MB_CUR_MAX);
+			if (len == 1)
+			{
+				switch(buf[i])
+				{
+					case '\\':
+					case '"':
+						fputs("\\", outfile);
+						break;
+					default:;
+				}
+			}
+			fprintf(outfile, "%.*s", len, buf + i);
+			i += len;
+		}
+
+		fputs("\",",outfile);
+	}
+
+	fputs("NULL};\n", outfile);
+}
+
 int main(int argc, char** argv)
 {
 	setlocale(LC_ALL, "");
@@ -566,6 +601,7 @@ int main(int argc, char** argv)
 	fputs("char* record_info[][64] = {", outfile);
 	emit_record_info(full_ast);
 	fputs("{NULL}};\n", outfile);
+	emit_source_string(yyin);
 	fprintf(outfile, "#line 1 \"%s\"\n", source_file_path);
 	fputs("int main(int argc,char** argv){init(argc,argv);",outfile);
 	add_symbols(full_ast);
