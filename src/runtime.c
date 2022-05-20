@@ -75,6 +75,14 @@ typedef struct cognate_stack
 	ANYPTR absolute_start; // For the garbage collector
 } cognate_stack;
 
+typedef struct backtrace
+{
+	char* name;
+	size_t line;
+	size_t col;
+	struct backtrace* next;
+} backtrace;
+
 #define NAN_MASK 0x7ff8000000000000
 #define PTR_MASK 0x0000ffffffffffff
 #define TYP_MASK 0x0007000000000000
@@ -110,16 +118,16 @@ static uint8_t* restrict free_start;
 static size_t system_memory;
 
 // Global variables
-extern cognate_stack stack;
-extern LIST cmdline_parameters;
-extern const char* restrict word_name;
-extern int line_num;
+static cognate_stack stack;
+static LIST cmdline_parameters = NULL;
+static backtrace* trace = NULL;
 
 extern char *record_info[][64];
+extern char *source_file_lines[];
 
-extern const char* restrict function_stack_top;
-extern const char* restrict function_stack_start;
-extern ptrdiff_t function_stack_size;
+static const char* restrict function_stack_top;
+static const char* restrict function_stack_start;
+static ptrdiff_t function_stack_size;
 
 // Variables and	needed by functions.c defined in runtime.c
 void init_stack(void);
@@ -171,8 +179,6 @@ ANY peek(void);
 void flush_stack_cache(void);
 int stack_length(void);
 void check_function_stack_size(void);
-void set_word_name(const char* restrict const);
-void set_line_num(int);
 
 // Builtin functions needed by compiled source file defined in functions.c
 ANY VAR(if)(BOOLEAN, ANY, ANY);
@@ -266,16 +272,6 @@ static _Bool match_lists(LIST, LIST);
 static void handle_error_signal(int);
 static void assert_impure();
 
-cognate_stack stack;
-LIST cmdline_parameters = NULL;
-
-const char* restrict word_name = NULL;
-int line_num = -1;
-
-const char* restrict function_stack_top;
-const char* restrict function_stack_start;
-ptrdiff_t function_stack_size;
-
 void init(int argc, char** argv)
 {
 	struct rlimit stack_limit;
@@ -316,10 +312,7 @@ void init(int argc, char** argv)
 void cleanup(void)
 {
 	if unlikely(stack.top != stack.start || stack.cache != NIL_OBJ)
-	{
-		word_name = NULL;
 		throw_error_fmt("exiting with %ti object(s) on the stack", stack.top - stack.start + (stack.cache != NIL_OBJ));
-	}
 }
 
 void check_function_stack_size(void)
@@ -329,58 +322,83 @@ void check_function_stack_size(void)
 		throw_error_fmt("maximum recursion depth exceeded");
 }
 
-void set_word_name(const char* restrict const name) { word_name=name; } // Need this to avoid unsequenced evaluation error.
-void set_line_num(int num) { line_num=num; } // Need this to avoid unsequenced evaluation error.
+char* get_source_line(size_t line)
+{
+	// Length should be enough?
+	return source_file_lines[line-1];
+}
+
+void backtrace_push(char* name, size_t line, size_t col)
+{
+	backtrace* b = gc_malloc(sizeof *b);
+	b->name = name;
+	b->line = line;
+	b->col = col;
+	b->next = trace;
+	trace = b;
+}
+
+backtrace* backtrace_pop()
+{
+	backtrace* b = trace;
+	trace = trace->next;
+	return b;
+}
 
 void assert_impure()
 {
 	if unlikely(pure) throw_error("invalid operation for pure function");
 }
 
+void print_backtrace()
+{
+	fputc('\n', stderr);
+	if (!trace) return;
+	int offset = -2;
+	backtrace* b;
+	for (int i = 0; i < 10;++i)
+	{
+		b = backtrace_pop();
+		int digits = 0;
+		int len = strlen(b->name);
+		for (size_t tmp = b->line; tmp /= 10; ++digits);
+		char* ln = get_source_line(b->line);
+		int col = b->col;
+		while (*ln)
+		{
+			if (*ln != ' ' && *ln != '\t') break;
+			ln++;
+			col--;
+		}
+		fprintf(stderr, "\033[0;2m[%zi] %.*s\033[0;1m%.*s\033[0;2m%s\n",
+				b->line,
+				col - len - 1, ln,
+				len, ln + col - len - 1,
+				ln + col - 1);
+		while (col-- + digits - len/2 + 2) fputs(" ", stderr);
+		fputs("\033[31;1m^\n", stderr);
+		if (!b->next) break;
+	}
+}
+
 _Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(const char* restrict const fmt, ...)
 {
-	const _Bool debug = word_name && line_num != -1;
-	int offset = -2;
-	fputc('\n', stderr);
-	if (debug)
-	{
-		int line_num_digits = 1;
-		for (int tmp = line_num; tmp /= 10; ++line_num_digits);
-		offset = strlen("Line: ... ") + line_num_digits + strlen(word_name);
-		fprintf(stderr, "\033[0;2mLine %i: \033[0;1m... %c%s ...\n%*s\033[31;1m↳ ", line_num, toupper(*word_name), word_name + 1, offset, "");
-	} else fputs("\033[31;1m", stderr);
+	print_backtrace();
+	fputs("\033[31;1m", stderr);
 	va_list args;
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
 	fputc('\n', stderr);
-	if (errno) {
-		const char* str = strerror(errno);
-		fprintf(stderr, "%*s\033[0;2m%c%s\n", offset + 2, "", tolower(*str), str+1);
-	}
 	fputs("\033[0m", stderr);
 	exit(EXIT_FAILURE);
 }
 
 _Noreturn void throw_error(const char* restrict const msg)
 {
-	const _Bool debug = word_name && line_num != -1;
-	int offset = -2;
-	fputc('\n', stderr);
-	if (debug)
-	{
-		int line_num_digits = 1;
-		for (int tmp = line_num; tmp /= 10; ++line_num_digits);
-		offset = strlen("Line: ... ") + line_num_digits + strlen(word_name);
-		fprintf(stderr, "\033[0;2mLine %i: \033[0;1m... %c%s ...\n%*s\033[31;1m↳ ",
-			line_num, toupper(*word_name), word_name + 1, offset, "");
-	} else fputs("\033[31;1m", stderr);
+	print_backtrace();
+	fputs("\033[31;1m", stderr);
 	fputs(msg, stderr);
 	fputc('\n', stderr);
-	if (errno)
-	{
-		const char* str = strerror(errno);
-		fprintf(stderr, "%*s\033[0;2m%c%s\n", offset + 2, "", tolower(*str), str+1);
-	}
 	fputs("\033[0m", stderr);
 	exit(EXIT_FAILURE);
 }
