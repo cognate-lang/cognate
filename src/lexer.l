@@ -17,7 +17,7 @@ void yyerror(char* str)
 {
 	char header[20];
 	int line_n = yylloc.first_line;
-	sprintf(header, "Line %d: ", line_n);
+	sprintf(header, "[%d] ", line_n);
 	int col_n = yylloc.first_column + strlen(header) - 1;
 	fprintf(stderr, "\033[0;2m%s", header);
 	char* line = NULL;
@@ -35,7 +35,7 @@ void yyerror(char* str)
 	col_n -= whitespace;
 	fprintf(stderr, "\033[0;1m%s", line);
 	while (--col_n) fputc(' ', stderr);
-	fprintf(stderr, "\033[31;1m↳ %s\033[0m\n", str);
+	fprintf(stderr, "\033[31;1m^ %s\033[0m\n", str);
 	exit(EXIT_FAILURE);
 }
 
