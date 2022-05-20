@@ -13,4 +13,4 @@ Def Primes (
 	)
 );
 
-Print Primes up to 1000000000;
+Print Primes up to 1000;
