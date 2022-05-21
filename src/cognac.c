@@ -390,7 +390,8 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 					}
 					if (!release) fputs(")", outfile);
 					fputs("));", outfile);
-					immediate_footer = "backtrace_pop();";
+					if (!release)
+						immediate_footer = "backtrace_pop();";
 					break;
 				case var:
 					fprintf(outfile, "VAR(%s);", res);
