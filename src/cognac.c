@@ -271,7 +271,6 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 	const char* immediate_footer = "";
 	yylloc.first_column = tree->col; // This lets us use yyerror()
 	yylloc.first_line = tree->line;
-	fprintf(outfile, "\n#line %zi\n", (ssize_t)tree->line);
 	if (gc_test)
 	{
 		fprintf(outfile, "gc_collect();");
@@ -358,6 +357,13 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 		case identifier:
 		{
 			decl_list* d = lookup_word(tree->text, defs);
+			if (!release)
+			{
+				registers = assert_registers(0, 0, registers);
+				fprintf(outfile, "backtrace_push(\"%s\",%zi,%zi);", d->name,tree->line,tree->col);
+				fputs("debugger_step();", outfile);
+				immediate_footer = "backtrace_pop();";
+			}
 			reg_list* return_register = NULL;
 			if (!d) yyerror("undefined word");
 			registers = assert_registers(d->argc, d->needs_stack ? d->argc : LONG_MAX, registers);
@@ -381,17 +387,13 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 			switch(d->type)
 			{
 				case func:
-					if (!release) fprintf(outfile, "(backtrace_push(\"%s\",%zi,%zi),", d->name,tree->line,tree->col);
 					fprintf(outfile,"CALL(%s,(", res);
 					for (unsigned short i = 0; i < d->argc; ++i)
 					{
 						registers = emit_register(d->args[i], registers);
 						if (i + 1 < d->argc) fputc(',', outfile);
 					}
-					if (!release) fputs(")", outfile);
 					fputs("));", outfile);
-					if (!release)
-						immediate_footer = "backtrace_pop();";
 					break;
 				case var:
 					fprintf(outfile, "VAR(%s);", res);
@@ -444,6 +446,13 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 		break;
 		case let:
 		{
+			if (!release)
+			{
+				registers = assert_registers(0, 0, registers);
+				fprintf(outfile, "backtrace_push(\"%s\",%zi,%zi);",tree->text, tree->line,tree->col);
+				fputs("debugger_step();", outfile);
+				immediate_footer = "backtrace_pop();";
+			}
 			registers = assert_registers(1, LONG_MAX, registers);
 			decl_list* d = malloc(sizeof *d);
 			*d = (decl_list)
@@ -468,6 +477,13 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 		break;
 		case def:
 		{
+			if (!release)
+			{
+				registers = assert_registers(0, 0, registers);
+				fprintf(outfile, "backtrace_push(\"%s\",%zi,%zi);",tree->text,tree->line,tree->col);
+				fputs("debugger_step();", outfile);
+				immediate_footer = "backtrace_pop();";
+			}
 			decl_list* d = lookup_word(tree->text, defs);
 			if (!d->predecl) yyerror("already defined in this block");
 			d -> predecl = false;
@@ -600,12 +616,12 @@ int main(int argc, char** argv)
 	}
 	yyparse();
 	//fputs("#include<cognate.c>\n",outfile);
+	if (!release) fputs("#define DEBUG 1\n", outfile);
 	fprintf(outfile, "%.*s", src_runtime_c_len, (char*)src_runtime_c);
 	fputs("char* record_info[][64] = {", outfile);
 	emit_record_info(full_ast);
 	fputs("{NULL}};\n", outfile);
 	emit_source_string(yyin);
-	fprintf(outfile, "#line 1 \"%s\"\n", source_file_path);
 	fputs("int main(int argc,char** argv){init(argc,argv);",outfile);
 	add_symbols(full_ast);
 	compile(full_ast, NULL, predeclare(full_ast, builtins()));
@@ -621,7 +637,7 @@ int main(int argc, char** argv)
 			"-lBlocksRuntime",
 #endif
 			"-lpthread", release ? "-Ofast" : "-O1", "-Wall", "-Wextra", "-Werror", "-Wno-unused", "-pedantic-errors",
-			"-std=c11", "-lm", "-g0", release ? "-s" : "-ggdb3", NULL
+			"-std=c11", "-lm", "-g0", "-s", NULL
 			// "-flto" and "-fuse-ld=lld" give smaller binaries but make installation a pain
 		};
 		execvp(args[0], args);

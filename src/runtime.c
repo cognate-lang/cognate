@@ -75,13 +75,14 @@ typedef struct cognate_stack
 	ANYPTR absolute_start; // For the garbage collector
 } cognate_stack;
 
+#ifdef DEBUG
 typedef struct backtrace
 {
 	char* name;
 	size_t line;
 	size_t col;
-	struct backtrace* next;
 } backtrace;
+#endif
 
 #define NAN_MASK 0x7ff8000000000000
 #define PTR_MASK 0x0000ffffffffffff
@@ -120,7 +121,10 @@ static size_t system_memory;
 // Global variables
 static cognate_stack stack;
 static LIST cmdline_parameters = NULL;
-static backtrace* trace = NULL;
+#ifdef DEBUG
+static backtrace* trace;
+static backtrace* trace_start;
+#endif
 
 extern char *record_info[][64];
 extern char *source_file_lines[];
@@ -131,6 +135,9 @@ static ptrdiff_t function_stack_size;
 
 // Variables and	needed by functions.c defined in runtime.c
 void init_stack(void);
+#ifdef DEBUG
+void init_backtrace_stack();
+#endif
 void check_record_id(size_t, RECORD);
 void set_function_stack_start(void);
 void expand_stack(void);
@@ -142,6 +149,9 @@ _Bool match_objects(ANY, ANY);
 void destructure_lists(LIST, LIST);
 void destructure_records(RECORD, RECORD);
 void destructure_objects(ANY, ANY);
+#ifdef DEBUG
+void print_backtrace(int, backtrace*);
+#endif
 
 void* gc_malloc(size_t);
 void gc_collect(void);
@@ -272,6 +282,10 @@ static _Bool match_lists(LIST, LIST);
 static void handle_error_signal(int);
 static void assert_impure();
 
+#ifdef DEBUG
+static _Bool debug = 0;
+#endif
+
 void init(int argc, char** argv)
 {
 	struct rlimit stack_limit;
@@ -308,6 +322,9 @@ void init(int argc, char** argv)
 	for (size_t i = 0; i < sizeof(signals); ++i) signal(signals[i], handle_error_signal);
 	// Initialize the stack.
 	init_stack();
+#ifdef DEBUG
+	init_backtrace_stack();
+#endif
 }
 void cleanup(void)
 {
@@ -328,73 +345,136 @@ char* get_source_line(size_t line)
 	return source_file_lines[line-1];
 }
 
+#ifdef DEBUG
 void backtrace_push(char* name, size_t line, size_t col)
 {
-	backtrace* b = gc_malloc(sizeof *b);
-	b->name = name;
-	b->line = line;
-	b->col = col;
-	b->next = trace;
-	trace = b;
+	*trace++ = (backtrace) {.name=name, .line=line, .col=col};
 }
 
 backtrace* backtrace_pop()
 {
-	backtrace* b = trace;
-	trace = trace->next;
-	return b;
+	return --trace;
 }
 
-void assert_impure()
+void debug_print_ident(char* name, size_t line, size_t col, int arrow)
 {
-	if unlikely(pure) throw_error("invalid operation for pure function");
-}
-
-void print_backtrace(int num, backtrace* b)
-{
-	if (!b || !num) return;
-	print_backtrace(num - 1, b->next);
 	int digits = 0;
-	int len = strlen(b->name);
-	for (size_t tmp = b->line; tmp /= 10; ++digits);
-	char* ln = get_source_line(b->line);
-	int col = b->col;
+	int len = strlen(name);
+	for (size_t tmp = line; tmp /= 10; ++digits);
+	char* ln = get_source_line(line);
 	while (*ln)
 	{
 		if (*ln != ' ' && *ln != '\t') break;
 		ln++;
 		col--;
 	}
-	fprintf(stderr, "\033[0;2m[%zi] %.*s\033[0;1m%.*s\033[0;2m%s\n",
-			b->line,
-			col - len - 1, ln,
+	fprintf(stderr, "\033[0;2m[%zi] %.*s\033[0;1m%.*s\033[0;2m%s\n\033[0m",
+			line,
+			(int)col - len - 1, ln,
 			len, ln + col - len - 1,
 			ln + col - 1);
+	if (!arrow) return;
 	while (col-- + digits - len/2 + 2) fputs(" ", stderr);
-	fputs("\033[31;1m^\n", stderr);
+	fputs("\033[31;1m^\033[0m\n", stderr);
 }
+
+void debugger_step()
+{
+	if likely(!debug) return;
+	backtrace* b = trace - 1;
+	debug_print_ident(b->name, b->line, b->col, 0);
+ask:
+	fputs("\033[0;2m<DEBUG>\033[0m ", stderr);
+	char cmd = getchar();
+	if (cmd == '\n') goto ask;
+	for(char c ; (c = getchar()) != '\n' && c != EOF;);
+	switch (cmd)
+	{
+		case 'h':
+		case 'H':
+			// Help
+			fputs("Welcome to the Cognate Debugger!\n"
+					"TODO\n", stderr);
+			break;
+		case 's':
+		case 'S':
+			// Stack
+			flush_stack_cache();
+			for (ANY* a = stack.top - 1;  a >= stack.start; --a)
+			{
+				fputs(show_object(*a, 0), stderr);
+				fputc('\n', stderr);
+			}
+			break;
+		case 'c':
+		case 'C':
+			// Continue
+			debug = 0;
+			return;
+		case 'n':
+		case 'N':
+			// Next
+			return;
+		case 't':
+		case 'T':
+			// Trace
+			print_backtrace(5, trace);
+			break;
+		case 'l':
+		case 'L':
+			// List
+			for (size_t i = 0; source_file_lines[i]; ++i)
+			{
+				fputs(source_file_lines[i], stderr);
+				fputc('\n', stderr);
+			}
+			break;
+		case 'q':
+		case 'Q':
+			// Quit
+			exit (EXIT_SUCCESS);
+		default:
+			fputs("?\n", stderr);
+			break;
+	}
+	goto ask;
+}
+
+void print_backtrace(int n, backtrace* b)
+{
+	if (b == trace_start || !n) return;
+	debug_print_ident((b-1)->name, (b-1)->line, (b-1)->col, 1);
+	print_backtrace(n - 1, b - 1);
+}
+#endif
 
 _Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(const char* restrict const fmt, ...)
 {
 	fputc('\n', stderr);
-	print_backtrace(5, trace);
 	fputs("\033[31;1m", stderr);
 	va_list args;
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
 	fputc('\n', stderr);
 	fputs("\033[0m", stderr);
+#ifdef DEBUG
+	debug = 1;
+	debugger_step();
+#endif
 	exit(EXIT_FAILURE);
 }
 
 _Noreturn void throw_error(const char* restrict const msg)
 {
 	fputc('\n', stderr);
-	print_backtrace(5, trace);
 	fputs("\033[31;1m", stderr);
 	fputs(msg, stderr);
 	fputc('\n', stderr);
 	fputs("\033[0m", stderr);
+#ifdef DEBUG
+	debug = 1;
+	debugger_step();
+#endif
 	exit(EXIT_FAILURE);
 }
 
@@ -402,6 +482,12 @@ void handle_error_signal(int sig)
 {
 	throw_error_fmt("recieved signal %i (%s)", sig, strsignal(sig));
 }
+
+void assert_impure()
+{
+	if unlikely(pure) throw_error("invalid operation for pure function");
+}
+
 
 char* show_object (const ANY object, const _Bool raw_strings)
 {
@@ -493,6 +579,13 @@ void init_stack(void)
 		= mmap(0, system_memory/10, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
 	stack.cache = NIL_OBJ;
 }
+
+#ifdef DEBUG
+void init_backtrace_stack()
+{
+	trace_start = trace = mmap(0, system_memory/10, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
+}
+#endif
 
 void push(ANY object)
 {
@@ -1660,6 +1753,17 @@ ANY VAR(unbox)(BOX b)
 void VAR(set)(BOX b, ANY a)
 {
 	*b = a;
+}
+
+void VAR(break)()
+{
+#ifdef DEBUG
+	fputc('\n', stderr);
+	debug = 1;
+	debugger_step();
+#else
+	throw_error("cannot Break when compiled with -release");
+#endif
 }
 // ---------- ACTUAL PROGRAM ----------
 
