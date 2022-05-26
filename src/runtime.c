@@ -350,40 +350,34 @@ void assert_impure()
 	if unlikely(pure) throw_error("invalid operation for pure function");
 }
 
-void print_backtrace()
+void print_backtrace(int num, backtrace* b)
 {
-	fputc('\n', stderr);
-	if (!trace) return;
-	int offset = -2;
-	backtrace* b;
-	for (int i = 0; i < 10;++i)
+	if (!b || !num) return;
+	print_backtrace(num - 1, b->next);
+	int digits = 0;
+	int len = strlen(b->name);
+	for (size_t tmp = b->line; tmp /= 10; ++digits);
+	char* ln = get_source_line(b->line);
+	int col = b->col;
+	while (*ln)
 	{
-		b = backtrace_pop();
-		int digits = 0;
-		int len = strlen(b->name);
-		for (size_t tmp = b->line; tmp /= 10; ++digits);
-		char* ln = get_source_line(b->line);
-		int col = b->col;
-		while (*ln)
-		{
-			if (*ln != ' ' && *ln != '\t') break;
-			ln++;
-			col--;
-		}
-		fprintf(stderr, "\033[0;2m[%zi] %.*s\033[0;1m%.*s\033[0;2m%s\n",
-				b->line,
-				col - len - 1, ln,
-				len, ln + col - len - 1,
-				ln + col - 1);
-		while (col-- + digits - len/2 + 2) fputs(" ", stderr);
-		fputs("\033[31;1m^\n", stderr);
-		if (!b->next) break;
+		if (*ln != ' ' && *ln != '\t') break;
+		ln++;
+		col--;
 	}
+	fprintf(stderr, "\033[0;2m[%zi] %.*s\033[0;1m%.*s\033[0;2m%s\n",
+			b->line,
+			col - len - 1, ln,
+			len, ln + col - len - 1,
+			ln + col - 1);
+	while (col-- + digits - len/2 + 2) fputs(" ", stderr);
+	fputs("\033[31;1m^\n", stderr);
 }
 
 _Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(const char* restrict const fmt, ...)
 {
-	print_backtrace();
+	fputc('\n', stderr);
+	print_backtrace(5, trace);
 	fputs("\033[31;1m", stderr);
 	va_list args;
 	va_start(args, fmt);
@@ -395,7 +389,8 @@ _Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(const char*
 
 _Noreturn void throw_error(const char* restrict const msg)
 {
-	print_backtrace();
+	fputc('\n', stderr);
+	print_backtrace(5, trace);
 	fputs("\033[31;1m", stderr);
 	fputs(msg, stderr);
 	fputc('\n', stderr);

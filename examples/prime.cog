@@ -7,9 +7,8 @@ Def Primes (
 		Let P is potential prime;
 		Let Primes is found primes;
 		Let To-check be Take-while (<= Sqrt P) Primes;
-		When All (Not Factor of P) To-check (
-			Append P
-		) to Primes
+		When All (Not Factor of P) To-check
+			(Append P) to Primes
 	)
 );
 
