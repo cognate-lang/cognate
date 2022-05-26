@@ -1,5 +1,5 @@
 CC=clang
-CFLAGS=-Wall -Wextra -Wpedantic -Ofast
+CFLAGS=-Wall -Wextra -Wpedantic -Og -g
 PREFIX=`echo ~`/.local
 BINDIR=$(PREFIX)/bin
 TESTS=block booleans filter for functions if io lists map maths parsing regex stack strings symbols variables

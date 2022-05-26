@@ -357,6 +357,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 		case identifier:
 		{
 			decl_list* d = lookup_word(tree->text, defs);
+			if (!d) yyerror("undefined word");
 			if (!release)
 			{
 				registers = assert_registers(0, 0, registers);
@@ -365,7 +366,6 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 				immediate_footer = "backtrace_pop();";
 			}
 			reg_list* return_register = NULL;
-			if (!d) yyerror("undefined word");
 			registers = assert_registers(d->argc, d->needs_stack ? d->argc : LONG_MAX, registers);
 			if (d->builtin && !strcmp(tree->text, "if") && registers && registers->next && registers->next->next
 					&& registers->next->type == registers->next->next->type)
