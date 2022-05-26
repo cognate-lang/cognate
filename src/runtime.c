@@ -100,7 +100,7 @@ typedef struct backtrace
 #define PREDEF(name) __block BLOCK VAR(name) = ^{ throw_error("Function '"#name"' called before definition!'"); };
 
 #define SET(name, val) \
-	if unlikely(pure) throw_error("cannot mutate variable in pure function"); \
+	if unlikely(pure) throw_error("Cannot mutate variable in pure function"); \
 	VAR(name) = val;
 
 #define unlikely(expr) (__builtin_expect((_Bool)(expr), 0))
@@ -128,6 +128,8 @@ static backtrace* trace_start;
 
 extern char *record_info[][64];
 extern char *source_file_lines[];
+
+extern int main(int, char**);
 
 static const char* restrict function_stack_top;
 static const char* restrict function_stack_start;
@@ -286,17 +288,22 @@ static void assert_impure();
 static _Bool debug = 0;
 #endif
 
+int _argc;
+char** _argv;
+
 void init(int argc, char** argv)
 {
+	_argc = argc;
+	_argv = argv;
 	struct rlimit stack_limit;
 	if unlikely(getrlimit(RLIMIT_STACK, &stack_limit) == -1)
-		throw_error("cannot get return stack limit");
+		throw_error("Cannot get return stack limit");
 	function_stack_size = stack_limit.rlim_cur;
 	SET_FUNCTION_STACK_START();
 	// Set locale for strings.
 	if unlikely(setlocale(LC_ALL, "") == NULL)
 	{
-		throw_error("cannot set locale");
+		throw_error("Cannot set locale");
 	}
 
 	system_memory = sysconf(_SC_PHYS_PAGES) * 4096;
@@ -306,7 +313,7 @@ void init(int argc, char** argv)
 	struct timespec ts;
 	if unlikely(clock_gettime(CLOCK_REALTIME, &ts) == -1)
 	{
-		throw_error("cannot get system time");
+		throw_error("Cannot get system time");
 	}
 	srand(ts.tv_nsec ^ ts.tv_sec); // TODO make random more random.
 	// Load parameters
@@ -329,14 +336,14 @@ void init(int argc, char** argv)
 void cleanup(void)
 {
 	if unlikely(stack.top != stack.start || stack.cache != NIL_OBJ)
-		throw_error_fmt("exiting with %ti object(s) on the stack", stack.top - stack.start + (stack.cache != NIL_OBJ));
+		throw_error_fmt("Exiting with %ti object(s) on the stack", stack.top - stack.start + (stack.cache != NIL_OBJ));
 }
 
 void check_function_stack_size(void)
 {
 	const char sp;
 	if unlikely(&sp < function_stack_top + STACK_MARGIN_KB * 1024)
-		throw_error_fmt("maximum recursion depth exceeded");
+		throw_error_fmt("Maximum recursion depth exceeded");
 }
 
 char* get_source_line(size_t line)
@@ -391,14 +398,17 @@ ask:
 	for(char c ; (c = getchar()) != '\n' && c != EOF;);
 	switch (cmd)
 	{
-		case 'h':
-		case 'H':
+		case 'h': case 'H':
 			// Help
 			fputs("Welcome to the Cognate Debugger!\n"
 					"TODO\n", stderr);
 			break;
-		case 's':
-		case 'S':
+		case 'r': case 'R':
+			// Restart
+			debug = 0;
+			main(_argc, _argv);
+			exit(EXIT_SUCCESS);
+		case 's': case 'S':
 			// Stack
 			flush_stack_cache();
 			for (ANY* a = stack.top - 1;  a >= stack.start; --a)
@@ -407,22 +417,18 @@ ask:
 				fputc('\n', stderr);
 			}
 			break;
-		case 'c':
-		case 'C':
+		case 'c': case 'C':
 			// Continue
 			debug = 0;
 			return;
-		case 'n':
-		case 'N':
+		case 'n': case 'N':
 			// Next
 			return;
-		case 't':
-		case 'T':
+		case 't': case 'T':
 			// Trace
 			print_backtrace(5, trace);
 			break;
-		case 'l':
-		case 'L':
+		case 'l': case 'L':
 			// List
 			for (size_t i = 0; source_file_lines[i]; ++i)
 			{
@@ -430,8 +436,7 @@ ask:
 				fputc('\n', stderr);
 			}
 			break;
-		case 'q':
-		case 'Q':
+		case 'q': case 'Q':
 			// Quit
 			exit (EXIT_SUCCESS);
 		default:
@@ -451,16 +456,13 @@ void print_backtrace(int n, backtrace* b)
 
 _Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(const char* restrict const fmt, ...)
 {
-	fputc('\n', stderr);
-	fputs("\033[31;1m", stderr);
+	fputs("\n\n\033[31;1m\t", stderr);
 	va_list args;
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
-	fputc('\n', stderr);
-	fputs("\033[0m", stderr);
+	fputs("\n\n\033[0m", stderr);
 #ifdef DEBUG
 	debug = 1;
-	fputs("Invoking debugger...\n", stderr);
 	debugger_step();
 #endif
 	exit(EXIT_FAILURE);
@@ -468,14 +470,11 @@ _Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(const char*
 
 _Noreturn void throw_error(const char* restrict const msg)
 {
-	fputc('\n', stderr);
-	fputs("\033[31;1m", stderr);
+	fputs("\n\n\033[31;1m\t", stderr);
 	fputs(msg, stderr);
-	fputc('\n', stderr);
-	fputs("\033[0m", stderr);
+	fputs("\n\n\033[0m", stderr);
 #ifdef DEBUG
 	debug = 1;
-	fputs("Invoking debugger...\n", stderr);
 	debugger_step();
 #endif
 	exit(EXIT_FAILURE);
@@ -483,12 +482,12 @@ _Noreturn void throw_error(const char* restrict const msg)
 
 void handle_error_signal(int sig)
 {
-	throw_error_fmt("recieved signal %i (%s)", sig, strsignal(sig));
+	throw_error_fmt("Recieved signal %i (%s)", sig, strsignal(sig));
 }
 
 void assert_impure()
 {
-	if unlikely(pure) throw_error("invalid operation for pure function");
+	if unlikely(pure) throw_error("Invalid operation for pure function");
 }
 
 
@@ -600,14 +599,14 @@ void push(ANY object)
 ANY pop(void)
 {
 	if likely(stack.cache != NIL_OBJ) { const ANY a = stack.cache; stack.cache = NIL_OBJ; return a; }
-	if unlikely(stack.top == stack.start) throw_error("stack underflow");
+	if unlikely(stack.top == stack.start) throw_error("Stack underflow");
 	return *--stack.top;
 }
 
 ANY peek(void)
 {
 	if likely(stack.cache != NIL_OBJ) return stack.cache;
-	if unlikely(stack.top == stack.start) throw_error("stack underflow");
+	if unlikely(stack.top == stack.start) throw_error("Stack underflow");
 	return *(stack.top - 1);
 }
 
@@ -687,7 +686,7 @@ _Bool compare_objects(ANY ob1, ANY ob2)
 		case symbol:  return unbox_symbol(ob1) == unbox_symbol(ob2);
 		case list:    return compare_lists(unbox_list(ob1), unbox_list(ob2));
 		case record:  return compare_records(unbox_record(ob1), unbox_record(ob2));
-		case block:   throw_error("cannot compare blocks");
+		case block:   throw_error("Cannot compare blocks");
 		case box:     return compare_objects(*unbox_box(ob1), *unbox_box(ob2));
 	}
 }
@@ -774,7 +773,7 @@ cognate_type get_type(ANY box)
 NUMBER unbox_number(ANY box)
 {
 	if unlikely(is_nan(box))
-		throw_error_fmt("expected a number but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+		throw_error_fmt("Expected a number but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
 	return *(NUMBER*)&box;
 }
 
@@ -786,7 +785,7 @@ ANY box_number(NUMBER num)
 BOX unbox_box(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != 0)
-		throw_error_fmt("expected a box but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+		throw_error_fmt("Expected a box but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
 	return (BOX)(PTR_MASK & box);
 }
 
@@ -798,7 +797,7 @@ ANY box_box(BOX box)
 BOOLEAN unbox_boolean(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)boolean << 48)
-		throw_error_fmt("expected a boolean but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+		throw_error_fmt("Expected a boolean but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
 	return (STRING)(PTR_MASK & box);
 }
 
@@ -810,7 +809,7 @@ ANY box_boolean(BOOLEAN b)
 STRING unbox_string(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)string << 48)
-		throw_error_fmt("expected a string but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+		throw_error_fmt("Expected a string but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
 	return (STRING)(PTR_MASK & box);
 }
 
@@ -822,7 +821,7 @@ ANY box_string(STRING s)
 LIST unbox_list(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)list << 48)
-		throw_error_fmt("expected a list but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+		throw_error_fmt("Expected a list but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
 	return (LIST)(PTR_MASK & box);
 }
 
@@ -834,7 +833,7 @@ ANY box_list(LIST s)
 RECORD unbox_record(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)record << 48)
-		throw_error_fmt("expected a record but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+		throw_error_fmt("Expected a record but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
 	return (RECORD)(PTR_MASK & box);
 }
 
@@ -846,7 +845,7 @@ ANY box_record(RECORD s)
 SYMBOL unbox_symbol(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)symbol << 48)
-		throw_error_fmt("expected a symbol but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+		throw_error_fmt("Expected a symbol but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
 	return (SYMBOL)(PTR_MASK & box);
 }
 
@@ -858,7 +857,7 @@ ANY box_symbol(SYMBOL s)
 BLOCK unbox_block(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)block << 48)
-		throw_error_fmt("expected a block but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+		throw_error_fmt("Expected a block but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
 	return (BLOCK)(PTR_MASK & box);
 }
 
@@ -870,7 +869,7 @@ ANY box_block(BLOCK s)
 void check_record_id(size_t i, RECORD r)
 {
 	if unlikely(i != r->id)
-		throw_error_fmt("expected a %.64s but got %.64s which is a %s", record_info[i][0], show_object(box_record(r), 0), record_info[r->id][0]);
+		throw_error_fmt("Expected a %.64s but got %.64s which is a %s", record_info[i][0], show_object(box_record(r), 0), record_info[r->id][0]);
 
 }
 
@@ -911,7 +910,7 @@ void gc_init(void)
 	bitmap = free_start   = mmap(0, (size_t)(system_memory*0.9/8), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
 	heap_start = heap_top = mmap(0, (size_t)(system_memory*0.9),   PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
 	if (heap_start == MAP_FAILED || bitmap == MAP_FAILED)
-		throw_error("memory map failure - are you trying to use valgrind?");
+		throw_error("Memory map failure - are you trying to use valgrind?");
 	BITMAP_INDEX(heap_start) = BITMAP_FREE;
 }
 
@@ -1046,14 +1045,14 @@ NUMBER VAR(M)(NUMBER a, NUMBER b)
 {
 	const double r = a * b;
 	if unlikely(is_nan(*(long*)&r))
-		throw_error_fmt("multiplication by %.14g of %.14g yields invalid result", a, b);
+		throw_error_fmt("Multiplication by %.14g of %.14g yields invalid result", a, b);
 	return r;
 }
 NUMBER VAR(D)(NUMBER a, NUMBER b)
 {
 	const double r = b - a;
 	if unlikely(is_nan(*(long*)&r))
-		throw_error_fmt("subtraction of %.14g from %.14g yields invalid result", a, b);
+		throw_error_fmt("Subtraction of %.14g from %.14g yields invalid result", a, b);
 	return r;
 }
 
@@ -1061,7 +1060,7 @@ NUMBER VAR(S)(NUMBER a, NUMBER b)
 {
 	const double r = b / a;
 	if unlikely(is_nan(*(long*)&r))
-		throw_error_fmt("division by %.14g of %.14g yields invalid result", a, b);
+		throw_error_fmt("Division by %.14g of %.14g yields invalid result", a, b);
 	return r;
 }
 
@@ -1069,7 +1068,7 @@ NUMBER VAR(modulo)(NUMBER a, NUMBER b)
 {
 	const double r = b - a * floor(b / a);
 	if unlikely(is_nan(*(long*)&r))
-		throw_error_fmt("modulo by %.14g of %.14g yields invalid result", a, b);
+		throw_error_fmt("Modulo by %.14g of %.14g yields invalid result", a, b);
 	return r;
 }
 
@@ -1095,7 +1094,7 @@ NUMBER VAR(random)(NUMBER low, NUMBER high)
 	if unlikely(is_nan(*(long*)&r)) goto invalid_range;
 	return r;
 invalid_range:
-	throw_error_fmt("invalid range %.14g..%.14g", low, high);
+	throw_error_fmt("Invalid range %.14g..%.14g", low, high);
 }
 
 void VAR(clear)(void) { stack.cache = NIL_OBJ; stack.top=stack.start; }
@@ -1243,7 +1242,7 @@ STRING VAR(join)(NUMBER n)
 	// Joins a string to the end of another string.
 	// Define Prefix (Swap, Suffix);
 	size_t n1 = n;
-	if (n != n1) throw_error_fmt("cannot join %.14g strings", n);
+	if (n != n1) throw_error_fmt("Cannot join %.14g strings", n);
 	const char* strings[n1];
 	size_t result_size = 1;
 	for (size_t i = 0; i < n1; ++i)
@@ -1298,7 +1297,7 @@ STRING VAR(substring)(NUMBER startf, NUMBER endf, STRING str)
 	}
 	return gc_strndup((char*)str, str_size + 1);
 invalid_range:
-	throw_error_fmt("invalid range %.14g..%.14g", startf, endf);
+	throw_error_fmt("Invalid range %.14g..%.14g", startf, endf);
 }
 
 
@@ -1319,12 +1318,12 @@ STRING VAR(read)(STRING filename)
 	assert_impure();
 	// Read a file to a string.
 	FILE *fp = fopen(filename, "ro");
-	if unlikely(fp == NULL) throw_error_fmt("cannot open file '%s'", filename);
+	if unlikely(fp == NULL) throw_error_fmt("Cannot open file '%s'", filename);
 	struct stat st;
 	fstat(fileno(fp), &st);
 	char* const text = gc_malloc (st.st_size + 1);
 	if (fread(text, sizeof(char), st.st_size, fp) != (unsigned long)st.st_size)
-		throw_error_fmt("error reading file '%s'", filename);
+		throw_error_fmt("Error reading file '%s'", filename);
 	fclose(fp);
 	text[st.st_size] = '\0'; // Remove trailing eof.
 	return text;
@@ -1341,7 +1340,7 @@ NUMBER VAR(number)(STRING str)
 		goto cannot_parse;
 	return num;
 cannot_parse:
-	throw_error_fmt("cannot parse '%.32s' to a number", str);
+	throw_error_fmt("Cannot parse '%.32s' to a number", str);
 }
 
 STRING VAR(path)(void)
@@ -1373,7 +1372,7 @@ void VAR(write)(STRING filename, ANY obj)
 	assert_impure();
 	// Write object to end of file, without a newline.
 	FILE* const fp = fopen(filename, "a");
-	if unlikely(fp == NULL) throw_error_fmt("cannot open file '%s'", filename);
+	if unlikely(fp == NULL) throw_error_fmt("Cannot open file '%s'", filename);
 	fputs(show_object(obj, 1), fp);
 	fclose(fp);
 }
@@ -1407,7 +1406,7 @@ BOOLEAN VAR(matchDregex)(STRING reg_str, STRING str)
 		{
 			char reg_err[256];
 			regerror(status, &reg, reg_err, 256);
-			throw_error_fmt("compile error (%s) in regex '%.32s'", reg_err, reg_str);
+			throw_error_fmt("Compile error (%s) in regex '%.32s'", reg_err, reg_str);
 		}
 		old_str = reg_str;
 		// This should probably be strcpy, but I trust that reg_str is either
@@ -1417,7 +1416,7 @@ BOOLEAN VAR(matchDregex)(STRING reg_str, STRING str)
 	if unlikely(found != 0 && found != REG_NOMATCH)
 	{
 
-		throw_error_fmt("match error with regex '%.32s' on string '%.32s'", str, reg_str);
+		throw_error_fmt("Match error with regex '%.32s' on string '%.32s'", str, reg_str);
 		// If this error ever actually appears, use regerror to get the full text.
 	}
 	return !found;
@@ -1460,7 +1459,7 @@ NUMBER VAR(ceiling)(NUMBER a)
 void VAR(assert)(STRING name, BOOLEAN result)
 {
 	if unlikely(!result)
-		throw_error_fmt("failed assertion '%s'", name);
+		throw_error_fmt("Failed assertion '%s'", name);
 }
 
 void VAR(error)(STRING str)
@@ -1527,7 +1526,7 @@ void VAR(for)(LIST lst, BLOCK blk)
 LIST VAR(range)(NUMBER start, NUMBER end)
 {
 	if (end < start)
-		throw_error_fmt("invalid range %.14g..%.14g", start, end);
+		throw_error_fmt("Invalid range %.14g..%.14g", start, end);
 	end = start + (size_t)(end - start) - 1;
 	LIST lst = NULL;
 	for (; start <= end; end--)
@@ -1545,12 +1544,12 @@ LIST VAR(range)(NUMBER start, NUMBER end)
 ANY VAR(index)(NUMBER ind, LIST lst)
 {
 	size_t i = ind;
-	if unlikely(i != ind) throw_error_fmt("cannot get index %.14g", ind);
+	if unlikely(i != ind) throw_error_fmt("Cannot get index %.14g", ind);
 	for (;lst;lst=lst->next)
 	{
 		if (!i--) return lst->object;
 	}
-	throw_error_fmt("index %zi is outside of array", (size_t)ind);
+	throw_error_fmt("Index %zi is outside of array", (size_t)ind);
 }
 
 void VAR(wait)(NUMBER seconds)
@@ -1585,7 +1584,7 @@ STRING VAR(show)(ANY o)
 
 LIST VAR(split)(STRING sep, STRING str)
 {
-	if (!*sep) throw_error("empty separator");
+	if (!*sep) throw_error("Empty separator");
 	LIST lst = NULL;
 	char *p = strtok(gc_strdup((char*)str), sep);
 	while (p != NULL)
@@ -1618,11 +1617,11 @@ NUMBER VAR(length)(LIST lst) {
 
 
 LIST VAR(take)(NUMBER n, LIST l) {
-	if unlikely(n != (unsigned long)n) throw_error_fmt("cannot take %.14g elements", n);
+	if unlikely(n != (unsigned long)n) throw_error_fmt("Cannot take %.14g elements", n);
 	LIST r = NULL;
 	while (n --> 0)
 	{
-		if unlikely(!l) throw_error("list too small");
+		if unlikely(!l) throw_error("List too small");
 		cognate_list* a = gc_new(cognate_list);
 		a->object = l->object;
 		a->next = r;
@@ -1642,9 +1641,9 @@ LIST VAR(take)(NUMBER n, LIST l) {
 }
 
 LIST VAR(discard)(NUMBER n, LIST l) {
-	if unlikely(n != (unsigned long)n) throw_error_fmt("cannot discard %.14g elements", n);
+	if unlikely(n != (unsigned long)n) throw_error_fmt("Cannot discard %.14g elements", n);
 	for (;n-->0;l=l->next)
-		if unlikely(!l) throw_error("list too small");
+		if unlikely(!l) throw_error("List too small");
 	return l;
 }
 
@@ -1765,7 +1764,7 @@ void VAR(break)()
 	debug = 1;
 	debugger_step();
 #else
-	throw_error("cannot Break when compiled with -release");
+	throw_error("Cannot Break when compiled with -release");
 #endif
 }
 // ---------- ACTUAL PROGRAM ----------
