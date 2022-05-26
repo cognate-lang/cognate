@@ -395,7 +395,8 @@ ask:
 	fputs("\033[0;33m<DEBUG>\033[0m ", stderr);
 	char cmd = getchar();
 	if (cmd == '\n') goto ask;
-	for(char c ; (c = getchar()) != '\n' && c != EOF;);
+	if (cmd == EOF) exit(EXIT_SUCCESS);
+	for (char c ; (c = getchar()) != '\n' && c != EOF;);
 	switch (cmd)
 	{
 		case 'h': case 'H':
@@ -406,8 +407,7 @@ ask:
 		case 'r': case 'R':
 			// Restart
 			debug = 0;
-			main(_argc, _argv);
-			exit(EXIT_SUCCESS);
+			exit(main(_argc, _argv));
 		case 's': case 'S':
 			// Stack
 			flush_stack_cache();
@@ -438,6 +438,7 @@ ask:
 			break;
 		case 'q': case 'Q':
 			// Quit
+			fputs("Exiting...\n", stderr);
 			exit (EXIT_SUCCESS);
 		default:
 			fputs("?\n", stderr);
@@ -462,8 +463,11 @@ _Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(const char*
 	vfprintf(stderr, fmt, args);
 	fputs("\n\n\033[0m", stderr);
 #ifdef DEBUG
-	debug = 1;
-	debugger_step();
+	if (isatty(fileno(stdin)))
+	{
+		debug = 1;
+		debugger_step();
+	} else print_backtrace(5, trace);
 #endif
 	exit(EXIT_FAILURE);
 }
@@ -474,8 +478,11 @@ _Noreturn void throw_error(const char* restrict const msg)
 	fputs(msg, stderr);
 	fputs("\n\n\033[0m", stderr);
 #ifdef DEBUG
-	debug = 1;
-	debugger_step();
+	if (isatty(fileno(stdin)))
+	{
+		debug = 1;
+		debugger_step();
+	} else print_backtrace(5, trace);
 #endif
 	exit(EXIT_FAILURE);
 }

@@ -26,12 +26,13 @@ src/parser.c src/parser.h: src/parser.y
 clean:
 	rm -f src/lexer.c src/parser.h src/parser.c cognac
 
-test: build $(TESTS)
+test: $(TESTS)
 	@grep -E "^(PASS|FAIL)" tests/*.log --color
 	@echo "****************************** TESTS THAT PASSED ******************************"
 	@grep -c "^PASS" tests/*.log --color || true
 	@echo "****************************** TESTS THAT FAILED ******************************"
 	@! grep -c "^FAIL" tests/*.log --color
 
-$(TESTS):
+$(TESTS): build
+	@rm -f tests/$@.log
 	./cognac tests/$@.cog -run > tests/$@.log
