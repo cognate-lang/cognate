@@ -348,6 +348,7 @@ char* get_source_line(size_t line)
 #ifdef DEBUG
 void backtrace_push(char* name, size_t line, size_t col)
 {
+	// TODO allocate this on the (call) stack instead of the heap.
 	*trace++ = (backtrace) {.name=name, .line=line, .col=col};
 }
 
