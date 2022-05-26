@@ -384,7 +384,7 @@ void debugger_step()
 	backtrace* b = trace - 1;
 	debug_print_ident(b->name, b->line, b->col, 0);
 ask:
-	fputs("\033[0;2m<DEBUG>\033[0m ", stderr);
+	fputs("\033[0;33m<DEBUG>\033[0m ", stderr);
 	char cmd = getchar();
 	if (cmd == '\n') goto ask;
 	for(char c ; (c = getchar()) != '\n' && c != EOF;);
@@ -459,6 +459,7 @@ _Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(const char*
 	fputs("\033[0m", stderr);
 #ifdef DEBUG
 	debug = 1;
+	fputs("Invoking debugger...\n", stderr);
 	debugger_step();
 #endif
 	exit(EXIT_FAILURE);
@@ -473,6 +474,7 @@ _Noreturn void throw_error(const char* restrict const msg)
 	fputs("\033[0m", stderr);
 #ifdef DEBUG
 	debug = 1;
+	fputs("Invoking debugger...\n", stderr);
 	debugger_step();
 #endif
 	exit(EXIT_FAILURE);
