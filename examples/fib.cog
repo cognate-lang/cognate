@@ -1,7 +1,7 @@
 Def Fib (
 	Let N;
 	Do If < 2 N
-		then (1)
+		then (1 ; Break)
 		else (Fib of - 1 N ; + Fib of - 2 N)
 );
 
