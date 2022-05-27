@@ -78,9 +78,10 @@ typedef struct cognate_stack
 #ifdef DEBUG
 typedef struct backtrace
 {
-	char* name;
-	size_t line;
-	size_t col;
+	const struct backtrace* restrict next;
+	const char* name;
+	const size_t line;
+	const size_t col;
 } backtrace;
 #endif
 
@@ -122,12 +123,12 @@ static size_t system_memory;
 static cognate_stack stack;
 static LIST cmdline_parameters = NULL;
 #ifdef DEBUG
-static backtrace* trace;
-static backtrace* trace_start;
+static const backtrace* trace = NULL;
 #endif
 
 extern char *record_info[][64];
 extern char *source_file_lines[];
+extern _Bool breakpoints[];
 
 extern int main(int, char**);
 
@@ -137,9 +138,6 @@ static ptrdiff_t function_stack_size;
 
 // Variables and	needed by functions.c defined in runtime.c
 void init_stack(void);
-#ifdef DEBUG
-void init_backtrace_stack();
-#endif
 void check_record_id(size_t, RECORD);
 void set_function_stack_start(void);
 void expand_stack(void);
@@ -152,7 +150,7 @@ void destructure_lists(LIST, LIST);
 void destructure_records(RECORD, RECORD);
 void destructure_objects(ANY, ANY);
 #ifdef DEBUG
-void print_backtrace(int, backtrace*);
+void print_backtrace(int, const backtrace*);
 #endif
 
 void* gc_malloc(size_t);
@@ -286,6 +284,8 @@ static void assert_impure();
 
 #ifdef DEBUG
 static _Bool debug = 0;
+static size_t next_count = 0;
+static size_t debug_lineno = 0;
 #endif
 
 int _argc;
@@ -329,9 +329,6 @@ void init(int argc, char** argv)
 	for (size_t i = 0; i < sizeof(signals); ++i) signal(signals[i], handle_error_signal);
 	// Initialize the stack.
 	init_stack();
-#ifdef DEBUG
-	init_backtrace_stack();
-#endif
 }
 void cleanup(void)
 {
@@ -346,25 +343,21 @@ void check_function_stack_size(void)
 		throw_error_fmt("Maximum recursion depth exceeded");
 }
 
+#ifdef DEBUG
 char* get_source_line(size_t line)
 {
 	// Length should be enough?
 	return source_file_lines[line-1];
 }
 
-#ifdef DEBUG
-void backtrace_push(char* name, size_t line, size_t col)
-{
-	// TODO allocate this on the (call) stack instead of the heap.
-	*trace++ = (backtrace) {.name=name, .line=line, .col=col};
-}
+#define BACKTRACE_PUSH(NAME, LINE, COL) \
+	const backtrace _trace_##LINE##_##COL = (backtrace) {.name = (#NAME), .line = (LINE), .col = (COL), .next=trace}; \
+	trace = &_trace_##LINE##_##COL;
 
-backtrace* backtrace_pop()
-{
-	return --trace;
-}
+#define BACKTRACE_POP() \
+	trace = trace->next;
 
-void debug_print_ident(char* name, size_t line, size_t col, int arrow)
+void debug_print_ident(const char* name, size_t line, size_t col, int arrow)
 {
 	int digits = 0;
 	int len = strlen(name);
@@ -386,18 +379,26 @@ void debug_print_ident(char* name, size_t line, size_t col, int arrow)
 	fputs("\033[31;1m^\033[0m\n", stderr);
 }
 
-void debugger_step()
+static void debugger_step()
 {
 	if likely(!debug) return;
-	backtrace* b = trace - 1;
-	debug_print_ident(b->name, b->line, b->col, 0);
+	if (next_count > 0)
+	{
+		next_count--;
+		return;
+	}
+	debug_print_ident(trace->name, trace->line, trace->col, 0);
 ask:
 	fputs("\033[0;33m<DEBUG>\033[0m ", stderr);
-	char cmd = getchar();
-	if (cmd == '\n') goto ask;
-	if (cmd == EOF) exit(EXIT_SUCCESS);
-	for (char c ; (c = getchar()) != '\n' && c != EOF;);
-	switch (cmd)
+	char buf[257] = {0};
+	fgets(buf, 256, stdin);
+	if (feof(stdin)) exit(EXIT_SUCCESS);
+	char op[65] = "\0";
+	unsigned long int_arg = 0;
+	char str_arg[128] = {0};
+	sscanf(buf, "%64s %lu", op, &int_arg);
+	sscanf(buf, "%64s %128s", op, str_arg);
+	switch (*op)
 	{
 		case 'h': case 'H':
 			// Help
@@ -423,16 +424,23 @@ ask:
 			return;
 		case 'n': case 'N':
 			// Next
+			if (int_arg)
+				next_count = int_arg - 1;
 			return;
 		case 't': case 'T':
 			// Trace
-			print_backtrace(5, trace);
+			if (int_arg)
+				print_backtrace(int_arg, trace);
+			else print_backtrace(5, trace);
 			break;
 		case 'l': case 'L':
-			// List
+			// List TODO handle argument
 			for (size_t i = 0; source_file_lines[i]; ++i)
 			{
-				fputs(source_file_lines[i], stderr);
+				int broken = breakpoints[i];
+				fprintf(stderr, "\033[0;2m[%3zi] %s\033[0m %s",
+						i+1, broken ? "\033[0;33m*" : " ",
+						source_file_lines[i]);
 				fputc('\n', stderr);
 			}
 			break;
@@ -440,18 +448,35 @@ ask:
 			// Quit
 			fputs("Exiting...\n", stderr);
 			exit (EXIT_SUCCESS);
+		case 'b': case 'B':
+			// Breakpoint
+			if (!int_arg) goto confused;
+			breakpoints[int_arg-1] = 1;
+			break;
+		case 'd': case 'D':
+			// Delete breakpoint
+			if (!int_arg) goto confused;
+			breakpoints[int_arg-1] = 0;
+			break;
 		default:
+confused:
 			fputs("?\n", stderr);
 			break;
 	}
 	goto ask;
 }
 
-void print_backtrace(int n, backtrace* b)
+static void check_breakpoint(size_t line)
 {
-	if (b == trace_start || !n) return;
-	debug_print_ident((b-1)->name, (b-1)->line, (b-1)->col, 1);
-	print_backtrace(n - 1, b - 1);
+	if unlikely(breakpoints[line-1])
+		debug = 1;
+}
+
+void print_backtrace(int n, const backtrace* b)
+{
+	if (!b || !n) return;
+	debug_print_ident(b->name, b->line, b->col, 1);
+	print_backtrace(n - 1, b->next);
 }
 #endif
 
@@ -588,13 +613,6 @@ void init_stack(void)
 		= mmap(0, system_memory/10, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
 	stack.cache = NIL_OBJ;
 }
-
-#ifdef DEBUG
-void init_backtrace_stack()
-{
-	trace_start = trace = mmap(0, system_memory/10, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
-}
-#endif
 
 void push(ANY object)
 {

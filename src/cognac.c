@@ -268,9 +268,14 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 		return;
 	}
 	const char* footer = "";
-	const char* immediate_footer = "";
 	yylloc.first_column = tree->col; // This lets us use yyerror()
 	yylloc.first_line = tree->line;
+	static size_t lineno = 0;
+	if (lineno != tree->line)
+	{
+		lineno = tree->line;
+		fprintf(outfile, "check_breakpoint(%zi);", tree->line);
+	}
 	if (gc_test)
 	{
 		fprintf(outfile, "gc_collect();");
@@ -361,9 +366,8 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 			if (!release)
 			{
 				registers = assert_registers(0, 0, registers);
-				fprintf(outfile, "backtrace_push(\"%s\",%zi,%zi);", d->name,tree->line,tree->col);
-				fputs("debugger_step();", outfile);
-				immediate_footer = "backtrace_pop();";
+				fprintf(outfile, "BACKTRACE_PUSH(%s,%zi,%zi);", d->name,tree->line,tree->col);
+				fprintf(outfile,"debugger_step();");
 			}
 			reg_list* return_register = NULL;
 			registers = assert_registers(d->argc, d->needs_stack ? d->argc : LONG_MAX, registers);
@@ -408,6 +412,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 				return_register->next = registers;
 				registers = return_register;
 			}
+			if (!release) fputs("BACKTRACE_POP();", outfile);
 		}
 		break;
 		case value:
@@ -449,9 +454,8 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 			if (!release)
 			{
 				registers = assert_registers(0, 0, registers);
-				fprintf(outfile, "backtrace_push(\"%s\",%zi,%zi);",tree->text, tree->line,tree->col);
-				fputs("debugger_step();", outfile);
-				immediate_footer = "backtrace_pop();";
+				fprintf(outfile, "BACKTRACE_PUSH(%s,%zi,%zi);",tree->text, tree->line,tree->col);
+				fprintf(outfile,"debugger_step();");
 			}
 			registers = assert_registers(1, LONG_MAX, registers);
 			decl_list* d = malloc(sizeof *d);
@@ -470,7 +474,9 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 			if (d->ret == block) fputs("Block_copy(", outfile);
 			registers = emit_register(d->ret, registers);
 			if (d->ret == block) fputs(")", outfile);
-			fputs(";{", outfile);
+			fputs(";", outfile);
+			if (!release) fputs("BACKTRACE_POP();", outfile);
+			fputs("{", outfile);
 			defs = d;
 			footer = "}";
 		}
@@ -480,9 +486,8 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 			if (!release)
 			{
 				registers = assert_registers(0, 0, registers);
-				fprintf(outfile, "backtrace_push(\"%s\",%zi,%zi);",tree->text,tree->line,tree->col);
-				fputs("debugger_step();", outfile);
-				immediate_footer = "backtrace_pop();";
+				fprintf(outfile, "BACKTRACE_PUSH(%s,%zi,%zi);",tree->text,tree->line,tree->col);
+				fprintf(outfile,"debugger_step();");
 			}
 			decl_list* d = lookup_word(tree->text, defs);
 			if (!d->predecl) yyerror("already defined in this block");
@@ -492,13 +497,14 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 			fprintf(outfile, "VAR(%s)=Block_copy(", name);
 			free(name);
 			registers = emit_register(block, registers);
-			fputs(");{", outfile);
+			fputs(");", outfile);
+			if (!release) fputs("BACKTRACE_POP()", outfile);
+			fputs("{", outfile);
 			footer = "}";
 		}
 		break;
 	}
 	// Free the ast node.
-	fputs(immediate_footer, outfile);
 	compile(tree->next, registers, defs);
 	fputs(footer, outfile);
 }
@@ -562,10 +568,14 @@ void emit_source_string(FILE* yyin)
 	int buf_sz = 255;
 	char buf[buf_sz];
 
+	if (release) return;
+
 	fputs("char* source_file_lines[]={", outfile);
 
 	rewind(yyin);
-	if (!release) while(fgets(buf, buf_sz, yyin)) {
+	size_t lines = 0;
+	while(fgets(buf, buf_sz, yyin)) {
+		lines ++;
 		fputs("\"", outfile);
 		for (size_t i = 0; buf[i] != '\n';)
 		{
@@ -589,6 +599,7 @@ void emit_source_string(FILE* yyin)
 	}
 
 	fputs("NULL};\n", outfile);
+	fprintf(outfile, "_Bool breakpoints[%zi] = {0};\n", lines);
 }
 
 int main(int argc, char** argv)
