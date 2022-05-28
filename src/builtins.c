@@ -83,7 +83,7 @@
 {.name="box",                 .type=func, .argc=1, .args={any}, .rets=true, .ret=box},
 {.name="unbox",               .type=func, .argc=1, .args={box}, .rets=true, .ret=any},
 {.name="set",                 .type=func, .argc=2, .args={box, any}, .rets=false},
-{.name="break",               .type=func, .argc=0, .rets=false},
+{.name="debug",               .type=func, .argc=0, .rets=false},
 
 /* Builtin stack operations */
 {.name="drop",                .type=stack_op, .stack_shuffle=&drop_register},
