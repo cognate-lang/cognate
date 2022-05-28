@@ -4,6 +4,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <Block.h>
 #include <setjmp.h>
 #include <string.h>
@@ -76,6 +77,7 @@ typedef struct cognate_stack
 } cognate_stack;
 
 #ifdef DEBUG
+
 typedef struct backtrace
 {
 	const struct backtrace* restrict next;
@@ -83,6 +85,14 @@ typedef struct backtrace
 	const size_t line;
 	const size_t col;
 } backtrace;
+
+typedef struct var_info
+{
+	const struct var_info* restrict next;
+	const char* name;
+	const ANY value;
+} var_info;
+
 #endif
 
 #define NAN_MASK 0x7ff8000000000000
@@ -124,11 +134,13 @@ static cognate_stack stack;
 static LIST cmdline_parameters = NULL;
 #ifdef DEBUG
 static const backtrace* trace = NULL;
+static const var_info* vars = NULL;
 #endif
 
 extern char *record_info[][64];
 extern char *source_file_lines[];
 extern _Bool breakpoints[];
+extern const size_t source_line_num;
 
 extern int main(int, char**);
 
@@ -150,7 +162,7 @@ void destructure_lists(LIST, LIST);
 void destructure_records(RECORD, RECORD);
 void destructure_objects(ANY, ANY);
 #ifdef DEBUG
-void print_backtrace(int, const backtrace*);
+void print_backtrace(int, const backtrace*, int);
 #endif
 
 void* gc_malloc(size_t);
@@ -329,6 +341,9 @@ void init(int argc, char** argv)
 	for (size_t i = 0; i < sizeof(signals); ++i) signal(signals[i], handle_error_signal);
 	// Initialize the stack.
 	init_stack();
+#ifdef DEBUG
+	if (getenv("COG_DEBUG")) debug=1;
+#endif
 }
 void cleanup(void)
 {
@@ -354,30 +369,15 @@ char* get_source_line(size_t line)
 	const backtrace _trace_##LINE##_##COL = (backtrace) {.name = (#NAME), .line = (LINE), .col = (COL), .next=trace}; \
 	trace = &_trace_##LINE##_##COL;
 
+#define VARS_PUSH(NAME, IDENT) \
+	const var_info _varinfo_##IDENT = (var_info) {.name = (#NAME), .value = VAR(IDENT), .next=vars}; \
+	vars = &_varinfo_##IDENT;
+
 #define BACKTRACE_POP() \
 	trace = trace->next;
 
-void debug_print_ident(const char* name, size_t line, size_t col, int arrow)
-{
-	int digits = 0;
-	int len = strlen(name);
-	for (size_t tmp = line; tmp /= 10; ++digits);
-	char* ln = get_source_line(line);
-	while (*ln)
-	{
-		if (*ln != ' ' && *ln != '\t') break;
-		ln++;
-		col--;
-	}
-	fprintf(stderr, "\033[0;2m[%zi] %.*s\033[0;1m%.*s\033[0;2m%s\n\033[0m",
-			line,
-			(int)col - len - 1, ln,
-			len, ln + col - len - 1,
-			ln + col - 1);
-	if (!arrow) return;
-	while (col-- + digits - len/2 + 2) fputs(" ", stderr);
-	fputs("\033[31;1m^\033[0m\n", stderr);
-}
+#define VARS_POP() \
+	vars = vars->next;
 
 static void debugger_step()
 {
@@ -387,12 +387,13 @@ static void debugger_step()
 		next_count--;
 		return;
 	}
-	debug_print_ident(trace->name, trace->line, trace->col, 0);
+	print_backtrace(1, trace, 0);
 ask:
 	fputs("\033[0;33m<DEBUG>\033[0m ", stderr);
 	char buf[257] = {0};
 	fgets(buf, 256, stdin);
 	if (feof(stdin)) exit(EXIT_SUCCESS);
+	if (*buf == '\n') goto ask;
 	char op[65] = "\0";
 	unsigned long int_arg = 0;
 	char str_arg[128] = {0};
@@ -430,17 +431,26 @@ ask:
 		case 't': case 'T':
 			// Trace
 			if (int_arg)
-				print_backtrace(int_arg, trace);
-			else print_backtrace(5, trace);
+				print_backtrace(int_arg, trace, 1);
+			else print_backtrace(5, trace, 1);
 			break;
 		case 'l': case 'L':
 			// List TODO handle argument
+			// TODO highlight current identifier like in traces
 			for (size_t i = 0; source_file_lines[i]; ++i)
 			{
 				int broken = breakpoints[i];
-				fprintf(stderr, "\033[0;2m[%3zi] %s\033[0m %s",
-						i+1, broken ? "\033[0;33m*" : " ",
-						source_file_lines[i]);
+				fprintf(stderr, "\033[0;2m[%3zi] %s\033[0m ", i+1, broken?"\033[0;33m*":" ");
+				if (trace->line == i+1)
+				{
+					size_t len = strlen(trace->name);
+					char* ln = source_file_lines[i];
+					fprintf(stderr, "%.*s\033[0;1m%.*s\033[0;0m%s",
+						(int)trace->col - len - 1, ln,
+						len, ln + trace->col - len - 1,
+						ln + trace->col - 1);
+				}
+				else fputs(source_file_lines[i], stderr);
 				fputc('\n', stderr);
 			}
 			break;
@@ -449,18 +459,37 @@ ask:
 			fputs("Exiting...\n", stderr);
 			exit (EXIT_SUCCESS);
 		case 'b': case 'B':
-			// Breakpoint
-			if (!int_arg) goto confused;
-			breakpoints[int_arg-1] = 1;
+			if (int_arg > source_line_num)
+				fprintf(stderr, "Line %zi is beyond end of file.\n", int_arg);
+			else if (int_arg) breakpoints[int_arg-1] = 1;
+			else breakpoints[trace->line-1] = 1;
+			break;
+		case 'v': case 'V':;
+			char* s = str_arg;
+			for (size_t i = 0; i < strlen(s); ++i)
+				s[i] = tolower(s[i]);
+			if (!*s)
+			{
+				fputs("Usage: v [NAME]\n", stderr);
+				break;
+			}
+			for (const var_info* restrict v = vars; v; v = v->next)
+			{
+				if (!strcmp(v->name, str_arg))
+				{
+					fprintf(stderr, "%c%s = %s\n", toupper(*s), s+1, show_object(v->value, 0));
+					goto ask;
+				}
+			}
+			fprintf(stderr, "No variable '%c%s' found\nNote: debug variables are dynamically scoped\n", toupper(*s), s+1);
 			break;
 		case 'd': case 'D':
 			// Delete breakpoint
-			if (!int_arg) goto confused;
-			breakpoints[int_arg-1] = 0;
+			if (!int_arg) fputs("Usage: d [LINE]\n", stderr);
+			else breakpoints[int_arg-1] = 0;
 			break;
 		default:
-confused:
-			fputs("?\n", stderr);
+			fprintf(stderr, "Invalid command '%s'\n", op);
 			break;
 	}
 	goto ask;
@@ -468,15 +497,32 @@ confused:
 
 static void check_breakpoint(size_t line)
 {
-	if unlikely(breakpoints[line-1])
-		debug = 1;
+	debug |= unlikely(breakpoints[line-1]);
 }
 
-void print_backtrace(int n, const backtrace* b)
+void print_backtrace(int n, const backtrace* b, int arrow)
 {
 	if (!b || !n) return;
-	debug_print_ident(b->name, b->line, b->col, 1);
-	print_backtrace(n - 1, b->next);
+	int digits = 0;
+	int len = strlen(b->name);
+	for (size_t tmp = b->line; tmp /= 10; ++digits);
+	char* ln = get_source_line(b->line);
+	size_t col = b->col;
+	while (*ln)
+	{
+		if (*ln != ' ' && *ln != '\t') break;
+		ln++;
+		col--;
+	}
+	fprintf(stderr, "\033[0;2m[%zi]\033[0m %.*s\033[0;1m%.*s\033[0m%s\n",
+			b->line,
+			(int)col - len - 1, ln,
+			len, ln + col - len - 1,
+			ln + col - 1);
+	if (!arrow) return;
+	while (col-- + digits - len/2 + 2) fputs(" ", stderr);
+	fputs("\033[31;1m^\033[0m\n", stderr);
+	print_backtrace(n - 1, b->next, arrow);
 }
 #endif
 
@@ -492,7 +538,7 @@ _Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(const char*
 	{
 		debug = 1;
 		debugger_step();
-	} else print_backtrace(5, trace);
+	} else print_backtrace(5, trace, 1);
 #endif
 	exit(EXIT_FAILURE);
 }
@@ -507,7 +553,7 @@ _Noreturn void throw_error(const char* restrict const msg)
 	{
 		debug = 1;
 		debugger_step();
-	} else print_backtrace(5, trace);
+	} else print_backtrace(5, trace, 1);
 #endif
 	exit(EXIT_FAILURE);
 }
@@ -1782,14 +1828,11 @@ void VAR(set)(BOX b, ANY a)
 	*b = a;
 }
 
-void VAR(break)()
+void VAR(debug)()
 {
 #ifdef DEBUG
-	fputc('\n', stderr);
 	debug = 1;
 	debugger_step();
-#else
-	throw_error("Cannot Break when compiled with -release");
 #endif
 }
 // ---------- ACTUAL PROGRAM ----------

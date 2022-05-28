@@ -271,7 +271,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 	yylloc.first_column = tree->col; // This lets us use yyerror()
 	yylloc.first_line = tree->line;
 	static size_t lineno = 0;
-	if (lineno != tree->line)
+	if (!release && lineno != tree->line)
 	{
 		lineno = tree->line;
 		fprintf(outfile, "check_breakpoint(%zi);", tree->line);
@@ -470,15 +470,19 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 			};
 			char* name = restrict_chars(d->name);
 			fprintf(outfile, "const %s VAR(%s)=", type_as_str[d->ret][true], name);
-			free(name);
 			if (d->ret == block) fputs("Block_copy(", outfile);
 			registers = emit_register(d->ret, registers);
 			if (d->ret == block) fputs(")", outfile);
 			fputs(";", outfile);
-			if (!release) fputs("BACKTRACE_POP();", outfile);
+			if (!release)
+			{
+				fprintf(outfile, "VARS_PUSH(%s, %s);", d->name, name);
+				fputs("BACKTRACE_POP();", outfile);
+			}
 			fputs("{", outfile);
 			defs = d;
-			footer = "}";
+			footer = release ? "}" : "VARS_POP();}";
+			free(name);
 		}
 		break;
 		case def:
@@ -569,7 +573,6 @@ void emit_source_string(FILE* yyin)
 	char buf[buf_sz];
 
 	if (release) return;
-
 	fputs("char* source_file_lines[]={", outfile);
 
 	rewind(yyin);
@@ -599,7 +602,8 @@ void emit_source_string(FILE* yyin)
 	}
 
 	fputs("NULL};\n", outfile);
-	fprintf(outfile, "_Bool breakpoints[%zi] = {0};\n", lines);
+	fprintf(outfile, "const size_t source_line_num=%zi;", lines);
+	fprintf(outfile, "_Bool breakpoints[%zi] = {0};", lines);
 }
 
 int main(int argc, char** argv)

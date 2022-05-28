@@ -1,7 +1,6 @@
 Def Factor (Zero? Modulo Swap);
 
 Def Primes (
-	Break;
 	Let U is upper bound;
 	initially List ();
 	For Range 2 to U (
@@ -13,4 +12,4 @@ Def Primes (
 	)
 );
 
-Print Primes up to 1000;
+Drop Primes up to 1000000;
