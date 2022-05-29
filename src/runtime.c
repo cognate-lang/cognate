@@ -993,7 +993,7 @@ void* gc_malloc(size_t sz)
 	static int bytes = 0;
 	size_t cells = (sz + 7) / 8;
 	bytes += sz;
-	if unlikely(bytes > 1024l*1024l*10)
+	if unlikely(bytes > 1024l*1024l*10l)
 	{
 		gc_collect();
 		bytes = 0;
@@ -1007,41 +1007,76 @@ void* gc_malloc(size_t sz)
 	return buf;
 }
 
-static uintptr_t gc_collect_root(uintptr_t object)
+static _Bool is_gc_ptr(uintptr_t object)
 {
 	const uintptr_t upper_bits = object & ~PTR_MASK;
-	if likely((object&7) || (upper_bits && !is_nan(object))) return object; // Not ptr
+	if ((object&7) || (upper_bits && !is_nan(object))) return 0;
 	uintptr_t index = (uintptr_t*)(object & PTR_MASK) - space[!z];
-	if (index >= alloc[!z]) return object; // Out of bounds
-	size_t offset = 0;
-	while (bitmap[!z][index] == EMPTY) index--, offset++; // Ptr to middle of object
-	if (bitmap[!z][index] == FORWARD) // Already collected
-		return upper_bits | (space[!z][index] + offset); // Forward
-	uintptr_t* buf = space[z] + alloc[z]; // Buffer in newspace
-	//assert(bitmap[z][alloc[z]] == STOP);
-	size_t sz = 1; for (;bitmap[!z][index+sz] == EMPTY;sz++);
-	bitmap[z][alloc[z]] = ALLOC;
-	alloc[z] += sz;
-	//assert(bitmap[z][alloc[z]] == EMPTY);
-	bitmap[z][alloc[z]] = STOP;
-	const uintptr_t tmp = space[!z][index];
-	space[!z][index] = (uintptr_t)buf; // Set forwarding address
-	bitmap[!z][index] = FORWARD;
-	const char sp;
-	if unlikely(&sp < function_stack_top + STACK_MARGIN_KB * 1024)
-		throw_error("The garbage collector died :(");
-	buf[0] = (uintptr_t) gc_collect_root(tmp);
-	for (size_t i = 1;i < sz;i++)
-		buf[i] = (uintptr_t)gc_collect_root((uintptr_t)space[!z][index+i]);
-	return upper_bits | (uintptr_t)(buf + offset);
+	if (index >= alloc[!z]) return 0;
+	return 1;
+}
+
+static void gc_collect_root(uintptr_t* addr)
+{
+	struct action {
+		uintptr_t* to;
+		uintptr_t from;
+	};
+	uintptr_t ret;
+	struct action* act_stk_start = (struct action*)space[!z] + alloc[!z];
+	struct action* act_stk_top = act_stk_start;
+	*act_stk_top++ = (struct action) { .from=*addr, .to=addr };
+start:;
+	while (act_stk_top != act_stk_start)
+	{
+		uintptr_t from = (act_stk_top-1)->from;
+		uintptr_t* to = (act_stk_top-1)->to;
+		act_stk_top--;
+		const uintptr_t upper_bits = from & ~PTR_MASK;
+		if likely((from&7) || (upper_bits && !is_nan(from)))
+		{
+			*to = from;
+			goto start;
+		}
+		uintptr_t index = (uintptr_t*)(from & PTR_MASK) - space[!z];
+		if (index >= alloc[!z])
+		{
+			*to = from;
+			goto start;
+		}
+		size_t offset = 0;
+		while (bitmap[!z][index] == EMPTY) index--, offset++; // Ptr to middle of object
+		if (bitmap[!z][index] == FORWARD)
+		{
+			*to = upper_bits | (space[!z][index] + offset);
+			goto start;
+		}
+		uintptr_t* buf = space[z] + alloc[z]; // Buffer in newspace
+		//assert(bitmap[z][alloc[z]] == STOP);
+		size_t sz = 1; for (;bitmap[!z][index+sz] == EMPTY;sz++);
+		bitmap[z][alloc[z]] = ALLOC;
+		alloc[z] += sz;
+		//assert(bitmap[z][alloc[z]] == EMPTY);
+		bitmap[z][alloc[z]] = STOP;
+		const uintptr_t tmp = space[!z][index];
+		space[!z][index] = (uintptr_t)buf; // Set forwarding address
+		bitmap[!z][index] = FORWARD;
+		const char sp;
+		if unlikely(&sp < function_stack_top + STACK_MARGIN_KB * 1024)
+			throw_error("The garbage collector died :(");
+		*act_stk_top++ = (struct action) { .from=tmp, .to=buf };
+		for (size_t i = 1;i < sz;i++)
+			*act_stk_top++ = (struct action) { .from=space[!z][index+i], .to=buf+i };
+		*to = upper_bits | (uintptr_t)(buf + offset);
+	}
 }
 
 __attribute__((noinline)) void gc_collect(void)
 {
-	//clock_t start, end;
-	//double cpu_time_used;
-	//size_t heapsz = alloc[z];
-	//start = clock();
+	clock_t start, end;
+	double cpu_time_used;
+	size_t heapsz = alloc[z];
+	start = clock();
 
 	z = !z;
 	for (size_t i = 0 ; i <= alloc[z] ; ++i) bitmap[z][i] = EMPTY;
@@ -1050,17 +1085,17 @@ __attribute__((noinline)) void gc_collect(void)
 
 	flush_stack_cache();
 	for (ANY* root = stack.absolute_start; root != stack.top; ++root)
-		*root = (uintptr_t)gc_collect_root((uintptr_t)*root);
+		gc_collect_root(root);
 
 	jmp_buf a;
 	if (setjmp(a)) return;
 
 	uintptr_t* sp = (uintptr_t*)&sp;
 	for (uintptr_t* root = sp + 1; root < (uintptr_t*)function_stack_start; ++root)
-		*root = gc_collect_root(*root); // Watch me destructively modify the call stack
+		gc_collect_root(root); // Watch me destructively modify the call stack
 
-	//end = clock();
-	//printf("%lf seconds for %ziMB -> %ziMB\n", (double)(end - start) / CLOCKS_PER_SEC, heapsz * 8 / 1024/1024, alloc[z] * 8/1024/1024);
+	end = clock();
+	printf("%lf seconds for %ziMB -> %ziMB\n", (double)(end - start) / CLOCKS_PER_SEC, heapsz * 8 / 1024/1024, alloc[z] * 8/1024/1024);
 
 	longjmp(a, 1);
 }
