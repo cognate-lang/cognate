@@ -1038,12 +1038,10 @@ static uintptr_t gc_collect_root(uintptr_t object)
 
 __attribute__((noinline)) void gc_collect(void)
 {
-	clock_t start, end;
-	double cpu_time_used;
-
-	size_t heapsz = alloc[z];
-
-	start = clock();
+	//clock_t start, end;
+	//double cpu_time_used;
+	//size_t heapsz = alloc[z];
+	//start = clock();
 
 	z = !z;
 	for (size_t i = 0 ; i <= alloc[z] ; ++i) bitmap[z][i] = EMPTY;
@@ -1059,11 +1057,11 @@ __attribute__((noinline)) void gc_collect(void)
 
 	uintptr_t* sp = (uintptr_t*)&sp;
 	for (uintptr_t* root = sp + 1; root < (uintptr_t*)function_stack_start; ++root)
-		*root = gc_collect_root(*root);
+		*root = gc_collect_root(*root); // Watch me destructively modify the call stack
 
-	end = clock();
-
+	//end = clock();
 	//printf("%lf seconds for %ziMB -> %ziMB\n", (double)(end - start) / CLOCKS_PER_SEC, heapsz * 8 / 1024/1024, alloc[z] * 8/1024/1024);
+
 	longjmp(a, 1);
 }
 
