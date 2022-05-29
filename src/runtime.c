@@ -456,7 +456,7 @@ ask:
 					char* ln = source_file_lines[i];
 					fprintf(stderr, "%.*s\033[0;1m%.*s\033[0;0m%s",
 						(int)(trace->col - len - 1), ln,
-						len, ln + trace->col - len - 1,
+						(int)len, ln + trace->col - len - 1,
 						ln + trace->col - 1);
 				}
 				else fputs(source_file_lines[i], stderr);
