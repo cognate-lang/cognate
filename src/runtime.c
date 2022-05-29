@@ -120,6 +120,11 @@ typedef struct var_info
 
 #define ALLOC_RECORD(n) (gc_malloc(sizeof(size_t)+n*sizeof(ANY)))
 
+uint64_t* space[2] = {NULL,NULL};
+char* bitmap[2] = {NULL,NULL};
+size_t alloc[2] = {0, 0};
+_Bool z = 0;
+
 static _Bool pure = 0;
 
 static size_t system_memory;
@@ -567,7 +572,7 @@ char* show_object (const ANY object, const _Bool raw_strings)
 {
 	static char* buffer;
 	static size_t depth = 0;
-	if (depth++ == 0) buffer = (char*)gc_malloc(0);
+	if (depth++ == 0) buffer = (char*)gc_malloc(0); // i dont like resizing buffers
 	switch (get_type(object))
 	{
 		case number: sprintf(buffer, "%.14g", unbox_number(object));
@@ -642,8 +647,12 @@ char* show_object (const ANY object, const _Bool raw_strings)
 			break;
 	}
 	depth--;
-	if (!depth) *buffer++ = '\0';
-	return strdup((char*)gc_malloc(0));
+	if (depth) return NULL;
+	*buffer++ = '\0';
+	char* b = strdup(gc_malloc(0));
+	char* c = gc_strdup(b);
+	free(b);
+	return c;
 }
 
 void init_stack(void)
@@ -944,11 +953,6 @@ void check_record_id(size_t i, RECORD r)
 #define STOP  0x2
 #define FORWARD 0x3
 
-uint64_t* space[2] = {NULL,NULL};
-char* bitmap[2] = {NULL,NULL};
-size_t alloc[2] = {0, 0};
-_Bool z = 0;
-
 /*
  * Cognate's Garbage Collector
  *
@@ -999,10 +1003,10 @@ void* gc_malloc(size_t sz)
 		bytes = 0;
 	}
 	void* buf = space[z] + alloc[z];
-	//assert(*(bitmap[z] + alloc[z]) == STOP);
+	assert(*(bitmap[z] + alloc[z]) == STOP);
 	bitmap[z][alloc[z]] = ALLOC;
 	alloc[z] += cells;
-	//assert(*(bitmap[z] + alloc[z]) == EMPTY);
+	assert(*(bitmap[z] + alloc[z]) == EMPTY);
 	bitmap[z][alloc[z]] = STOP;
 	return buf;
 }
@@ -1018,56 +1022,52 @@ static _Bool is_gc_ptr(uintptr_t object)
 
 static void gc_collect_root(uintptr_t* addr)
 {
+	if (!is_gc_ptr(*addr)) return;
 	struct action {
 		uintptr_t* to;
 		uintptr_t from;
 	};
-	uintptr_t ret;
 	struct action* act_stk_start = (struct action*)space[!z] + alloc[!z];
 	struct action* act_stk_top = act_stk_start;
 	*act_stk_top++ = (struct action) { .from=*addr, .to=addr };
 start:;
 	while (act_stk_top != act_stk_start)
 	{
-		uintptr_t from = (act_stk_top-1)->from;
-		uintptr_t* to = (act_stk_top-1)->to;
 		act_stk_top--;
+		uintptr_t from = act_stk_top->from;
+		uintptr_t* to = act_stk_top->to;
 		const uintptr_t upper_bits = from & ~PTR_MASK;
-		if likely((from&7) || (upper_bits && !is_nan(from)))
-		{
-			*to = from;
-			goto start;
-		}
 		uintptr_t index = (uintptr_t*)(from & PTR_MASK) - space[!z];
-		if (index >= alloc[!z])
-		{
-			*to = from;
-			goto start;
-		}
 		size_t offset = 0;
 		while (bitmap[!z][index] == EMPTY) index--, offset++; // Ptr to middle of object
 		if (bitmap[!z][index] == FORWARD)
-		{
 			*to = upper_bits | (space[!z][index] + offset);
-			goto start;
+		else
+		{
+			uintptr_t* buf = space[z] + alloc[z]; // Buffer in newspace
+			assert(bitmap[z][alloc[z]] == STOP);
+			size_t sz = 1; for (;bitmap[!z][index+sz] == EMPTY;sz++);
+			bitmap[z][alloc[z]] = ALLOC;
+			alloc[z] += sz;
+			assert(bitmap[z][alloc[z]] == EMPTY);
+			bitmap[z][alloc[z]] = STOP;
+			const uintptr_t tmp = space[!z][index];
+			space[!z][index] = (uintptr_t)buf; // Set forwarding address
+			bitmap[!z][index] = FORWARD;
+			const char sp;
+			if (is_gc_ptr(tmp))
+				*act_stk_top++ = (struct action) { .from=tmp, .to=buf };
+			else
+				*buf = tmp;
+			for (size_t i = 1;i < sz;i++)
+				if (is_gc_ptr(space[!z][index+i]))
+					*act_stk_top++
+						= (struct action) { .from=space[!z][index+i], .to=buf+i };
+				else
+					buf[i] = space[!z][index+i];
+			*to = upper_bits | (uintptr_t)(buf + offset);
+
 		}
-		uintptr_t* buf = space[z] + alloc[z]; // Buffer in newspace
-		//assert(bitmap[z][alloc[z]] == STOP);
-		size_t sz = 1; for (;bitmap[!z][index+sz] == EMPTY;sz++);
-		bitmap[z][alloc[z]] = ALLOC;
-		alloc[z] += sz;
-		//assert(bitmap[z][alloc[z]] == EMPTY);
-		bitmap[z][alloc[z]] = STOP;
-		const uintptr_t tmp = space[!z][index];
-		space[!z][index] = (uintptr_t)buf; // Set forwarding address
-		bitmap[!z][index] = FORWARD;
-		const char sp;
-		if unlikely(&sp < function_stack_top + STACK_MARGIN_KB * 1024)
-			throw_error("The garbage collector died :(");
-		*act_stk_top++ = (struct action) { .from=tmp, .to=buf };
-		for (size_t i = 1;i < sz;i++)
-			*act_stk_top++ = (struct action) { .from=space[!z][index+i], .to=buf+i };
-		*to = upper_bits | (uintptr_t)(buf + offset);
 	}
 }
 
