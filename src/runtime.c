@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <Block.h>
+#include <assert.h>
 #include <setjmp.h>
 #include <string.h>
 #include <sys/mman.h>
@@ -121,12 +122,6 @@ typedef struct var_info
 
 static _Bool pure = 0;
 
-static uintptr_t* restrict heap_start;
-static uintptr_t* restrict heap_top;
-
-static uint8_t* restrict bitmap;
-static uint8_t* restrict free_start;
-
 static size_t system_memory;
 
 // Global variables
@@ -146,7 +141,7 @@ extern int main(int, char**);
 
 static const char* restrict function_stack_top;
 static const char* restrict function_stack_start;
-static ptrdiff_t function_stack_size;
+static rlim_t function_stack_size;
 
 // Variables and	needed by functions.c defined in runtime.c
 void init_stack(void);
@@ -312,13 +307,12 @@ void init(int argc, char** argv)
 		throw_error("Cannot get return stack limit");
 	function_stack_size = stack_limit.rlim_cur;
 	SET_FUNCTION_STACK_START();
+	if (function_stack_size == ULONG_MAX) function_stack_top = NULL;
 	// Set locale for strings.
 	if unlikely(setlocale(LC_ALL, "") == NULL)
 	{
 		throw_error("Cannot set locale");
 	}
-
-	system_memory = sysconf(_SC_PHYS_PAGES) * 4096;
 	// Init GC
 	gc_init();
 	// Seed the random number generator properly.
@@ -355,7 +349,7 @@ void check_function_stack_size(void)
 {
 	const char sp;
 	if unlikely(&sp < function_stack_top + STACK_MARGIN_KB * 1024)
-		throw_error_fmt("Maximum recursion depth exceeded");
+		throw_error("Maximum recursion depth exceeded");
 }
 
 #ifdef DEBUG
@@ -573,7 +567,7 @@ char* show_object (const ANY object, const _Bool raw_strings)
 {
 	static char* buffer;
 	static size_t depth = 0;
-	if (depth++ == 0) buffer = (char*)heap_top;
+	if (depth++ == 0) buffer = (char*)gc_malloc(0);
 	switch (get_type(object))
 	{
 		case number: sprintf(buffer, "%.14g", unbox_number(object));
@@ -642,7 +636,6 @@ char* show_object (const ANY object, const _Bool raw_strings)
 		}
 		break;
 		case box:
-			//puts("test");
 			*buffer++ = '[';
 			show_object(*unbox_box(object), 0);
 			*buffer++ = ']';
@@ -650,7 +643,7 @@ char* show_object (const ANY object, const _Bool raw_strings)
 	}
 	depth--;
 	if (!depth) *buffer++ = '\0';
-	return strdup((char*)heap_top);
+	return strdup((char*)gc_malloc(0));
 }
 
 void init_stack(void)
@@ -946,11 +939,15 @@ void check_record_id(size_t i, RECORD r)
 
 #define PAGE_SIZE 4096
 
-#define BITMAP_EMPTY 0x0
-#define BITMAP_FREE  0x1
-#define BITMAP_ALLOC 0x3
+#define EMPTY 0x0
+#define ALLOC 0x1
+#define STOP  0x2
+#define FORWARD 0x3
 
-#define BITMAP_INDEX(ptr) bitmap[ptr - heap_start]
+uint64_t* space[2] = {NULL,NULL};
+char* bitmap[2] = {NULL,NULL};
+size_t alloc[2] = {0, 0};
+_Bool z = 0;
 
 /*
  * Cognate's Garbage Collector
@@ -976,80 +973,98 @@ void check_record_id(size_t i, RECORD r)
  *		> locks on gc_malloc().
  */
 
+#define TERABYTE (1024l * 1024l * 1024l * 1024l)
+
 void gc_init(void)
 {
-	bitmap = free_start   = mmap(0, (size_t)(system_memory*0.9/8), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
-	heap_start = heap_top = mmap(0, (size_t)(system_memory*0.9),   PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
-	if (heap_start == MAP_FAILED || bitmap == MAP_FAILED)
-		throw_error("Memory map failure - are you trying to use valgrind?");
-	BITMAP_INDEX(heap_start) = BITMAP_FREE;
-}
-
-static void __attribute__((unused)) show_heap_usage(void)
-{
-	printf("%p -> %p\n", (void*)heap_start, (void*)heap_top);
-	for (uintptr_t* i = heap_start; i < heap_top; ++i)
-	{
-		switch(BITMAP_INDEX(i))
-		{
-			case BITMAP_ALLOC: putc('#', stdout); break;
-			case BITMAP_FREE:  putc('-', stdout); break;
-			default:           putc('?', stdout);
-		}
-	}
-	putc('\n', stdout);
+	system_memory = sysconf(_SC_PHYS_PAGES) * 4096;
+	bitmap[0] = mmap(0, system_memory/18, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
+   bitmap[1] = mmap(0, system_memory/18, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
+   space[0]  = mmap(0, (system_memory/18)*8, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
+   space[1]  = mmap(0, (system_memory/18)*8, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
+	bitmap[0][0] = STOP;
+	bitmap[1][0] = STOP;
 }
 
 __attribute__((malloc, hot, assume_aligned(sizeof(uint64_t)), alloc_size(1), returns_nonnull))
-void* gc_malloc(size_t bytes)
+void* gc_malloc(size_t sz)
 {
-	static int byte_count = 0;
-	byte_count += bytes;
-	if unlikely(byte_count > 1024l * 1024l * 10) gc_collect(), byte_count = 0;
-	const size_t longs = (bytes + 7) / sizeof(uintptr_t);
-	free_start = memchr(free_start, BITMAP_FREE, LONG_MAX);
-	for (uint8_t* restrict free_end; unlikely(free_end = memchr(free_start + 1, BITMAP_ALLOC, longs - 1)); )
-		free_start = memchr(free_end + 1, BITMAP_FREE, LONG_MAX);
-	memset(free_start + 1, BITMAP_EMPTY, longs - 1);
-	uint8_t* restrict free_end = free_start + longs;
-	uintptr_t* buf = heap_start + (free_start - bitmap);
-	*free_start = BITMAP_ALLOC;
-	if unlikely(heap_top < buf + longs) heap_top = buf + longs;
-	if (*free_end == BITMAP_EMPTY) *free_end = BITMAP_FREE;
-	free_start = free_end;
+	if (!sz) return space[z] + alloc[z];
+	static int bytes = 0;
+	size_t cells = (sz + 7) / 8;
+	bytes += sz;
+	if unlikely(bytes > 1024l*1024l*10)
+	{
+		gc_collect();
+		bytes = 0;
+	}
+	void* buf = space[z] + alloc[z];
+	//assert(*(bitmap[z] + alloc[z]) == STOP);
+	bitmap[z][alloc[z]] = ALLOC;
+	alloc[z] += cells;
+	//assert(*(bitmap[z] + alloc[z]) == EMPTY);
+	bitmap[z][alloc[z]] = STOP;
 	return buf;
 }
 
-static void gc_collect_root(uintptr_t object)
+static uintptr_t gc_collect_root(uintptr_t object)
 {
-	uintptr_t* restrict ptr = (uintptr_t*)(object & PTR_MASK);
-	if likely((object != (uintptr_t)ptr && !is_nan(object))
-	 || ptr < heap_start || ptr >= heap_top
-	 || BITMAP_INDEX(ptr) != BITMAP_FREE) return;
-	/* Cognate does not use pointers to the middle of gc objects,
-	 * but if in future it does, then the garbage collector will
-	 * need to iterate back through the bitmap if ptr is empty. */
-	BITMAP_INDEX(ptr) = BITMAP_ALLOC;
-	// No need to optimize the bitmap addressing, since it's O(n) anyways.
-	for (uintptr_t* p = ptr + 1; BITMAP_INDEX(p) == BITMAP_EMPTY; ++p)
-		gc_collect_root(*p);
-	gc_collect_root(*ptr);
+	const uintptr_t upper_bits = object & ~PTR_MASK;
+	if likely((object&7) || (upper_bits && !is_nan(object))) return object; // Not ptr
+	uintptr_t index = (uintptr_t*)(object & PTR_MASK) - space[!z];
+	if (index >= alloc[!z]) return object; // Out of bounds
+	size_t offset = 0;
+	while (bitmap[!z][index] == EMPTY) index--, offset++; // Ptr to middle of object
+	if (bitmap[!z][index] == FORWARD) // Already collected
+		return upper_bits | (space[!z][index] + offset); // Forward
+	uintptr_t* buf = space[z] + alloc[z]; // Buffer in newspace
+	//assert(bitmap[z][alloc[z]] == STOP);
+	size_t sz = 1; for (;bitmap[!z][index+sz] == EMPTY;sz++);
+	bitmap[z][alloc[z]] = ALLOC;
+	alloc[z] += sz;
+	//assert(bitmap[z][alloc[z]] == EMPTY);
+	bitmap[z][alloc[z]] = STOP;
+	const uintptr_t tmp = space[!z][index];
+	space[!z][index] = (uintptr_t)buf; // Set forwarding address
+	bitmap[!z][index] = FORWARD;
+	const char sp;
+	if unlikely(&sp < function_stack_top + STACK_MARGIN_KB * 1024)
+		throw_error("The garbage collector died :(");
+	buf[0] = (uintptr_t) gc_collect_root(tmp);
+	for (size_t i = 1;i < sz;i++)
+		buf[i] = (uintptr_t)gc_collect_root((uintptr_t)space[!z][index+i]);
+	return upper_bits | (uintptr_t)(buf + offset);
 }
 
 __attribute__((noinline)) void gc_collect(void)
 {
-	for (uintptr_t* restrict p = (uintptr_t*)bitmap;
-	    (uint8_t*)p < bitmap + (heap_top - heap_start); ++p)
-		*p &= 0x5555555555555555;
-	for (uintptr_t* root = stack.absolute_start; root < stack.top; ++root)
-		gc_collect_root(*root);
-	gc_collect_root(stack.cache);
+	clock_t start, end;
+	double cpu_time_used;
+
+	size_t heapsz = alloc[z];
+
+	start = clock();
+
+	z = !z;
+	for (size_t i = 0 ; i <= alloc[z] ; ++i) bitmap[z][i] = EMPTY;
+	alloc[z] = 0;
+	bitmap[z][0] = STOP;
+
+	flush_stack_cache();
+	for (ANY* root = stack.absolute_start; root != stack.top; ++root)
+		*root = (uintptr_t)gc_collect_root((uintptr_t)*root);
+
 	jmp_buf a;
-	setjmp(a);
-	uintptr_t* sp = (uintptr_t*)&sp + 1;
-	for (uintptr_t* root = sp; root <= (uintptr_t*)function_stack_start; ++root)
-		gc_collect_root(*root);
-	free_start = bitmap;
+	if (setjmp(a)) return;
+
+	uintptr_t* sp = (uintptr_t*)&sp;
+	for (uintptr_t* root = sp + 1; root < (uintptr_t*)function_stack_start; ++root)
+		*root = gc_collect_root(*root);
+
+	end = clock();
+
+	//printf("%lf seconds for %ziMB -> %ziMB\n", (double)(end - start) / CLOCKS_PER_SEC, heapsz * 8 / 1024/1024, alloc[z] * 8/1024/1024);
+	longjmp(a, 1);
 }
 
 char* gc_strdup(char* src)
