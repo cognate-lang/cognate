@@ -120,7 +120,7 @@ typedef struct var_info
 
 #define ALLOC_RECORD(n) (gc_malloc(sizeof(size_t)+n*sizeof(ANY)))
 
-static uint64_t* space[2] = {NULL,NULL};
+static ANY* space[2] = {NULL,NULL};
 static char* bitmap[2] = {NULL,NULL};
 static size_t alloc[2] = {0, 0};
 static _Bool z = 0;
@@ -455,7 +455,7 @@ ask:
 					size_t len = strlen(trace->name);
 					char* ln = source_file_lines[i];
 					fprintf(stderr, "%.*s\033[0;1m%.*s\033[0;0m%s",
-						(int)trace->col - len - 1, ln,
+						(int)(trace->col - len - 1), ln,
 						len, ln + trace->col - len - 1,
 						ln + trace->col - 1);
 				}
