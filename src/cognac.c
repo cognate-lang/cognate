@@ -658,8 +658,8 @@ int main(int argc, char** argv)
 		execvp(args[0], args);
 	}
 	else wait(&status);
-	free(c_file_path);
-	free(binary_file_path);
+	//free(c_file_path);
+	//free(binary_file_path);
 	if (!run || status) return status;
 	char prog_name[strlen(argv[0])+3];
 	strcpy(prog_name, "./");
