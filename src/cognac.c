@@ -274,7 +274,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 	if (!release && lineno != tree->line)
 	{
 		lineno = tree->line;
-		fprintf(outfile, "check_breakpoint(%zi);", tree->line);
+		fprintf(outfile, "check_breakpoint(%zu);", tree->line);
 	}
 	if (gc_test)
 	{
@@ -366,7 +366,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 			if (!release)
 			{
 				registers = assert_registers(0, 0, registers);
-				fprintf(outfile, "BACKTRACE_PUSH(%s,%zi,%zi);", d->name,tree->line,tree->col);
+				fprintf(outfile, "BACKTRACE_PUSH(%s,%zu,%zu);", d->name,tree->line,tree->col);
 				fprintf(outfile,"debugger_step();");
 			}
 			reg_list* return_register = NULL;
@@ -454,7 +454,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 			if (!release)
 			{
 				registers = assert_registers(0, 0, registers);
-				fprintf(outfile, "BACKTRACE_PUSH(%s,%zi,%zi);",tree->text, tree->line,tree->col);
+				fprintf(outfile, "BACKTRACE_PUSH(%s,%zu,%zu);",tree->text, tree->line,tree->col);
 				fprintf(outfile,"debugger_step();");
 			}
 			registers = assert_registers(1, LONG_MAX, registers);
@@ -490,7 +490,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 			if (!release)
 			{
 				registers = assert_registers(0, 0, registers);
-				fprintf(outfile, "BACKTRACE_PUSH(%s,%zi,%zi);",tree->text,tree->line,tree->col);
+				fprintf(outfile, "BACKTRACE_PUSH(%s,%zu,%zu);",tree->text,tree->line,tree->col);
 				fprintf(outfile,"debugger_step();");
 			}
 			decl_list* d = lookup_word(tree->text, defs);
@@ -602,8 +602,8 @@ void emit_source_string(FILE* yyin)
 	}
 
 	fputs("NULL};\n", outfile);
-	fprintf(outfile, "const size_t source_line_num=%zi;", lines);
-	fprintf(outfile, "_Bool breakpoints[%zi] = {0};", lines);
+	fprintf(outfile, "const size_t source_line_num=%zu;", lines);
+	fprintf(outfile, "_Bool breakpoints[%zu] = {0};", lines);
 }
 
 int main(int argc, char** argv)
@@ -658,6 +658,8 @@ int main(int argc, char** argv)
 		execvp(args[0], args);
 	}
 	else wait(&status);
+	free(c_file_path);
+	free(binary_file_path);
 	if (!run || status) return status;
 	char prog_name[strlen(argv[0])+3];
 	strcpy(prog_name, "./");
