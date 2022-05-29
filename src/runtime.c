@@ -120,10 +120,10 @@ typedef struct var_info
 
 #define ALLOC_RECORD(n) (gc_malloc(sizeof(size_t)+n*sizeof(ANY)))
 
-uint64_t* space[2] = {NULL,NULL};
-char* bitmap[2] = {NULL,NULL};
-size_t alloc[2] = {0, 0};
-_Bool z = 0;
+static uint64_t* space[2] = {NULL,NULL};
+static char* bitmap[2] = {NULL,NULL};
+static size_t alloc[2] = {0, 0};
+static _Bool z = 0;
 
 static _Bool pure = 0;
 
@@ -149,142 +149,142 @@ static const char* restrict function_stack_start;
 static rlim_t function_stack_size;
 
 // Variables and	needed by functions.c defined in runtime.c
-void init_stack(void);
-void check_record_id(size_t, RECORD);
-void set_function_stack_start(void);
-void expand_stack(void);
-char* show_object(const ANY object, const _Bool);
-void _Noreturn __attribute__((format(printf, 1, 2))) throw_error_fmt(const char* restrict const, ...);
-void _Noreturn throw_error(const char* restrict const);
-_Bool compare_objects(ANY, ANY);
-_Bool match_objects(ANY, ANY);
-void destructure_lists(LIST, LIST);
-void destructure_records(RECORD, RECORD);
-void destructure_objects(ANY, ANY);
+static void init_stack(void);
+static void check_record_id(size_t, RECORD);
+static void set_function_stack_start(void);
+static void expand_stack(void);
+static char* show_object(const ANY object, const _Bool);
+static void _Noreturn __attribute__((format(printf, 1, 2))) throw_error_fmt(const char* restrict const, ...);
+static void _Noreturn throw_error(const char* restrict const);
+static _Bool compare_objects(ANY, ANY);
+static _Bool match_objects(ANY, ANY);
+static void destructure_lists(LIST, LIST);
+static void destructure_records(RECORD, RECORD);
+static void destructure_objects(ANY, ANY);
 #ifdef DEBUG
-void print_backtrace(int, const backtrace*, int);
+static void print_backtrace(int, const backtrace*, int);
 #endif
 
-void* gc_malloc(size_t);
-void gc_collect(void);
-void gc_init(void);
-char* gc_strdup(char*);
-char* gc_strndup(char*, size_t);
+static void* gc_malloc(size_t);
+static void gc_collect(void);
+static void gc_init(void);
+static char* gc_strdup(char*);
+static char* gc_strndup(char*, size_t);
 
 #define gc_new(t) (t*) gc_malloc (sizeof(t))
 
 // Variables and functions needed by compiled source file defined in runtime.c
-cognate_type get_type(ANY);
-_Bool is_nan(ANY);
-NUMBER unbox_number(ANY);
-BOX unbox_box(ANY);
-ANY box_box(BOX);
-ANY box_number(NUMBER);
-BOOLEAN unbox_boolean(ANY);
-ANY box_boolean(BOOLEAN);
-STRING unbox_string(ANY);
-ANY box_string(STRING);
-LIST unbox_list(ANY);
-ANY box_list(LIST);
-RECORD unbox_record(ANY);
-ANY box_record(RECORD);
-SYMBOL unbox_symbol(ANY);
-ANY box_symbol(SYMBOL);
-BLOCK unbox_block(ANY);
-ANY box_block(BLOCK);
+static cognate_type get_type(ANY);
+static _Bool is_nan(ANY);
+static NUMBER unbox_number(ANY);
+static BOX unbox_box(ANY);
+static ANY box_box(BOX);
+static ANY box_number(NUMBER);
+static BOOLEAN unbox_boolean(ANY);
+static ANY box_boolean(BOOLEAN);
+static STRING unbox_string(ANY);
+static ANY box_string(STRING);
+static LIST unbox_list(ANY);
+static ANY box_list(LIST);
+static RECORD unbox_record(ANY);
+static ANY box_record(RECORD);
+static SYMBOL unbox_symbol(ANY);
+static ANY box_symbol(SYMBOL);
+static BLOCK unbox_block(ANY);
+static ANY box_block(BLOCK);
 
-void init(int, char **);
-void cleanup(void);
-void push(ANY);
-ANY pop(void);
-ANY peek(void);
-void flush_stack_cache(void);
-int stack_length(void);
-void check_function_stack_size(void);
+static void init(int, char **);
+static void cleanup(void);
+static void push(ANY);
+static ANY pop(void);
+static ANY peek(void);
+static void flush_stack_cache(void);
+static int stack_length(void);
+static void check_function_stack_size(void);
 
 // Builtin functions needed by compiled source file defined in functions.c
-ANY VAR(if)(BOOLEAN, ANY, ANY);
-void VAR(when)(BOOLEAN, BLOCK);
-void VAR(unless)(BOOLEAN, BLOCK);
-void VAR(while)(BLOCK, BLOCK);
-void VAR(until)(BLOCK, BLOCK);
-void VAR(do)(BLOCK);
-void VAR(put)(ANY);
-void VAR(print)(ANY);
-NUMBER VAR(P)(NUMBER, NUMBER);
-NUMBER VAR(M)(NUMBER, NUMBER);
-NUMBER VAR(D)(NUMBER, NUMBER);
-NUMBER VAR(S)(NUMBER, NUMBER);
-NUMBER VAR(modulo)(NUMBER, NUMBER);
-NUMBER VAR(sqrt)(NUMBER);
-NUMBER VAR(random)(NUMBER, NUMBER);
-void VAR(clear)(void);
-extern BOOLEAN VAR(true);
-extern BOOLEAN VAR(false);
-BOOLEAN VAR(either)(BOOLEAN, BOOLEAN);
-BOOLEAN VAR(both)(BOOLEAN, BOOLEAN);
-BOOLEAN VAR(oneDof)(BOOLEAN, BOOLEAN);
-BOOLEAN VAR(not)(BOOLEAN);
-BOOLEAN VAR(EE)(ANY, ANY);
-BOOLEAN VAR(SE)(ANY, ANY);
-BOOLEAN VAR(L)(NUMBER, NUMBER);
-BOOLEAN VAR(G)(NUMBER, NUMBER);
-BOOLEAN VAR(LE)(NUMBER, NUMBER);
-BOOLEAN VAR(GE)(NUMBER, NUMBER);
-BOOLEAN VAR(match)(ANY, ANY);
-BOOLEAN VAR(anyQ)(ANY);
-BOOLEAN VAR(numberQ)(ANY);
-BOOLEAN VAR(symbolQ)(ANY);
-BOOLEAN VAR(listQ)(ANY);
-BOOLEAN VAR(stringQ)(ANY);
-BOOLEAN VAR(blockQ)(ANY);
-BOOLEAN VAR(booleanQ)(ANY);
-BOOLEAN VAR(integerQ)(ANY);
-BOOLEAN VAR(zeroQ)(ANY);
-ANY VAR(first)(LIST);
-LIST VAR(rest)(LIST);
-STRING VAR(head)(STRING);
-STRING VAR(tail)(STRING);
-LIST VAR(push)(ANY, LIST);
-BOOLEAN VAR(emptyQ)(LIST);
-LIST VAR(list)(BLOCK);
-STRING VAR(join)(NUMBER);
-NUMBER VAR(stringDlength)(STRING);
-STRING VAR(substring)(NUMBER, NUMBER, STRING);
-STRING VAR(input)(void);
-STRING VAR(read)(STRING);
-NUMBER VAR(number)(STRING);
-STRING VAR(path)(void);
-LIST VAR(stack)(void);
-void VAR(write)(STRING, ANY);
-LIST VAR(parameters)(void);
-void VAR(stop)(void);
-STRING VAR(show)(ANY);
-BOOLEAN VAR(matchDregex)(STRING, STRING);
-NUMBER VAR(ordinal)(STRING);
-STRING VAR(character)(NUMBER);
-NUMBER VAR(floor)(NUMBER);
-NUMBER VAR(round)(NUMBER);
-NUMBER VAR(ceiling)(NUMBER);
-void VAR(assert)(STRING, BOOLEAN);
-void VAR(error)(STRING);
-LIST VAR(map)(BLOCK, LIST);
-LIST VAR(filter)(BLOCK, LIST);
-void VAR(for)(LIST, BLOCK);
-LIST VAR(range)(NUMBER, NUMBER);
-ANY VAR(index)(NUMBER, LIST);
-void VAR(puts)(BLOCK);
-void VAR(prints)(BLOCK);
-BLOCK VAR(precompute)(BLOCK);
-void VAR(wait)(NUMBER);
-BLOCK VAR(case)(ANY, ANY, ANY);
-LIST VAR(split)(STRING, STRING);
-NUMBER VAR(length)(LIST);
-LIST VAR(take)(NUMBER,LIST);
-LIST VAR(takeDwhile)(BLOCK,LIST);
-LIST VAR(discard)(NUMBER,LIST);
-BLOCK VAR(remember)(BLOCK);
-BOOLEAN VAR(all)(BLOCK,LIST);
+static ANY VAR(if)(BOOLEAN, ANY, ANY);
+static void VAR(when)(BOOLEAN, BLOCK);
+static void VAR(unless)(BOOLEAN, BLOCK);
+static void VAR(while)(BLOCK, BLOCK);
+static void VAR(until)(BLOCK, BLOCK);
+static void VAR(do)(BLOCK);
+static void VAR(put)(ANY);
+static void VAR(print)(ANY);
+static NUMBER VAR(P)(NUMBER, NUMBER);
+static NUMBER VAR(M)(NUMBER, NUMBER);
+static NUMBER VAR(D)(NUMBER, NUMBER);
+static NUMBER VAR(S)(NUMBER, NUMBER);
+static NUMBER VAR(modulo)(NUMBER, NUMBER);
+static NUMBER VAR(sqrt)(NUMBER);
+static NUMBER VAR(random)(NUMBER, NUMBER);
+static void VAR(clear)(void);
+static BOOLEAN VAR(true);
+static BOOLEAN VAR(false);
+static BOOLEAN VAR(either)(BOOLEAN, BOOLEAN);
+static BOOLEAN VAR(both)(BOOLEAN, BOOLEAN);
+static BOOLEAN VAR(oneDof)(BOOLEAN, BOOLEAN);
+static BOOLEAN VAR(not)(BOOLEAN);
+static BOOLEAN VAR(EE)(ANY, ANY);
+static BOOLEAN VAR(SE)(ANY, ANY);
+static BOOLEAN VAR(L)(NUMBER, NUMBER);
+static BOOLEAN VAR(G)(NUMBER, NUMBER);
+static BOOLEAN VAR(LE)(NUMBER, NUMBER);
+static BOOLEAN VAR(GE)(NUMBER, NUMBER);
+static BOOLEAN VAR(match)(ANY, ANY);
+static BOOLEAN VAR(anyQ)(ANY);
+static BOOLEAN VAR(numberQ)(ANY);
+static BOOLEAN VAR(symbolQ)(ANY);
+static BOOLEAN VAR(listQ)(ANY);
+static BOOLEAN VAR(stringQ)(ANY);
+static BOOLEAN VAR(blockQ)(ANY);
+static BOOLEAN VAR(booleanQ)(ANY);
+static BOOLEAN VAR(integerQ)(ANY);
+static BOOLEAN VAR(zeroQ)(ANY);
+static ANY VAR(first)(LIST);
+static LIST VAR(rest)(LIST);
+static STRING VAR(head)(STRING);
+static STRING VAR(tail)(STRING);
+static LIST VAR(push)(ANY, LIST);
+static BOOLEAN VAR(emptyQ)(LIST);
+static LIST VAR(list)(BLOCK);
+static STRING VAR(join)(NUMBER);
+static NUMBER VAR(stringDlength)(STRING);
+static STRING VAR(substring)(NUMBER, NUMBER, STRING);
+static STRING VAR(input)(void);
+static STRING VAR(read)(STRING);
+static NUMBER VAR(number)(STRING);
+static STRING VAR(path)(void);
+static LIST VAR(stack)(void);
+static void VAR(write)(STRING, ANY);
+static LIST VAR(parameters)(void);
+static void VAR(stop)(void);
+static STRING VAR(show)(ANY);
+static BOOLEAN VAR(matchDregex)(STRING, STRING);
+static NUMBER VAR(ordinal)(STRING);
+static STRING VAR(character)(NUMBER);
+static NUMBER VAR(floor)(NUMBER);
+static NUMBER VAR(round)(NUMBER);
+static NUMBER VAR(ceiling)(NUMBER);
+static void VAR(assert)(STRING, BOOLEAN);
+static void VAR(error)(STRING);
+static LIST VAR(map)(BLOCK, LIST);
+static LIST VAR(filter)(BLOCK, LIST);
+static void VAR(for)(LIST, BLOCK);
+static LIST VAR(range)(NUMBER, NUMBER);
+static ANY VAR(index)(NUMBER, LIST);
+static void VAR(puts)(BLOCK);
+static void VAR(prints)(BLOCK);
+static BLOCK VAR(precompute)(BLOCK);
+static void VAR(wait)(NUMBER);
+static BLOCK VAR(case)(ANY, ANY, ANY);
+static LIST VAR(split)(STRING, STRING);
+static NUMBER VAR(length)(LIST);
+static LIST VAR(take)(NUMBER,LIST);
+static LIST VAR(takeDwhile)(BLOCK,LIST);
+static LIST VAR(discard)(NUMBER,LIST);
+static BLOCK VAR(remember)(BLOCK);
+static BOOLEAN VAR(all)(BLOCK,LIST);
 
 static const char *lookup_type(cognate_type);
 static _Bool compare_lists(LIST, LIST);
@@ -300,10 +300,10 @@ static size_t next_count = 0;
 static size_t debug_lineno = 0;
 #endif
 
-int _argc;
-char** _argv;
+static int _argc;
+static char** _argv;
 
-void init(int argc, char** argv)
+static void init(int argc, char** argv)
 {
 	_argc = argc;
 	_argv = argv;
@@ -344,13 +344,13 @@ void init(int argc, char** argv)
 	if (getenv("COG_DEBUG")) debug=1;
 #endif
 }
-void cleanup(void)
+static void cleanup(void)
 {
 	if unlikely(stack.top != stack.start || stack.cache != NIL_OBJ)
 		throw_error_fmt("Exiting with %ti object(s) on the stack", stack.top - stack.start + (stack.cache != NIL_OBJ));
 }
 
-void check_function_stack_size(void)
+static void check_function_stack_size(void)
 {
 	const char sp;
 	if unlikely(&sp < function_stack_top + STACK_MARGIN_KB * 1024)
@@ -358,7 +358,7 @@ void check_function_stack_size(void)
 }
 
 #ifdef DEBUG
-char* get_source_line(size_t line)
+static char* get_source_line(size_t line)
 {
 	// Length should be enough?
 	return source_file_lines[line-1];
@@ -499,7 +499,7 @@ static void check_breakpoint(size_t line)
 	debug |= unlikely(breakpoints[line-1]);
 }
 
-void print_backtrace(int n, const backtrace* b, int arrow)
+static void print_backtrace(int n, const backtrace* b, int arrow)
 {
 	if (!b || !n) return;
 	int digits = 0;
@@ -525,7 +525,7 @@ void print_backtrace(int n, const backtrace* b, int arrow)
 }
 #endif
 
-_Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(const char* restrict const fmt, ...)
+static _Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(const char* restrict const fmt, ...)
 {
 	fputs("\n\n\033[31;1m\t", stderr);
 	va_list args;
@@ -542,7 +542,7 @@ _Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(const char*
 	exit(EXIT_FAILURE);
 }
 
-_Noreturn void throw_error(const char* restrict const msg)
+static _Noreturn void throw_error(const char* restrict const msg)
 {
 	fputs("\n\n\033[31;1m\t", stderr);
 	fputs(msg, stderr);
@@ -557,18 +557,18 @@ _Noreturn void throw_error(const char* restrict const msg)
 	exit(EXIT_FAILURE);
 }
 
-void handle_error_signal(int sig)
+static void handle_error_signal(int sig)
 {
 	throw_error_fmt("Recieved signal %i (%s)", sig, strsignal(sig));
 }
 
-void assert_impure()
+static void assert_impure()
 {
 	if unlikely(pure) throw_error("Invalid operation for pure function");
 }
 
 
-char* show_object (const ANY object, const _Bool raw_strings)
+static char* show_object (const ANY object, const _Bool raw_strings)
 {
 	static char* buffer;
 	static size_t depth = 0;
@@ -655,47 +655,50 @@ char* show_object (const ANY object, const _Bool raw_strings)
 	return c;
 }
 
-void init_stack(void)
+static void init_stack(void)
 {
 	stack.absolute_start = stack.top = stack.start
 		= mmap(0, system_memory/10, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
 	stack.cache = NIL_OBJ;
 }
 
-void push(ANY object)
+__attribute__((hot))
+static void push(ANY object)
 {
 	if likely(stack.cache == NIL_OBJ) { stack.cache = object; return; }
 	*stack.top++ = stack.cache;
 	stack.cache = object;
 }
 
-ANY pop(void)
+__attribute__((hot))
+static ANY pop(void)
 {
 	if likely(stack.cache != NIL_OBJ) { const ANY a = stack.cache; stack.cache = NIL_OBJ; return a; }
 	if unlikely(stack.top == stack.start) throw_error("Stack underflow");
 	return *--stack.top;
 }
 
-ANY peek(void)
+__attribute__((hot))
+static ANY peek(void)
 {
 	if likely(stack.cache != NIL_OBJ) return stack.cache;
 	if unlikely(stack.top == stack.start) throw_error("Stack underflow");
 	return *(stack.top - 1);
 }
 
-void flush_stack_cache(void)
+static void flush_stack_cache(void)
 {
 	if (stack.cache == NIL_OBJ) return;
 	push(stack.cache);
 	pop();
 }
 
-int stack_length(void)
+static int stack_length(void)
 {
 	return stack.top - stack.start + (stack.cache != NIL_OBJ);
 }
 
-const char* lookup_type(cognate_type type)
+static const char* lookup_type(cognate_type type)
 {
 	switch(type)
 	{
@@ -745,7 +748,7 @@ static _Bool match_records(RECORD patt, RECORD obj)
 }
 
 
-_Bool compare_objects(ANY ob1, ANY ob2)
+static _Bool compare_objects(ANY ob1, ANY ob2)
 {
 	if (ob1 == ob2) return 1;
 	if (get_type(ob1) != get_type(ob2)) return 0;
@@ -764,7 +767,7 @@ _Bool compare_objects(ANY ob1, ANY ob2)
 	}
 }
 
-_Bool match_lists(LIST lst1, LIST lst2)
+static _Bool match_lists(LIST lst1, LIST lst2)
 {
 	if (!lst1) return !lst2;
 	if (!lst2) return 0;
@@ -778,7 +781,7 @@ _Bool match_lists(LIST lst1, LIST lst2)
 	return 0;
 }
 
-_Bool match_objects(ANY patt, ANY obj)
+static _Bool match_objects(ANY patt, ANY obj)
 {
 	if (patt == obj) return 1;
 	else if (get_type(patt) != get_type(obj)) return 0;
@@ -800,21 +803,21 @@ _Bool match_objects(ANY patt, ANY obj)
 	}
 }
 
-void destructure_lists(LIST patt, LIST obj)
+static void destructure_lists(LIST patt, LIST obj)
 {
 	if (!patt) return;
 	destructure_lists(patt->next, obj->next);
 	destructure_objects(patt->object, obj->object);
 }
 
-void destructure_records(RECORD patt, RECORD obj)
+static void destructure_records(RECORD patt, RECORD obj)
 {
 	ssize_t i;
 	for (i = 0; record_info[patt->id][i+1]; ++i);
 	for (; i >= 0; --i) destructure_objects(patt->items[i], obj->items[i]);
 }
 
-void destructure_objects(ANY patt, ANY obj)
+static void destructure_objects(ANY patt, ANY obj)
 {
 	if (get_type(patt) == block)
 	{
@@ -831,115 +834,115 @@ void destructure_objects(ANY patt, ANY obj)
 
 }
 
-_Bool is_nan(ANY box)
+static _Bool is_nan(ANY box)
 {
 	// Mostly works with -ffast-math
 	return (box & NAN_MASK) == NAN_MASK;
 }
 
-cognate_type get_type(ANY box)
+static cognate_type get_type(ANY box)
 {
 	if (is_nan(box)) return (TYP_MASK & box) >> 48;
 	else return number;
 }
 
-NUMBER unbox_number(ANY box)
+static NUMBER unbox_number(ANY box)
 {
 	if unlikely(is_nan(box))
 		throw_error_fmt("Expected a number but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
 	return *(NUMBER*)&box;
 }
 
-ANY box_number(NUMBER num)
+static ANY box_number(NUMBER num)
 {
 	return *(ANY*)&num;
 }
 
-BOX unbox_box(ANY box)
+static BOX unbox_box(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != 0)
 		throw_error_fmt("Expected a box but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
 	return (BOX)(PTR_MASK & box);
 }
 
-ANY box_box(BOX box)
+static ANY box_box(BOX box)
 {
 	return NAN_MASK | ((long)box << 48) | (long)box;
 }
 
-BOOLEAN unbox_boolean(ANY box)
+static BOOLEAN unbox_boolean(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)boolean << 48)
 		throw_error_fmt("Expected a boolean but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
 	return (STRING)(PTR_MASK & box);
 }
 
-ANY box_boolean(BOOLEAN b)
+static ANY box_boolean(BOOLEAN b)
 {
 	return NAN_MASK | ((long)boolean << 48) | b;
 }
 
-STRING unbox_string(ANY box)
+static STRING unbox_string(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)string << 48)
 		throw_error_fmt("Expected a string but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
 	return (STRING)(PTR_MASK & box);
 }
 
-ANY box_string(STRING s)
+static ANY box_string(STRING s)
 {
 	return NAN_MASK | ((long)string << 48) | (long)s;
 }
 
-LIST unbox_list(ANY box)
+static LIST unbox_list(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)list << 48)
 		throw_error_fmt("Expected a list but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
 	return (LIST)(PTR_MASK & box);
 }
 
-ANY box_list(LIST s)
+static ANY box_list(LIST s)
 {
 	return NAN_MASK | ((long)list << 48) | (long)s;
 }
 
-RECORD unbox_record(ANY box)
+static RECORD unbox_record(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)record << 48)
 		throw_error_fmt("Expected a record but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
 	return (RECORD)(PTR_MASK & box);
 }
 
-ANY box_record(RECORD s)
+static ANY box_record(RECORD s)
 {
 	return NAN_MASK | ((long)record << 48) | (long)s;
 }
 
-SYMBOL unbox_symbol(ANY box)
+static SYMBOL unbox_symbol(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)symbol << 48)
 		throw_error_fmt("Expected a symbol but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
 	return (SYMBOL)(PTR_MASK & box);
 }
 
-ANY box_symbol(SYMBOL s)
+static ANY box_symbol(SYMBOL s)
 {
 	return NAN_MASK | ((long)symbol << 48) | (long)s;
 }
 
-BLOCK unbox_block(ANY box)
+static BLOCK unbox_block(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)block << 48)
 		throw_error_fmt("Expected a block but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
 	return (BLOCK)(PTR_MASK & box);
 }
 
-ANY box_block(BLOCK s)
+static ANY box_block(BLOCK s)
 {
 	return NAN_MASK | ((long)block << 48) | (long)Block_copy(s);
 }
 
-void check_record_id(size_t i, RECORD r)
+static void check_record_id(size_t i, RECORD r)
 {
 	if unlikely(i != r->id)
 		throw_error_fmt("Expected a %.64s but got %.64s which is a %s", record_info[i][0], show_object(box_record(r), 0), record_info[r->id][0]);
@@ -950,52 +953,25 @@ void check_record_id(size_t i, RECORD r)
 
 #define EMPTY 0x0
 #define ALLOC 0x1
-#define STOP  0x2
-#define FORWARD 0x3
+#define FORWARD 0x2
 
-/*
- * Cognate's Garbage Collector
- *
- * This is a simplistic tracing conservative gc, using a bitmap allocator.
- * It has no dependencies on malloc() or free().
- * Well under 100 SLOC is also ridiculously small for a garbage collector.
- *
- * TODO:
- *	- Remove consequetive GC_FREEs after doing gc as then we don't have to
- *		memset the bitmap when we allocate.
- *	- Use a free list / free stack for allocating as this will improve
- *		performance
- *	- Make the bitmap only use 2 bits per long like it should, instead of a byte.
- *	- Use vector intrinsics to speed up bitmap checking/modifying.
- *
- * FIXME:
- *	- Doesn't work under valgrind.
- *	- An object will be deallocated if only referenced from other threads(!)
- *		> Collector either needs to iterate over parent threads' stacks, or a
- *		> thread-global collector iterates over all threads stacks. Second
- *		> method seems simpler and uses less memory but would also require
- *		> locks on gc_malloc().
- */
-
-#define TERABYTE (1024l * 1024l * 1024l * 1024l)
-
-void gc_init(void)
+static void gc_init(void)
 {
 	system_memory = sysconf(_SC_PHYS_PAGES) * 4096;
 	bitmap[0] = mmap(0, system_memory/18, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
    bitmap[1] = mmap(0, system_memory/18, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
    space[0]  = mmap(0, (system_memory/18)*8, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
    space[1]  = mmap(0, (system_memory/18)*8, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
-	bitmap[0][0] = STOP;
-	bitmap[1][0] = STOP;
+	bitmap[0][0] = ALLOC;
+	bitmap[1][0] = ALLOC;
 }
 
 __attribute__((malloc, hot, assume_aligned(sizeof(uint64_t)), alloc_size(1), returns_nonnull))
-void* gc_malloc(size_t sz)
+static void* gc_malloc(size_t sz)
 {
-	if (!sz) return space[z] + alloc[z];
+	//if (!sz) return space[z] + alloc[z];
 	static int bytes = 0;
-	size_t cells = (sz + 7) / 8;
+	const size_t cells = (sz + 7) / 8;
 	bytes += sz;
 	if unlikely(bytes > 1024l*1024l*10l)
 	{
@@ -1003,85 +979,85 @@ void* gc_malloc(size_t sz)
 		bytes = 0;
 	}
 	void* buf = space[z] + alloc[z];
-	assert(*(bitmap[z] + alloc[z]) == STOP);
-	bitmap[z][alloc[z]] = ALLOC;
+	//assert(*(bitmap[z] + alloc[z]) == ALLOC);
 	alloc[z] += cells;
-	assert(*(bitmap[z] + alloc[z]) == EMPTY);
-	bitmap[z][alloc[z]] = STOP;
+	//assert(*(bitmap[z] + alloc[z]) == EMPTY);
+	bitmap[z][alloc[z]] = ALLOC;
 	return buf;
 }
 
-static _Bool is_gc_ptr(uintptr_t object)
+__attribute__((hot))
+static _Bool is_gc_ptr(ANY object)
 {
-	const uintptr_t upper_bits = object & ~PTR_MASK;
+	const ANY upper_bits = object & ~PTR_MASK;
 	if ((object&7) || (upper_bits && !is_nan(object))) return 0;
-	uintptr_t index = (uintptr_t*)(object & PTR_MASK) - space[!z];
+	const ANY index = (ANY*)(object & PTR_MASK) - space[!z];
 	if (index >= alloc[!z]) return 0;
 	return 1;
 }
 
-static void gc_collect_root(uintptr_t* addr)
+__attribute__((hot))
+static void gc_collect_root(ANY* restrict addr)
 {
 	if (!is_gc_ptr(*addr)) return;
 	struct action {
-		uintptr_t* to;
-		uintptr_t from;
+		ANY from;
+		ANY* restrict to;
 	};
-	struct action* act_stk_start = (struct action*)space[!z] + alloc[!z];
-	struct action* act_stk_top = act_stk_start;
+	struct action* restrict act_stk_start = (struct action*)space[!z] + alloc[!z];
+	struct action* restrict act_stk_top = act_stk_start;
 	*act_stk_top++ = (struct action) { .from=*addr, .to=addr };
-start:;
-	while (act_stk_top != act_stk_start)
+	while (act_stk_top-- != act_stk_start)
 	{
-		act_stk_top--;
-		uintptr_t from = act_stk_top->from;
-		uintptr_t* to = act_stk_top->to;
-		const uintptr_t upper_bits = from & ~PTR_MASK;
-		uintptr_t index = (uintptr_t*)(from & PTR_MASK) - space[!z];
-		size_t offset = 0;
+		ANY from = act_stk_top->from;
+		ANY* to = act_stk_top->to;
+		const ANY upper_bits = from & ~PTR_MASK;
+		ANY index = (ANY*)(from & PTR_MASK) - space[!z];
+		ptrdiff_t offset = 0;
 		while (bitmap[!z][index] == EMPTY) index--, offset++; // Ptr to middle of object
 		if (bitmap[!z][index] == FORWARD)
 			*to = upper_bits | (space[!z][index] + offset);
 		else
 		{
-			uintptr_t* buf = space[z] + alloc[z]; // Buffer in newspace
-			assert(bitmap[z][alloc[z]] == STOP);
-			size_t sz = 1; for (;bitmap[!z][index+sz] == EMPTY;sz++);
-			bitmap[z][alloc[z]] = ALLOC;
+			ANY* buf = space[z] + alloc[z]; // Buffer in newspace
+			//assert(bitmap[z][alloc[z]] == ALLOC);
+			size_t sz = 1;
+			for (;bitmap[!z][index+sz] == EMPTY;sz++);
 			alloc[z] += sz;
-			assert(bitmap[z][alloc[z]] == EMPTY);
-			bitmap[z][alloc[z]] = STOP;
-			const uintptr_t tmp = space[!z][index];
-			space[!z][index] = (uintptr_t)buf; // Set forwarding address
+			//assert(bitmap[z][alloc[z]] == EMPTY);
+			bitmap[z][alloc[z]] = ALLOC;
+			const ANY tmp = space[!z][index];
+			space[!z][index] = (ANY)buf; // Set forwarding address
 			bitmap[!z][index] = FORWARD;
 			const char sp;
 			if (is_gc_ptr(tmp))
 				*act_stk_top++ = (struct action) { .from=tmp, .to=buf };
-			else
-				*buf = tmp;
+			else *buf = tmp;
 			for (size_t i = 1;i < sz;i++)
-				if (is_gc_ptr(space[!z][index+i]))
-					*act_stk_top++
-						= (struct action) { .from=space[!z][index+i], .to=buf+i };
-				else
-					buf[i] = space[!z][index+i];
-			*to = upper_bits | (uintptr_t)(buf + offset);
-
+			{
+				ANY from = space[!z][index+i];
+				if (is_gc_ptr(from))
+					*act_stk_top++ = (struct action) { .from=from, .to=buf+i };
+				else buf[i] = from;
+			}
+			*to = upper_bits | (ANY)(buf + offset);
 		}
 	}
 }
 
-__attribute__((noinline)) void gc_collect(void)
+static __attribute__((noinline,hot)) void gc_collect(void)
 {
+	/*
 	clock_t start, end;
 	double cpu_time_used;
 	size_t heapsz = alloc[z];
 	start = clock();
+	*/
 
 	z = !z;
-	for (size_t i = 0 ; i <= alloc[z] ; ++i) bitmap[z][i] = EMPTY;
+	memset(bitmap[z], 0, alloc[z]);
 	alloc[z] = 0;
-	bitmap[z][0] = STOP;
+	bitmap[z][0] = ALLOC;
 
 	flush_stack_cache();
 	for (ANY* root = stack.absolute_start; root != stack.top; ++root)
@@ -1090,23 +1066,23 @@ __attribute__((noinline)) void gc_collect(void)
 	jmp_buf a;
 	if (setjmp(a)) return;
 
-	uintptr_t* sp = (uintptr_t*)&sp;
-	for (uintptr_t* root = sp + 1; root < (uintptr_t*)function_stack_start; ++root)
+	ANY* sp = (ANY*)&sp;
+	for (ANY* root = sp + 1; root < (ANY*)function_stack_start; ++root)
 		gc_collect_root(root); // Watch me destructively modify the call stack
 
-	end = clock();
-	printf("%lf seconds for %ziMB -> %ziMB\n", (double)(end - start) / CLOCKS_PER_SEC, heapsz * 8 / 1024/1024, alloc[z] * 8/1024/1024);
+	//end = clock();
+	//printf("%lf seconds for %ziMB -> %ziMB\n", (double)(end - start) / CLOCKS_PER_SEC, heapsz * 8 / 1024/1024, alloc[z] * 8/1024/1024);
 
 	longjmp(a, 1);
 }
 
-char* gc_strdup(char* src)
+static char* gc_strdup(char* src)
 {
 	const size_t len = strlen(src);
 	return memcpy(gc_malloc(len + 1), src, len + 1);
 }
 
-char* gc_strndup(char* src, size_t bytes)
+static char* gc_strndup(char* src, size_t bytes)
 {
 	const size_t len = strlen(src);
 	if (len < bytes) bytes = len;
@@ -1115,22 +1091,22 @@ char* gc_strndup(char* src, size_t bytes)
 	return memcpy(dest, src, bytes);
 }
 
-ANY VAR(if)(BOOLEAN cond, ANY a, ANY b)
+static ANY VAR(if)(BOOLEAN cond, ANY a, ANY b)
 {
 	return cond ? a : b;
 }
 
-void VAR(when)(BOOLEAN cond, BLOCK expr)
+static void VAR(when)(BOOLEAN cond, BLOCK expr)
 {
 	if (cond) expr();
 }
 
-void VAR(unless)(BOOLEAN cond, BLOCK expr)
+static void VAR(unless)(BOOLEAN cond, BLOCK expr)
 {
 	if (!cond) expr();
 }
 
-void VAR(while)(BLOCK cond, BLOCK body)
+static void VAR(while)(BLOCK cond, BLOCK body)
 {
 	cond();
 	while (unbox_boolean(pop()))
@@ -1140,7 +1116,7 @@ void VAR(while)(BLOCK cond, BLOCK body)
 	}
 }
 
-void VAR(until)(BLOCK cond, BLOCK body)
+static void VAR(until)(BLOCK cond, BLOCK body)
 {
 	cond();
 	while (!unbox_boolean(pop()))
@@ -1150,24 +1126,25 @@ void VAR(until)(BLOCK cond, BLOCK body)
 	}
 }
 
-void VAR(do)(BLOCK blk) { blk(); }
+static void VAR(do)(BLOCK blk) { blk(); }
 
-void VAR(put)(ANY a)	 { assert_impure(); fputs(show_object(a, 1), stdout); fflush(stdout); }
-void VAR(print)(ANY a) { assert_impure(); puts(show_object(a, 1)); }
+static void VAR(put)(ANY a)	 { assert_impure(); fputs(show_object(a, 1), stdout); fflush(stdout); }
+static void VAR(print)(ANY a) { assert_impure(); puts(show_object(a, 1)); }
 
-void VAR(puts)(BLOCK b)		{ assert_impure(); VAR(for)(VAR(list)(b), ^{VAR(put)(pop()); }); }
-void VAR(prints)(BLOCK b) { assert_impure(); VAR(for)(VAR(list)(b), ^{VAR(put)(pop()); }); putc('\n', stdout); }
+static void VAR(puts)(BLOCK b)	  { assert_impure(); VAR(for)(VAR(list)(b), ^{VAR(put)(pop()); }); }
+static void VAR(prints)(BLOCK b) { assert_impure(); VAR(for)(VAR(list)(b), ^{VAR(put)(pop()); }); putc('\n', stdout); }
 
-NUMBER VAR(P)(NUMBER a, NUMBER b) { return a + b; } // Add cannot produce NaN.
+static NUMBER VAR(P)(NUMBER a, NUMBER b) { return a + b; } // Add cannot produce NaN.
 
-NUMBER VAR(M)(NUMBER a, NUMBER b)
+static NUMBER VAR(M)(NUMBER a, NUMBER b)
 {
 	const double r = a * b;
 	if unlikely(is_nan(*(long*)&r))
 		throw_error_fmt("Multiplication by %.14g of %.14g yields invalid result", a, b);
 	return r;
 }
-NUMBER VAR(D)(NUMBER a, NUMBER b)
+
+static NUMBER VAR(D)(NUMBER a, NUMBER b)
 {
 	const double r = b - a;
 	if unlikely(is_nan(*(long*)&r))
@@ -1175,7 +1152,7 @@ NUMBER VAR(D)(NUMBER a, NUMBER b)
 	return r;
 }
 
-NUMBER VAR(S)(NUMBER a, NUMBER b)
+static NUMBER VAR(S)(NUMBER a, NUMBER b)
 {
 	const double r = b / a;
 	if unlikely(is_nan(*(long*)&r))
@@ -1183,7 +1160,7 @@ NUMBER VAR(S)(NUMBER a, NUMBER b)
 	return r;
 }
 
-NUMBER VAR(modulo)(NUMBER a, NUMBER b)
+static NUMBER VAR(modulo)(NUMBER a, NUMBER b)
 {
 	const double r = b - a * floor(b / a);
 	if unlikely(is_nan(*(long*)&r))
@@ -1191,12 +1168,12 @@ NUMBER VAR(modulo)(NUMBER a, NUMBER b)
 	return r;
 }
 
-NUMBER VAR(sqrt)(NUMBER a)
+static NUMBER VAR(sqrt)(NUMBER a)
 {
 	return sqrt(a);
 }
 
-NUMBER VAR(random)(NUMBER low, NUMBER high)
+static NUMBER VAR(random)(NUMBER low, NUMBER high)
 {
 	NUMBER step = 1;
 	if unlikely((high - low) < 0) goto invalid_range;
@@ -1216,37 +1193,32 @@ invalid_range:
 	throw_error_fmt("Invalid range %.14g..%.14g", low, high);
 }
 
-void VAR(clear)(void) { stack.cache = NIL_OBJ; stack.top=stack.start; }
+static void VAR(clear)(void) { stack.cache = NIL_OBJ; stack.top=stack.start; }
 
-BOOLEAN VAR(true) =  1;
-BOOLEAN VAR(false) = 0;
+static BOOLEAN VAR(true) =  1;
+static BOOLEAN VAR(false) = 0;
+static BOOLEAN VAR(either)(BOOLEAN a, BOOLEAN b) { return a || b; }
+static BOOLEAN VAR(both)(BOOLEAN a, BOOLEAN b)   { return a && b; }
+static BOOLEAN VAR(oneDof)(BOOLEAN a, BOOLEAN b) { return a ^ b;  }
+static BOOLEAN VAR(not)(BOOLEAN a)               { return !a;     }
+static BOOLEAN VAR(EE)(ANY a, ANY b)  { return compare_objects(a,b); }
+static BOOLEAN VAR(SE)(ANY a, ANY b) { return !compare_objects(a,b); }
+static BOOLEAN VAR(G)(NUMBER a, NUMBER b)  { return a < b; }
+static BOOLEAN VAR(L)(NUMBER a, NUMBER b)  { return a > b; }
+static BOOLEAN VAR(GE)(NUMBER a, NUMBER b) { return a <= b; }
+static BOOLEAN VAR(LE)(NUMBER a, NUMBER b) { return a >= b; }
+static BOOLEAN VAR(numberQ)(ANY a)  { return get_type(a)==number; }
+static BOOLEAN VAR(listQ)(ANY a)    { return get_type(a)==list;   }
+static BOOLEAN VAR(stringQ)(ANY a)  { return get_type(a)==string; }
+static BOOLEAN VAR(anyQ)(ANY a)     { (void)a; return 1; }
+static BOOLEAN VAR(blockQ)(ANY a)   { return get_type(a)==block;  }
+static BOOLEAN VAR(booleanQ)(ANY a) { return get_type(a)==boolean;}
+static BOOLEAN VAR(symbolQ)(ANY a)  { return get_type(a)==symbol; }
+static BOOLEAN VAR(integerQ)(ANY a) { return VAR(numberQ)(a) && unbox_number(a) == floor(unbox_number(a)); }
+static BOOLEAN VAR(zeroQ)(ANY a)    { return VAR(numberQ)(a) && unbox_number(a) == 0; }
+static BOOLEAN VAR(match)(ANY patt, ANY obj) { return match_objects(patt,obj); }
 
-BOOLEAN VAR(either)(BOOLEAN a, BOOLEAN b) { return a || b; }
-BOOLEAN VAR(both)(BOOLEAN a, BOOLEAN b)   { return a && b; }
-BOOLEAN VAR(oneDof)(BOOLEAN a, BOOLEAN b) { return a ^ b;  }
-BOOLEAN VAR(not)(BOOLEAN a)               { return !a;     }
-
-
-BOOLEAN VAR(EE)(ANY a, ANY b)  { return compare_objects(a,b); }
-BOOLEAN VAR(SE)(ANY a, ANY b) { return !compare_objects(a,b); }
-BOOLEAN VAR(G)(NUMBER a, NUMBER b)  { return a < b; }
-BOOLEAN VAR(L)(NUMBER a, NUMBER b)  { return a > b; }
-BOOLEAN VAR(GE)(NUMBER a, NUMBER b) { return a <= b; }
-BOOLEAN VAR(LE)(NUMBER a, NUMBER b) { return a >= b; }
-
-BOOLEAN VAR(numberQ)(ANY a)  { return get_type(a)==number; }
-BOOLEAN VAR(listQ)(ANY a)    { return get_type(a)==list;   }
-BOOLEAN VAR(stringQ)(ANY a)  { return get_type(a)==string; }
-BOOLEAN VAR(anyQ)(ANY a)     { (void)a; return 1; }
-BOOLEAN VAR(blockQ)(ANY a)   { return get_type(a)==block;  }
-BOOLEAN VAR(booleanQ)(ANY a) { return get_type(a)==boolean;}
-BOOLEAN VAR(symbolQ)(ANY a)  { return get_type(a)==symbol; }
-BOOLEAN VAR(integerQ)(ANY a) { return VAR(numberQ)(a) && unbox_number(a) == floor(unbox_number(a)); }
-BOOLEAN VAR(zeroQ)(ANY a)    { return VAR(numberQ)(a) && unbox_number(a) == 0; }
-
-BOOLEAN VAR(match)(ANY patt, ANY obj) { return match_objects(patt,obj); }
-
-BLOCK VAR(case)(ANY patt, ANY if_match, ANY if_not_match)
+static BLOCK VAR(case)(ANY patt, ANY if_match, ANY if_not_match)
 {
 	_Bool block1 = get_type(if_match) == block;
 	_Bool block2 = get_type(if_not_match) == block;
@@ -1291,33 +1263,33 @@ BLOCK VAR(case)(ANY patt, ANY if_match, ANY if_not_match)
 	});
 }
 
-ANY VAR(first)(LIST lst)
+static ANY VAR(first)(LIST lst)
 {
 	// Returns the first element of a list. O(1).
 	if unlikely(!lst) throw_error("empty list is invalid");
 	return lst->object;
 }
 
-LIST VAR(rest)(LIST lst)
+static LIST VAR(rest)(LIST lst)
 {
 	// Returns the tail portion of a list. O(1).
 	if unlikely(!lst) throw_error("empty list is invalid");
 	return lst->next;
 }
 
-STRING VAR(head)(STRING str)
+static STRING VAR(head)(STRING str)
 {
 	if unlikely(!*str) throw_error("empty string is invalid");
 	return gc_strndup((char*)str, mblen(str, MB_CUR_MAX));
 }
 
-STRING VAR(tail)(STRING str)
+static STRING VAR(tail)(STRING str)
 {
 	if unlikely(!*str) throw_error("empty string is invalid");
 	return str + mblen(str, MB_CUR_MAX);
 }
 
-LIST VAR(push)(ANY a, LIST b)
+static LIST VAR(push)(ANY a, LIST b)
 {
 	// Pushes an object from the stack onto the list's first element. O(1).
 	// TODO: Better name? Inconsistent with List where pushing to the stack adds to the END.
@@ -1326,14 +1298,14 @@ LIST VAR(push)(ANY a, LIST b)
 	return lst;
 }
 
-BOOLEAN VAR(emptyQ)(LIST lst)
+static BOOLEAN VAR(emptyQ)(LIST lst)
 {
 	// Returns true is a list or string is empty. O(1).
 	// Can be used to to write a Length function.
 	return !lst;
 }
 
-LIST VAR(list)(BLOCK expr)
+static LIST VAR(list)(BLOCK expr)
 {
 	flush_stack_cache();
 	ANYPTR tmp_stack_start = stack.start;
@@ -1356,7 +1328,7 @@ LIST VAR(list)(BLOCK expr)
 	return lst;
 }
 
-STRING VAR(join)(NUMBER n)
+static STRING VAR(join)(NUMBER n)
 {
 	// Joins a string to the end of another string.
 	// Define Prefix (Swap, Suffix);
@@ -1379,14 +1351,14 @@ STRING VAR(join)(NUMBER n)
 	return result;
 }
 
-NUMBER VAR(stringDlength)(STRING str)
+static NUMBER VAR(stringDlength)(STRING str)
 {
 	size_t len = 0;
 	for (; *str ; str += mblen(str, MB_CUR_MAX), ++len);
 	return len;
 }
 
-STRING VAR(substring)(NUMBER startf, NUMBER endf, STRING str)
+static STRING VAR(substring)(NUMBER startf, NUMBER endf, STRING str)
 {
 	// O(end).
 	// Only allocates a new string if it has to.
@@ -1420,7 +1392,7 @@ invalid_range:
 }
 
 
-STRING VAR(input)(void)
+static STRING VAR(input)(void)
 {
 	// Read user input to a string.
 	assert_impure();
@@ -1432,7 +1404,7 @@ STRING VAR(input)(void)
 	return ret;
 }
 
-STRING VAR(read)(STRING filename)
+static STRING VAR(read)(STRING filename)
 {
 	assert_impure();
 	// Read a file to a string.
@@ -1449,7 +1421,7 @@ STRING VAR(read)(STRING filename)
 	// TODO: single line (or delimited) file read function for better IO performance
 }
 
-NUMBER VAR(number)(STRING str)
+static NUMBER VAR(number)(STRING str)
 {
 	// casts string to number.
 	char* end;
@@ -1462,7 +1434,7 @@ cannot_parse:
 	throw_error_fmt("Cannot parse '%.32s' to a number", str);
 }
 
-STRING VAR(path)(void)
+static STRING VAR(path)(void)
 {
 	assert_impure();
 	char buf[FILENAME_MAX];
@@ -1472,7 +1444,7 @@ STRING VAR(path)(void)
 	return ret;
 }
 
-LIST VAR(stack)(void)
+static LIST VAR(stack)(void)
 {
 	LIST lst = NULL;
 	flush_stack_cache();
@@ -1486,7 +1458,7 @@ LIST VAR(stack)(void)
 	return lst;
 }
 
-void VAR(write)(STRING filename, ANY obj)
+static void VAR(write)(STRING filename, ANY obj)
 {
 	assert_impure();
 	// Write object to end of file, without a newline.
@@ -1496,19 +1468,19 @@ void VAR(write)(STRING filename, ANY obj)
 	fclose(fp);
 }
 
-LIST VAR(parameters)(void)
+static LIST VAR(parameters)(void)
 {
 	return cmdline_parameters; // TODO should be a variable, and allow mutation and stuff
 }
 
-void VAR(stop)(void)
+static void VAR(stop)(void)
 {
 	assert_impure();
 	// Don't check stack length, because it probably wont be empty.
 	exit(EXIT_SUCCESS);
 }
 
-BOOLEAN VAR(matchDregex)(STRING reg_str, STRING str)
+static BOOLEAN VAR(matchDregex)(STRING reg_str, STRING str)
 {
 	// Returns true if string matches regex.
 	static const char* old_str = NULL;
@@ -1541,7 +1513,7 @@ BOOLEAN VAR(matchDregex)(STRING reg_str, STRING str)
 	return !found;
 }
 
-NUMBER VAR(ordinal)(STRING str)
+static NUMBER VAR(ordinal)(STRING str)
 {
 	if unlikely(!str[0] || strlen(str) > (size_t)mblen(str, MB_CUR_MAX))
 		throw_error_fmt("Invalid string '%.32s' (should be length 1)", str);
@@ -1550,7 +1522,7 @@ NUMBER VAR(ordinal)(STRING str)
 	return chr;
 }
 
-STRING VAR(character)(NUMBER d)
+static STRING VAR(character)(NUMBER d)
 {
 	const wchar_t i = d;
 	char* const str = gc_malloc (MB_CUR_MAX + 1);
@@ -1560,33 +1532,33 @@ STRING VAR(character)(NUMBER d)
 	return str;
 }
 
-NUMBER VAR(floor)(NUMBER a)
+static NUMBER VAR(floor)(NUMBER a)
 {
 	return floor(a);
 }
 
-NUMBER VAR(round)(NUMBER a)
+static NUMBER VAR(round)(NUMBER a)
 {
 	return round(a);
 }
 
-NUMBER VAR(ceiling)(NUMBER a)
+static NUMBER VAR(ceiling)(NUMBER a)
 {
 	return ceil(a);
 }
 
-void VAR(assert)(STRING name, BOOLEAN result)
+static void VAR(assert)(STRING name, BOOLEAN result)
 {
 	if unlikely(!result)
 		throw_error_fmt("Failed assertion '%s'", name);
 }
 
-void VAR(error)(STRING str)
+static void VAR(error)(STRING str)
 {
 	throw_error(str);
 }
 
-LIST VAR(map)(BLOCK blk, LIST lst)
+static LIST VAR(map)(BLOCK blk, LIST lst)
 {
 	flush_stack_cache();
 	ANYPTR tmp_stack_start = stack.start;
@@ -1613,7 +1585,7 @@ LIST VAR(map)(BLOCK blk, LIST lst)
 
 }
 
-LIST VAR(filter)(BLOCK blk, LIST lst)
+static LIST VAR(filter)(BLOCK blk, LIST lst)
 {
 	cognate_list start = {0};
 	cognate_list* ptr = &start;
@@ -1633,7 +1605,7 @@ LIST VAR(filter)(BLOCK blk, LIST lst)
 	return start.next;
 }
 
-void VAR(for)(LIST lst, BLOCK blk)
+static void VAR(for)(LIST lst, BLOCK blk)
 {
 	for (; lst ; lst = lst->next)
 	{
@@ -1642,7 +1614,7 @@ void VAR(for)(LIST lst, BLOCK blk)
 	}
 }
 
-LIST VAR(range)(NUMBER start, NUMBER end)
+static LIST VAR(range)(NUMBER start, NUMBER end)
 {
 	if (end < start)
 		throw_error_fmt("Invalid range %.14g..%.14g", start, end);
@@ -1658,9 +1630,7 @@ LIST VAR(range)(NUMBER start, NUMBER end)
 	return lst;
 }
 
-
-
-ANY VAR(index)(NUMBER ind, LIST lst)
+static ANY VAR(index)(NUMBER ind, LIST lst)
 {
 	size_t i = ind;
 	if unlikely(i != ind) throw_error_fmt("Cannot get index %.14g", ind);
@@ -1671,13 +1641,13 @@ ANY VAR(index)(NUMBER ind, LIST lst)
 	throw_error_fmt("Index %zi is outside of array", (size_t)ind);
 }
 
-void VAR(wait)(NUMBER seconds)
+static void VAR(wait)(NUMBER seconds)
 {
 	assert_impure();
 	sleep(seconds);
 }
 
-BLOCK VAR(precompute)(BLOCK blk)
+static BLOCK VAR(precompute)(BLOCK blk)
 {
 	flush_stack_cache();
 	ANYPTR tmp_stack_start = stack.start;
@@ -1696,12 +1666,12 @@ BLOCK VAR(precompute)(BLOCK blk)
 	});
 }
 
-STRING VAR(show)(ANY o)
+static STRING VAR(show)(ANY o)
 {
 	return show_object(o, 0);
 }
 
-LIST VAR(split)(STRING sep, STRING str)
+static LIST VAR(split)(STRING sep, STRING str)
 {
 	if (!*sep) throw_error("Empty separator");
 	LIST lst = NULL;
@@ -1727,7 +1697,7 @@ LIST VAR(split)(STRING sep, STRING str)
 	return prev;
 }
 
-NUMBER VAR(length)(LIST lst) {
+static NUMBER VAR(length)(LIST lst) {
 	size_t len = 0;
 	for (; lst; lst = lst->next)
 		len++;
@@ -1735,7 +1705,7 @@ NUMBER VAR(length)(LIST lst) {
 }
 
 
-LIST VAR(take)(NUMBER n, LIST l) {
+static LIST VAR(take)(NUMBER n, LIST l) {
 	if unlikely(n != (unsigned long)n) throw_error_fmt("Cannot take %.14g elements", n);
 	LIST r = NULL;
 	while (n --> 0)
@@ -1759,14 +1729,14 @@ LIST VAR(take)(NUMBER n, LIST l) {
 	return prev;
 }
 
-LIST VAR(discard)(NUMBER n, LIST l) {
+static LIST VAR(discard)(NUMBER n, LIST l) {
 	if unlikely(n != (unsigned long)n) throw_error_fmt("Cannot discard %.14g elements", n);
 	for (;n-->0;l=l->next)
 		if unlikely(!l) throw_error("List too small");
 	return l;
 }
 
-BLOCK VAR(remember)(BLOCK b)
+static BLOCK VAR(remember)(BLOCK b)
 {
 	// Only works for 1 -> 1 functions
 	struct memolist {
@@ -1796,7 +1766,7 @@ BLOCK VAR(remember)(BLOCK b)
 	});
 }
 
-BLOCK VAR(pure)(BLOCK b)
+static BLOCK VAR(pure)(BLOCK b)
 {
 	return Block_copy(^{
 		pure = 1;
@@ -1805,7 +1775,7 @@ BLOCK VAR(pure)(BLOCK b)
 	});
 }
 
-LIST VAR(takeDwhile)(BLOCK predicate, LIST lst)
+static LIST VAR(takeDwhile)(BLOCK predicate, LIST lst)
 {
 	LIST r = NULL;
 	while (lst)
@@ -1833,7 +1803,7 @@ LIST VAR(takeDwhile)(BLOCK predicate, LIST lst)
 
 }
 
-BOOLEAN VAR(all)(BLOCK predicate, LIST lst)
+static BOOLEAN VAR(all)(BLOCK predicate, LIST lst)
 {
 	for (; lst ; lst = lst->next)
 	{
@@ -1844,7 +1814,7 @@ BOOLEAN VAR(all)(BLOCK predicate, LIST lst)
 	return 1;
 }
 
-LIST VAR(append)(ANY a, LIST l)
+static LIST VAR(append)(ANY a, LIST l)
 {
 	// TODO iterative version.
 	cognate_list* ll = gc_malloc(sizeof(*l));
@@ -1859,24 +1829,24 @@ LIST VAR(append)(ANY a, LIST l)
 	return ll;
 }
 
-BOX VAR(box)(ANY a)
+static BOX VAR(box)(ANY a)
 {
 	ANY* b = gc_malloc(sizeof *b);
 	*b = a;
 	return b;
 }
 
-ANY VAR(unbox)(BOX b)
+static ANY VAR(unbox)(BOX b)
 {
 	return *b;
 }
 
-void VAR(set)(BOX b, ANY a)
+static void VAR(set)(BOX b, ANY a)
 {
 	*b = a;
 }
 
-void VAR(debug)()
+static void VAR(debug)()
 {
 #ifdef DEBUG
 	debug = 1;
