@@ -516,7 +516,7 @@ static void print_backtrace(int n, const backtrace* b, int arrow)
 	int len = strlen(b->name);
 	for (size_t tmp = b->line; tmp /= 10; ++digits);
 	char* ln = get_source_line(b->line);
-	size_t col = b->col;
+	ssize_t col = b->col;
 	while (*ln)
 	{
 		if (*ln != ' ' && *ln != '\t') break;
@@ -529,7 +529,7 @@ static void print_backtrace(int n, const backtrace* b, int arrow)
 			len, ln + col - len - 1,
 			ln + col - 1);
 	if (!arrow) return;
-	while (col-- + digits - len/2 + 2) fputs(" ", stderr);
+	while (col-- + digits - len/2 + 2 > 0) fputs(" ", stderr);
 	fputs("\033[31;1m^\033[0m\n", stderr);
 	print_backtrace(n - 1, b->next, arrow);
 }
