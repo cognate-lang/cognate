@@ -525,7 +525,7 @@ static void print_backtrace(int n, const backtrace* b, int arrow)
 	}
 	fprintf(stderr, "\033[0;2m[%zi]\033[0m %.*s\033[0;1m%.*s\033[0m%s\n",
 			b->line,
-			(int)col - len - 1, ln,
+			(int)(col - len - 1), ln,
 			len, ln + col - len - 1,
 			ln + col - 1);
 	if (!arrow) return;
