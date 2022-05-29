@@ -402,8 +402,18 @@ ask:
 	{
 		case 'h': case 'H':
 			// Help
-			fputs("Welcome to the Cognate Debugger!\n"
-					"TODO\n", stderr);
+			fputs("Usage:\n"
+					"\tq       \t\033[0;1mquit\033[0m the debugger\n"
+					"\th       \tshow this \033[0;1mhelp\033[0m message\n"
+					"\ts [n]   \tshow (n items of) the \033[0;1mstack\033[0m\n"
+					"\tc       \t\033[0;1mcontinue\033[0m execution\n"
+					"\tr       \t\033[0;1mrestart\033[0m the program\n"
+					"\tn [n]   \tgo to \033[0;1mnext\033[0m (n) tokens\n"
+					"\tt [n]   \tprint (n items of) a back\033[0;1mtrace\033[0m\n"
+					"\tl       \t\033[0;1mlist\033[0m the source program\n"
+					"\tb [n]   \tset \033[0;1mbreakpoint\033[0m on line n\n"
+					"\td [n]   \t\033[0;1mdelete\033[0m breakpoint on line n\n"
+					"\tv [name]\tshow \033[0;1mvariable\033[0m of name\n", stderr);
 			break;
 		case 'r': case 'R':
 			// Restart
