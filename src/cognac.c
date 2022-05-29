@@ -580,7 +580,7 @@ void emit_source_string(FILE* yyin)
 	while(fgets(buf, buf_sz, yyin)) {
 		lines ++;
 		fputs("\"", outfile);
-		for (size_t i = 0; buf[i] != '\n';)
+		for (size_t i = 0; buf[i] != '\n' && buf[i];)
 		{
 			int len = mblen(buf+i, MB_CUR_MAX);
 			if (len == 1)
