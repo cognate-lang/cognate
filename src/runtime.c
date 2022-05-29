@@ -395,7 +395,7 @@ ask:
 	if (*buf == '\n') goto ask;
 	char op[65] = "\0";
 	unsigned long int_arg = 0;
-	char str_arg[128] = {0};
+	char str_arg[129] = {0};
 	sscanf(buf, "%64s %lu", op, &int_arg);
 	sscanf(buf, "%64s %128s", op, str_arg);
 	switch (*op)
