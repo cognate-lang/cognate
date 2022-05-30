@@ -418,6 +418,8 @@ ask:
 		case 'r': case 'R':
 			// Restart
 			debug = 0;
+			trace = NULL;
+			vars = NULL;
 			exit(main(_argc, _argv));
 		case 's': case 'S':
 			// Stack
