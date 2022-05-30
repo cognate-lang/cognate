@@ -981,21 +981,17 @@ static void gc_init(void)
 __attribute__((malloc, hot, assume_aligned(sizeof(uint64_t)), alloc_size(1), returns_nonnull))
 static void* gc_malloc(size_t sz)
 {
-	//char s;
-	//static char* sp;
-	if (!sz) return space[z] + alloc[z];
-	static int bytes = 0;
-	const size_t cells = (sz + 7) / 8;
-	bytes += sz;
-	if unlikely(bytes > 1024l*1024l*10l)
+	static ptrdiff_t interval = 1024l*1024l*10;
+	interval -= sz;
+	if unlikely(interval < 0)
 	{
 		gc_collect();
-		bytes = 0;
+		interval = 1024l*1024l*10l + alloc[z] * 4;
 	}
-	//sp = &s;
+
 	void* buf = space[z] + alloc[z];
 	//assert(*(bitmap[z] + alloc[z]) == ALLOC);
-	alloc[z] += cells;
+	alloc[z] += (sz + 7) / 8;
 	//assert(*(bitmap[z] + alloc[z]) == EMPTY);
 	bitmap[z][alloc[z]] = ALLOC;
 	return buf;
@@ -1068,14 +1064,6 @@ static __attribute__((noinline,hot)) void gc_collect(void)
 	size_t heapsz = alloc[z];
 	start = clock();
 	*/
-
-	/*
-	puts(":::HEAP BEFORE:::");
-	for (size_t i = 0; i < alloc[z]; ++i)
-	{
-		printf("[%zu] %lx\n", i, space[z][i], 0);
-	}*/
-
 	z = !z;
 	memset(bitmap[z], EMPTY, alloc[z]+1);
 	alloc[z] = 0;
@@ -1094,15 +1082,8 @@ static __attribute__((noinline,hot)) void gc_collect(void)
 		if (is_gc_ptr(*root))
 			gc_collect_root(root); // Watch me destructively modify the call stack
 
-	/*
-	puts(":::HEAP AFTER:::");
-	for (size_t i = 0; i < alloc[z]; ++i)
-	{
-		printf("[%zu] %lx\n", i, space[z][i], 0);
-	}*/
-
 	//end = clock();
-	//printf("%lf seconds for %ziB -> %ziB\n", (double)(end - start) / CLOCKS_PER_SEC, heapsz * 8, alloc[z] * 8);
+	//printf("%lf seconds for %ziMB -> %ziMB\n", (double)(end - start) / CLOCKS_PER_SEC, heapsz * 8 /1024/1024, alloc[z] * 8 / 1024/1024);
 
 	longjmp(a, 1);
 }
