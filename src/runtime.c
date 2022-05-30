@@ -1004,7 +1004,7 @@ static void* gc_malloc(size_t sz)
 	if unlikely(interval < 0)
 	{
 		gc_collect();
-		interval = 1024l*1024l*10l + alloc[z] * 4;
+		interval = 1024l*1024l*10l + alloc[z] * 6;
 	}
 
 	void* buf = space[z] + alloc[z];
