@@ -1006,7 +1006,6 @@ static void* gc_malloc(size_t sz)
 		gc_collect();
 		interval = 1024l*1024l*10l + alloc[z] * 6;
 	}
-
 	void* buf = space[z] + alloc[z];
 	//assert(bitmap[z][alloc[z]] == ALLOC);
 	alloc[z] += (sz + 7) / 8;
@@ -1055,19 +1054,15 @@ static void gc_collect_root(ANY* restrict addr)
 			alloc[z] += sz;
 			//assert(bitmap[z][alloc[z]] == EMPTY);
 			bitmap[z][alloc[z]] = ALLOC;
-			const ANY tmp = space[!z][index];
-			space[!z][index] = (ANY)buf; // Set forwarding address
-			bitmap[!z][index] = FORWARD;
-			if (is_gc_ptr(tmp))
-				*act_stk_top++ = (struct action) { .from=tmp, .to=buf };
-			else *buf = tmp;
-			for (size_t i = 1;i < sz;i++)
+			for (size_t i = 0;i < sz;i++)
 			{
 				ANY from = space[!z][index+i];
 				if (is_gc_ptr(from))
 					*act_stk_top++ = (struct action) { .from=from, .to=buf+i };
 				else buf[i] = from;
 			}
+			space[!z][index] = (ANY)buf; // Set forwarding address
+			bitmap[!z][index] = FORWARD;
 			*to = upper_bits | (ANY)(buf + offset);
 		}
 	}
