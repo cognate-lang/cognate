@@ -838,14 +838,15 @@ static void destructure_objects(ANY patt, ANY obj)
 	}
 	switch (get_type(patt))
 	{
-		case list:   destructure_lists(unbox_list(patt), unbox_list(obj));
-		case record: destructure_records(unbox_record(patt), unbox_record(obj));
-		case box:    destructure_objects(*unbox_box(patt), *unbox_box(obj));
+		case list:   destructure_lists(unbox_list(patt), unbox_list(obj)); break;
+		case record: destructure_records(unbox_record(patt), unbox_record(obj)); break;
+		case box:    destructure_objects(*unbox_box(patt), *unbox_box(obj)); break;
 		default:;
 	}
 
 }
 
+__attribute__((hot))
 static _Bool is_nan(ANY box)
 {
 	// Mostly works with -ffast-math
@@ -858,6 +859,7 @@ static cognate_type get_type(ANY box)
 	else return number;
 }
 
+__attribute__((hot))
 static NUMBER unbox_number(ANY box)
 {
 	if unlikely(is_nan(box))
@@ -865,11 +867,13 @@ static NUMBER unbox_number(ANY box)
 	return *(NUMBER*)&box;
 }
 
+__attribute__((hot))
 static ANY box_number(NUMBER num)
 {
 	return *(ANY*)&num;
 }
 
+__attribute__((hot))
 static BOX unbox_box(ANY b)
 {
 	if unlikely(!is_nan(b) || (TYP_MASK & b) != (long)box)
@@ -877,11 +881,13 @@ static BOX unbox_box(ANY b)
 	return (BOX)(PTR_MASK & b);
 }
 
+__attribute__((hot))
 static ANY box_box(BOX b)
 {
 	return NAN_MASK | ((long)box << 48) | (long)b;
 }
 
+__attribute__((hot))
 static BOOLEAN unbox_boolean(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)boolean << 48)
@@ -889,11 +895,13 @@ static BOOLEAN unbox_boolean(ANY box)
 	return (BOOLEAN)(PTR_MASK & box);
 }
 
+__attribute__((hot))
 static ANY box_boolean(BOOLEAN b)
 {
 	return NAN_MASK | ((long)boolean << 48) | b;
 }
 
+__attribute__((hot))
 static STRING unbox_string(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)string << 48)
@@ -901,11 +909,13 @@ static STRING unbox_string(ANY box)
 	return (STRING)(PTR_MASK & box);
 }
 
+__attribute__((hot))
 static ANY box_string(STRING s)
 {
 	return NAN_MASK | ((long)string << 48) | (long)s;
 }
 
+__attribute__((hot))
 static LIST unbox_list(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)list << 48)
@@ -913,11 +923,13 @@ static LIST unbox_list(ANY box)
 	return (LIST)(PTR_MASK & box);
 }
 
+__attribute__((hot))
 static ANY box_list(LIST s)
 {
 	return NAN_MASK | ((long)list << 48) | (long)s;
 }
 
+__attribute__((hot))
 static RECORD unbox_record(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)record << 48)
@@ -925,11 +937,13 @@ static RECORD unbox_record(ANY box)
 	return (RECORD)(PTR_MASK & box);
 }
 
+__attribute__((hot))
 static ANY box_record(RECORD s)
 {
 	return NAN_MASK | ((long)record << 48) | (long)s;
 }
 
+__attribute__((hot))
 static SYMBOL unbox_symbol(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)symbol << 48)
@@ -937,11 +951,13 @@ static SYMBOL unbox_symbol(ANY box)
 	return (SYMBOL)(PTR_MASK & box);
 }
 
+__attribute__((hot))
 static ANY box_symbol(SYMBOL s)
 {
 	return NAN_MASK | ((long)symbol << 48) | (long)s;
 }
 
+__attribute__((hot))
 static BLOCK unbox_block(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)block << 48)
@@ -949,11 +965,13 @@ static BLOCK unbox_block(ANY box)
 	return (BLOCK)(PTR_MASK & box);
 }
 
+__attribute__((hot))
 static ANY box_block(BLOCK s)
 {
 	return NAN_MASK | ((long)block << 48) | (long)Block_copy(s);
 }
 
+__attribute__((hot))
 static void check_record_id(size_t i, RECORD r)
 {
 	if unlikely(i != r->id)
@@ -1001,7 +1019,7 @@ __attribute__((hot))
 static _Bool is_gc_ptr(ANY object)
 {
 	const ANY upper_bits = object & ~PTR_MASK;
-	if ((object&7) || (upper_bits && !is_nan(object))) return 0;
+	if ((object & 7) || (upper_bits && !is_nan(object))) return 0;
 	const ANY index = (ANY*)(object & PTR_MASK) - space[!z];
 	if (index >= alloc[!z]) return 0;
 	return 1;
@@ -1040,7 +1058,6 @@ static void gc_collect_root(ANY* restrict addr)
 			const ANY tmp = space[!z][index];
 			space[!z][index] = (ANY)buf; // Set forwarding address
 			bitmap[!z][index] = FORWARD;
-			const char sp;
 			if (is_gc_ptr(tmp))
 				*act_stk_top++ = (struct action) { .from=tmp, .to=buf };
 			else *buf = tmp;
@@ -1071,16 +1088,14 @@ static __attribute__((noinline,hot)) void gc_collect(void)
 
 	flush_stack_cache();
 	for (ANY* root = stack.absolute_start; root != stack.top; ++root)
-		if (is_gc_ptr(*root))
-			gc_collect_root(root);
+		gc_collect_root(root);
 
 	jmp_buf a;
 	if (setjmp(a)) return;
 
 	ANY* sp = (ANY*)&sp;
 	for (ANY* root = sp + 1; root < (ANY*)function_stack_start; ++root)
-		if (is_gc_ptr(*root))
-			gc_collect_root(root); // Watch me destructively modify the call stack
+		gc_collect_root(root); // Watch me destructively modify the call stack
 
 	//end = clock();
 	//printf("%lf seconds for %ziMB -> %ziMB\n", (double)(end - start) / CLOCKS_PER_SEC, heapsz * 8 /1024/1024, alloc[z] * 8 / 1024/1024);
