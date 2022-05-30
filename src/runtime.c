@@ -870,23 +870,23 @@ static ANY box_number(NUMBER num)
 	return *(ANY*)&num;
 }
 
-static BOX unbox_box(ANY box)
+static BOX unbox_box(ANY b)
 {
-	if unlikely(!is_nan(box) || (TYP_MASK & box) != 0)
-		throw_error_fmt("Expected a box but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
-	return (BOX)(PTR_MASK & box);
+	if unlikely(!is_nan(b) || (TYP_MASK & b) != (long)box)
+		throw_error_fmt("Expected a box but got %.64s which is a %s", show_object(b, 0), lookup_type(get_type(b)));
+	return (BOX)(PTR_MASK & b);
 }
 
-static ANY box_box(BOX box)
+static ANY box_box(BOX b)
 {
-	return NAN_MASK | ((long)box << 48) | (long)box;
+	return NAN_MASK | ((long)box << 48) | (long)b;
 }
 
 static BOOLEAN unbox_boolean(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)boolean << 48)
 		throw_error_fmt("Expected a boolean but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
-	return (STRING)(PTR_MASK & box);
+	return (BOOLEAN)(PTR_MASK & box);
 }
 
 static ANY box_boolean(BOOLEAN b)
@@ -981,7 +981,9 @@ static void gc_init(void)
 __attribute__((malloc, hot, assume_aligned(sizeof(uint64_t)), alloc_size(1), returns_nonnull))
 static void* gc_malloc(size_t sz)
 {
-	//if (!sz) return space[z] + alloc[z];
+	//char s;
+	//static char* sp;
+	if (!sz) return space[z] + alloc[z];
 	static int bytes = 0;
 	const size_t cells = (sz + 7) / 8;
 	bytes += sz;
@@ -990,6 +992,7 @@ static void* gc_malloc(size_t sz)
 		gc_collect();
 		bytes = 0;
 	}
+	//sp = &s;
 	void* buf = space[z] + alloc[z];
 	//assert(*(bitmap[z] + alloc[z]) == ALLOC);
 	alloc[z] += cells;
@@ -1066,24 +1069,40 @@ static __attribute__((noinline,hot)) void gc_collect(void)
 	start = clock();
 	*/
 
+	/*
+	puts(":::HEAP BEFORE:::");
+	for (size_t i = 0; i < alloc[z]; ++i)
+	{
+		printf("[%zu] %lx\n", i, space[z][i], 0);
+	}*/
+
 	z = !z;
-	memset(bitmap[z], 0, alloc[z]);
+	memset(bitmap[z], EMPTY, alloc[z]+1);
 	alloc[z] = 0;
 	bitmap[z][0] = ALLOC;
 
 	flush_stack_cache();
 	for (ANY* root = stack.absolute_start; root != stack.top; ++root)
-		gc_collect_root(root);
+		if (is_gc_ptr(*root))
+			gc_collect_root(root);
 
 	jmp_buf a;
 	if (setjmp(a)) return;
 
 	ANY* sp = (ANY*)&sp;
 	for (ANY* root = sp + 1; root < (ANY*)function_stack_start; ++root)
-		gc_collect_root(root); // Watch me destructively modify the call stack
+		if (is_gc_ptr(*root))
+			gc_collect_root(root); // Watch me destructively modify the call stack
+
+	/*
+	puts(":::HEAP AFTER:::");
+	for (size_t i = 0; i < alloc[z]; ++i)
+	{
+		printf("[%zu] %lx\n", i, space[z][i], 0);
+	}*/
 
 	//end = clock();
-	//printf("%lf seconds for %ziMB -> %ziMB\n", (double)(end - start) / CLOCKS_PER_SEC, heapsz * 8 / 1024/1024, alloc[z] * 8/1024/1024);
+	//printf("%lf seconds for %ziB -> %ziB\n", (double)(end - start) / CLOCKS_PER_SEC, heapsz * 8, alloc[z] * 8);
 
 	longjmp(a, 1);
 }
@@ -1841,7 +1860,7 @@ static LIST VAR(append)(ANY a, LIST l)
 	return ll;
 }
 
-static BOX VAR(box)(ANY a)
+static BOX VAR(box)(ANY a) // boxes seem to break the GC sometimes TODO
 {
 	ANY* b = gc_malloc(sizeof *b);
 	*b = a;
