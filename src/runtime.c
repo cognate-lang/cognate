@@ -47,13 +47,13 @@ typedef struct cognate_record* restrict RECORD;
 
 typedef enum cognate_type
 {
-	box     = 0,
-	boolean = 1,
-	string  = 2,
-	list    = 3,
-	record  = 4,
-	block   = 5,
-	symbol  = 6,
+	box     = 1,
+	boolean = 2,
+	string  = 3,
+	list    = 4,
+	record  = 5,
+	block   = 6,
+	symbol  = 7,
 	number  = 8,
 } cognate_type;
 
@@ -876,7 +876,7 @@ static ANY box_number(NUMBER num)
 __attribute__((hot))
 static BOX unbox_box(ANY b)
 {
-	if unlikely(!is_nan(b) || (TYP_MASK & b) != (long)box)
+	if unlikely(!is_nan(b) || (TYP_MASK & b) != (long)box << 48)
 		throw_error_fmt("Expected a box but got %.64s which is a %s", show_object(b, 0), lookup_type(get_type(b)));
 	return (BOX)(PTR_MASK & b);
 }
@@ -1008,9 +1008,9 @@ static void* gc_malloc(size_t sz)
 	}
 
 	void* buf = space[z] + alloc[z];
-	//assert(*(bitmap[z] + alloc[z]) == ALLOC);
+	//assert(bitmap[z][alloc[z]] == ALLOC);
 	alloc[z] += (sz + 7) / 8;
-	//assert(*(bitmap[z] + alloc[z]) == EMPTY);
+	//assert(!sz || bitmap[z][alloc[z]] == EMPTY);
 	bitmap[z][alloc[z]] = ALLOC;
 	return buf;
 }
@@ -1045,7 +1045,7 @@ static void gc_collect_root(ANY* restrict addr)
 		ptrdiff_t offset = 0;
 		while (bitmap[!z][index] == EMPTY) index--, offset++; // Ptr to middle of object
 		if (bitmap[!z][index] == FORWARD)
-			*to = upper_bits | (space[!z][index] + offset);
+			*to = upper_bits | (ANY)((ANY*)space[!z][index] + offset);
 		else
 		{
 			ANY* buf = space[z] + alloc[z]; // Buffer in newspace
@@ -1155,10 +1155,10 @@ static void VAR(until)(BLOCK cond, BLOCK body)
 
 static void VAR(do)(BLOCK blk) { blk(); }
 
-static void VAR(put)(ANY a)	 { assert_impure(); fputs(show_object(a, 1), stdout); fflush(stdout); }
+static void VAR(put)(ANY a)   { assert_impure(); fputs(show_object(a, 1), stdout); fflush(stdout); }
 static void VAR(print)(ANY a) { assert_impure(); puts(show_object(a, 1)); }
 
-static void VAR(puts)(BLOCK b)	  { assert_impure(); VAR(for)(VAR(list)(b), ^{VAR(put)(pop()); }); }
+static void VAR(puts)(BLOCK b)   { assert_impure(); VAR(for)(VAR(list)(b), ^{VAR(put)(pop()); }); }
 static void VAR(prints)(BLOCK b) { assert_impure(); VAR(for)(VAR(list)(b), ^{VAR(put)(pop()); }); putc('\n', stdout); }
 
 static NUMBER VAR(P)(NUMBER a, NUMBER b) { return a + b; } // Add cannot produce NaN.

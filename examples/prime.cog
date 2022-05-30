@@ -12,4 +12,4 @@ Def Primes (
 	)
 );
 
-Print Primes up to 500000;
+Print Primes up to 100000;
