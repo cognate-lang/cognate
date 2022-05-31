@@ -1088,8 +1088,7 @@ static __attribute__((noinline,hot)) void gc_collect(void)
 	jmp_buf a;
 	if (setjmp(a)) return;
 
-	ANY* sp = (ANY*)&sp;
-	for (ANY* root = sp + 1; root < (ANY*)function_stack_start; ++root)
+	for (ANY* root = (ANY*)&a; root < (ANY*)function_stack_start; ++root)
 		gc_collect_root(root); // Watch me destructively modify the call stack
 
 	//end = clock();
