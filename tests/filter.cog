@@ -1,8 +1,7 @@
 Let Evens be Filter (Modulo 2 ; == 0) over the List (1 2 3 4 5);
 Let Empty be Filter (Modulo 2 ; == 0) over the List ();
 Let X be Box True;
-X;
-Let Odds be Filter (Drop ;Debug; Twin Unbox X ; Set X to Not)
+Let Odds be Filter (Drop ; Twin Unbox X ; Set X to Not)
 	over the List (1 2 3 4 5);
 
 Print If == Evens List (2 4)
