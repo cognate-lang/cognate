@@ -985,8 +985,25 @@ static void check_record_id(size_t i, RECORD r)
 #define ALLOC 0x1
 #define FORWARD 0x2
 
+
+// Blocksruntime stuff, nothing to see here
+/*
+static void* blk_alloc(const unsigned long size, __attribute__((unused)) const _Bool _, __attribute__((unused)) const _Bool __) { return gc_malloc(size); }
+static void blk_setHasRefcount(__attribute__((unused)) const void* _, __attribute__((unused)) const _Bool __) {}
+static void blk_gc_assign_strong(void* src, void** dst) { *dst = src; }
+static void blk_gc_assign_weak(const void* src, void* dst) { *(void**)dst = (void*)src; }
+static void blk_gc_memmove(void* dst, void* src, unsigned long size) { memmove(dst, src, size); }
+
+extern void _Block_use_GC(void *(*)(const unsigned long, const _Bool, const _Bool),
+                          void (*)(const void *, const _Bool),
+                          void (*)(void *, void **),
+                          void (*)(const void *, void *),
+                          void (*)(void *, void *, unsigned long));
+*/
+
 static void gc_init(void)
 {
+	// Tell blocksruntime to use the gc
 	system_memory = sysconf(_SC_PHYS_PAGES) * 4096;
 	bitmap[0] = mmap(0, system_memory/18, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
    bitmap[1] = mmap(0, system_memory/18, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
@@ -1011,6 +1028,7 @@ static void* gc_malloc(size_t sz)
 	alloc[z] += (sz + 7) / 8;
 	//assert(!sz || bitmap[z][alloc[z]] == EMPTY);
 	bitmap[z][alloc[z]] = ALLOC;
+	//assert(!((ANY)buf & 7));
 	return buf;
 }
 
@@ -1018,8 +1036,8 @@ __attribute__((hot))
 static _Bool is_gc_ptr(ANY object)
 {
 	const ANY upper_bits = object & ~PTR_MASK;
-	if ((object & 7) || (upper_bits && !is_nan(object))) return 0;
-	const ANY index = (ANY*)(object & PTR_MASK) - space[!z];
+	if (upper_bits && !is_nan(object)) return 0;
+	const ANY index = (ANY*)(object & PTR_MASK & ~7) - space[!z];
 	if (index >= alloc[!z]) return 0;
 	return 1;
 }
@@ -1040,13 +1058,15 @@ static void gc_collect_root(ANY* restrict addr)
 		ANY from = act_stk_top->from;
 		ANY* to = act_stk_top->to;
 		const ANY upper_bits = from & ~PTR_MASK;
-		ANY index = (ANY*)(from & PTR_MASK) - space[!z];
+		const ANY lower_bits = from & 7;
+		ANY index = (ANY*)(from & PTR_MASK & ~7) - space[!z];
 		ptrdiff_t offset = 0;
 		while (bitmap[!z][index] == EMPTY) index--, offset++; // Ptr to middle of object
 		if (bitmap[!z][index] == FORWARD)
-			*to = upper_bits | (ANY)((ANY*)space[!z][index] + offset);
+			*to = lower_bits | upper_bits | (ANY)((ANY*)space[!z][index] + offset);
 		else
 		{
+			//assert(bitmap[!z][index] == ALLOC);
 			ANY* buf = space[z] + alloc[z]; // Buffer in newspace
 			//assert(bitmap[z][alloc[z]] == ALLOC);
 			size_t sz = 1;
@@ -1063,7 +1083,7 @@ static void gc_collect_root(ANY* restrict addr)
 			}
 			space[!z][index] = (ANY)buf; // Set forwarding address
 			bitmap[!z][index] = FORWARD;
-			*to = upper_bits | (ANY)(buf + offset);
+			*to = lower_bits | upper_bits | (ANY)(buf + offset);
 		}
 	}
 }
@@ -1696,14 +1716,13 @@ static LIST VAR(split)(STRING sep, STRING str)
 {
 	if (!*sep) throw_error("Empty separator");
 	LIST lst = NULL;
-	char *p = strtok(gc_strdup((char*)str), sep);
-	while (p != NULL)
+	str = gc_strdup((char*)str);
+	char* r = (char*)str;
+	while ((str = strtok_r(NULL, sep, &r)))
 	{
-		p = gc_strdup(p);
 		cognate_list* node = gc_new(cognate_list);
-		node->object = box_string(p);
+		node->object = box_string(str);
 		node->next = lst;
-		p = strtok(NULL, sep);
 		lst = node;
 	}
 	cognate_list* prev = NULL;

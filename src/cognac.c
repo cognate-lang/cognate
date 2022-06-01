@@ -606,6 +606,7 @@ void emit_source_string(FILE* yyin)
 	fprintf(outfile, "_Bool breakpoints[%zu] = {0};", lines);
 }
 
+
 int main(int argc, char** argv)
 {
 	setlocale(LC_ALL, "");
