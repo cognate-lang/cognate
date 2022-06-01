@@ -276,11 +276,6 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 		lineno = tree->line;
 		fprintf(outfile, "check_breakpoint(%zu);", tree->line);
 	}
-	if (gc_test)
-	{
-		fprintf(outfile, "gc_collect();");
-		registers = assert_registers(0, 0, registers);
-	}
 	switch (tree->type)
 	{
 		case type:
