@@ -986,8 +986,8 @@ static void check_record_id(size_t i, RECORD r)
 #define FORWARD 0x2
 
 
+#ifndef __APPLE__
 // Blocksruntime stuff, nothing to see here
-/*
 static void* blk_alloc(const unsigned long size, __attribute__((unused)) const _Bool _, __attribute__((unused)) const _Bool __) { return gc_malloc(size); }
 static void blk_setHasRefcount(__attribute__((unused)) const void* _, __attribute__((unused)) const _Bool __) {}
 static void blk_gc_assign_strong(void* src, void** dst) { *dst = src; }
@@ -998,12 +998,15 @@ extern void _Block_use_GC(void *(*)(const unsigned long, const _Bool, const _Boo
                           void (*)(const void *, const _Bool),
                           void (*)(void *, void **),
                           void (*)(const void *, void *),
-                          void (*)(void *, void *, unsigned long));
-*/
+                          void (*)(void *, void *, unsigned long)) __attribute__((weak));
+#endif
 
 static void gc_init(void)
 {
 	// Tell blocksruntime to use the gc
+#ifndef __APPLE__
+	if (_Block_use_GC != NULL) _Block_use_GC(blk_alloc, blk_setHasRefcount, blk_gc_assign_strong, blk_gc_assign_weak, blk_gc_memmove);
+#endif
 	system_memory = sysconf(_SC_PHYS_PAGES) * 4096;
 	bitmap[0] = mmap(0, system_memory/18, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
    bitmap[1] = mmap(0, system_memory/18, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
