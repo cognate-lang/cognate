@@ -260,7 +260,7 @@ static void VAR(write)(STRING, ANY);
 static LIST VAR(parameters)(void);
 static void VAR(stop)(void);
 static STRING VAR(show)(ANY);
-static BOOLEAN VAR(matchDregex)(STRING, STRING);
+static BLOCK VAR(regex)(STRING);
 static NUMBER VAR(ordinal)(STRING);
 static STRING VAR(character)(NUMBER);
 static NUMBER VAR(floor)(NUMBER);
@@ -1528,37 +1528,26 @@ static void VAR(stop)(void)
 	exit(EXIT_SUCCESS);
 }
 
-static BOOLEAN VAR(matchDregex)(STRING reg_str, STRING str)
+static BLOCK VAR(regex)(STRING reg_str)
 {
-	// Returns true if string matches regex.
-	static const char* old_str = NULL;
-	static regex_t reg;
-	if (old_str == NULL || strcmp(reg_str, old_str) != 0)
+	regex_t reg;
+	if unlikely(!*reg_str) // Empty string always matches.
+		return Block_copy(^{ unbox_string(pop()); push(box_boolean(1)); });
+	const int status = regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE | REG_NOSUB);
+	errno = 0; // Hmmm
+	if unlikely(status)
 	{
-		// Technically, the last regex to be used in the program will leak memory.
-		// However, this is minor, since only a limited amount of memory can be leaked.
-		regfree(&reg); // Apparently freeing an unallocated regex is fine.
-		if unlikely(!*reg_str) throw_error("cannot match empty regex");
-		const int status = regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE | REG_NOSUB);
-		errno = 0; // Hmmm
-		if unlikely(status)
-		{
-			char reg_err[256];
-			regerror(status, &reg, reg_err, 256);
-			throw_error_fmt("Compile error (%s) in regex '%.32s'", reg_err, reg_str);
-		}
-		old_str = reg_str;
-		// This should probably be strcpy, but I trust that reg_str is either
-		// allocated with the garbage collector, or read only in the data segment.
+		char reg_err[256];
+		regerror(status, &reg, reg_err, 256);
+		throw_error_fmt("Compile error (%s) in regex '%.32s'", reg_err, reg_str);
 	}
-	const int found = regexec(&reg, str, 0, NULL, 0);
-	if unlikely(found != 0 && found != REG_NOMATCH)
-	{
-
-		throw_error_fmt("Match error with regex '%.32s' on string '%.32s'", str, reg_str);
-		// If this error ever actually appears, use regerror to get the full text.
-	}
-	return !found;
+	return Block_copy(^{
+		STRING str = unbox_string(pop());
+		const int found = regexec(&reg, str, 0, NULL, 0);
+		if unlikely(found != 0 && found != REG_NOMATCH)
+			throw_error_fmt("Match error with regex '%.32s' on string '%.32s'", str, reg_str);
+		push(box_boolean(!found));
+	});
 }
 
 static NUMBER VAR(ordinal)(STRING str)
