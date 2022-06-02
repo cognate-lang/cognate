@@ -50,7 +50,7 @@
 {.name="join",                .type=func, .argc=1, .args={number},    .rets=true, .ret=string, .needs_stack=true},
 {.name="string-length",       .type=func, .argc=1, .args={string},    .rets=true, .ret=number},
 {.name="substring",           .type=func, .argc=3, .args={number, number, string}, .rets=true, .ret=string},
-{.name="match-regex",         .type=func, .argc=2, .args={string, string},         .rets=true, .ret=boolean},
+{.name="regex",               .type=func, .argc=1, .args={string},    .rets=true, .ret=block},
 {.name="ordinal",             .type=func, .argc=1, .args={string}, .rets=true, .ret=number},
 {.name="character",           .type=func, .argc=1, .args={number}, .rets=true, .ret=string},
 {.name="split",               .type=func, .argc=2, .args={string, string}, .rets=true, .ret=list},
