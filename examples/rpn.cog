@@ -3,7 +3,7 @@
 ~~ in: 2 5 + 3 * 1 - 4 /
 ~~ out: 5
 
-Let Error? be False;
+Let Error? be Box False;
 
 Def Math-op as (
 	Let Op;
@@ -27,24 +27,21 @@ Def Math-op as (
 
 
 Def Eval as (
-	Let Expr;
-	Let Tokens be Split on " " Expr;
-
+	Let Tokens be Split on " ";
 	Set Error? to Empty? Tokens;
-
 	push List ();
 	For each in Tokens
 		Case (Match-regex "^[-]?[0-9]+$") (Push Number)
-		Case "+" (Math-op)
-		Case "*" (Math-op)
-		Case "-" (Math-op)
-		Case "/" (Math-op)
+		Case "+" (Math-op "+")
+		Case "*" (Math-op "*")
+		Case "-" (Math-op "-")
+		Case "/" (Math-op "/")
 		else (
 			Set Error? to True;
 			Put "Error: Unknown Token ";
 			Print the token
 		);
-	Do If Not Error? (Print First) else (Drop);
+	Do If Not Unbox Error? (Print First) else (Drop);
 );
 
 Print "Welcome to CogCalc, a simple RPN Calculator!";

@@ -796,8 +796,15 @@ static _Bool match_lists(LIST lst1, LIST lst2)
 static _Bool match_objects(ANY patt, ANY obj)
 {
 	if (patt == obj) return 1;
-	else if (get_type(patt) != get_type(obj)) return 0;
-	switch (get_type(patt))
+	cognate_type T = get_type(patt);
+	if (T == block)
+	{
+		push (obj);
+		unbox_block(patt)();
+		return unbox_boolean(pop());
+	}
+	else if (T != get_type(obj)) return 0;
+	switch (T)
 	{
 		case number:
 			return fabs(unbox_number(patt) - unbox_number(obj))
@@ -808,10 +815,7 @@ static _Bool match_objects(ANY patt, ANY obj)
 		case list:    return match_lists(unbox_list(patt), unbox_list(obj));
 		case record:  return match_records(unbox_record(patt), unbox_record(obj));
 		case box:     return match_objects(*unbox_box(patt), *unbox_box(obj));
-		case block:
-			push (obj);
-			unbox_block(patt)();
-			return unbox_boolean(pop());
+		default:      __builtin_trap();
 	}
 }
 
