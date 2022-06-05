@@ -171,8 +171,6 @@ static void gc_init(void);
 static char* gc_strdup(char*);
 static char* gc_strndup(char*, size_t);
 
-#define gc_new(t) (t*) gc_malloc (sizeof(t))
-
 // Variables and functions needed by compiled source file defined in runtime.c
 static cognate_type get_type(ANY);
 static _Bool is_nan(ANY);
@@ -330,7 +328,7 @@ static void init(int argc, char** argv)
 	// Load parameters
 	while (argc --> 1)
 	{
-		cognate_list* const tmp = gc_new (cognate_list);
+		cognate_list* const tmp = gc_malloc (sizeof *tmp);
 		tmp->object = box_string(argv[argc]);
 		tmp->next = cmdline_parameters;
 		cmdline_parameters = tmp;
@@ -584,7 +582,7 @@ static char* show_object (const ANY object, const _Bool raw_strings)
 {
 	static char* buffer;
 	static size_t depth = 0;
-	if (depth++ == 0) buffer = (char*)gc_malloc(0); // i dont like resizing buffers
+	if (depth++ == 0) buffer = (char*)(space[z] + alloc[z]); // i dont like resizing buffers
 	switch (get_type(object))
 	{
 		case number: sprintf(buffer, "%.14g", unbox_number(object));
@@ -661,7 +659,7 @@ static char* show_object (const ANY object, const _Bool raw_strings)
 	depth--;
 	if (depth) return NULL;
 	*buffer++ = '\0';
-	char* b = strdup(gc_malloc(0));
+	char* b = strdup((char*)(space[z] + alloc[z]));
 	char* c = gc_strdup(b);
 	free(b);
 	return c;
@@ -994,10 +992,10 @@ static void check_record_id(size_t i, RECORD r)
 
 #define PAGE_SIZE 4096
 
-#define EMPTY 0x0
-#define ALLOC 0x1
-#define FORWARD 0x2
-
+#define EMPTY     0x0
+#define ALLOC     0x1
+#define FLATALLOC 0x2
+#define FORWARD   0x3
 
 #ifndef __APPLE__
 // Blocksruntime stuff, nothing to see here
@@ -1022,9 +1020,9 @@ static void gc_init(void)
 #endif
 	system_memory = sysconf(_SC_PHYS_PAGES) * 4096;
 	bitmap[0] = mmap(0, system_memory/18, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
-   bitmap[1] = mmap(0, system_memory/18, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
-   space[0]  = mmap(0, (system_memory/18)*8, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
-   space[1]  = mmap(0, (system_memory/18)*8, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
+	bitmap[1] = mmap(0, system_memory/18, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
+	space[0]  = mmap(0, (system_memory/18)*8, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
+	space[1]  = mmap(0, (system_memory/18)*8, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
 	bitmap[0][0] = ALLOC;
 	bitmap[1][0] = ALLOC;
 }
@@ -1044,6 +1042,25 @@ static void* gc_malloc(size_t sz)
 	alloc[z] += (sz + 7) / 8;
 	//assert(!sz || bitmap[z][alloc[z]] == EMPTY);
 	bitmap[z][alloc[z]] = ALLOC;
+	//assert(!((ANY)buf & 7));
+	return buf;
+}
+
+__attribute__((malloc, hot, assume_aligned(sizeof(uint64_t)), alloc_size(1), returns_nonnull))
+static void* gc_flatmalloc(size_t sz)
+{
+	static ptrdiff_t interval = 1024l*1024l*10;
+	interval -= sz;
+	if unlikely(interval < 0)
+	{
+		gc_collect();
+		interval = 1024l*1024l*10l + alloc[z] * 6;
+	}
+	void* buf = space[z] + alloc[z];
+	//assert(bitmap[z][alloc[z]] == ALLOC);
+	alloc[z] += (sz + 7) / 8;
+	//assert(!sz || bitmap[z][alloc[z]] == EMPTY);
+	bitmap[z][alloc[z]] = FLATALLOC;
 	//assert(!((ANY)buf & 7));
 	return buf;
 }
@@ -1082,6 +1099,7 @@ static void gc_collect_root(ANY* restrict addr)
 			*to = lower_bits | upper_bits | (ANY)((ANY*)space[!z][index] + offset);
 		else
 		{
+			_Bool flat = bitmap[!z][index] == FLATALLOC;
 			//assert(bitmap[!z][index] == ALLOC);
 			ANY* buf = space[z] + alloc[z]; // Buffer in newspace
 			//assert(bitmap[z][alloc[z]] == ALLOC);
@@ -1093,7 +1111,7 @@ static void gc_collect_root(ANY* restrict addr)
 			for (size_t i = 0;i < sz;i++)
 			{
 				ANY from = space[!z][index+i];
-				if (is_gc_ptr(from))
+				if (!flat && is_gc_ptr(from))
 					*act_stk_top++ = (struct action) { .from=from, .to=buf+i };
 				else buf[i] = from;
 			}
@@ -1136,14 +1154,14 @@ static __attribute__((noinline,hot)) void gc_collect(void)
 static char* gc_strdup(char* src)
 {
 	const size_t len = strlen(src);
-	return memcpy(gc_malloc(len + 1), src, len + 1);
+	return memcpy(gc_flatmalloc(len + 1), src, len + 1);
 }
 
 static char* gc_strndup(char* src, size_t bytes)
 {
 	const size_t len = strlen(src);
 	if (len < bytes) bytes = len;
-	char* dest = gc_malloc(bytes + 1);
+	char* dest = gc_flatmalloc(bytes + 1);
 	dest[bytes] = '\0';
 	return memcpy(dest, src, bytes);
 }
@@ -1371,7 +1389,7 @@ static LIST VAR(push)(ANY a, LIST b)
 {
 	// Pushes an object from the stack onto the list's first element. O(1).
 	// TODO: Better name? Inconsistent with List where pushing to the stack adds to the END.
-	cognate_list* lst = gc_new (cognate_list);
+	cognate_list* lst = gc_malloc (sizeof *lst);
 	*lst = (cognate_list) {.object = a, .next = b};
 	return lst;
 }
@@ -1396,7 +1414,7 @@ static LIST VAR(list)(BLOCK expr)
 	size_t len = stack_length();
 	for (size_t i = 0; i < len; ++i)
 	{
-		cognate_list* l = gc_new(cognate_list);
+		cognate_list* l = gc_malloc(sizeof *l);
 		l->object = stack.start[i];
 		l->next = lst;
 		lst = l;
@@ -1420,7 +1438,7 @@ static STRING VAR(join)(NUMBER n)
 		strings[i] = str;
 		result_size += strlen(str);
 	}
-	char* const result = gc_malloc(result_size);
+	char* const result = gc_flatmalloc(result_size);
 	result[0] = '\0';
 	for (size_t i = 0; i < n1; ++i)
 	{
@@ -1490,7 +1508,7 @@ static STRING VAR(read)(STRING filename)
 	if unlikely(fp == NULL) throw_error_fmt("Cannot open file '%s'", filename);
 	struct stat st;
 	fstat(fileno(fp), &st);
-	char* const text = gc_malloc (st.st_size + 1);
+	char* const text = gc_flatmalloc (st.st_size + 1);
 	if (fread(text, sizeof(char), st.st_size, fp) != (unsigned long)st.st_size)
 		throw_error_fmt("Error reading file '%s'", filename);
 	fclose(fp);
@@ -1528,7 +1546,7 @@ static LIST VAR(stack)(void)
 	flush_stack_cache();
 	for (size_t i = 0; i + stack.start < stack.top; ++i)
 	{
-		cognate_list* tmp = gc_new (cognate_list);
+		cognate_list* tmp = gc_malloc (sizeof *tmp);
 		tmp -> object = stack.start[i];
 		tmp -> next = lst;
 		lst = tmp;
@@ -1592,7 +1610,7 @@ static NUMBER VAR(ordinal)(STRING str)
 static STRING VAR(character)(NUMBER d)
 {
 	const wchar_t i = d;
-	char* const str = gc_malloc (MB_CUR_MAX + 1);
+	char* const str = gc_flatmalloc (MB_CUR_MAX + 1);
 	if unlikely(i != d || wctomb(str, i) == -1)
 		throw_error_fmt("Cannot convert %.14g to UTF8 character", d);
 	str[mblen(str, MB_CUR_MAX)] = '\0';
@@ -1639,7 +1657,7 @@ static LIST VAR(map)(BLOCK blk, LIST lst)
 		flush_stack_cache();
 		while (stack.top != stack.start)
 		{
-			cognate_list* new = gc_new(cognate_list);
+			cognate_list* new = gc_malloc(sizeof *new);
 			new->object = pop();
 			new->next = NULL;
 			ptr->next = new;
@@ -1662,7 +1680,7 @@ static LIST VAR(filter)(BLOCK blk, LIST lst)
 		blk();
 		if (unbox_boolean(pop()))
 		{
-			cognate_list* new = gc_new(cognate_list);
+			cognate_list* new = gc_malloc(sizeof *new);
 			new->object = lst->object;
 			new->next = NULL;
 			ptr->next = new;
@@ -1689,7 +1707,7 @@ static LIST VAR(range)(NUMBER start, NUMBER end)
 	LIST lst = NULL;
 	for (; start <= end; end--)
 	{
-		cognate_list* node = gc_new(cognate_list);
+		cognate_list* node = gc_malloc(sizeof *node);
 		node->object = box_number(end);
 		node->next = lst;
 		lst = node;
@@ -1746,7 +1764,7 @@ static LIST VAR(split)(STRING sep, STRING str)
 	char* r = (char*)str;
 	while ((str = strtok_r(NULL, sep, &r)))
 	{
-		cognate_list* node = gc_new(cognate_list);
+		cognate_list* node = gc_malloc(sizeof *node);
 		node->object = box_string(str);
 		node->next = lst;
 		lst = node;
@@ -1777,7 +1795,7 @@ static LIST VAR(take)(NUMBER n, LIST l) {
 	while (n --> 0)
 	{
 		if unlikely(!l) throw_error("List too small");
-		cognate_list* a = gc_new(cognate_list);
+		cognate_list* a = gc_malloc(sizeof *a);
 		a->object = l->object;
 		a->next = r;
 		r = a;
@@ -1850,7 +1868,7 @@ static LIST VAR(takeDwhile)(BLOCK predicate, LIST lst)
 		predicate();
 		int res = unbox_boolean(pop());
 		if (!res) break;
-		cognate_list* a = gc_new(cognate_list);
+		cognate_list* a = gc_malloc(sizeof *a);
 		a->object = lst->object;
 		a->next = r;
 		r = a;
