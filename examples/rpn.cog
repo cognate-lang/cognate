@@ -47,7 +47,7 @@ Def Eval as (
 Print "Welcome to CogCalc, a simple RPN Calculator!";
 Print "Entering REPL (type 'done' to exit):";
 Put "> "; Input;
-While (/= "done" Twin)
+While (!= "done" Twin)
 (
     Eval;
     Put "> "; Input;

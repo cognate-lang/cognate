@@ -1,4 +1,4 @@
-Print If /= \foo \bar
+Print If != \foo \bar
 	"PASS: Comparing different symbols"
 	"FAIL: Comparing different symbols";
 
