@@ -226,7 +226,7 @@ static BOOLEAN VAR(both)(BOOLEAN, BOOLEAN);
 static BOOLEAN VAR(oneDof)(BOOLEAN, BOOLEAN);
 static BOOLEAN VAR(not)(BOOLEAN);
 static BOOLEAN VAR(EE)(ANY, ANY);
-static BOOLEAN VAR(SE)(ANY, ANY);
+static BOOLEAN VAR(XE)(ANY, ANY);
 static BOOLEAN VAR(L)(NUMBER, NUMBER);
 static BOOLEAN VAR(G)(NUMBER, NUMBER);
 static BOOLEAN VAR(LE)(NUMBER, NUMBER);
@@ -863,11 +863,20 @@ static cognate_type get_type(ANY box)
 	else return number;
 }
 
+static _Noreturn void type_error(char* expected, ANY got)
+{
+	char* s = "a";
+	switch (expected[0])
+		case 'a': case 'e': case 'i': case 'o': case 'u': case 'h':
+			s = "an";
+	throw_error_fmt("Expected %s %s but got %.64s", s, expected, show_object(got, 0));
+}
+
 __attribute__((hot))
 static NUMBER unbox_number(ANY box)
 {
 	if unlikely(is_nan(box))
-		throw_error_fmt("Expected a number but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+		type_error("number", box);
 	return *(NUMBER*)&box;
 }
 
@@ -881,7 +890,7 @@ __attribute__((hot))
 static BOX unbox_box(ANY b)
 {
 	if unlikely(!is_nan(b) || (TYP_MASK & b) != (long)box << 48)
-		throw_error_fmt("Expected a box but got %.64s which is a %s", show_object(b, 0), lookup_type(get_type(b)));
+		type_error("box", b);
 	return (BOX)(PTR_MASK & b);
 }
 
@@ -895,7 +904,7 @@ __attribute__((hot))
 static BOOLEAN unbox_boolean(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)boolean << 48)
-		throw_error_fmt("Expected a boolean but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+		type_error("boolean", box);
 	return (BOOLEAN)(PTR_MASK & box);
 }
 
@@ -909,7 +918,7 @@ __attribute__((hot))
 static STRING unbox_string(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)string << 48)
-		throw_error_fmt("Expected a string but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+		type_error("string", box);
 	return (STRING)(PTR_MASK & box);
 }
 
@@ -923,7 +932,7 @@ __attribute__((hot))
 static LIST unbox_list(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)list << 48)
-		throw_error_fmt("Expected a list but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+		type_error("list", box);
 	return (LIST)(PTR_MASK & box);
 }
 
@@ -937,7 +946,7 @@ __attribute__((hot))
 static RECORD unbox_record(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)record << 48)
-		throw_error_fmt("Expected a record but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+		type_error("record", box);
 	return (RECORD)(PTR_MASK & box);
 }
 
@@ -951,7 +960,7 @@ __attribute__((hot))
 static SYMBOL unbox_symbol(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)symbol << 48)
-		throw_error_fmt("Expected a symbol but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+		type_error("symbol", box);
 	return (SYMBOL)(PTR_MASK & box);
 }
 
@@ -965,7 +974,7 @@ __attribute__((hot))
 static BLOCK unbox_block(ANY box)
 {
 	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)block << 48)
-		throw_error_fmt("Expected a block but got %.64s which is a %s", show_object(box, 0), lookup_type(get_type(box)));
+		type_error("block", box);
 	return (BLOCK)(PTR_MASK & box);
 }
 
@@ -1250,7 +1259,7 @@ static BOOLEAN VAR(both)(BOOLEAN a, BOOLEAN b)   { return a && b; }
 static BOOLEAN VAR(oneDof)(BOOLEAN a, BOOLEAN b) { return a ^ b;  }
 static BOOLEAN VAR(not)(BOOLEAN a)               { return !a;     }
 static BOOLEAN VAR(EE)(ANY a, ANY b)  { return compare_objects(a,b); }
-static BOOLEAN VAR(SE)(ANY a, ANY b) { return !compare_objects(a,b); }
+static BOOLEAN VAR(XE)(ANY a, ANY b) { return !compare_objects(a,b); }
 static BOOLEAN VAR(G)(NUMBER a, NUMBER b)  { return a < b; }
 static BOOLEAN VAR(L)(NUMBER a, NUMBER b)  { return a > b; }
 static BOOLEAN VAR(GE)(NUMBER a, NUMBER b) { return a <= b; }
@@ -1264,6 +1273,27 @@ static BOOLEAN VAR(booleanQ)(ANY a) { return get_type(a)==boolean;}
 static BOOLEAN VAR(symbolQ)(ANY a)  { return get_type(a)==symbol; }
 static BOOLEAN VAR(integerQ)(ANY a) { return VAR(numberQ)(a) && unbox_number(a) == floor(unbox_number(a)); }
 static BOOLEAN VAR(zeroQ)(ANY a)    { return VAR(numberQ)(a) && unbox_number(a) == 0; }
+
+static NUMBER  VAR(numberX)(NUMBER a)  { return a; }
+static LIST    VAR(listX)(LIST a)      { return a; }
+static STRING  VAR(stringX)(STRING a)  { return a; }
+static ANY     VAR(anyX)(ANY a)        { return a; }
+static BLOCK   VAR(blockX)(BLOCK a)    { return a; }
+static BOOLEAN VAR(booleanX)(BOOLEAN a){ return a; }
+static SYMBOL  VAR(symbolX)(SYMBOL a)  { return a; }
+
+static NUMBER VAR(integerX)(NUMBER a)
+{
+	if unlikely(a != (size_t)a) type_error("integer", box_number(a));
+	return a;
+}
+
+static BOOLEAN VAR(zeroX)(NUMBER a)
+{
+	if unlikely(a != 0.0) type_error("zero", box_number(a));
+	return a;
+}
+
 static BOOLEAN VAR(match)(ANY patt, ANY obj) { return match_objects(patt,obj); }
 
 static BLOCK VAR(case)(ANY patt, ANY if_match, ANY if_not_match)
@@ -1888,6 +1918,16 @@ static void VAR(debug)()
 	debug = 1;
 	debugger_step();
 #endif
+}
+
+static void VAR(times)(NUMBER n, BLOCK f)
+{
+	size_t i = n;
+	if unlikely((NUMBER)i != n) throw_error_fmt("cannot repeat Times %.14g", n);
+	while (n--)
+	{
+		f();
+	}
 }
 // ---------- ACTUAL PROGRAM ----------
 
