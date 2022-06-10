@@ -2,7 +2,7 @@ CC=clang
 CFLAGS=-Wall -Wextra -Wpedantic -Og -g
 PREFIX=`echo ~`/.local
 BINDIR=$(PREFIX)/bin
-TESTS=block booleans filter for functions if io lists map maths parsing regex stack strings symbols variables
+TESTS=block booleans filter for functions if io lists map maths parsing regex stack strings symbols variables trig other-math
 
 build: cognac
 
