@@ -1,0 +1,14 @@
+Print If == 1 Exp 0
+      "PASS: exp"
+else
+      "FAIL: exp";
+
+Print If == 0 Loge 1
+      "PASS: Log base e"
+else
+      "FAIL: Log base e";
+
+Print If == 2 Log 10 100
+      "PASS: Log"
+else
+      "FAIL: Log";
