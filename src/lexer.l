@@ -46,8 +46,8 @@ int last_openbrace_col;
 
 %x BLOCK_COMMENT
 
-ALLOWCHAR [A-Za-z0-9\-\?\!\'\+\/\*\>\=\<]
-FORMAL    [A-Z\-\?\!\+\/\*\>\<\=]
+ALLOWCHAR [A-Za-z0-9\-\?\!\'\+\/\*\>\=\<\^]
+FORMAL    [A-Z\-\?\!\+\/\*\>\<\=\^]
 
 %%
 D[eE][fF] return DEF;
