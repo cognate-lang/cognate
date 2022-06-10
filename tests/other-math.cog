@@ -3,7 +3,7 @@ Print If == 1 Exp 0
 else
       "FAIL: exp";
 
-Print If == 0 Loge 1
+Print If == 0 Ln 1
       "PASS: Log base e"
 else
       "FAIL: Log base e";

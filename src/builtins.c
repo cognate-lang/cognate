@@ -102,21 +102,29 @@
 {.name="cosd",                   .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
 {.name="tand",                   .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
 
-{.name="sinr",                   .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
-{.name="cosr",                   .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
-{.name="tanr",                   .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+{.name="sin",                   .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+{.name="cos",                   .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+{.name="tan",                   .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
 
-{.name="exp",                   .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
-{.name="log",                   .type=func, .argc=2, .args={number, number},      .rets=true, .ret=number},
-{.name="loge",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+{.name="exp",                    .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+{.name="log",                    .type=func, .argc=2, .args={number, number},      .rets=true, .ret=number},
+{.name="ln",                     .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
 
-{.name="asind",                   .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
-{.name="acosd",                   .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
-{.name="atand",                   .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+{.name="asind",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+{.name="acosd",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+{.name="atand",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
 
-{.name="asinr",                   .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
-{.name="acosr",                   .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
-{.name="atanr",                   .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+{.name="asin",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+{.name="acos",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+{.name="atan",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+
+{.name="hsind",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+{.name="hcosd",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+{.name="htand",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+
+{.name="hsin",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+{.name="hcos",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+{.name="htan",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
 
 
 
