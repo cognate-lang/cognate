@@ -54,6 +54,9 @@ char * restrict_chars(char* in)
 			case '/':
 				out[index] = 'S';
 				break;
+			case '^':
+				out[index] = 'C';
+				break;
 			default:
 				break;
 		}
