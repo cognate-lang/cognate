@@ -291,9 +291,9 @@ static BOOLEAN VAR(all)(BLOCK,LIST);
 static NUMBER VAR(sind)(NUMBER);
 static NUMBER VAR(cosd)(NUMBER);
 static NUMBER VAR(tand)(NUMBER);
-static NUMBER VAR(sinr)(NUMBER);
-static NUMBER VAR(cosr)(NUMBER);
-static NUMBER VAR(tanr)(NUMBER);
+static NUMBER VAR(sin)(NUMBER);
+static NUMBER VAR(cos)(NUMBER);
+static NUMBER VAR(tan)(NUMBER);
 
 static NUMBER VAR(exp)(NUMBER);
 static NUMBER VAR(log)(NUMBER, NUMBER);
@@ -302,9 +302,16 @@ static NUMBER VAR(loge)(NUMBER);
 static NUMBER VAR(asind)(NUMBER);
 static NUMBER VAR(acosd)(NUMBER);
 static NUMBER VAR(atand)(NUMBER);
-static NUMBER VAR(asinr)(NUMBER);
-static NUMBER VAR(acosr)(NUMBER);
-static NUMBER VAR(atanr)(NUMBER);
+static NUMBER VAR(asin)(NUMBER);
+static NUMBER VAR(acos)(NUMBER);
+static NUMBER VAR(atan)(NUMBER);
+
+static NUMBER VAR(hsind)(NUMBER);
+static NUMBER VAR(hcosd)(NUMBER);
+static NUMBER VAR(htand)(NUMBER);
+static NUMBER VAR(hsin)(NUMBER);
+static NUMBER VAR(hcos)(NUMBER);
+static NUMBER VAR(htan)(NUMBER);
 
 static const char *lookup_type(cognate_type);
 static _Bool compare_lists(LIST, LIST);
