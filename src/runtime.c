@@ -213,6 +213,7 @@ static NUMBER VAR(P)(NUMBER, NUMBER);
 static NUMBER VAR(M)(NUMBER, NUMBER);
 static NUMBER VAR(D)(NUMBER, NUMBER);
 static NUMBER VAR(S)(NUMBER, NUMBER);
+static NUMBER VAR(C)(NUMBER, NUMBER);
 static NUMBER VAR(modulo)(NUMBER, NUMBER);
 static NUMBER VAR(sqrt)(NUMBER);
 static NUMBER VAR(random)(NUMBER, NUMBER);
@@ -283,6 +284,25 @@ static LIST VAR(takeDwhile)(BLOCK,LIST);
 static LIST VAR(discard)(NUMBER,LIST);
 static BLOCK VAR(remember)(BLOCK);
 static BOOLEAN VAR(all)(BLOCK,LIST);
+
+static NUMBER VAR(sind)(NUMBER);
+static NUMBER VAR(cosd)(NUMBER);
+static NUMBER VAR(tand)(NUMBER);
+static NUMBER VAR(sinr)(NUMBER);
+static NUMBER VAR(cosr)(NUMBER);
+static NUMBER VAR(tanr)(NUMBER);
+
+static NUMBER VAR(exp)(NUMBER);
+static NUMBER VAR(log)(NUMBER, NUMBER);
+static NUMBER VAR(loge)(NUMBER);
+static NUMBER var(sqrt)(NUMBER);
+
+static NUMBER VAR(asind)(NUMBER);
+static NUMBER VAR(acosd)(NUMBER);
+static NUMBER VAR(atand)(NUMBER);
+static NUMBER VAR(asinr)(NUMBER);
+static NUMBER VAR(acosr)(NUMBER);
+static NUMBER VAR(atanr)(NUMBER);
 
 static const char *lookup_type(cognate_type);
 static _Bool compare_lists(LIST, LIST);
@@ -1235,6 +1255,14 @@ static NUMBER VAR(S)(NUMBER a, NUMBER b)
 	return r;
 }
 
+static NUMBER VAR(C)(NUMBER a, NUMBER b)
+{
+	const double r = pow(b, a);
+	if unlikely(is_nan(*(long*)&r))
+		throw_error_fmt("Raising %.14g to the power of %.14g yeilds invalid result", b, a);
+	return r;
+}
+
 static NUMBER VAR(modulo)(NUMBER a, NUMBER b)
 {
 	const double r = b - a * floor(b / a);
@@ -1937,6 +1965,118 @@ static void VAR(debug)()
 	debugger_step();
 #endif
 }
+
+/* math */
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+// helper for math functions
+static inline NUMBER radian_to_degrees(NUMBER a)
+{
+	const double ratio = 180 / M_PI;
+	return a * ratio;
+}
+
+static inline NUMBER decimal_to_degrees(NUMBER a)
+{
+	const double ratio = M_PI / 180;
+	return a * ratio;
+}
+
+static NUMBER VAR(sind)(NUMBER a)
+{
+	double a_radian = degrees_to_radian(a);
+	double sin_radian = sin(a_radian);
+	return radian_to_degrees(sin_radian);
+}
+
+static NUMBER VAR(cosd)(NUMBER a)
+{
+	double a_radian = degrees_to_radian(a);
+	double cos_radian = cos(a_radian);
+	return radian_to_degrees(cos_radian);
+}
+
+static NUMBER VAR(tand)(NUMBER a)
+{
+	double a_radian = degrees_to_radian(a);
+	double tan_radian = sin(a_radian);
+	return radian_to_degrees(tan_radian);
+}
+
+static NUMBER VAR(sinr)(NUMBER a)
+{
+	return sin(a);
+}
+
+static NUMBER VAR(cosr)(NUMBER a)
+{
+	return cos(a);
+}
+
+static NUMBER VAR(tanr)(NUMBER a)
+{
+	return tan(a);
+}
+
+static NUMBER VAR(exp)(NUMBER a)
+{
+	return exp(a);
+}
+
+static NUMBER VAR(log)(NUMBER a, NUMBER b)
+{
+	/* This uses the following formula:
+	   log_x(y) =
+	   	    log_e(y) / log_e(x)
+	const top = log(b);
+	const bottom = log(a);
+	return top / bottom;
+}
+
+static NUMBER VAR(loge)(NUMBER a)
+{
+	reuturn log(a);
+}
+
+static NUMBER VAR(asind)(NUMBER a)
+{
+	double a_radian = degrees_to_radian(a);
+	double asin_radian = asin(a_radian);
+	return radian_to_degrees(asin_radian);
+}
+
+static NUMBER VAR(acosd)(NUMBER a)
+{
+	double a_radian = degrees_to_radian(a);
+	double acos_radian = acos(a_radian);
+	return radian_to_degrees(acos_radian);
+}
+
+static NUMBER VAR(atand)(NUMBER a)
+{
+	double a_radian = degrees_to_radian(a);
+	double atan_radian = asin(a_radian);
+	return radian_to_degrees(atan_radian);
+}
+
+static NUMBER VAR(asinr)(NUMBER a)
+{
+	return asin(a);
+}
+
+static NUMBER VAR(acosr)(NUMBER a)
+{
+	return acos(a);
+}
+
+static NUMBER VAR(atanr)(NUMBER a)
+{
+	return atan(a);
+}
+
 
 static void VAR(times)(NUMBER n, BLOCK f)
 {
