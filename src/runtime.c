@@ -191,6 +191,9 @@ static ANY box_symbol(SYMBOL);
 static BLOCK unbox_block(ANY);
 static ANY box_block(BLOCK);
 
+static NUMBER radians_to_degrees(NUMBER);
+static NUMBER degrees_to_radians(NUMBER);
+
 static void init(int, char **);
 static void cleanup(void);
 static void push(ANY);
@@ -295,7 +298,6 @@ static NUMBER VAR(tanr)(NUMBER);
 static NUMBER VAR(exp)(NUMBER);
 static NUMBER VAR(log)(NUMBER, NUMBER);
 static NUMBER VAR(loge)(NUMBER);
-static NUMBER var(sqrt)(NUMBER);
 
 static NUMBER VAR(asind)(NUMBER);
 static NUMBER VAR(acosd)(NUMBER);
@@ -1973,37 +1975,35 @@ static void VAR(debug)()
 #endif
 
 // helper for math functions
-static inline NUMBER radian_to_degrees(NUMBER a)
+static inline NUMBER radians_to_degrees(NUMBER a)
 {
-	const double ratio = 180 / M_PI;
-	return a * ratio;
+	return a * (180 / M_PI);
 }
 
-static inline NUMBER decimal_to_degrees(NUMBER a)
+static inline NUMBER degrees_to_radians(NUMBER a)
 {
-	const double ratio = M_PI / 180;
-	return a * ratio;
+	return a * (M_PI / 180);
 }
 
 static NUMBER VAR(sind)(NUMBER a)
 {
-	double a_radian = degrees_to_radian(a);
-	double sin_radian = sin(a_radian);
-	return radian_to_degrees(sin_radian);
+	double rad = degrees_to_radians(a);
+	double sinrad = sin(rad);
+	return sinrad;
 }
 
 static NUMBER VAR(cosd)(NUMBER a)
 {
-	double a_radian = degrees_to_radian(a);
-	double cos_radian = cos(a_radian);
-	return radian_to_degrees(cos_radian);
+	double rad = degrees_to_radians(a);
+	double cosrad = cos(rad);
+	return cosrad;
 }
 
 static NUMBER VAR(tand)(NUMBER a)
 {
-	double a_radian = degrees_to_radian(a);
-	double tan_radian = sin(a_radian);
-	return radian_to_degrees(tan_radian);
+	double rad = degrees_to_radians(a);
+	double tanrad = tan(rad);
+	return tanrad;
 }
 
 static NUMBER VAR(sinr)(NUMBER a)
@@ -2031,35 +2031,37 @@ static NUMBER VAR(log)(NUMBER a, NUMBER b)
 	/* This uses the following formula:
 	   log_x(y) =
 	   	    log_e(y) / log_e(x)
-	const top = log(b);
-	const bottom = log(a);
+	*/
+	const double top = log(b);
+	const double bottom = log(a);
 	return top / bottom;
 }
 
 static NUMBER VAR(loge)(NUMBER a)
 {
-	reuturn log(a);
+	return log(a);
 }
+
 
 static NUMBER VAR(asind)(NUMBER a)
 {
-	double a_radian = degrees_to_radian(a);
-	double asin_radian = asin(a_radian);
-	return radian_to_degrees(asin_radian);
+	double rad = degrees_to_radians(a);
+	double asinrad = asin(rad);
+	return asinrad;
 }
 
 static NUMBER VAR(acosd)(NUMBER a)
 {
-	double a_radian = degrees_to_radian(a);
-	double acos_radian = acos(a_radian);
-	return radian_to_degrees(acos_radian);
+	double rad = degrees_to_radians(a);
+	double acosrad = acos(rad);
+	return acosrad;
 }
 
 static NUMBER VAR(atand)(NUMBER a)
 {
-	double a_radian = degrees_to_radian(a);
-	double atan_radian = asin(a_radian);
-	return radian_to_degrees(atan_radian);
+	double rad = degrees_to_radians(a);
+	double atanrad = atan(rad);
+	return atanrad;
 }
 
 static NUMBER VAR(asinr)(NUMBER a)
