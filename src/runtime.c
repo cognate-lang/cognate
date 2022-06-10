@@ -297,7 +297,7 @@ static NUMBER VAR(tan)(NUMBER);
 
 static NUMBER VAR(exp)(NUMBER);
 static NUMBER VAR(log)(NUMBER, NUMBER);
-static NUMBER VAR(loge)(NUMBER);
+static NUMBER VAR(ln)(NUMBER);
 
 static NUMBER VAR(asind)(NUMBER);
 static NUMBER VAR(acosd)(NUMBER);
