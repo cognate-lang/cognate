@@ -118,13 +118,13 @@
 {.name="acos",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
 {.name="atan",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
 
-{.name="hsind",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
-{.name="hcosd",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
-{.name="htand",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+{.name="sinhd",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+{.name="coshd",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+{.name="tanhd",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
 
-{.name="hsin",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
-{.name="hcos",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
-{.name="htan",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+{.name="sinh",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+{.name="cosh",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
+{.name="tanh",                  .type=func, .argc=1, .args={number},      .rets=true, .ret=number},
 
 
 
