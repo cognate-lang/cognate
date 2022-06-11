@@ -306,12 +306,12 @@ static NUMBER VAR(asin)(NUMBER);
 static NUMBER VAR(acos)(NUMBER);
 static NUMBER VAR(atan)(NUMBER);
 
-static NUMBER VAR(hsind)(NUMBER);
-static NUMBER VAR(hcosd)(NUMBER);
-static NUMBER VAR(htand)(NUMBER);
-static NUMBER VAR(hsin)(NUMBER);
-static NUMBER VAR(hcos)(NUMBER);
-static NUMBER VAR(htan)(NUMBER);
+static NUMBER VAR(sinhd)(NUMBER);
+static NUMBER VAR(coshd)(NUMBER);
+static NUMBER VAR(tanhd)(NUMBER);
+static NUMBER VAR(sinh)(NUMBER);
+static NUMBER VAR(cosh)(NUMBER);
+static NUMBER VAR(tanh)(NUMBER);
 
 static const char *lookup_type(cognate_type);
 static _Bool compare_lists(LIST, LIST);
@@ -2121,51 +2121,51 @@ static NUMBER VAR(atan)(NUMBER a)
 	return tmp;
 }
 
-static NUMBER VAR(hsind)(NUMBER a)
+static NUMBER VAR(sinhd)(NUMBER a)
 {
 	double tmp = radians_to_degrees(sinh(a));
 	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("hsind(%.14g) yields invalid result", a);
+		     throw_error_fmt("sinhd(%.14g) yields invalid result", a);
 	return tmp;
 }
 
-static NUMBER VAR(hcosd)(NUMBER a)
+static NUMBER VAR(coshd)(NUMBER a)
 {
 	double tmp = radians_to_degrees(cosh(a));
 	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("hcosd(%.14g) yields invalid result", a);
+		     throw_error_fmt("coshd(%.14g) yields invalid result", a);
 	return tmp;
 }
 
-static NUMBER VAR(htand)(NUMBER a)
+static NUMBER VAR(tanhd)(NUMBER a)
 {
 	double tmp = radians_to_degrees(tanh(a));
 	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("htand(%.14g) yields invalid result", a);
+		     throw_error_fmt("tanhd(%.14g) yields invalid result", a);
 	return tmp;
 }
 
-static NUMBER VAR(hsin)(NUMBER a)
+static NUMBER VAR(sinh)(NUMBER a)
 {
 	double tmp = sinh(a);
 	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("hsin(%.14g) yields invalid result", a);
+		     throw_error_fmt("sinh(%.14g) yields invalid result", a);
 	return tmp;
 }
 
-static NUMBER VAR(hcos)(NUMBER a)
+static NUMBER VAR(cosh)(NUMBER a)
 {
 	double tmp = cosh(a);
 	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("hcos(%.14g) yields invalid result", a);
+		     throw_error_fmt("cosh(%.14g) yields invalid result", a);
 	return tmp;
 }
 
-static NUMBER VAR(htan)(NUMBER a)
+static NUMBER VAR(tanh)(NUMBER a)
 {
   	double tmp = tanh(a);
 	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("htan(%.14g) yields invalid result", a);
+		     throw_error_fmt("tanh(%.14g) yields invalid result", a);
 	return tmp;
 }
 
