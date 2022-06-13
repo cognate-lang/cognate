@@ -327,7 +327,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 			};
 
 
-			fprintf(outfile, "BOOLEAN(^VAR(%sQMARK))(ANY) = Block_copy(^BOOLEAN(ANY R){return get_type(R)==record&&unbox_record(R)->id==%i;});", cons->name, record_id);
+			fprintf(outfile, "BOOLEAN(^VAR(%sQ))(ANY) = Block_copy(^BOOLEAN(ANY R){return get_type(R)==record&&unbox_record(R)->id==%i;});", cons->name, record_id);
 
 			defs = pred;
 
