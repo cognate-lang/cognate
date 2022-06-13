@@ -392,7 +392,7 @@ static char* get_source_line(size_t line)
 }
 
 #define BACKTRACE_PUSH(NAME, LINE, COL) \
-	const backtrace _trace_##LINE##_##COL = (backtrace) {.name = (#NAME), .line = (LINE), .col = (COL), .next=trace}; \
+	const backtrace _trace_##LINE##_##COL = (backtrace) {.name = NAME, .line = (LINE), .col = (COL), .next=trace}; \
 	trace = &_trace_##LINE##_##COL;
 
 #define VARS_PUSH(NAME, IDENT) \

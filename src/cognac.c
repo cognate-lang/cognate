@@ -57,6 +57,9 @@ char * restrict_chars(char* in)
 			case '^':
 				out[index] = 'C';
 				break;
+			case '\'':
+				out[index] = 'A';
+				break;
 			default:
 				break;
 		}
@@ -364,7 +367,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 			if (!release)
 			{
 				registers = assert_registers(0, 0, registers);
-				fprintf(outfile, "BACKTRACE_PUSH(%s,%zu,%zu);", d->name,tree->line,tree->col);
+				fprintf(outfile, "BACKTRACE_PUSH(\"%s\",%zu,%zu);", tree->text,tree->line,tree->col);
 				fprintf(outfile,"debugger_step();");
 			}
 			reg_list* return_register = NULL;
@@ -452,7 +455,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 			if (!release)
 			{
 				registers = assert_registers(0, 0, registers);
-				fprintf(outfile, "BACKTRACE_PUSH(%s,%zu,%zu);",tree->text, tree->line,tree->col);
+				fprintf(outfile, "BACKTRACE_PUSH(\"%s\",%zu,%zu);",tree->text, tree->line,tree->col);
 				fprintf(outfile,"debugger_step();");
 			}
 			registers = assert_registers(1, LONG_MAX, registers);
@@ -488,7 +491,7 @@ void compile(ast* tree, reg_list* registers, decl_list* defs)
 			if (!release)
 			{
 				registers = assert_registers(0, 0, registers);
-				fprintf(outfile, "BACKTRACE_PUSH(%s,%zu,%zu);",tree->text,tree->line,tree->col);
+				fprintf(outfile, "BACKTRACE_PUSH(\"%s\",%zu,%zu);",tree->text,tree->line,tree->col);
 				fprintf(outfile,"debugger_step();");
 			}
 			decl_list* d = lookup_word(tree->text, defs);
