@@ -51,7 +51,6 @@
 {.name="string?",             .type=func, .argc=1, .args={any},       .rets=true, .ret=boolean},
 {.name="block?",              .type=func, .argc=1, .args={any},       .rets=true, .ret=boolean},
 {.name="boolean?",            .type=func, .argc=1, .args={any},       .rets=true, .ret=boolean},
-
 {.name="first",               .type=func, .argc=1, .args={list},      .rets=true, .ret=any},
 {.name="rest",                .type=func, .argc=1, .args={list},      .rets=true, .ret=list},
 {.name="head",                .type=func, .argc=1, .args={string},    .rets=true, .ret=string},
