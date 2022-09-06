@@ -1278,6 +1278,20 @@ static void pcc_action_token_4(pcc_context_t *__pcc_ctx, pcc_thunk_t *__pcc_in, 
 #undef auxil
 }
 
+static void pcc_action___0(pcc_context_t *__pcc_ctx, pcc_thunk_t *__pcc_in, pcc_value_t *__pcc_out) {
+#define auxil (__pcc_ctx->auxil)
+#define __ (*__pcc_out)
+#define _0 pcc_get_capture_string(__pcc_ctx, &__pcc_in->data.leaf.capt0)
+#define _0s ((const size_t)(__pcc_ctx->pos + __pcc_in->data.leaf.capt0.range.start))
+#define _0e ((const size_t)(__pcc_ctx->pos + __pcc_in->data.leaf.capt0.range.end))
+    puts("parse error"); __builtin_trap();
+#undef _0e
+#undef _0s
+#undef _0
+#undef __
+#undef auxil
+}
+
 static pcc_thunk_chunk_t *pcc_evaluate_rule_expression(pcc_context_t *ctx);
 static pcc_thunk_chunk_t *pcc_evaluate_rule_statement(pcc_context_t *ctx);
 static pcc_thunk_chunk_t *pcc_evaluate_rule_formal(pcc_context_t *ctx);
@@ -2061,6 +2075,18 @@ static pcc_thunk_chunk_t *pcc_evaluate_rule__(pcc_context_t *ctx) {
             ctx->cur = p;
             goto L0009;
         L0011:;
+        }
+        {
+            int u;
+            const size_t n = pcc_get_char_as_utf32(ctx, &u);
+            if (n == 0) goto L0009;
+            ctx->cur += n;
+        }
+        {
+            pcc_thunk_t *const thunk = pcc_thunk__create_leaf(ctx->auxil, pcc_action___0, 0, 0);
+            thunk->data.leaf.capt0.range.start = chunk->pos;
+            thunk->data.leaf.capt0.range.end = ctx->cur;
+            pcc_thunk_array__add(ctx->auxil, &chunk->thunks, thunk);
         }
         goto L0001;
     L0009:;

@@ -33,3 +33,5 @@ comment
 	/  '~'[^~]+'~'
 
 _ <- ([ \n\t\r]/comment)+/!./&[();]
+
+. { puts("parse error"); __builtin_trap(); }
