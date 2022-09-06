@@ -2680,7 +2680,6 @@ int main(int argc, char** argv)
 	add_var_types(m);
 	add_typechecks(m);
 	merge_symbols(m);
-	print_funcs(m->funcs);
 	to_c(m);
 	to_exe(m);
 	return EXIT_SUCCESS;
