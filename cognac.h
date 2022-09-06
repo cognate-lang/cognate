@@ -183,7 +183,7 @@ struct _func_t
 	bool has_captures;
 	bool entry;
 	bool has_args;
-	bool stack_annotated;
+	bool has_regs;
 	bool generic;
 	bool noargs;
 };
