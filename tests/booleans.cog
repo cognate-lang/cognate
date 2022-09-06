@@ -1,0 +1,23 @@
+Print If == True True   then "PASS: True == True"   else "FAIL: True == True";
+Print If == False False then "PASS: False == False" else "FAIL: False == False";
+Print If == True False  then "Fail: True == False"  else "PASS: True == False";
+Print If == False True  then "Fail: False == True"  else "PASS: False == True";
+
+
+Print If Both True and True   then "PASS: True AND True"  else "FAIL: True AND True";
+Print If Both True and False  then "FAIL: True AND False" else "PASS: True AND False";
+Print If Both False and True  then "FAIL: False AND True" else "PASS: False AND True";
+Print If Both False and False then "FAIL: False AND False" else "PASS: False AND False";
+
+Print If Either True or True    then "PASS: True OR True" else "FAIL: True OR True";
+Print If Either True and False  then "PASS: True OR False" else "FAIL: True OR False";
+Print If Either False and True  then "PASS: False OR True" else "FAIL: False OR True";
+Print If Either False and False then "FAIL: False OR False" else "PASS: False OR False";
+
+Print If One-of True xor True   then "FAIL: True XOR True" else "PASS: True XOR True";
+Print If One-of True xor False  then "PASS: True XOR False" else "FAIL: True XOR False";
+Print If One-of False xor True  then "PASS: False XOR True" else "FAIL: False XOR True";
+Print If One-of False xor False then "FAIL: False XOR False" else "PASS: False XOR False";
+
+Print If Not True  then "FAIL: NOT True"  else "PASS: NOT True";
+Print If Not False then "PASS: NOT False" else "PASS: NOT False";

@@ -184,6 +184,7 @@ struct _func_t
 	bool entry;
 	bool has_args;
 	bool has_regs;
+	bool has_stack;
 	bool generic;
 	bool noargs;
 };
@@ -210,7 +211,7 @@ ast_list_t* push_ast(ast_t*, ast_list_t*);
 ast_list_t* ast_single(type_t, void*);
 char* lowercase(const char*);
 int main(int, char**);
-void print_funcs (func_list_t*);
+void print_funcs (module_t*);
 void print_ast(ast_list_t*, int);
 void flatten_ast(module_t*);
 void add_captures(module_t*);

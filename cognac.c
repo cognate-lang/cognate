@@ -129,6 +129,7 @@ bool consistent(func_t* f1, func_t* f2)
 	// TODO different types can be handled if we generate adaptor functions but effort
 	if (f1->argc != f2->argc || f1->returns != f2->returns) return false;
 	if (f1->returns && f1->rettype != f2->rettype) return false;
+	if (f1->stack != f2->stack) return false;
 	for (val_list_t *v1 = f1->args, *v2 = f2->args ; v1 ; v1 = v1->next, v2 = v2->next)
 	{
 		if (v1->val->type != v2->val->type) return false;
@@ -1046,8 +1047,8 @@ void print_ast(ast_list_t* tree, int i)
 		case none:       printf("[none]\n"); break;
 		case load:       printf("[load]\n"); break;
 		case ret:        printf("[ret]\n"); break;
-		case static_call:printf("[static_call] %s\n", tree->op->func->name); break;
-		case fn_branch:  printf("[fn_branch]\n"); break;
+		case static_call:printf("[static_call] %s (%zu args)\n", tree->op->func->name, tree->op->func->argc); break;
+		case fn_branch:  printf("[fn_branch] %s %s\n", tree->op->funcs->func->name, tree->op->funcs->next->func->name); break;
 		default:         printf("[INVALID %i]\n", tree->op->type); break;
 	}
 	print_ast(tree->next, i);
@@ -1060,6 +1061,11 @@ void add_noargs(module_t* mod)
 		if (f->func == mod->entry || f->func->generic || f->func->noargs)
 		{
 			f->func->noargs_variant = NULL;
+			continue;
+		}
+		else if (f->func->argc == 0 && f->func->returns == false)
+		{
+			f->func->noargs_variant = f->func;
 			continue;
 		}
 		ast_list_t* tree = malloc(sizeof *tree);
@@ -1113,19 +1119,34 @@ void add_generics(module_t* mod)
 	}
 }
 
-void _add_arguments(func_t* f)
+bool _add_arguments(func_t* f)
 {
-	if (f->has_args) return;
+	if (f->has_args) return 0;
+	f->has_args = true;
+	bool changed = 0;
 	size_t registers = 0;
 	bool can_use_args = 1;
-	f->argc = 0;
 	for (ast_list_t* n = f->ops ; n ; n = n->next)
 	{
 		ast_t* op = n->op;
 		switch(op->type)
 		{
+			case ret:
+				/*
+				 * TODO TODO TODO
+				 * This almost seems to work for some reason
+				 * Never remove arguments but allow removing the returns
+				 * each pass?!?!?!?
+				 * What is this madness?
+				 */
+				remove_op(n);
+				f->returns = false;
+				break;
 			case closure:
-				_add_arguments(op->func);
+				changed |= _add_arguments(op->func);
+				registers++;
+				break;
+			case load:
 			case literal:
 			case var:
 				registers++;
@@ -1138,10 +1159,11 @@ void _add_arguments(func_t* f)
 						f->args = push_val(make_value(any, n), f->args);
 						insert_op_before(make_op(load, f->args->val), n);
 						f->argc++;
+						changed = true;
 					}
 
 					for (func_list_t* f = op->funcs ; f ; f = f->next)
-						_add_arguments(f->func);
+						changed |= _add_arguments(f->func);
 
 					func_t* v = virtual_choose_func(op->funcs);
 
@@ -1160,6 +1182,7 @@ void _add_arguments(func_t* f)
 							insert_op_before(make_op(load, f->args->val), n);
 							insert_op_before(make_op(unpick, f->args->val), n);
 							f->argc++;
+							changed = true;
 						}
 					}
 
@@ -1177,12 +1200,13 @@ void _add_arguments(func_t* f)
 						insert_op_before(make_op(load, f->args->val), n);
 						insert_op_before(make_op(unpick, f->args->val), n);
 						f->argc++;
+						changed = true;
 					}
 				}
 				registers++;
 				break;
-			case call:
 			case static_call:
+			case call:
 				{
 					func_t* fn = call_to_func(op);
 					if (fn->stack)
@@ -1199,6 +1223,7 @@ void _add_arguments(func_t* f)
 							insert_op_before(make_op(load, f->args->val), n);
 							insert_op_before(make_op(unpick, f->args->val), n);
 							f->argc++;
+							changed = true;
 						}
 					}
 					if (fn->stack) can_use_args = false;
@@ -1206,7 +1231,6 @@ void _add_arguments(func_t* f)
 					break;
 				}
 			case bind:
-			case ret:
 				if (registers) registers--;
 				else if (can_use_args && f->argc < 255 && !f->entry)
 				{
@@ -1214,9 +1238,10 @@ void _add_arguments(func_t* f)
 					insert_op_before(make_op(load, f->args->val), n);
 					insert_op_before(make_op(unpick, f->args->val), n);
 					f->argc++;
+					changed = true;
 				}
 				break;
-			case define: case none: break;
+			case define: case none: case pick: case unpick: break;
 			default: __builtin_trap();
 		}
 		if (!n->next && registers && !f->entry)
@@ -1224,16 +1249,24 @@ void _add_arguments(func_t* f)
 			insert_op_before(make_op(ret, NULL), n);
 			f->returns = true;
 			f->rettype = any;
+			//changed = true;
 		}
 	}
-	f->has_args = true;
 	f->args = reverse(f->args);
+	return changed;
 }
 
 void add_arguments(module_t* mod)
 {
-	for (func_list_t* f = mod->funcs ; f ; f = f->next)
-		_add_arguments(f->func);
+	bool changed = true;
+	while (changed)
+	{
+		for (func_list_t* f = mod->funcs ; f ; f = f->next)
+			f->func->has_args = false;
+		changed = false;
+		for (func_list_t* f = mod->funcs ; f ; f = f->next)
+			changed |= _add_arguments(f->func);
+	}
 }
 
 void _add_registers(func_t* f)
@@ -1252,12 +1285,17 @@ void _add_registers(func_t* f)
 			case literal:
 			case var:
 			case load:
+			case pop:
 				registers++;
 				break;
 			case fn_branch:
 				{
 					if (registers) registers--;
-					else insert_op_before(make_op(pop, NULL), n), f->stack = true;
+					else
+					{
+						insert_op_before(make_op(pop, NULL), n);
+						f->stack = true;
+					}
 
 					for (func_list_t* f = op->funcs ; f ; f = f->next)
 						_add_registers(f->func);
@@ -1267,7 +1305,12 @@ void _add_registers(func_t* f)
 					if (v->stack)
 					{
 						for (size_t i = registers; i > (size_t)v->argc ; --i)
+						{
+							insert_op_before(make_op(pick, NULL), n);
+							insert_op_before(make_op(push, NULL), n);
+							f->stack = true;
 							registers--;
+						}
 					}
 
 					for (size_t i = 0 ; i < v->argc ; ++i)
@@ -1275,8 +1318,9 @@ void _add_registers(func_t* f)
 						if (registers) registers--;
 						else
 						{
-							insert_op_before(make_op(pop, NULL), n), f->stack = true;
+							insert_op_before(make_op(pop, NULL), n);
 							insert_op_before(make_op(unpick, NULL), n);
+							f->stack = true;
 						}
 					}
 
@@ -1289,8 +1333,9 @@ void _add_registers(func_t* f)
 					if (registers) registers--;
 					else
 					{
-						insert_op_before(make_op(pop, NULL), n), f->stack = true;
+						insert_op_before(make_op(pop, NULL), n);
 						insert_op_before(make_op(unpick, NULL), n);
+						f->stack = true;
 					}
 				}
 				registers++;
@@ -1303,7 +1348,9 @@ void _add_registers(func_t* f)
 					{
 						for (size_t i = registers; i > (size_t)fn->argc ; --i)
 						{
-							insert_op_before(make_op(push, NULL), n), f->stack = true;
+							insert_op_before(make_op(pick, NULL), n);
+							insert_op_before(make_op(push, NULL), n);
+							f->stack = true;
 							registers--;
 						}
 					}
@@ -1312,9 +1359,9 @@ void _add_registers(func_t* f)
 						if (registers) registers--;
 						else
 						{
-							insert_op_before(make_op(pop, NULL), n), f->stack = true;
+							insert_op_before(make_op(pop, NULL), n);
 							insert_op_before(make_op(unpick, NULL), n);
-							f->argc++;
+							f->stack = true;
 						}
 					}
 					if (fn->returns) registers++;
@@ -1322,16 +1369,27 @@ void _add_registers(func_t* f)
 				}
 			case bind:
 			case ret:
+			case push:
 				if (registers) registers--;
 				else
 				{
-					insert_op_before(make_op(pop, NULL), n), f->stack = true;
+					insert_op_before(make_op(pop, NULL), n);
 					insert_op_before(make_op(unpick, NULL), n);
+					f->stack = true;
 				}
 				break;
 			case define: case none: case pick: case unpick: break;
 			default: __builtin_trap();
 		}
+		if (!n->next)
+		{
+			for (size_t i = 0 ; i < registers ; ++i)
+			{
+				insert_op_before(make_op(pick, NULL), n);
+				insert_op_before(make_op(push, NULL), n);
+			}
+		}
+
 	}
 	f->has_regs = true;
 }
@@ -1811,7 +1869,6 @@ void add_typechecks(module_t* mod)
 					}
 				case call:
 				case static_call:
-					//assert(!(op->word->stack && registers->len));
 					{
 						func_t* fn = call_to_func(op->op);
 						size_t i = 0;
@@ -1828,7 +1885,7 @@ void add_typechecks(module_t* mod)
 							else __builtin_trap();
 							insert_op_before(make_op(unpick, NULL), op);
 						}
-						for ( int i = 0 ; i < fn->argc ; ++i )
+						for ( size_t i = 0 ; i < fn->argc ; ++i )
 							insert_op_before(make_op(pick, NULL), op);
 						if (fn->returns)
 							push_register_front(make_register(fn->rettype, op), registers);
@@ -1875,9 +1932,9 @@ char* lowercase(const char* S)
 	return s;
 }
 
-void print_funcs (func_list_t* funcs)
+void print_funcs (module_t* mod)
 {
-	for (func_list_t* f = funcs ; f ; f = f->next)
+	for (func_list_t* f = mod->funcs ; f ; f = f->next)
 	{
 		printf("======== %s ========\n", f->func->name);
 		printf("( ");
@@ -2087,6 +2144,8 @@ void inline_functions(module_t* m)
 
 bool _compute_stack(func_t* f)
 {
+	if (f->has_stack) return f->stack;
+	f->has_stack = true;
 	for (ast_list_t* a = f->ops ; a ; a = a->next)
 	{
 		switch (a->op->type)
@@ -2096,19 +2155,32 @@ bool _compute_stack(func_t* f)
 			case static_call:
 				{
 					func_t* called = call_to_func(a->op);
+					if (_compute_stack(called))
+					{
+						f->stack = true;
+						return true;
+					}
+				}
+				break;
+			case fn_branch:
+				{
+					func_t* called = virtual_choose_func(a->op->funcs);
 					if (called->stack)
 					{
+						f->stack = true;
 						return true;
 					}
-					if (called != f && _compute_stack(called))
-					{
-						return true;
-					}
-					break;
+					for (func_list_t* F = a->op->funcs ; F ; F = F->next)
+						if (_compute_stack(F->func))
+						{
+							f->stack = true;
+							return true;
+						}
 				}
 				break;
 			case push:
 			case pop:
+				f->stack = true;
 				return true;
 		}
 	}
@@ -2118,7 +2190,9 @@ bool _compute_stack(func_t* f)
 void compute_stack(module_t* m)
 {
 	for (func_list_t* f = m->funcs ; f ; f = f->next)
-		f->func->stack = _compute_stack(f->func);
+		f->func->stack = false, f->func->has_stack = false;
+	for (func_list_t* f = m->funcs ; f ; f = f->next)
+		_compute_stack(f->func);
 }
 
 void compute_captures(func_t* f, word_list_t** ret, word_list_t** locals, func_list_t** tried)
@@ -2666,13 +2740,13 @@ int main(int argc, char** argv)
 		flatten_ast,
 		inline_functions,
 		compute_sources,
-		compute_stack,
 		static_branches,
 		compute_sources,
 		static_calls,
 		add_arguments,
 		add_generics,
 		add_noargs,
+		compute_stack,
 		add_registers,
 		shorten_references,
 		inline_values,
@@ -2741,6 +2815,7 @@ word_list_t* builtins()
 		fn->captures = NULL;
 		fn->calls = NULL;
 		fn->has_captures = true;
+		fn->has_args = true;
 		type_t calltype = b[i].calltype;
 		for (int ii = b[i].argc-1 ; ii >= 0 ; --ii)
 			fn->args = push_val(make_value(b[i].args[ii], NULL), fn->args);
