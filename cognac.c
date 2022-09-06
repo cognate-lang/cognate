@@ -2654,34 +2654,39 @@ next:;
 int main(int argc, char** argv)
 {
 	(void)argc; (void)argv;
-	assert(argc >= 2);
+	assert(argc == 2);
 	module_t* m = create_module(argv[1]);
-	module_parse(m);
-	add_backlinks(m);
-	fold_defs(m);
-	predeclare(m);
-	resolve_scope(m);
-	flatten_ast(m);
-	inline_functions(m);
-	compute_sources(m);
-	compute_stack(m);
-	static_branches(m);
-	compute_sources(m);
-	static_calls(m);
-	add_arguments(m);
-	add_generics(m);
-	add_noargs(m);
-	add_registers(m);
-	shorten_references(m);
-	inline_values(m);
-	compute_variables(m);
-	remove_unused_funcs(m);
-	resolve_early_use(m);
-	add_var_types(m);
-	add_typechecks(m);
-	merge_symbols(m);
-	to_c(m);
-	to_exe(m);
+	void(*stages[])(module_t*)
+	= {
+		module_parse,
+		add_backlinks,
+		fold_defs,
+		predeclare,
+		resolve_scope,
+		flatten_ast,
+		inline_functions,
+		compute_sources,
+		compute_stack,
+		static_branches,
+		compute_sources,
+		static_calls,
+		add_arguments,
+		add_generics,
+		add_noargs,
+		add_registers,
+		shorten_references,
+		inline_values,
+		compute_variables,
+		remove_unused_funcs,
+		resolve_early_use,
+		add_var_types,
+		add_typechecks,
+		merge_symbols,
+		to_c,
+		to_exe
+	};
+	for (size_t i = 0 ; i < sizeof stages / sizeof stages[0] ; ++i)
+		stages[i](m);
 	return EXIT_SUCCESS;
 }
 
