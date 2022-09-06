@@ -564,6 +564,14 @@ void flatten_ast(module_t* mod)
 
 const char* c_literal(lit_t* literal)
 {
+	if (literal->type == symbol)
+	{
+		char s[strlen(literal->string) + 2];
+		s[0] = '$';
+		s[1] = '\0';
+		strcat(s, literal->string);
+		return strdup(s);
+	}
 	return literal->string; // TODO
 }
 
@@ -667,6 +675,12 @@ void to_c(module_t* mod)
 	strcat(c_source_path, ".c");
 	FILE* c_source = fopen(c_source_path, "w");
 	fprintf(c_source, "%.*s", runtime_c_len, (char*)runtime_c);
+	fputc('\n', c_source);
+	for (symbol_list_t* syms = mod->symbols ; syms ; syms = syms->next)
+	{
+		fprintf(c_source, "SYMBOL $%s = \"%s\";\n", syms->text, syms->text);
+	}
+	if (mod->symbols) fputc('\n', c_source);
 	for (func_list_t* func = mod->funcs ; func ; func = func->next)
 	{
 		size_t num_words = 0;
@@ -676,12 +690,12 @@ void to_c(module_t* mod)
 		if (!func->func->generic) for (word_list_t* w = func->func->captures ; w ; w = w->next)
 		{
 			fprintf(c_source, "%s", c_val_type(w->word->val->type));
-			if (w->next || func->func->argc) fprintf(c_source, ",");
+			if (w->next || func->func->argc) fprintf(c_source, ", ");
 		}
 		else
 		{
 			fprintf(c_source, "void* env[%zu]", num_words);
-			if (func->func->argc) fprintf(c_source, ",");
+			if (func->func->argc) fprintf(c_source, ", ");
 		}
 		reg_dequeue_t* ar = make_register_dequeue();
 		for (val_list_t* v = func->func->args ; v ; v = v->next)
@@ -695,6 +709,7 @@ void to_c(module_t* mod)
 
 		if (func->func->generic_variant && func->func->generic_variant->used) fprintf(c_source, "BLOCK clone_%s(BLOCK);\n", func->func->name);
 	}
+	fputc('\n', c_source);
 	for (func_list_t* func = mod->funcs ; func ; func = func->next)
 	{
 		size_t num_words = 0;
@@ -738,12 +753,12 @@ void to_c(module_t* mod)
 				fprintf(c_source, "%s %s",
 						c_val_type(w->word->val->type),
 						c_word_name(w->word));
-				if (w->next || func->func->argc) fprintf(c_source, ",");
+				if (w->next || func->func->argc) fprintf(c_source, ", ");
 			}
 		else
 		{
 			fprintf(c_source, "void* env[%zu]", num_words);
-			if (func->func->argc) fprintf(c_source, ",");
+			if (func->func->argc) fprintf(c_source, ", ");
 		}
 		reg_dequeue_t* ar = make_register_dequeue();
 		for (val_list_t* v = func->func->args ; v ; v = v->next)
@@ -998,6 +1013,7 @@ void to_c(module_t* mod)
 			else fprintf(c_source, "\treturn _%zu;\n", res->id);
 		}
 		fprintf(c_source, "}\n");
+		if (func->next) fputc('\n', c_source);
 	}
 	fclose(c_source);
 }
@@ -1920,10 +1936,7 @@ void compute_sources(module_t* m)
 
 void _inline_functions(ast_list_t* a, func_list_t** funcs)
 {
-	bool changed = 1;
-	// We do a limited number of inlining passes
-	// else code size can grow exponentially
-	while (changed)
+	for (bool changed = 1 ; changed ;)
 	{
 		changed = 0;
 		_compute_sources(a);
@@ -2503,6 +2516,28 @@ void static_branches(module_t* m)
 	}
 }
 
+void merge_symbols(module_t* m)
+{
+	for (func_list_t* funcs = m->funcs ; funcs ; funcs = funcs->next)
+	{
+		for (ast_list_t* ast = funcs->func->ops ; ast ; ast = ast->next)
+		{
+			if (ast->op->type == literal && ast->op->literal->type == symbol)
+			{
+				for (symbol_list_t* s = m->symbols ; s ; s = s->next)
+				{
+					if (!strcmp(s->text, ast->op->literal->string)) goto next;
+				}
+				symbol_list_t* S = malloc(sizeof *S);
+				S->text = (char*)ast->op->literal->string;
+				S->next = m->symbols;
+				m->symbols = S;
+			}
+next:;
+		}
+	}
+}
+
 int main(int argc, char** argv)
 {
 	(void)argc; (void)argv;
@@ -2531,6 +2566,7 @@ int main(int argc, char** argv)
 	resolve_early_use(m);
 	add_var_types(m);
 	add_typechecks(m);
+	merge_symbols(m);
 	to_c(m);
 	to_exe(m);
 	return EXIT_SUCCESS;

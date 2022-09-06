@@ -11,6 +11,7 @@ typedef struct _word_t word_t;
 typedef struct _builtin_t builtin_t;
 typedef struct _word_list_t word_list_t;
 typedef struct _func_list_t func_list_t;
+typedef struct _symbol_list_t symbol_list_t;
 typedef struct _ast_list_t ast_list_t;
 typedef struct _lit_t lit_t;
 typedef struct _reg_dequeue_t reg_dequeue_t;
@@ -187,6 +188,12 @@ struct _func_t
 	bool noargs;
 };
 
+struct _symbol_list_t
+{
+	char* text;
+	struct _symbol_list_t* next;
+};
+
 struct _module_t
 {
 	char* path;
@@ -195,6 +202,7 @@ struct _module_t
 	ast_list_t* tree;
 	func_list_t* funcs;
 	func_t* entry;
+	symbol_list_t* symbols;
 };
 
 ast_list_t* join_ast(ast_list_t*, ast_list_t*);
