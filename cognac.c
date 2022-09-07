@@ -2766,6 +2766,7 @@ int main(int argc, char** argv)
 		predeclare,
 		resolve_scope,
 		flatten_ast,
+		merge_symbols,
 		inline_functions,
 		compute_sources,
 		static_branches,
@@ -2783,7 +2784,6 @@ int main(int argc, char** argv)
 		resolve_early_use,
 		add_var_types,
 		add_typechecks,
-		merge_symbols,
 		to_c,
 		to_exe
 	};
