@@ -9,12 +9,16 @@ else
 
 ~~ The syntax highlighter can"t handle this next bit.
 
-" \" Let B be 4; \" " " " Let B be 4; " "
-Let B be 5; "" "Let B be 4;"
-" Let B be 4; \"  Let B be 4 ";
+Let X be Box 0;
+
+Def Inc as ( Set X to + 1 Unbox X );
+
+" \" Inc; \" " " " Inc; " "
+Inc; "" "Inc;"
+" Inc; \"  Inc ";
 Clear;
 
-Print If == 5 B
+Print If == 2 Unbox X
   "PASS: Strings"
 else
   "FAIL: Strings";

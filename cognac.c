@@ -302,7 +302,7 @@ void module_parse(module_t* mod)
 	pcc_destroy(ctx);
 }
 
-ast_list_t* _predeclare(ast_list_t* tree, word_list_t* words)
+ast_list_t* _predeclare(ast_list_t* tree)
 {
 	for (ast_list_t* node = tree ; node ; node = node->next)
 	{
@@ -322,7 +322,7 @@ ast_list_t* _predeclare(ast_list_t* tree, word_list_t* words)
 				}
 				break;
 			case braces:
-				node->op->child = _predeclare(node->op->child, words);
+				node->op->child = _predeclare(node->op->child);
 				break;
 			default: break;
 		}
@@ -473,7 +473,7 @@ void _resolve_scope(ast_list_t* tree, word_list_t* words)
 
 void predeclare(module_t* mod)
 {
-	mod->tree = _predeclare(mod->tree, NULL);
+	mod->tree = _predeclare(mod->tree);
 }
 
 void resolve_scope(module_t* mod)
@@ -2725,6 +2725,33 @@ next:;
 	}
 }
 
+void _catch_shadows(ast_list_t* tree)
+{
+	word_list_t* defined = NULL;
+	for (ast_list_t* a = tree ; a ; a = a->next)
+	{
+		if (a->op->type == let || a->op->type == def)
+		{
+			for (word_list_t* w = defined ; w ; w = w->next)
+			{
+				if (!strcmp(w->word->name, a->op->string))
+				{
+					printf("Cannot shadow `%s' in same block\n", w->word->name);
+					__builtin_trap();
+				}
+			}
+			word_t* W = make_word(a->op->string, a->op->type, NULL);
+			defined = push_word(W, defined);
+		}
+		else if (a->op->type == braces) _catch_shadows(a->op->child);
+	}
+}
+
+void catch_shadows(module_t* m)
+{
+	_catch_shadows(m->tree);
+}
+
 int main(int argc, char** argv)
 {
 	(void)argc; (void)argv;
@@ -2735,6 +2762,7 @@ int main(int argc, char** argv)
 		module_parse,
 		add_backlinks,
 		fold_defs,
+		catch_shadows,
 		predeclare,
 		resolve_scope,
 		flatten_ast,

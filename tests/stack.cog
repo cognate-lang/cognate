@@ -53,9 +53,9 @@ else
 
 1 2 3 4 5;
 
-Let X be == List() Stack Clear;
+Let Y be == List() Stack Clear;
 
-Print If X
+Print If Y
   "PASS: Clearing the stack"
 else
   "FAIL: Clearing the stack";
