@@ -1007,6 +1007,8 @@ bool _add_arguments(func_t* f)
 				 * Never remove arguments but allow removing the returns
 				 * each pass?!?!?!?
 				 * What is this madness?
+				 *
+				 * Well I found the madness
 				 */
 				remove_op(n);
 				f->returns = false;
@@ -1032,8 +1034,10 @@ bool _add_arguments(func_t* f)
 						changed = true;
 					}
 
+					/*
 					for (func_list_t* f = op->funcs ; f ; f = f->next)
 						changed |= _add_arguments(f->func);
+						*/
 
 					func_t* v = op->funcs->func;
 
@@ -1142,6 +1146,7 @@ void add_arguments(module_t* mod)
 void _add_registers(func_t* f)
 {
 	if (f->has_regs) return;
+	f->has_regs = true;
 	size_t registers = 0;
 	for (ast_list_t* n = f->ops ; n ; n = n->next)
 	{
@@ -1164,21 +1169,22 @@ void _add_registers(func_t* f)
 					else
 					{
 						insert_op_before(make_op(pop, NULL), n);
+						insert_op_before(make_op(unpick, NULL), n);
 						f->stack = true;
 					}
 
 					for (func_list_t* f = op->funcs ; f ; f = f->next)
-						_add_registers(f->func);
+				   	_add_registers(f->func);
 
 					func_t* v = op->funcs->func;
 
 					if (v->stack)
 					{
+						f->stack = true;
 						for (size_t i = registers; i > (size_t)v->argc ; --i)
 						{
 							insert_op_before(make_op(pick, NULL), n);
 							insert_op_before(make_op(push, NULL), n);
-							f->stack = true;
 							registers--;
 						}
 					}
@@ -1193,6 +1199,8 @@ void _add_registers(func_t* f)
 							f->stack = true;
 						}
 					}
+
+					if (v->stack) assert(!registers);
 
 					if (v->returns) registers++;
 					break;
@@ -1214,13 +1222,14 @@ void _add_registers(func_t* f)
 			case static_call:
 				{
 					func_t* fn = call_to_func(op);
+					if (fn != unknown_func) _add_registers(fn);
 					if (fn->stack)
 					{
+						f->stack = true;
 						for (size_t i = registers; i > (size_t)fn->argc ; --i)
 						{
 							insert_op_before(make_op(pick, NULL), n);
 							insert_op_before(make_op(push, NULL), n);
-							f->stack = true;
 							registers--;
 						}
 					}
@@ -1257,11 +1266,10 @@ void _add_registers(func_t* f)
 			{
 				insert_op_before(make_op(pick, NULL), n);
 				insert_op_before(make_op(push, NULL), n);
+				f->stack = true;
 			}
 		}
-
 	}
-	f->has_regs = true;
 }
 
 void add_registers(module_t* mod)
@@ -2101,8 +2109,10 @@ void compute_variables(module_t* m)
 					&f->func->calls);
 		mark_all_unused(m);
 		mark_used_vars(m);
+		/*
 		for (func_list_t* f = m->funcs ; f ; f = f->next)
 			changed |= remove_unused_vars(f->func);
+			*/
 	}
 }
 
@@ -2453,7 +2463,7 @@ int main(int argc, char** argv)
 		resolve_scope,
 		flatten_ast,
 		merge_symbols,
-		inline_functions,
+		//inline_functions,
 		compute_sources,
 		static_branches,
 		compute_sources,
@@ -2463,6 +2473,7 @@ int main(int argc, char** argv)
 		balance_branches,
 		compute_stack,
 		add_registers,
+		compute_stack,
 		shorten_references,
 		inline_values,
 		compute_variables,
