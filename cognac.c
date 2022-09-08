@@ -1,6 +1,7 @@
 #include "cognac.h"
 #include "parser.h"
 #include "runtime.h"
+#include <limits.h>
 #include <assert.h>
 #include <string.h>
 #include <unistd.h>
@@ -113,34 +114,12 @@ func_t* make_func(ast_list_t* tree, char* name)
 	func->locals = NULL;
 	func->generic_variant = NULL;
 	func->generic = false;
-	func->noargs_variant = NULL;
-	func->noargs = false;
 	func->calls = NULL;
 	func->stack = false; // hmm
 	func->captures = NULL;
 	func->entry = false;
 	func->has_captures = false;
 	return func;
-}
-
-bool consistent(func_t* f1, func_t* f2)
-{
-	// essentially we can only form a static if when they have the same argc, same arg types, same return types, etc
-	// TODO different types can be handled if we generate adaptor functions but effort
-	if (f1->argc != f2->argc || f1->returns != f2->returns) return false;
-	if (f1->returns && f1->rettype != f2->rettype) return false;
-	if (f1->stack != f2->stack) return false;
-	for (val_list_t *v1 = f1->args, *v2 = f2->args ; v1 ; v1 = v1->next, v2 = v2->next)
-	{
-		if (v1->val->type != v2->val->type) return false;
-	}
-	return true;
-}
-
-func_t* virtual_choose_func(func_list_t* F)
-{
-	if (consistent(F->func, F->next->func)) return F->func;
-	else return &unknown_func;
 }
 
 ast_t* make_op(type_t type, void* data)
@@ -367,7 +346,7 @@ void shorten_references(module_t* mod)
 				case fn_branch:
 					{
 						pop_register_front(regs);
-						func_t* f = virtual_choose_func(a->op->funcs);
+						func_t* f = a->op->funcs->func;
 						for ( size_t i = 0 ; i < f->argc ; ++i )
 							pop_register_front(regs);
 						if (f->stack) assert(regs->len == 0);
@@ -646,6 +625,7 @@ void to_exe(module_t* mod)
 	{
 		"gcc", c_source_path, "-o", "./a.out",
 		"-Ofast", "-flto", //"-Wno-unused", "-Wall", "-Wextra", "-Wpedantic",
+		//"-Og", "-ggdb3", "-g"
 		"-std=gnu11", "-lm", NULL
 	};
 	execvp(args[0], args);
@@ -715,7 +695,7 @@ void to_c(module_t* mod)
 	for (func_list_t* func = mod->funcs ; func ; func = func->next)
 	{
 		size_t num_words = 0;
-		if (func->func->generic_variant && func->func->generic_variant->used && !func->func->generic && !func->func->noargs)
+		if (func->func->generic_variant && func->func->generic_variant->used && !func->func->generic)
 		{
 			for (word_list_t* w = func->func->captures ; w ; w = w->next) num_words++;
 			fprintf(c_source, "BLOCK clone_%s(BLOCK b)\n{\n", func->func->name);
@@ -770,7 +750,7 @@ void to_c(module_t* mod)
 			push_register_front(r, ar);
 			if (v->next) fprintf(c_source, ", ");
 		}
-		if (!(func->func->generic || func->func->noargs) && !func->func->captures && !func->func->args)
+		if (!(func->func->generic) && !func->func->captures && !func->func->args)
 			fprintf(c_source, "void");
 		fprintf(c_source, ") {\n");
 		size_t i = 0;
@@ -794,8 +774,7 @@ void to_c(module_t* mod)
 				default: __builtin_trap();
 				case fn_branch:
 					{
-						func_t* v = virtual_choose_func(op->op->funcs); // hmmm
-						bool g = v == &unknown_func;
+						func_t* v = op->op->funcs->func;
 						if (v->returns)
 						{
 							reg_t* ret = make_register(v->rettype, NULL);
@@ -809,12 +788,12 @@ void to_c(module_t* mod)
 								{
 									reg_t* r1 = pop_register_front(registers);
 									fprintf(c_source, "_%zu ? ", r1->id);
-									c_emit_funcall(g?f->func->noargs_variant:f->func, c_source, registers);
+									c_emit_funcall(f->func, c_source, registers);
 									fprintf(c_source, " : ");
 								}
 								else
 								{
-									c_emit_funcall(g?f->func->noargs_variant:f->func, c_source, registers);
+									c_emit_funcall(f->func, c_source, registers);
 									fprintf(c_source, ";\n", sanitize(f->func->name));
 								}
 								*registers = saved;
@@ -834,12 +813,12 @@ void to_c(module_t* mod)
 								{
 									reg_t* r1 = pop_register_front(registers);
 									fprintf(c_source, "\tif (_%zu) ", r1->id);
-									c_emit_funcall(g?f->func->noargs_variant:f->func, c_source, registers);
+									c_emit_funcall(f->func, c_source, registers);
 									fprintf(c_source, ";\n\telse ");
 								}
 								else
 								{
-									c_emit_funcall(g?f->func->noargs_variant:f->func, c_source, registers);
+									c_emit_funcall(f->func, c_source, registers);
 									fprintf(c_source, ";\n");
 								}
 								*registers = saved;
@@ -1035,8 +1014,8 @@ void print_ast(ast_list_t* tree, int i)
 		case call:       printf("[call] %s(%zu)\n", tree->op->word->name, tree->op->word->shadow_id); break;
 		case var:        printf("[var] %s(%zu)\n", tree->op->word->name, tree->op->word->shadow_id); break;
 		case bind:       printf("[bind] %s(%zu)\n", tree->op->word->name, tree->op->word->shadow_id); break;
-		case to_any:        printf("[to_any] %s\n", c_val_type(tree->op->val_type)); break;
-		case from_any:      printf("[from_any] %s\n", c_val_type(tree->op->val_type)); break;
+		case to_any:     printf("[to_any] %s\n", c_val_type(tree->op->val_type)); break;
+		case from_any:   printf("[from_any] %s\n", c_val_type(tree->op->val_type)); break;
 		case pop:        printf("[pop]\n"); break;
 		case push:       printf("[push]\n"); break;
 		case pick:       printf("[pick]\n"); break;
@@ -1048,52 +1027,17 @@ void print_ast(ast_list_t* tree, int i)
 		case load:       printf("[load]\n"); break;
 		case ret:        printf("[ret]\n"); break;
 		case static_call:printf("[static_call] %s (%zu args)\n", tree->op->func->name, tree->op->func->argc); break;
-		case fn_branch:  printf("[fn_branch] %s %s\n", tree->op->funcs->func->name, tree->op->funcs->next->func->name); break;
+		case fn_branch:  printf("[fn_branch] %s (%zu args) %s (%zu args)\n", tree->op->funcs->func->name, tree->op->funcs->func->argc, tree->op->funcs->next->func->name, tree->op->funcs->next->func->argc); break;
 		default:         printf("[INVALID %i]\n", tree->op->type); break;
 	}
 	print_ast(tree->next, i);
-}
-
-void add_noargs(module_t* mod)
-{
-	for (func_list_t* f = mod->funcs ; f ; f = f->next)
-	{
-		if (f->func == mod->entry || f->func->generic || f->func->noargs)
-		{
-			f->func->noargs_variant = NULL;
-			continue;
-		}
-		else if (f->func->argc == 0 && f->func->returns == false)
-		{
-			f->func->noargs_variant = f->func;
-			continue;
-		}
-		ast_list_t* tree = malloc(sizeof *tree);
-		tree->prev = NULL;
-		tree->next = malloc(sizeof *(tree->next));
-		tree->op = make_op(none, NULL);
-		tree->next->op = make_op(none, NULL);
-		tree->next->prev = tree;
-		tree->next->next = NULL;
-		insert_op_after(
-				make_op(static_call, f->func), tree);
-		char* name = malloc(strlen(f->func->name) + strlen("noargs") + 1);
-		strcpy(name, f->func->name);
-		strcat(name, "noargs");
-		func_t* f_ = make_func(tree, name);
-		f_->noargs = true;
-		f_->captures = f->func->captures;
-		f_->noargs_variant = NULL;
-		mod->funcs = push_func(f_, mod->funcs);
-		f->func->noargs_variant = f_;
-	}
 }
 
 void add_generics(module_t* mod)
 {
 	for (func_list_t* f = mod->funcs ; f ; f = f->next)
 	{
-		if (f->func == mod->entry || f->func->generic || f->func->noargs)
+		if (f->func == mod->entry || f->func->generic)
 		{
 			f->func->generic_variant = NULL;
 			continue;
@@ -1107,9 +1051,7 @@ void add_generics(module_t* mod)
 		tree->next->next = NULL;
 		insert_op_after(
 				make_op(static_call, f->func), tree);
-		char* name = malloc(strlen(f->func->name) + strlen("generic") + 1);
-		strcpy(name, f->func->name);
-		strcat(name, "generic");
+		char* name = make_func_name();
 		func_t* f_ = make_func(tree, name);
 		f_->generic = true;
 		f_->captures = f->func->captures;
@@ -1158,6 +1100,7 @@ bool _add_arguments(func_t* f)
 					{
 						f->args = push_val(make_value(any, n), f->args);
 						insert_op_before(make_op(load, f->args->val), n);
+						insert_op_before(make_op(unpick, f->args->val), n);
 						f->argc++;
 						changed = true;
 					}
@@ -1165,7 +1108,7 @@ bool _add_arguments(func_t* f)
 					for (func_list_t* f = op->funcs ; f ; f = f->next)
 						changed |= _add_arguments(f->func);
 
-					func_t* v = virtual_choose_func(op->funcs);
+					func_t* v = op->funcs->func;
 
 					if (v->stack)
 					{
@@ -1300,7 +1243,7 @@ void _add_registers(func_t* f)
 					for (func_list_t* f = op->funcs ; f ; f = f->next)
 						_add_registers(f->func);
 
-					func_t* v = virtual_choose_func(op->funcs);
+					func_t* v = op->funcs->func;
 
 					if (v->stack)
 					{
@@ -1532,7 +1475,7 @@ bool add_var_types_forwards(module_t* mod)
 				case fn_branch:
 					{
 						pop_register_front(registers);
-						func_t* fn = virtual_choose_func(op->op->funcs);
+						func_t* fn = op->op->funcs->func;
 						for ( size_t i = 0 ; i < fn->argc ; ++i )
 							pop_register_front(registers);
 						if (fn->stack) assert(registers->len == 0);
@@ -1649,13 +1592,13 @@ bool add_var_types_backwards(module_t* mod)
 					}
 				case fn_branch:
 					{
-						func_t* fn = virtual_choose_func(op->op->funcs);
+						func_t* fn = op->op->funcs->func;
 						if (fn->returns)
 							pop_register_front(registers);
+						if (fn->stack) assert(registers->len == 0);
 						val_list_t* reversed_args = reverse(fn->args);
 						for ( val_list_t* a = reversed_args ; a ; a = a->next )
 							push_register_front(make_register(a->val->type, op), registers);
-						if (fn->stack) assert(registers->len == 0);
 						push_register_front(make_register(boolean, op), registers);
 						break;
 					}
@@ -1845,7 +1788,7 @@ void add_typechecks(module_t* mod)
 						{
 							insert_op_before(make_op(from_any, (void*)boolean), op);
 						} else __builtin_trap();
-						func_t* fn = virtual_choose_func(op->op->funcs);
+						func_t* fn = op->op->funcs->func;
 						size_t i = 0;
 						for ( val_list_t* a = fn->args ; a ; a = a->next )
 						{
@@ -2164,7 +2107,7 @@ bool _compute_stack(func_t* f)
 				break;
 			case fn_branch:
 				{
-					func_t* called = virtual_choose_func(a->op->funcs);
+					func_t* called = a->op->funcs->func;
 					if (called->stack)
 					{
 						f->stack = true;
@@ -2513,12 +2456,8 @@ void mark_used_funcs(func_t* f)
 
 		if (n->op->type == fn_branch)
 		{
-			bool cons = consistent(n->op->funcs->func, n->op->funcs->next->func);
 			for (func_list_t* f = n->op->funcs ; f ; f = f->next)
-			{
 				mark_used_funcs(f->func);
-				if (!cons) mark_used_funcs(f->func->noargs_variant);
-			}
 		}
 	}
 }
@@ -2752,6 +2691,108 @@ void catch_shadows(module_t* m)
 	_catch_shadows(m->tree);
 }
 
+bool consistent(func_t* f1, func_t* f2)
+{
+	// essentially we can only form a static if when they have the same argc, same arg types, same return types, etc
+	// TODO different types can be handled if we generate adaptor functions but effort
+	if (f1->argc != f2->argc || f1->returns != f2->returns) return false;
+	if (f1->returns && f1->rettype != f2->rettype) return false;
+	if (f1->stack != f2->stack) return false;
+	for (val_list_t *v1 = f1->args, *v2 = f2->args ; v1 ; v1 = v1->next, v2 = v2->next)
+	{
+		if (v1->val->type != v2->val->type) return false;
+	}
+	return true;
+}
+
+void balance_branches(module_t* m)
+{
+	for (func_list_t* funcs = m->funcs ; funcs ; funcs = funcs->next)
+	{
+		for (ast_list_t* ast = funcs->func->ops ; ast ; ast = ast->next)
+		{
+			ast_t* op = ast->op;
+			switch (op->type)
+			{
+				case fn_branch:
+					{
+						int min_argc = INT_MAX;
+						int max_argc = 0;
+						bool all_return  = true;
+						bool some_return = false;
+						for (func_list_t* fns = op->funcs ; fns ; fns = fns->next)
+						{
+							if (fns->func->argc < min_argc) min_argc = fns->func->argc;
+							if (fns->func->argc > max_argc) max_argc = fns->func->argc;
+							all_return  &= fns->func->returns;
+							some_return |= fns->func->returns;
+						}
+
+						if (all_return == some_return
+								&& min_argc == max_argc) break;
+
+						val_list_t* adapt_args = NULL;
+						for (int i = 0 ; i < min_argc ; ++i)
+							adapt_args = push_val(make_value(any, NULL), adapt_args);
+
+						/*
+						 * TODO
+						 * We can optimize Do If X then () else (+ 1) 12;
+						 * we just need to change () into the identity functions
+						 * that way the runtime stack is not needed.
+						 *
+						 * Counterpoint:
+						 *
+						 * 	Do If True () else (Print);
+						 *
+						 * is a valid program but will not run with the above
+						 * optimization.
+						 * TODO
+						 */
+
+						// generate adaptor functions.
+						for (func_list_t* fns = op->funcs ; fns ; fns = fns->next)
+						{
+							ast_list_t* body = make_astlist();
+							func_t* adaptor = make_func(body, make_func_name());
+							adaptor->argc = min_argc;
+							adaptor->returns = all_return;
+							adaptor->args = adapt_args;
+
+							if (adaptor->returns)
+								insert_op_after(make_op(ret, NULL), body);
+							else if (fns->func->returns)
+								insert_op_after(make_op(push, NULL), body);
+
+							insert_op_after(make_op(static_call, fns->func), body);
+
+							int remaining = fns->func->argc - adaptor->argc;
+							for (int i = 0 ; i < remaining ; ++i)
+							{
+								insert_op_after(make_op(unpick, NULL), body);
+								insert_op_after(make_op(pop, NULL), body);
+							}
+
+							for (val_list_t* v = adaptor->args ; v ; v = v->next)
+							{
+								insert_op_after(make_op(unpick, NULL), body);
+								insert_op_after(make_op(load, NULL), body);
+							}
+
+							m->funcs = push_func(adaptor, m->funcs);
+							fns->func = adaptor;
+						}
+					}
+					break;
+				default: break;
+			}
+		}
+	}
+}
+
+void end(module_t* m) { exit(EXIT_SUCCESS); }
+
+
 int main(int argc, char** argv)
 {
 	(void)argc; (void)argv;
@@ -2774,7 +2815,7 @@ int main(int argc, char** argv)
 		static_calls,
 		add_arguments,
 		add_generics,
-		add_noargs,
+		balance_branches,
 		compute_stack,
 		add_registers,
 		shorten_references,
@@ -2782,6 +2823,7 @@ int main(int argc, char** argv)
 		compute_variables,
 		remove_unused_funcs,
 		resolve_early_use,
+		print_funcs,
 		add_var_types,
 		add_typechecks,
 		to_c,

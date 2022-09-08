@@ -168,7 +168,6 @@ struct _func_list_t
 struct _func_t
 {
 	func_t* generic_variant;
-	func_t* noargs_variant;
 	ast_list_t* ops;
 	word_list_t* captures;
 	word_list_t* locals;
@@ -186,7 +185,6 @@ struct _func_t
 	bool has_regs;
 	bool has_stack;
 	bool generic;
-	bool noargs;
 };
 
 struct _symbol_list_t
