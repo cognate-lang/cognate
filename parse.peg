@@ -12,25 +12,26 @@
 
 expression
 	<- l:statement ';' r:expression { $$ = join_ast(l, r); }
-	/  l:statement ';'? { $$ = l; }
+	/  l:statement { $$ = l; }
 
 statement
 	<- _? l:token _ r:statement { $$ = join_ast(r, l); }
-	/  _? { }
+	/  _ { $$ = NULL; }
 
 formal <- [!A-Z+*/^><=]/'\''/'-'/'?'
 informal <- formal/[a-z0-9]
 
 token
-	<- '(' e:expression ')'         { $$ = ast_single(braces,     (void*) e);                 }
-	/  <formal informal*>           { $$ = ast_single(identifier, (void*) lowercase($1));     }
-	/  '\\'<informal+>              { $$ = ast_single(literal,    (void*) mk_lit(symbol, $2)); }
-	/  <'"'('\\\\'/'\\"'/[^"])*'"'> { $$ = ast_single(literal,    (void*) mk_lit(string, $3)); }
-	/  <'-'?[0-9]+('.'[0-9]+)?>     { $$ = ast_single(literal,    (void*) mk_lit(number, $4)); }
-	/ 	[a-z] informal*
+	<- 'L'('e'/'E')('t'/'T') _ <formal informal*> { $$ = ast_single(let, (void*) lowercase($1)); }
+	/  'D'('e'/'E')('f'/'F') _ <formal informal*> { $$ = ast_single(def, (void*) lowercase($2)); }
+	/  '(' e:expression ')'         { $$ = ast_single(braces,     (void*) e);                 }
+	/  <formal informal*>           { $$ = ast_single(identifier, (void*) lowercase($3));     }
+	/  '\\'<informal+>              { $$ = ast_single(literal,    (void*) mk_lit(symbol, $4)); }
+	/  <'"'('\\\\'/'\\"'/[^"])*'"'> { $$ = ast_single(literal,    (void*) mk_lit(string, $5)); }
+	/  <'-'?[0-9]+('.'[0-9]+)?>     { $$ = ast_single(literal,    (void*) mk_lit(number, $6)); }
 
 comment
 	<- '~~'[^\n]*'\n'
 	/  '~'[^~]+'~'
 
-_ <- ([ \n\t\r]/comment)+/!./&[();]
+_ <- ([ \n\t\r]/comment/([a-z]informal*))+/!./&[();]

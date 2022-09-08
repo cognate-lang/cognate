@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-func_t unknown_func = (func_t)
+func_t* unknown_func = &(func_t)
 {
 	.argc=0,
 	.args=NULL,
@@ -24,7 +24,7 @@ func_t* word_func(word_t* w)
 {
 	return w->val->source && w->val->source->op->type == closure
 		? w->val->source->op->func
-		: &unknown_func;
+		: unknown_func;
 }
 
 val_list_t* reverse(val_list_t* v)
@@ -44,7 +44,7 @@ val_list_t* reverse(val_list_t* v)
 
 func_t* call_to_func(ast_t* c)
 {
-	if (c->type == call) return &unknown_func;
+	if (c->type == call) return unknown_func;
 	else return c->func;
 }
 
@@ -237,31 +237,6 @@ reg_dequeue_t* make_register_dequeue()
 	return r;
 }
 
-void _fold_defs(ast_list_t* tree)
-{
-	for (ast_list_t* ptr = tree ; ptr && ptr->next ; ptr = ptr->next)
-	{
-		if (ptr->op->type == braces) _fold_defs(ptr->op->child);
-		switch (ptr->op->type)
-		{
-			default: break;
-			case identifier:;
-				char* name = ptr->op->string;
-				type_t t;
-				if      (!strcmp("def", name)) t = def;
-				else if (!strcmp("let", name)) t = let;
-				else break;
-				if (ptr->prev->op->type != identifier) __builtin_trap(); // TODO
-				ptr->prev->op->type = t;
-				remove_op(ptr);
-		}
-	}
-}
-
-void fold_defs(module_t* m)
-{
-	_fold_defs(m->tree);
-}
 
 module_t* create_module(char* path)
 {
@@ -459,54 +434,6 @@ void resolve_scope(module_t* mod)
 {
 	_resolve_scope(mod->tree, builtins());
 }
-
-/*
-void _add_captures(func_t* func)
-{
-	if (func->has_captures) return;
-	func->has_captures = true;
-	// Annotate a list of func_t structures with captured variables
-	func->locals = NULL;
-	func->captures = NULL;
-	for (ast_list_t* node = func->ops ; node ; node = node->next)
-	{
-		switch(node->op->type)
-		{
-			case closure:
-				if (!node->op->func->has_captures) _add_captures(node->op->func);
-				for (word_list_t* c = node->op->func->captures ; c ; c = c->next)
-				{
-					for (word_list_t* w = func->captures ; w ; w = w->next)
-						if (w->word == c->word) goto next; // O(n^2)
-					for (word_list_t* w = func->locals ; w ; w = w->next)
-						if (w->word == c->word) goto next; // very O(n^2)
-					func->captures = push_word(c->word, func->captures);
-					next:;
-				}
-				break;
-			case call:
-			case var:
-				for (word_list_t* w = func->captures ; w ; w = w->next)
-					if (w->word == node->op->word) goto next2; // O(n^2)
-				for (word_list_t* w = func->locals ; w ; w = w->next)
-					if (w->word == node->op->word) goto next2; // very O(n^2)
-				func->captures = push_word(node->op->word, func->captures);
-				break;
-			case bind:
-			case define:
-				func->locals = push_word(node->op->word, func->locals);
-				break;
-			default: next2:;
-		}
-	}
-}
-
-void add_captures(module_t* mod)
-{
-	for (func_list_t* f = mod->funcs ; f ; f = f->next)
-		_add_captures(f->func);
-}
-*/
 
 func_t* _flatten_ast(ast_list_t* tree, func_list_t** rest)
 {
@@ -1343,115 +1270,6 @@ void add_registers(module_t* mod)
 		_add_registers(f->func);
 }
 
-
-/*
-void add_registers(module_t* mod)
-{
-	for (func_list_t* func = mod->funcs ; func ; func = func->next)
-	{
-		size_t registers = 0;
-		for (ast_list_t* op = func->func->ops ; op ; op = op->next)
-		{
-			switch (op->op->type)
-			{
-				case pick:
-				case unpick:
-					break;
-				case literal:
-				case var:
-				case closure:
-				case load:
-					registers++;
-					break;
-				case branch:
-					for (char i = 0; i < 3; ++i)
-					{
-						if (registers) registers--;
-						else
-						{
-							insert_op_before(make_op(pop, NULL), op);
-							insert_op_before(make_op(unpick, NULL), op);
-						}
-					}
-					registers++;
-					break;
-				case fn_branch:
-					{
-						if (registers) registers--;
-						else
-							insert_op_before(make_op(pop, NULL), op);
-
-						func_t* v = virtual_choose_func(op->op->funcs);
-						assert(!(v->stack && v->argc));
-						for (size_t i = 0 ; i < v->argc ; ++i)
-						{
-							if (registers) registers--;
-							else
-							{
-								insert_op_before(make_op(pop, NULL), op);
-								insert_op_before(make_op(unpick, NULL), op);
-							}
-						}
-						if (v->stack && registers)
-						{
-							for (size_t i = 0 ; i < registers ; ++i)
-							{
-								insert_op_before(make_op(pick, NULL), op);
-								insert_op_before(make_op(push, NULL), op);
-							}
-							registers = 0;
-						}
-						if (v->stack) assert(!registers);
-						if (v->returns) registers++;
-						break;
-					}
-				case call:
-				case static_call:
-					{
-						func_t* fn = call_to_func(op->op);
-						for (size_t i = 0 ; i < fn->argc ; ++i)
-						{
-							if (registers) registers--;
-							else
-							{
-								insert_op_before(make_op(pop, NULL), op);
-								insert_op_before(make_op(unpick, NULL), op);
-							}
-						}
-						if (fn->stack && registers)
-						{
-							for (size_t i = 0 ; i < registers ; ++i)
-							{
-								insert_op_before(make_op(pick, NULL), op);
-								insert_op_before(make_op(push, NULL), op);
-							}
-							registers = 0;
-						}
-						if (fn->stack) assert(!registers);
-						if (fn->returns) registers++;
-						break;
-					}
-				case bind:
-				case ret:
-					if (registers) registers--;
-					else insert_op_before(make_op(pop, NULL), op);
-					break;
-				case none: case define: break;
-				default: __builtin_trap();
-			}
-			if (!op->next)
-			{
-				for (size_t i = 0 ; i < registers ; ++i)
-				{
-					insert_op_before(make_op(pick, NULL), op);
-					insert_op_before(make_op(push, NULL), op);
-				}
-			}
-		}
-	}
-}
-*/
-
 bool add_var_types_forwards(module_t* mod)
 {
 	bool changed = 0;
@@ -1889,21 +1707,6 @@ void print_funcs (module_t* mod)
 	}
 }
 
-/* wait i don't think i need this lol
-word_list_t* clone_words(word_list_t* words, word_list_t* locals_from, word_list_t* locals_to)
-{
-	if (!words) return NULL;
-	size_t i = 0;
-	for (word_list_t* W = locals_from ; W ; W = W->next, i++)
-		if (W->word) goto found;
-	return push_word(words->word, clone_words(words->next, locals_from, locals_to));
-found:;
-	word_list_t* w = locals_to;
-	for (; i ; w = w->next, i--);
-	return push_word(w->word, clone_words(words->next, locals_from, locals_to));
-}
-*/
-
 void* assoc_push(void* from, void* to, ptr_assoc_t* assoc)
 {
 	ptr_assoc_t* new = malloc(sizeof *new);
@@ -2060,7 +1863,7 @@ void _inline_functions(ast_list_t* a, func_list_t** funcs)
 				case call:
 					{
 						func_t* fn = word_func(node->op->word);
-						if (fn != &unknown_func)
+						if (fn != unknown_func)
 						{
 							if (!fn->ops) break;
 							size_t n = 0;
@@ -2303,145 +2106,6 @@ void compute_variables(module_t* m)
 	}
 }
 
-/*
-word_list_t* _compute_variables(func_t* f)
-{
-	if (f->has_captures) return f->captures;
-	f->has_captures = true;
-	assert(!f->captures);
-	bool changed = 1;
-	while (changed)
-	{
-		f->locals = NULL;
-		f->captures = NULL;
-		changed = false;
-		for (ast_list_t* node = f->ops ; node ; node = node->next)
-			if (node->op->type == define) node->op->word->used = false;
-		for (ast_list_t* node = f->ops ; node ; node = node->next)
-		{
-			switch (node->op->type)
-			{
-				case define:
-					for (word_list_t* w = f->locals ; w ; w = w->next)
-						if (w->word == node->op->word) goto end; // very O(n^2)
-					f->locals = push_word(node->op->word, f->locals);
-					break;
-				case call:
-				case var:
-					{
-						func_t* fn = word_func(node->op->word);
-						if (fn == &unknown_func || node->op->type == var)
-						{
-							node->op->word->used = true;
-							for (word_list_t* w = f->captures ; w ; w = w->next)
-								if (w->word == node->op->word) goto end;
-							for (word_list_t* w = f->locals ; w ; w = w->next)
-								if (w->word == node->op->word) goto end;
-							f->captures = push_word(node->op->word, f->captures);
-						}
-						else
-						{
-							for (func_list_t* calls = fn->calls ; calls ; calls = calls->next)
-							{
-								for (word_list_t* e = calls->func->captures ; e ; e = e->next)
-								{
-									e->word->used = true;
-									for (word_list_t* w = f->captures ; w ; w = w->next)
-										if (w->word == e->word) goto end; // O(n^2)
-									for (word_list_t* w = f->locals ; w ; w = w->next)
-										if (w->word == e->word) goto end; // very O(n^2)
-									f->captures = push_word(e->word, f->captures);
-								}
-							}
-						}
-						break;
-					}
-				case closure:
-					{
-						word_list_t* extra = _compute_variables(node->op->func);
-						for (word_list_t* e = extra ; e ; e = e->next)
-						{
-							e->word->used = true;
-							for (word_list_t* w = f->captures ; w ; w = w->next)
-								if (w->word == e->word) goto end; // O(n^2)
-							for (word_list_t* w = f->locals ; w ; w = w->next)
-								if (w->word == e->word) goto end; // very O(n^2)
-							f->captures = push_word(e->word, f->captures);
-						}
-						break;
-					}
-				end: break;
-				default: break;
-			}
-		}
-		reg_dequeue_t* registers = make_register_dequeue();
-		for (ast_list_t* node = f->ops ; node ; node = node->next)
-		{
-			switch (node->op->type)
-			{
-				case branch:
-					pop_register_front(registers);
-					pop_register_front(registers);
-					pop_register_front(registers);
-					push_register_front(make_register(any, NULL), registers);
-					break;
-				case var:
-				case literal:
-				case builtin_var:
-				case closure:
-					push_register_front(make_register(any, node), registers);
-					break;
-				case pop:
-				case load:
-					push_register_front(make_register(any, NULL), registers);
-					break;
-				case push:
-				case ret:
-					pop_register_front(registers);
-					break;
-				case call:
-				case builtin_call:
-					{
-						func_t* fn = word_func(node->op->word);
-						if (fn->stack)
-							for (size_t i = registers->len; i > fn->argc ; --i)
-								pop_register_front(registers);
-						else for (size_t i = 0 ; i < fn->argc && registers->len ; ++i)
-							pop_register_front(registers);
-						if (fn->returns)
-							push_register_front(make_register(fn->rettype, NULL), registers);
-						break;
-					}
-				case define:
-					if (!node->op->word->used)
-					{
-						remove_op(node);
-						changed = true;
-					}
-					break;
-				case bind:
-					{
-						reg_t* r = pop_register_front(registers);
-						if (!node->op->word->used)
-						{
-							if (r->source)
-							{
-								remove_op(node);
-								remove_op(r->source);
-							} else node->op->type = drop;
-							changed = true;
-						}
-						break;
-					}
-				default: break;
-			}
-		}
-	}
-	if (f->generic_variant) f->generic_variant->captures = f->captures;
-	return f->captures;
-}
-*/
-
 void mark_used_funcs(func_t* f)
 {
 	if (f->used) return;
@@ -2476,24 +2140,6 @@ void remove_unused_funcs(module_t* m)
 		else prevnext = &f->next;
 	}
 }
-
-/*
-void add_function_ops(module_t* m)
-{
-	print_funcs(m->funcs);
-	for (func_t* f = m->funcs ; f ; f = f->next)
-	{
-		for (ast_t* n = f->ops ; n ; n = n->next)
-		{
-			if (n->type == builtin_call || n->type == call)
-			{
-				if (n->word->op) puts("wow");
-				//n->type = n->word->op;
-			}
-		}
-	}
-}
-*/
 
 void _add_backlinks(ast_list_t** t)
 {
@@ -2542,7 +2188,7 @@ void static_calls(module_t* m)
 			if (a->op->type == call)
 			{
 				func_t* called = word_func(a->op->word);
-				if (called == &unknown_func) continue;
+				if (called == unknown_func) continue;
 				a->op->type = static_call;
 				a->op->func = called;
 			}
@@ -2802,7 +2448,6 @@ int main(int argc, char** argv)
 	= {
 		module_parse,
 		add_backlinks,
-		fold_defs,
 		catch_shadows,
 		predeclare,
 		resolve_scope,
@@ -2823,7 +2468,6 @@ int main(int argc, char** argv)
 		compute_variables,
 		remove_unused_funcs,
 		resolve_early_use,
-		print_funcs,
 		add_var_types,
 		add_typechecks,
 		to_c,
