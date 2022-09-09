@@ -293,21 +293,24 @@ void shorten_references(module_t* mod)
 		{
 			switch (a->op->type)
 			{
+				default: __builtin_trap();
 				case none:
 				case define:
 					break;
-				default: __builtin_trap();
 				case pick:
 					push_register_front(pop_register_rear(regs), regs);
 					break;
 				case unpick:
 					push_register_rear(pop_register_front(regs), regs);
 					break;
+				case to_any:
+				case from_any:
+					pop_register_front(regs);
+					push_register_front(make_register(any, a), regs);
+					break;
 				case literal:
 				case closure:
 				case pop:
-				case to_any:
-				case from_any:
 				case load:
 				case var:
 					push_register_front(make_register(any, a), regs);
@@ -440,6 +443,7 @@ func_t* _flatten_ast(ast_list_t* tree, func_list_t** rest)
 	// Build a list of functions in the `rest` parameter
 	// return the entry function for the AST node
 	func_t* func = make_func(tree, make_func_name());
+	func->stack = true;
 	static bool entry = 1;
 	func->entry = entry;
 	entry = 0;
@@ -778,6 +782,7 @@ void to_c(module_t* mod)
 						fprintf(c_source, "\t%s %s%s;\n",
 							c_val_type(op->op->word->val->type),
 							c_word_name(op->op->word), op->op->word->used_early ? " = box_SYMBOL(\"undefined\")" : "");
+					// TODO TODO TODO we should throw an error instead of just the symbol undefined
 					break;
 				case push:
 					fprintf(c_source, "\tpush(_%zu);\n", pop_register_front(registers)->id);
@@ -988,78 +993,41 @@ void add_generics(module_t* mod)
 	}
 }
 
-bool _add_arguments(func_t* f)
+bool _determine_arguments(func_t* f)
 {
 	if (f->has_args) return 0;
+	size_t argc = 0;
+	bool returns = false;
 	f->has_args = true;
-	bool changed = 0;
 	size_t registers = 0;
-	bool can_use_args = 1;
+	bool changed = false;
+	bool can_use_args = true;
 	for (ast_list_t* n = f->ops ; n ; n = n->next)
 	{
 		ast_t* op = n->op;
 		switch(op->type)
 		{
-			case ret:
-				/*
-				 * TODO TODO TODO
-				 * This almost seems to work for some reason
-				 * Never remove arguments but allow removing the returns
-				 * each pass?!?!?!?
-				 * What is this madness?
-				 *
-				 * Well I found the madness
-				 */
-				remove_op(n);
-				f->returns = false;
-				break;
 			case closure:
-				changed |= _add_arguments(op->func);
-				registers++;
-				break;
-			case load:
 			case literal:
 			case var:
+			case load:
 				registers++;
 				break;
 			case fn_branch:
 				{
 					if (registers) registers--;
-					else
-					{
-						f->args = push_val(make_value(any, n), f->args);
-						insert_op_before(make_op(load, f->args->val), n);
-						insert_op_before(make_op(unpick, f->args->val), n);
-						f->argc++;
-						changed = true;
-					}
-
-					/*
+					else argc++;
 					for (func_list_t* f = op->funcs ; f ; f = f->next)
-						changed |= _add_arguments(f->func);
-						*/
-
+						changed |= _determine_arguments(f->func);
 					func_t* v = op->funcs->func;
-
-					if (v->stack)
-					{
-						for (size_t i = registers; i > (size_t)v->argc ; --i)
-							registers--;
-					}
-
+					if (v->stack && registers > v->argc)
+						registers = v->argc;
 					for (size_t i = 0 ; i < v->argc ; ++i)
 					{
 						if (registers) registers--;
 						else if (can_use_args && f->argc < 255 && !f->entry)
-						{
-							f->args = push_val(make_value(any, n), f->args);
-							insert_op_before(make_op(load, f->args->val), n);
-							insert_op_before(make_op(unpick, f->args->val), n);
-							f->argc++;
-							changed = true;
-						}
+							argc++;
 					}
-
 					if (v->stack) can_use_args = false;
 					if (v->returns) registers++;
 					break;
@@ -1069,13 +1037,7 @@ bool _add_arguments(func_t* f)
 				{
 					if (registers) registers--;
 					else if (can_use_args && f->argc < 255 && !f->entry)
-					{
-						f->args = push_val(make_value(any, n), f->args);
-						insert_op_before(make_op(load, f->args->val), n);
-						insert_op_before(make_op(unpick, f->args->val), n);
-						f->argc++;
-						changed = true;
-					}
+						argc++;
 				}
 				registers++;
 				break;
@@ -1083,22 +1045,14 @@ bool _add_arguments(func_t* f)
 			case call:
 				{
 					func_t* fn = call_to_func(op);
-					if (fn->stack)
-					{
-						for (size_t i = registers; i > (size_t)fn->argc ; --i)
-							registers--;
-					}
+					if (fn != unknown_func) changed |= _determine_arguments(fn);
+					if (fn->stack && registers > fn->argc)
+						registers = fn->argc;
 					for (size_t i = 0 ; i < fn->argc ; ++i)
 					{
 						if (registers) registers--;
 						else if (can_use_args && f->argc < 255 && !f->entry)
-						{
-							f->args = push_val(make_value(any, n), f->args);
-							insert_op_before(make_op(load, f->args->val), n);
-							insert_op_before(make_op(unpick, f->args->val), n);
-							f->argc++;
-							changed = true;
-						}
+							argc++;
 					}
 					if (fn->stack) can_use_args = false;
 					if (fn->returns) registers++;
@@ -1107,41 +1061,160 @@ bool _add_arguments(func_t* f)
 			case bind:
 				if (registers) registers--;
 				else if (can_use_args && f->argc < 255 && !f->entry)
-				{
-					f->args = push_val(make_value(any, n), f->args);
-					insert_op_before(make_op(load, f->args->val), n);
-					insert_op_before(make_op(unpick, f->args->val), n);
-					f->argc++;
-					changed = true;
-				}
+					argc++;
 				break;
 			case define: case none: case pick: case unpick: break;
 			default: __builtin_trap();
 		}
 		if (!n->next && registers && !f->entry)
-		{
-			insert_op_before(make_op(ret, NULL), n);
-			f->returns = true;
-			f->rettype = any;
-			//changed = true;
-		}
+			returns = true;
+	}
+	changed |= argc != f->argc || returns != f->returns;
+	f->argc = argc;
+	f->returns = returns;
+	return changed;
+}
+
+void _add_arguments(func_t* f)
+{
+	for (size_t i = 0 ; i < f->argc ; ++i)
+	{
+		insert_op_after(make_op(unpick, NULL), f->ops);
+		insert_op_after(make_op(load, NULL), f->ops);
+		f->args = push_val(make_value(any, f->ops), f->args);
+	}
+	if (f->returns)
+	{
+		ast_list_t* end = f->ops;
+		while (end->next) end = end->next;
+		insert_op_before(make_op(ret, NULL), end);
+		f->rettype = any;
 	}
 	f->args = reverse(f->args);
-	return changed;
+}
+
+void determine_arguments(module_t* mod)
+{
+	bool changed = 1;
+	while (changed)
+	{
+		changed = false;
+		for (func_list_t* f = mod->funcs ; f ; f = f->next)
+			f->func->has_args = false;
+		for (func_list_t* f = mod->funcs ; f ; f = f->next)
+			changed |= _determine_arguments(f->func);
+	}
 }
 
 void add_arguments(module_t* mod)
 {
-	bool changed = true;
+	for (func_list_t* f = mod->funcs ; f ; f = f->next)
+		_add_arguments(f->func);
+}
+
+bool _determine_registers(func_t* f)
+{
+	if (f->has_regs) return false;
+	f->has_regs = true;
+	bool changed = false;
+	bool old_stack = f->stack;
+	size_t registers = 0;
+	for (ast_list_t* n = f->ops ; n ; n = n->next)
+	{
+		ast_t* op = n->op;
+		switch(op->type)
+		{
+			case closure:
+			case literal:
+			case var:
+			case load:
+			case pop:
+				registers++;
+				break;
+			case fn_branch:
+				{
+					if (registers) registers--;
+					else f->stack = true;
+					func_t* v = op->funcs->func;
+					for (func_list_t* f = op->funcs ; f ; f = f->next)
+				   	changed |= _determine_registers(f->func);
+
+					for (func_list_t* f = op->funcs ; f ; f = f->next)
+						if (f->func->stack)
+							for (func_list_t* f = op->funcs ; f ; f = f->next)
+								f->func->stack = true;
+					if (v->stack)
+					{
+						f->stack = true;
+						for (size_t i = registers; i > (size_t)v->argc ; --i)
+							registers--;
+					}
+					for (size_t i = 0 ; i < v->argc ; ++i)
+					{
+						if (registers) registers--;
+						else f->stack = true;
+					}
+					if (v->stack) assert(!registers);
+					if (v->returns) registers++;
+					break;
+				}
+			case branch:
+				for (char i = 0; i < 3; ++i)
+				{
+					if (registers) registers--;
+					else f->stack = true;
+				}
+				registers++;
+				break;
+			case call:
+			case static_call:
+				{
+					func_t* fn = call_to_func(op);
+					if (fn != unknown_func)
+						changed |= _determine_registers(fn);
+					if (fn->stack)
+					{
+						f->stack = true;
+						for (size_t i = registers; i > (size_t)fn->argc ; --i)
+							registers--;
+					}
+					for (size_t i = 0 ; i < fn->argc ; ++i)
+					{
+						if (registers) registers--;
+						else f->stack = true;
+					}
+					if (fn->returns) registers++;
+					break;
+				}
+			case bind:
+			case ret:
+			case push:
+				if (registers) registers--;
+				else f->stack = true;
+				break;
+			case define: case none: case pick: case unpick: break;
+			default: __builtin_trap();
+		}
+		if (!n->next && registers)
+			f->stack = true;
+	}
+	return changed || f->stack != old_stack;
+}
+
+void determine_registers(module_t* mod)
+{
+	// Honestly? idk if this pass is needed.
+	bool changed = 1;
 	while (changed)
 	{
-		for (func_list_t* f = mod->funcs ; f ; f = f->next)
-			f->func->has_args = false;
 		changed = false;
 		for (func_list_t* f = mod->funcs ; f ; f = f->next)
-			changed |= _add_arguments(f->func);
+			f->func->has_regs = false;
+		for (func_list_t* f = mod->funcs ; f ; f = f->next)
+			changed |= _determine_registers(f->func);
 	}
 }
+
 
 void _add_registers(func_t* f)
 {
@@ -1154,7 +1227,6 @@ void _add_registers(func_t* f)
 		switch(op->type)
 		{
 			case closure:
-				_add_registers(op->func);
 				registers++;
 				break;
 			case literal:
@@ -1173,10 +1245,16 @@ void _add_registers(func_t* f)
 						f->stack = true;
 					}
 
+					func_t* v = op->funcs->func;
+
 					for (func_list_t* f = op->funcs ; f ; f = f->next)
 				   	_add_registers(f->func);
 
-					func_t* v = op->funcs->func;
+					for (func_list_t* f = op->funcs ; f ; f = f->next)
+						if (f->func->stack)
+							for (func_list_t* f = op->funcs ; f ; f = f->next)
+								f->func->stack = true;
+
 
 					if (v->stack)
 					{
@@ -1274,6 +1352,8 @@ void _add_registers(func_t* f)
 
 void add_registers(module_t* mod)
 {
+	for (func_list_t* f = mod->funcs ; f ; f = f->next)
+		f->func->has_regs = false;
 	for (func_list_t* f = mod->funcs ; f ; f = f->next)
 		_add_registers(f->func);
 }
@@ -1813,13 +1893,18 @@ bool does_call(word_t* target, ast_list_t* start)
 
 void _compute_sources(ast_list_t* a)
 {
+	/*
+	 * TODO
+	 * We need a souped-up version of this functions
+	 * shorten_references() is just better, but needs more context
+	 * at this point we have to assume all functions use the stack
+	 */
 	reg_dequeue_t* regs = make_register_dequeue();
 	for (ast_list_t* node = a ; node ; node = node->next)
 	{
 		switch (node->op->type)
 		{
-			case closure:
-				_compute_sources(node->op->func->ops);
+			case closure: _compute_sources(node->op->func->ops);
 			case literal:
 			case var:
 				{
@@ -1838,13 +1923,24 @@ void _compute_sources(ast_list_t* a)
 			case call:
 				{
 					func_t* fn = word_func(node->op->word);
-					if (fn->stack) clear_registers(regs);
-					else for (size_t i = 0 ; i < fn->argc ; ++i)
+					for (size_t i = 0 ; i < fn->argc ; ++i)
 						pop_register_front(regs);
+					if (fn->stack) clear_registers(regs);
 					if (fn->returns)
 						push_register_front(make_register(any, node), regs);
 				}
-			default: break;
+				break;
+			case branch:
+				for (int i = 0 ; i < 3 ; ++i) pop_register_front(regs);
+				push_register_front(make_register(any, node), regs);
+				break;
+			case fn_branch:
+				clear_registers(regs);
+				break;
+			case none:
+			case define:
+				break;
+			default: __builtin_trap();
 		}
 	}
 }
@@ -1918,12 +2014,6 @@ bool _compute_stack(func_t* f)
 				break;
 			case fn_branch:
 				{
-					func_t* called = a->op->funcs->func;
-					if (called->stack)
-					{
-						f->stack = true;
-						return true;
-					}
 					for (func_list_t* F = a->op->funcs ; F ; F = F->next)
 						if (_compute_stack(F->func))
 						{
@@ -2109,10 +2199,8 @@ void compute_variables(module_t* m)
 					&f->func->calls);
 		mark_all_unused(m);
 		mark_used_vars(m);
-		/*
 		for (func_list_t* f = m->funcs ; f ; f = f->next)
 			changed |= remove_unused_vars(f->func);
-			*/
 	}
 }
 
@@ -2463,15 +2551,18 @@ int main(int argc, char** argv)
 		resolve_scope,
 		flatten_ast,
 		merge_symbols,
-		//inline_functions,
 		compute_sources,
+		inline_functions,
 		static_branches,
 		compute_sources,
 		static_calls,
+		compute_stack,
+		determine_arguments,
 		add_arguments,
 		add_generics,
 		balance_branches,
 		compute_stack,
+		determine_registers,
 		add_registers,
 		compute_stack,
 		shorten_references,
