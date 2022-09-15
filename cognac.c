@@ -574,8 +574,8 @@ void c_emit_funcall(func_t* fn, FILE* c_source, reg_dequeue_t* registers)
 	else fprintf(c_source, "NULL");
 	for (size_t i = 0 ; i < fn->argc ; ++i)
 	{
-		char sep = i + 1 == fn->argc ? ')' : ',';
-		fprintf(c_source, "_%zu%c", pop_register_front(registers)->id, sep);
+		char* sep = i + 1 == fn->argc ? ")" : ", ";
+		fprintf(c_source, "_%zu%s", pop_register_front(registers)->id, sep);
 	}
 	if (fn->argc == 0) fprintf(c_source, ")");
 
@@ -845,19 +845,7 @@ void to_c(module_t* mod)
 									ret->id);
 						}
 						else fprintf(c_source, "\t");
-						fprintf(c_source, "%s(",
-								sanitize(fn->name));
-						for (word_list_t* w = fn->captures ; w ; w = w->next)
-						{
-							fprintf(c_source, "%s", c_word_name(w->word));
-							if (w->next || fn->argc) fprintf(c_source, ",");
-						}
-						for (size_t i = 0 ; i < fn->argc ; ++i)
-						{
-							char sep = i + 1 == fn->argc ? ')' : ',';
-							fprintf(c_source, "_%zu%c", pop_register_front(registers)->id, sep);
-						}
-						if (fn->argc == 0) fprintf(c_source, ")");
+						c_emit_funcall(fn, c_source, registers);
 						fprintf(c_source, ";\n");
 						if (fn->returns) push_register_front(ret, registers);
 						break;
@@ -2570,6 +2558,7 @@ int main(int argc, char** argv)
 		resolve_early_use,
 		add_var_types,
 		add_typechecks,
+		// TODO renaming pass to renumber registers and shadow_ids
 		to_c,
 		to_exe
 	};
@@ -2626,6 +2615,7 @@ word_list_t* builtins()
 		fn->locals = NULL;
 		fn->ops = NULL;
 		fn->generic_variant = NULL;
+		fn->generic = false;
 		fn->captures = NULL;
 		fn->calls = NULL;
 		fn->has_captures = true;
