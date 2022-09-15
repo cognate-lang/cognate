@@ -79,7 +79,7 @@ word_t* make_word(char* name, type_t calltype, val_t* v)
 	w->used = false;
 	w->name = name;
 	w->shadow_id = shadow_id++;
-	w->used_early = true; // assume early use
+	w->used_early = false; // assume early use for now
 	w->calltype = calltype;
 	w->val = v;
 	return w;
@@ -602,7 +602,10 @@ void to_c(module_t* mod)
 				func->func->name);
 		if (!func->func->generic) for (word_list_t* w = func->func->captures ; w ; w = w->next)
 		{
-			fprintf(c_source, "%s", c_val_type(w->word->val->type));
+			if (w->word->used_early)
+				fprintf(c_source, "early_%s*", c_val_type(w->word->val->type));
+			else
+				fprintf(c_source, "%s", c_val_type(w->word->val->type));
 			if (w->next || func->func->argc) fprintf(c_source, ", ");
 		}
 		else
@@ -620,52 +623,25 @@ void to_c(module_t* mod)
 			fprintf(c_source, "void");
 		fprintf(c_source, ");\n");
 
-		if (func->func->generic_variant && func->func->generic_variant->used) fprintf(c_source, "BLOCK clone_%s(BLOCK);\n", func->func->name);
 	}
 	fputc('\n', c_source);
 	for (func_list_t* func = mod->funcs ; func ; func = func->next)
 	{
 		size_t num_words = 0;
-		if (func->func->generic_variant && func->func->generic_variant->used && !func->func->generic)
-		{
-			for (word_list_t* w = func->func->captures ; w ; w = w->next) num_words++;
-			fprintf(c_source, "BLOCK clone_%s(BLOCK b)\n{\n", func->func->name);
-			fprintf(c_source, "\tif (b->heap_clone) return b->heap_clone;\n");
-			fprintf(c_source, "\tBLOCK B = gc_malloc(%zu * WORDSZ);\n", num_words + 3);
-			fprintf(c_source, "\tb->heap_clone = B;\n");
-			fprintf(c_source, "\tB->heap_clone = B;\n");
-			fprintf(c_source, "\tB->fn = &%s;\n\tB->clone = &clone_%s;\n",
-					func->func->generic_variant->name, func->func->name);
-			size_t i = 0;
-			for (word_list_t* w = func->func->captures ; w ; w = w->next, i++)
-			{
-				char cast[128] = "";
-				if (w->word->used_early) sprintf(cast, "*(%s*)", c_val_type(w->word->val->type));
-				else sprintf(cast, "*(%s*)&", c_val_type(w->word->val->type));
-				if (w->word->used_early) fprintf(c_source, "\tB->env[%zu] = gc_malloc(WORDSZ);\n", i);
-				if (w->word->val->type == block)
-				{
-					fprintf(c_source, "\t%sB->env[%zu] = (%sb->env[%zu])->clone(%sb->env[%zu]);\n",
-						cast, i, cast, i, cast, i);
-				}
-				else
-				{
-					fprintf(c_source, "\t%sB->env[%zu] = %sb->env[%zu];\n",
-						cast, i, cast, i);
-				}
-			}
-			fprintf(c_source, "\treturn B;\n}\n");
-		}
-
 		fprintf(c_source, "%s %s(",
-				func->func->returns ? c_val_type(func->func->rettype) : "void",
-				func->func->name);
+		func->func->returns ? c_val_type(func->func->rettype) : "void",
+		func->func->name);
 		if (!func->func->generic)
 			for (word_list_t* w = func->func->captures ; w ; w = w->next)
 			{
-				fprintf(c_source, "%s %s",
-						c_val_type(w->word->val->type),
-						c_word_name(w->word));
+				if (w->word->used_early)
+					fprintf(c_source, "early_%s* %s",
+							c_val_type(w->word->val->type),
+							c_word_name(w->word));
+				else
+					fprintf(c_source, "%s %s",
+							c_val_type(w->word->val->type),
+							c_word_name(w->word));
 				if (w->next || func->func->argc) fprintf(c_source, ", ");
 			}
 		else
@@ -688,13 +664,17 @@ void to_c(module_t* mod)
 		if (func->func->generic)
 			for (word_list_t* w = func->func->captures ; w ; w = w->next, i++)
 			{
-				char cast[128] = "";
-				if (w->word->used_early) sprintf(cast, "*(%s*)", c_val_type(w->word->val->type));
-				else sprintf(cast, "*(%s*)&", c_val_type(w->word->val->type));
-				fprintf(c_source, "\t%s %s = %senv[%zu];\n",
-					c_val_type(w->word->val->type),
-					c_word_name(w->word),
-					cast, i);
+				if (w->word->used_early)
+					fprintf(c_source, "\tearly_%s* %s = env[%zu];\n",
+						c_val_type(w->word->val->type),
+						c_word_name(w->word),
+						i);
+				else
+					fprintf(c_source, "\t%s %s = *(%s*)&env[%zu];\n",
+						c_val_type(w->word->val->type),
+						c_word_name(w->word),
+						c_val_type(w->word->val->type),
+						i);
 			}
 		reg_dequeue_t* registers = make_register_dequeue();
 		reg_t* res = NULL;
@@ -775,14 +755,17 @@ void to_c(module_t* mod)
 					break;
 				case none: break;
 				case define: // TODO default value
-					if (op->op->word->calltype == call)
-						fprintf(c_source, "\tBLOCK %s%s;\n",
-							c_word_name(op->op->word), op->op->word->used_early ? " = undefined_function" : "");
-					else
-						fprintf(c_source, "\t%s %s%s;\n",
+					if (op->op->word->used_early)
+					{
+						fprintf(c_source, "\tearly_%s* %s = gc_malloc(sizeof(early_%s));\n",
 							c_val_type(op->op->word->val->type),
-							c_word_name(op->op->word), op->op->word->used_early ? " = box_SYMBOL(\"undefined\")" : "");
-					// TODO TODO TODO we should throw an error instead of just the symbol undefined
+							c_word_name(op->op->word),
+							c_val_type(op->op->word->val->type));
+					}
+					else
+						fprintf(c_source, "\t%s %s;\n",
+							c_val_type(op->op->word->val->type),
+							c_word_name(op->op->word));
 					break;
 				case push:
 					fprintf(c_source, "\tpush(_%zu);\n", pop_register_front(registers)->id);
@@ -826,16 +809,29 @@ void to_c(module_t* mod)
 					{
 						reg_t* reg = make_register(op->op->word->val->type, NULL);
 						push_register_front(reg, registers);
-						fprintf(c_source, "\t%s _%zu = %s;\n",
-							c_val_type(op->op->word->val->type),
-							reg->id,
-							c_word_name(op->op->word));
+						if (op->op->word->used_early)
+							fprintf(c_source, "\tCHK(%s);\n\t%s _%zu = %s->value;\n",
+								c_word_name(op->op->word),
+								c_val_type(op->op->word->val->type),
+								reg->id,
+								c_word_name(op->op->word));
+						else
+							fprintf(c_source, "\t%s _%zu = %s;\n",
+								c_val_type(op->op->word->val->type),
+								reg->id,
+								c_word_name(op->op->word));
 						break;
 					}
 				case bind:
-					fprintf(c_source, "\t%s = _%zu;\n",
-						c_word_name(op->op->word),
-						pop_register_front(registers)->id);
+					if (op->op->word->used_early)
+						fprintf(c_source, "\t%s->defined = 1;\n\t%s->value = _%zu;\n",
+							c_word_name(op->op->word),
+							c_word_name(op->op->word),
+							pop_register_front(registers)->id);
+					else
+						fprintf(c_source, "\t%s = _%zu;\n",
+							c_word_name(op->op->word),
+							pop_register_front(registers)->id);
 					break;
 				case static_call:
 					{
@@ -867,9 +863,16 @@ void to_c(module_t* mod)
 						break;
 					}
 				case call:
-					fprintf(c_source, "\t%s->fn(%s->env);\n",
-						c_word_name(op->op->word),
-						c_word_name(op->op->word));
+					// TODO remove call and use var and a do op
+					if (op->op->word->used_early)
+						fprintf(c_source, "\tCHK(%s);\n\t%s->value->fn(%s->value->env);\n",
+							c_word_name(op->op->word),
+							c_word_name(op->op->word),
+							c_word_name(op->op->word));
+					else
+						fprintf(c_source, "\t%s->fn(%s->env);\n",
+							c_word_name(op->op->word),
+							c_word_name(op->op->word));
 					break;
 				case closure:
 					{
@@ -877,19 +880,15 @@ void to_c(module_t* mod)
 						for (word_list_t* w = op->op->func->captures ; w ; w = w->next) num_words++;
 						reg_t* reg = make_register(block, NULL);
 						push_register_front(reg, registers);
-						fprintf(c_source, "\tBLOCK _%zu = alloca(%zu * WORDSZ);\n",
+						fprintf(c_source, "\tBLOCK _%zu = gc_malloc(%zu * WORDSZ);\n",
 							reg->id,
 							num_words + 3);
 						fprintf(c_source, "\t_%zu->fn = %s;\n", reg->id, op->op->func->generic_variant->name);
-						fprintf(c_source, "\t_%zu->clone = &clone_%s;\n", reg->id, op->op->func->name);
-						fprintf(c_source, "\t_%zu->heap_clone = NULL;\n", reg->id);
 						size_t i = 0;
 						for (word_list_t* w = op->op->func->captures ; w ; w = w->next, i++)
 						{
-							char* cast = w->word->used_early ? "(void*)&" : "*(void**)&";
-							fprintf(c_source, "\t_%zu->env[%zu] = %s%s;\n",
+							fprintf(c_source, "\t_%zu->env[%zu] = *(void**)&%s;\n",
 								reg->id, i,
-								cast,
 								c_word_name(w->word));
 						}
 						break;
@@ -920,11 +919,7 @@ void to_c(module_t* mod)
 				}
 		}
 		if (res)
-		{
-			if (res->type == block)
-				fprintf(c_source, "\treturn _%zu->clone(_%zu);\n", res->id, res->id);
-			else fprintf(c_source, "\treturn _%zu;\n", res->id);
-		}
+			fprintf(c_source, "\treturn _%zu;\n", res->id);
 		fprintf(c_source, "}\n");
 		if (func->next) fputc('\n', c_source);
 	}
@@ -1459,9 +1454,7 @@ bool add_var_types_forwards(module_t* mod)
 				case bind:
 					{
 						val_type_t t = pop_register_front(registers)->type;
-						if (!op->op->word->used_early
-								&& t != any
-								&& op->op->word->val->type != t) // Early use needs to be bound to undefined symbol
+						if (t != any && op->op->word->val->type != t) // Early use needs to be bound to undefined symbol
 						{
 							if (op->op->word->val->type != any) __builtin_trap(); // type error
 							op->op->word->val->type = t;
@@ -1512,7 +1505,6 @@ bool add_var_types_backwards(module_t* mod)
 					{
 						val_type_t t = pop_register_front(registers)->type;
 						if (t != any
-								&& !op->op->word->used_early
 								&& op->op->word->val->type != t)
 						{
 							if (op->op->word->val->type != any) __builtin_trap(); // type error

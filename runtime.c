@@ -35,6 +35,8 @@
 #define INITIAL_READ_SIZE 64
 #define STACK_MARGIN_KB		50
 
+#define CHK(thing) if (!thing->defined) throw_error("undefined thing")
+
 typedef unsigned long ANY;
 typedef ANY* restrict ANYPTR;
 typedef ANY* restrict BOX;
@@ -45,6 +47,16 @@ typedef const char* restrict STRING;
 typedef const struct cognate_list* restrict LIST;
 typedef const char* restrict SYMBOL;
 typedef struct cognate_record* restrict RECORD;
+
+typedef struct _early_ANY { ANY value ; _Bool defined ; } early_ANY;
+typedef struct _early_BOX { BOX value ; _Bool defined ; } early_BOX;
+typedef struct _early_BLOCK { BLOCK value ; _Bool defined ; } early_BLOCK;
+typedef struct _early_BOOLEAN { BOOLEAN value ; _Bool defined ; } early_BOOLEAN;
+typedef struct _early_NUMBER { NUMBER value ; _Bool defined ; } early_NUMBER;
+typedef struct _early_STRING { STRING value ; _Bool defined ; } early_STRING;
+typedef struct _early_LIST { LIST value ; _Bool defined ; } early_LIST;
+typedef struct _early_SYMBOL { SYMBOL value ; _Bool defined ; } early_SYMBOL;
+typedef struct _early_RECORD { RECORD value ; _Bool defined ; } early_RECORD;
 
 typedef enum cognate_type
 {
@@ -61,8 +73,6 @@ typedef enum cognate_type
 typedef struct cognate_block
 {
 	void (*fn)(void*[]);
-	BLOCK heap_clone;
-	BLOCK (*clone)(BLOCK);
 	void* env[0];
 } cognate_block;
 
@@ -1044,7 +1054,7 @@ BLOCK block_copy(BLOCK b)
 __attribute__((hot))
 static ANY box_BLOCK(BLOCK s)
 {
-	ANY a =  NAN_MASK | ((long)block << 48) | (long)s->clone(s);
+	ANY a =  NAN_MASK | ((long)block << 48) | (long)s;
 	return a;
 }
 
