@@ -1898,13 +1898,19 @@ void _compute_sources(ast_list_t* a)
 		{
 			case closure: _compute_sources(node->op->func->ops);
 			case literal:
-			case var:
 				{
 					reg_t* r = make_register(any, node);
+					push_register_front(r, regs);
+				}
+				break;
+			case var:
+				{
+					reg_t* r = make_register(any, node->op->word->val->source);
 					push_register_front(r, regs);
 					// TODO shorten references
 				}
 				break;
+
 			case bind:
 				{
 					reg_t* r = pop_register_front(regs);
@@ -2634,4 +2640,3 @@ word_list_t* builtins()
 	}
 	return words;
 }
-
