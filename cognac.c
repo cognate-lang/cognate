@@ -17,7 +17,6 @@ func_t* unknown_func = &(func_t)
 	.returns=false,
 	.stack=true,
 	.captures=NULL,
-	.has_captures = false,
 };
 
 func_t* word_func(word_t* w)
@@ -118,7 +117,6 @@ func_t* make_func(ast_list_t* tree, char* name)
 	func->stack = false; // hmm
 	func->captures = NULL;
 	func->entry = false;
-	func->has_captures = false;
 	return func;
 }
 
@@ -238,14 +236,18 @@ reg_dequeue_t* make_register_dequeue()
 }
 
 
-module_t* create_module(char* path)
+module_t* create_module(char* path, module_t* inherit)
 {
 	module_t* mod = malloc(sizeof *mod);
 	mod->path = path;
 	mod->file = fopen(path, "r");
-	mod->name = NULL; // TODO
+	char* path2 = strdup(path);
+	for (char* s = path2 ; *s ; ++s) if (*s == '/') path2 = s;
+	for (char* s = path2 ; *s ; ++s) if (*s == '.') { *s = '\0'; break; }
+	mod->prefix = lowercase(path2);
 	mod->tree = NULL;
 	mod->funcs = NULL;
+	mod->inherits = inherit;
 	return mod;
 }
 
@@ -402,7 +404,12 @@ end:;
 	}
 }
 
-void _resolve_scope(ast_list_t* tree, word_list_t* words)
+void predeclare(module_t* mod)
+{
+	mod->tree = _predeclare(mod->tree);
+}
+
+word_list_t* _resolve_scope(ast_list_t* tree, word_list_t* words)
 {
 	for (ast_list_t* node = tree ; node ; node = node->next)
 	{
@@ -426,15 +433,18 @@ void _resolve_scope(ast_list_t* tree, word_list_t* words)
 			default: break;
 		}
 	}
+	return words;
 }
 
-void predeclare(module_t* mod)
+word_list_t* resolve_scope_rec(module_t* mod)
 {
-	mod->tree = _predeclare(mod->tree);
+	if (!mod) return builtins();
+	return _resolve_scope(mod->tree, resolve_scope_rec(mod->inherits));
 }
 
 void resolve_scope(module_t* mod)
 {
+	//resolve_scope_rec(mod);
 	_resolve_scope(mod->tree, builtins());
 }
 
@@ -556,7 +566,7 @@ void to_exe(module_t* mod)
 	{
 		"gcc", c_source_path, "-o", "./a.out",
 		"-Ofast", "-flto", //"-Wno-unused", "-Wall", "-Wextra", "-Wpedantic",
-		//"-Og", "-ggdb3", "-g"
+		//"-Og", "-ggdb3", "-g",
 		"-std=gnu11", "-lm", NULL
 	};
 	execvp(args[0], args);
@@ -999,7 +1009,7 @@ bool _determine_arguments(func_t* f)
 			case fn_branch:
 				{
 					if (registers) registers--;
-					else argc++;
+					else if (can_use_args && f->argc < 255 && !f->entry) argc++;
 					for (func_list_t* f = op->funcs ; f ; f = f->next)
 						changed |= _determine_arguments(f->func);
 					func_t* v = op->funcs->func;
@@ -1215,7 +1225,6 @@ void _add_registers(func_t* f)
 			case literal:
 			case var:
 			case load:
-			case pop:
 				registers++;
 				break;
 			case fn_branch:
@@ -1238,7 +1247,6 @@ void _add_registers(func_t* f)
 							for (func_list_t* f = op->funcs ; f ; f = f->next)
 								f->func->stack = true;
 
-
 					if (v->stack)
 					{
 						f->stack = true;
@@ -1249,6 +1257,8 @@ void _add_registers(func_t* f)
 							registers--;
 						}
 					}
+
+					if (v->stack) assert(registers == v->argc);
 
 					for (size_t i = 0 ; i < v->argc ; ++i)
 					{
@@ -1304,12 +1314,12 @@ void _add_registers(func_t* f)
 							f->stack = true;
 						}
 					}
+					if (fn->stack) assert(!registers);
 					if (fn->returns) registers++;
 					break;
 				}
 			case bind:
 			case ret:
-			case push:
 				if (registers) registers--;
 				else
 				{
@@ -1327,8 +1337,8 @@ void _add_registers(func_t* f)
 			{
 				insert_op_before(make_op(pick, NULL), n);
 				insert_op_before(make_op(push, NULL), n);
-				f->stack = true;
 			}
+			f->stack = true;
 		}
 	}
 }
@@ -1858,11 +1868,11 @@ ast_list_t* clone_func(ast_list_t* ops, ptr_assoc_t* assoc, func_list_t** funcs)
 	return l;
 }
 
-bool does_call(word_t* target, ast_list_t* start)
+bool does_call(func_t* target, ast_list_t* start)
 {
 	for (ast_list_t* node = start ; node ; node = node->next)
 	{
-		if (node->op->type == call && node->op->word == target)
+		if (node->op->type == call && word_func(node->op->word) == target)
 			return true;
 		else if (node->op->type == closure
 				&& does_call(target, node->op->func->ops))
@@ -1959,7 +1969,7 @@ void _inline_functions(ast_list_t* a, func_list_t** funcs)
 							size_t n = 0;
 							for (ast_list_t* inl = fn->ops ; inl ; inl = inl->next) n++;
 							if (n > 20) break;
-							if (does_call(node->op->word, fn->ops)) break;
+							if (does_call(fn, fn->ops)) break;
 							changed = 1;
 							ast_list_t* inl = clone_func(fn->ops, NULL, funcs);
 							for ( ; inl ; inl = inl->next)
@@ -2177,16 +2187,16 @@ void compute_variables(module_t* m)
 	while (changed)
 	{
 		changed = 0;
+		mark_all_unused(m);
+		mark_used_vars(m);
+		for (func_list_t* f = m->funcs ; f ; f = f->next)
+			changed |= remove_unused_vars(f->func);
 		for (func_list_t* f = m->funcs ; f ; f = f->next)
 			compute_captures(
 					f->func,
 					&f->func->captures,
 					&f->func->locals,
 					&f->func->calls);
-		mark_all_unused(m);
-		mark_used_vars(m);
-		for (func_list_t* f = m->funcs ; f ; f = f->next)
-			changed |= remove_unused_vars(f->func);
 	}
 }
 
@@ -2491,16 +2501,18 @@ void balance_branches(module_t* m)
 
 							if (adaptor->returns)
 								insert_op_after(make_op(ret, NULL), body);
+							/*
 							else if (fns->func->returns)
 								insert_op_after(make_op(push, NULL), body);
+								*/
 
 							insert_op_after(make_op(static_call, fns->func), body);
 
 							int remaining = fns->func->argc - adaptor->argc;
 							for (int i = 0 ; i < remaining ; ++i)
 							{
-								insert_op_after(make_op(unpick, NULL), body);
-								insert_op_after(make_op(pop, NULL), body);
+								//insert_op_after(make_op(unpick, NULL), body);
+								//insert_op_after(make_op(pop, NULL), body);
 							}
 
 							for (val_list_t* v = adaptor->args ; v ; v = v->next)
@@ -2527,7 +2539,9 @@ int main(int argc, char** argv)
 {
 	(void)argc; (void)argv;
 	assert(argc == 2);
-	module_t* m = create_module(argv[1]);
+	//module_t* prelude = create_module("prelude.cog", NULL);
+	//prelude->prefix = "";
+	module_t* m = create_module(argv[1], NULL);//prelude);
 	void(*stages[])(module_t*)
 	= {
 		module_parse,
@@ -2616,9 +2630,9 @@ word_list_t* builtins()
 		fn->ops = NULL;
 		fn->generic_variant = NULL;
 		fn->generic = false;
+		fn->has_stack = true;
 		fn->captures = NULL;
 		fn->calls = NULL;
-		fn->has_captures = true;
 		fn->has_args = true;
 		type_t calltype = b[i].calltype;
 		for (int ii = b[i].argc-1 ; ii >= 0 ; --ii)
