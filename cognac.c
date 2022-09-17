@@ -348,7 +348,7 @@ void shorten_references(module_t* mod)
 				case bind:
 					{
 						reg_t* r = pop_register_front(regs);
-						while (r->source->op->type == var)
+						while (r->source && r->source->op->type == var)
 							r->source = r->source->op->word->val->source;
 						a->op->word->val->source = r->source;
 						break;
@@ -677,6 +677,21 @@ void to_c(module_t* mod)
 						c_val_type(w->word->val->type),
 						i);
 			}
+
+		for (word_list_t* w = func->func->locals ; w ; w = w->next)
+		{
+			if (w->word->used_early)
+			{
+				fprintf(c_source, "\tearly_%s* %s = gc_malloc(sizeof(early_%s));\n",
+					c_val_type(w->word->val->type),
+					c_word_name(w->word),
+					c_val_type(w->word->val->type));
+			}
+			else
+				fprintf(c_source, "\t%s %s;\n",
+					c_val_type(w->word->val->type),
+					c_word_name(w->word));
+		}
 		reg_dequeue_t* registers = make_register_dequeue();
 		reg_t* res = NULL;
 		for (ast_list_t* op = func->func->ops ; op ; op = op->next)
@@ -755,19 +770,7 @@ void to_c(module_t* mod)
 					}
 					break;
 				case none: break;
-				case define: // TODO default value
-					if (op->op->word->used_early)
-					{
-						fprintf(c_source, "\tearly_%s* %s = gc_malloc(sizeof(early_%s));\n",
-							c_val_type(op->op->word->val->type),
-							c_word_name(op->op->word),
-							c_val_type(op->op->word->val->type));
-					}
-					else
-						fprintf(c_source, "\t%s %s;\n",
-							c_val_type(op->op->word->val->type),
-							c_word_name(op->op->word));
-					break;
+				case define: __builtin_trap();
 				case push:
 					fprintf(c_source, "\tpush(_%zu);\n", pop_register_front(registers)->id);
 					break;
@@ -1472,10 +1475,11 @@ bool add_var_types_backwards(module_t* mod)
 			{
 				case branch:
 					{
-						reg_t* ar1 = pop_register_front(registers);
-						push_register_front(make_register(ar1->type, op), registers);
-						push_register_front(make_register(ar1->type, op), registers);
+						pop_register_front(registers);
+						push_register_front(make_register(any, op), registers);
+						push_register_front(make_register(any, op), registers);
 						push_register_front(make_register(boolean, op), registers);
+						// branch may be typelevel dispatch and thus we don't know that both inputs have the same type as the output.
 						break;
 					}
 				case fn_branch:
@@ -2026,24 +2030,32 @@ void compute_stack(module_t* m)
 		_compute_stack(f->func);
 }
 
-void compute_captures(func_t* f, word_list_t** ret, word_list_t** locals, func_list_t** tried)
+void compute_locals(func_t* f)
 {
+	f->locals = NULL;
+	for (ast_list_t* a = f->ops ; a ; a = a->next)
+		if (a->op->type == define)
+			f->locals = push_word(a->op->word, f->locals);
+}
+
+void compute_captures(func_t* f, word_list_t** ret, word_list_t* kinda_locals, func_list_t** tried)
+{
+	for (ast_list_t* a = f->ops ; a ; a = a->next)
+		if (a->op->type == define)
+			kinda_locals = push_word(a->op->word, kinda_locals);
 	for (ast_list_t* a = f->ops ; a ; a = a->next)
 	{
 		switch (a->op->type)
 		{
 			default: break;
-			case define:
-				*locals = push_word(a->op->word, *locals);
-				break;
 			case static_call:
 				{
 					func_t* called = a->op->func;
 					for (func_list_t* r = *tried ; r ; r=r->next)
-						if (called == r->func) goto end;
+						if (called == r->func) goto end4;
 					*tried = push_func(called, *tried);
-					if (called != f)
-						compute_captures(called, ret, locals, tried);
+					if (called != f) compute_captures(called, ret, kinda_locals, tried);
+end4:;
 					break;
 				}
 			case fn_branch:
@@ -2051,29 +2063,31 @@ void compute_captures(func_t* f, word_list_t** ret, word_list_t** locals, func_l
 					for (func_list_t* called = a->op->funcs ; called ; called = called->next)
 					{
 						for (func_list_t* r = *tried ; r ; r=r->next)
-							if (called->func == r->func) goto end;
+							if (called->func == r->func) goto end3;
 						*tried = push_func(called->func, *tried);
 						if (called->func != f)
-							compute_captures(called->func, ret, locals, tried);
+							compute_captures(called->func, ret, kinda_locals, tried);
+end3:;
 					}
 					break;
 				}
-
 			case call:
 			case var:
 				for (word_list_t* r = *ret ; r ; r=r->next)
 					if (r->word == a->op->word) goto end;
-				for (word_list_t* r = *locals ; r ; r=r->next)
+				for (word_list_t* r = kinda_locals ; r ; r=r->next)
 					if (r->word == a->op->word) goto end;
 				*ret = push_word(a->op->word, *ret);
 				end:
 				break;
 			case closure:
-				compute_captures(a->op->func, ret, locals, tried);
+				for (func_list_t* r = *tried ; r ; r=r->next)
+					if (a->op->func == r->func) goto end4;
+				*tried = push_func(a->op->func, *tried);
+				if (a->op->func != f) compute_captures(a->op->func, ret, kinda_locals, tried);
 				break;
 		}
 	}
-
 }
 
 bool remove_unused_vars(func_t* f)
@@ -2172,6 +2186,17 @@ void mark_used_vars(module_t* m)
 	}
 }
 
+void remove_defines(module_t* m)
+{
+	for (func_list_t* f = m->funcs ; f ; f = f->next)
+	{
+		for (ast_list_t* a = f->func->ops ; a ; a = a->next)
+		{
+			if (a->op->type == define) remove_op(a);
+		}
+	}
+}
+
 void compute_variables(module_t* m)
 {
 	bool changed = 1;
@@ -2183,12 +2208,20 @@ void compute_variables(module_t* m)
 		for (func_list_t* f = m->funcs ; f ; f = f->next)
 			changed |= remove_unused_vars(f->func);
 		for (func_list_t* f = m->funcs ; f ; f = f->next)
-			compute_captures(
-					f->func,
-					&f->func->captures,
-					&f->func->locals,
-					&f->func->calls);
+		{
+			f->func->captures = NULL;
+			f->func->locals = NULL;
+			f->func->calls = NULL;
+		}
+		for (func_list_t* f = m->funcs ; f ; f = f->next)
+			compute_locals(f->func);
+		for (func_list_t* f = m->funcs ; f ; f = f->next)
+		{
+			func_list_t* _ = NULL;
+			compute_captures(f->func, &f->func->captures, NULL, &_);
+		}
 	}
+	remove_defines(m); // why did we even have those???
 }
 
 void mark_used_funcs(func_t* f)
@@ -2258,7 +2291,9 @@ void inline_values(module_t* m)
 	{
 		for (ast_list_t* a = f->func->ops ; a ; a = a->next)
 		{
-			if (a->op->type == var && a->op->word->val->source->op->type == literal)
+			if (a->op->type == var
+					&& a->op->word->val->source
+					&& a->op->word->val->source->op->type == literal)
 				a->op = a->op->word->val->source->op;
 		}
 	}
