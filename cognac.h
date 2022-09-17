@@ -201,7 +201,6 @@ struct _module_t
 	func_list_t* funcs;
 	func_t* entry;
 	symbol_list_t* symbols;
-	module_t* inherits;
 };
 
 ast_list_t* join_ast(ast_list_t*, ast_list_t*);
@@ -215,7 +214,7 @@ void flatten_ast(module_t*);
 void add_captures(module_t*);
 void resolve_scope(module_t*);
 void module_parse(module_t*);
-module_t* create_module(char*, module_t*);
+module_t* create_module(char*);
 void fold_defs(module_t*);
 lit_t* mk_lit(val_type_t, const char*);
 word_list_t* builtins();

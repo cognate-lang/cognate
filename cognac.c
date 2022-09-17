@@ -236,7 +236,7 @@ reg_dequeue_t* make_register_dequeue()
 }
 
 
-module_t* create_module(char* path, module_t* inherit)
+module_t* create_module(char* path)
 {
 	module_t* mod = malloc(sizeof *mod);
 	mod->path = path;
@@ -247,7 +247,6 @@ module_t* create_module(char* path, module_t* inherit)
 	mod->prefix = lowercase(path2);
 	mod->tree = NULL;
 	mod->funcs = NULL;
-	mod->inherits = inherit;
 	return mod;
 }
 
@@ -409,7 +408,7 @@ void predeclare(module_t* mod)
 	mod->tree = _predeclare(mod->tree);
 }
 
-word_list_t* _resolve_scope(ast_list_t* tree, word_list_t* words)
+void _resolve_scope(ast_list_t* tree, word_list_t* words)
 {
 	for (ast_list_t* node = tree ; node ; node = node->next)
 	{
@@ -433,18 +432,10 @@ word_list_t* _resolve_scope(ast_list_t* tree, word_list_t* words)
 			default: break;
 		}
 	}
-	return words;
-}
-
-word_list_t* resolve_scope_rec(module_t* mod)
-{
-	if (!mod) return builtins();
-	return _resolve_scope(mod->tree, resolve_scope_rec(mod->inherits));
 }
 
 void resolve_scope(module_t* mod)
 {
-	//resolve_scope_rec(mod);
 	_resolve_scope(mod->tree, builtins());
 }
 
@@ -2534,14 +2525,11 @@ void balance_branches(module_t* m)
 
 void end(module_t* m) { exit(EXIT_SUCCESS); }
 
-
 int main(int argc, char** argv)
 {
 	(void)argc; (void)argv;
 	assert(argc == 2);
-	//module_t* prelude = create_module("prelude.cog", NULL);
-	//prelude->prefix = "";
-	module_t* m = create_module(argv[1], NULL);//prelude);
+	module_t* m = create_module(argv[1]);
 	void(*stages[])(module_t*)
 	= {
 		module_parse,
