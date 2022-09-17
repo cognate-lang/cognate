@@ -184,6 +184,8 @@ struct _func_t
 	bool has_regs;
 	bool has_stack;
 	bool generic;
+	bool branch;
+	bool unique;
 };
 
 struct _symbol_list_t

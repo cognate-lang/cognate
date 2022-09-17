@@ -1195,6 +1195,7 @@ static __attribute__((noinline,hot)) void gc_collect(void)
 	size_t heapsz = alloc[z];
 	start = clock();
 	*/
+
 	z = !z;
 	memset(bitmap[z], EMPTY, alloc[z]+1);
 	alloc[z] = 0;
@@ -1210,8 +1211,10 @@ static __attribute__((noinline,hot)) void gc_collect(void)
 	for (ANY* root = (ANY*)&a; root < (ANY*)function_stack_start; ++root)
 		gc_collect_root(root); // Watch me destructively modify the call stack
 
-	//end = clock();
-	//printf("%lf seconds for %ziMB -> %ziMB\n", (double)(end - start) / CLOCKS_PER_SEC, heapsz * 8 /1024/1024, alloc[z] * 8 / 1024/1024);
+	/*
+	end = clock();
+	printf("%lf seconds for %ziMB -> %ziMB\n", (double)(end - start) / CLOCKS_PER_SEC, heapsz * 8 /1024/1024, alloc[z] * 8 / 1024/1024);
+	*/
 
 	longjmp(a, 1);
 }

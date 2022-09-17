@@ -17,6 +17,7 @@ func_t* unknown_func = &(func_t)
 	.returns=false,
 	.stack=true,
 	.captures=NULL,
+	.unique=false,
 };
 
 func_t* word_func(word_t* w)
@@ -108,6 +109,8 @@ func_t* make_func(ast_list_t* tree, char* name)
 	func->args = NULL;
 	func->argc = 0;
 	func->has_args = false;
+	func->unique = false;
+	func->branch = false;
 	func->has_regs = false;
 	func->name = name;
 	func->locals = NULL;
@@ -444,7 +447,7 @@ func_t* _flatten_ast(ast_list_t* tree, func_list_t** rest)
 	// Build a list of functions in the `rest` parameter
 	// return the entry function for the AST node
 	func_t* func = make_func(tree, make_func_name());
-	func->stack = true;
+	//func->stack = true;
 	static bool entry = 1;
 	func->entry = entry;
 	entry = 0;
@@ -1369,8 +1372,21 @@ bool add_var_types_forwards(module_t* mod)
 					{
 						pop_register_front(registers);
 						func_t* fn = op->op->funcs->func;
-						for ( size_t i = 0 ; i < fn->argc ; ++i )
-							pop_register_front(registers);
+						func_t* fn2 = op->op->funcs->next->func;
+						for ( val_list_t* v1 = fn->args, *v2=fn2->args ; v1 ; v1=v1->next, v2=v2->next )
+						{
+							// you thought the other one was bad???
+							val_type_t t = pop_register_front(registers)->type;
+							if (fn->unique && fn2->unique
+									&& v1->val->type == any && t != any)
+								// yay we're allowed to mess with it
+							{
+								v1->val->type = t; // kinda dodgy
+								v2->val->type = t; // god this is gonna break something
+								// Will this even help anything???
+								changed = 1; // hmmm
+							}
+						}
 						if (fn->stack) assert(registers->len == 0);
 						if (fn->returns)
 							push_register_front(
@@ -1434,8 +1450,16 @@ bool add_var_types_forwards(module_t* mod)
 				case static_call:
 					{
 						func_t* fn = call_to_func(op->op);
-						for ( size_t i = 0 ; i < fn->argc ; ++i )
-							pop_register_front(registers);
+						for ( val_list_t* v = fn->args ; v ; v = v->next )
+						{
+							val_type_t t = pop_register_front(registers)->type;
+							if (fn->unique && v->val->type == any && t != any)
+								// yay we're allowed to mess with it
+							{
+								v->val->type = t; // kinda dodgy
+								changed = 1; // hmmm
+							}
+						}
 						if (fn->stack) assert(registers->len == 0);
 						if (fn->returns)
 							push_register_front(
@@ -1484,6 +1508,7 @@ bool add_var_types_backwards(module_t* mod)
 					}
 				case fn_branch:
 					{
+						// hopefully balanced
 						func_t* fn = op->op->funcs->func;
 						if (fn->returns)
 							pop_register_front(registers);
@@ -1497,8 +1522,7 @@ bool add_var_types_backwards(module_t* mod)
 				case var:
 					{
 						val_type_t t = pop_register_front(registers)->type;
-						if (t != any
-								&& op->op->word->val->type != t)
+						if (t != any && op->op->word->val->type != t)
 						{
 							if (op->op->word->val->type != any) __builtin_trap(); // type error
 							op->op->word->val->type = t;
@@ -1560,7 +1584,7 @@ bool add_var_types_backwards(module_t* mod)
 		for (val_list_t* v = func->func->args; v ; v = v->next)
 		{
 			val_type_t t = args->val->type;
-			if (t != any && v->val->type != t)
+			if (t != any && v->val->type != t && !func->func->branch)
 			{
 				if (v->val->type != any) __builtin_trap(); // type error
 				v->val->type = t;
@@ -1680,19 +1704,22 @@ void add_typechecks(module_t* mod)
 							insert_op_before(make_op(from_any, (void*)boolean), op);
 						} else __builtin_trap();
 						func_t* fn = op->op->funcs->func;
+						//func_t* fn2 = op->op->funcs->next->func;
 						size_t i = 0;
-						for ( val_list_t* a = fn->args ; a ; a = a->next )
+						//for ( val_list_t *a = fn->args, *a2=fn2->args ; a ; a = a->next, a2=a2->next )
+						for ( val_list_t *a = fn->args ; a ; a = a->next )
 						{
 							reg_t* reg = pop_register_front(registers);
 							val_type_t expected = a->val->type;
 							val_type_t got = reg->type;
+							//if (a->val->type != a2->val->type) expected = any; // hmmm
+							insert_op_before(make_op(unpick, NULL), op);
 							if (expected == got) { }
 							else if (expected == any)
 								insert_op_before(make_op(to_any, (void*)got), op);
 							else if (got == any)
 								insert_op_before(make_op(from_any, (void*)expected), op);
 							else __builtin_trap();
-							insert_op_before(make_op(unpick, NULL), op);
 						}
 						for ( int i = 0 ; i < fn->argc ; ++i )
 							insert_op_before(make_op(pick, NULL), op);
@@ -1916,7 +1943,8 @@ void _compute_sources(ast_list_t* a)
 					func_t* fn = word_func(node->op->word);
 					for (size_t i = 0 ; i < fn->argc ; ++i)
 						pop_register_front(regs);
-					if (fn->stack) clear_registers(regs);
+					// assume all functions are stack
+					clear_registers(regs);
 					if (fn->returns)
 						push_register_front(make_register(any, node), regs);
 				}
@@ -2392,6 +2420,7 @@ void static_branches(module_t* m)
 						func_t* f = word_func(a->op->word);
 						for ( size_t i = 0 ; i < f->argc ; ++i )
 							pop_register_front(regs);
+						if (f->stack) clear_registers(regs);
 						if (f->returns)
 							push_register_front(make_register(f->rettype, a), regs);
 						break;
@@ -2495,7 +2524,7 @@ void balance_branches(module_t* m)
 						}
 
 						if (all_return == some_return
-								&& min_argc == max_argc) break;
+								&& min_argc == max_argc) goto end;
 
 						val_list_t* adapt_args = NULL;
 						for (int i = 0 ; i < min_argc ; ++i)
@@ -2534,12 +2563,14 @@ void balance_branches(module_t* m)
 
 							insert_op_after(make_op(static_call, fns->func), body);
 
+							/*
 							int remaining = fns->func->argc - adaptor->argc;
 							for (int i = 0 ; i < remaining ; ++i)
 							{
-								//insert_op_after(make_op(unpick, NULL), body);
-								//insert_op_after(make_op(pop, NULL), body);
+								insert_op_after(make_op(unpick, NULL), body);
+								insert_op_after(make_op(pop, NULL), body);
 							}
+							*/
 
 							for (val_list_t* v = adaptor->args ; v ; v = v->next)
 							{
@@ -2550,12 +2581,50 @@ void balance_branches(module_t* m)
 							m->funcs = push_func(adaptor, m->funcs);
 							fns->func = adaptor;
 						}
+end:
+						for (func_list_t* fns = op->funcs ; fns ; fns = fns->next)
+							fns->func->branch = true;
 					}
 					break;
 				default: break;
 			}
 		}
 	}
+}
+
+void determine_unique_calls(module_t* m)
+{
+	func_list_t* once = NULL;
+	func_list_t* twice = NULL;
+
+	for (func_list_t* f = m->funcs ; f ; f = f->next)
+	{
+		f->func->unique = true;
+		for (ast_list_t* a = f->func->ops ; a ; a = a->next)
+		{
+			switch (a->op->type)
+			{
+				case static_call:
+					for (func_list_t* o = once ; o ; o = o->next)
+						if (o->func == a->op->func)
+						{
+							twice = push_func(a->op->func, twice);
+							goto end;
+						}
+					for (func_list_t* t = twice ; t ; t = t->next)
+						if (t->func == a->op->func) goto end;
+					once = push_func(a->op->func, once);
+end:;
+					break;
+				case fn_branch:
+					break;
+				default:
+					break;
+			}
+		}
+	}
+	for (func_list_t* t = twice ; t ; t = t->next)
+		t->func->unique = false;
 }
 
 void end(module_t* m) { exit(EXIT_SUCCESS); }
@@ -2567,6 +2636,16 @@ int main(int argc, char** argv)
 	module_t* m = create_module(argv[1]);
 	void(*stages[])(module_t*)
 	= {
+		/*
+		 * TODO
+		 *
+		 * Optimizations should be applied in loops until they stabilise
+		 *
+		 * There should be 1, 2, maybe 3 optimization loops with the (non
+		 * destructive) optimizations in them.
+		 *
+		 * That way we avoid each opt having its own limited loop.
+		 */
 		module_parse,
 		add_backlinks,
 		catch_shadows,
@@ -2576,6 +2655,7 @@ int main(int argc, char** argv)
 		merge_symbols,
 		compute_sources,
 		inline_functions,
+		compute_sources,
 		static_branches,
 		compute_sources,
 		static_calls,
@@ -2593,6 +2673,7 @@ int main(int argc, char** argv)
 		compute_variables,
 		remove_unused_funcs,
 		resolve_early_use,
+		determine_unique_calls,
 		add_var_types,
 		add_typechecks,
 		// TODO renaming pass to renumber registers and shadow_ids
@@ -2656,6 +2737,8 @@ word_list_t* builtins()
 		fn->has_stack = true;
 		fn->captures = NULL;
 		fn->calls = NULL;
+		fn->branch = false;
+		fn->unique = false;
 		fn->has_args = true;
 		type_t calltype = b[i].calltype;
 		for (int ii = b[i].argc-1 ; ii >= 0 ; --ii)
