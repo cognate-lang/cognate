@@ -2656,7 +2656,7 @@ int main(int argc, char** argv)
 		compute_sources,
 		inline_functions,
 		compute_sources,
-		static_branches,
+		//static_branches,
 		compute_sources,
 		static_calls,
 		compute_stack,
