@@ -2653,6 +2653,7 @@ int main(int argc, char** argv)
 		resolve_scope,
 		flatten_ast,
 		merge_symbols,
+		compute_stack,
 		compute_sources,
 		inline_functions,
 		compute_sources,
