@@ -2392,6 +2392,18 @@ void static_branches(module_t* m)
 					break;
 				case branch:
 					{
+
+						/* TODO
+						 *
+						 * Ok what's the problem here?
+						 *
+						 * Essentially, this optimization replaces If Cond () else ()
+						 * With a single closure that pops the boolean and dispatches
+						 * In the Do If case this works great, but not all blocks passed
+						 * to If are evaluated immediately - hence the issue. Shouldn't
+						 * be *too* difficult to fix probably hopefully fingers crossed.
+						 */
+
 						pop_register_front(regs); // bool
 						reg_t* i1 = pop_register_front(regs);
 						reg_t* i2 = pop_register_front(regs);
