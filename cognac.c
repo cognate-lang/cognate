@@ -2392,7 +2392,6 @@ void static_branches(module_t* m)
 					break;
 				case branch:
 					{
-
 						/* TODO
 						 *
 						 * Ok what's the problem here?
@@ -2416,9 +2415,14 @@ void static_branches(module_t* m)
 										push_func(i2->source->op->func,
 											NULL));
 							ast_list_t* op = make_astlist();
+							word_t* b = make_word("", var, NULL);
 							insert_op_after(make_op(fn_branch, fl), op);
+							insert_op_after(make_op(var, b), op);
 							func_t* F = make_func(op, make_func_name());
 							a->op = make_op(closure, F);
+							insert_op_before(make_op(define, b), a);
+							insert_op_before(make_op(bind, b), a);
+							b->val = make_value(any, a->prev);
 							m->funcs = push_func(F, m->funcs);
 							remove_op(i1->source);
 							remove_op(i2->source);
@@ -2669,7 +2673,7 @@ int main(int argc, char** argv)
 		compute_sources,
 		inline_functions,
 		compute_sources,
-		//static_branches,
+		static_branches,
 		compute_sources,
 		static_calls,
 		compute_stack,
