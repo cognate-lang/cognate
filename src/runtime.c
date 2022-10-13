@@ -37,7 +37,7 @@
 typedef unsigned long ANY;
 typedef ANY* restrict ANYPTR;
 typedef ANY* restrict BOX;
-typedef void(^BLOCK)();
+typedef void(^BLOCK)(void);
 typedef _Bool BOOLEAN;
 typedef double NUMBER;
 typedef const char* restrict STRING;
@@ -319,7 +319,7 @@ static _Bool compare_records(RECORD, RECORD);
 static _Bool match_records(RECORD, RECORD);
 static _Bool match_lists(LIST, LIST);
 static void handle_error_signal(int);
-static void assert_impure();
+static void assert_impure(void);
 
 #ifdef DEBUG
 static _Bool debug = 0;
@@ -405,7 +405,7 @@ static char* get_source_line(size_t line)
 #define VARS_POP() \
 	vars = vars->next;
 
-static void debugger_step()
+static void debugger_step(void)
 {
 	if likely(!debug) return;
 	if (next_count > 0)
@@ -601,7 +601,7 @@ static void handle_error_signal(int sig)
 	throw_error_fmt("Recieved signal %i (%s)", sig, strsignal(sig));
 }
 
-static void assert_impure()
+static void assert_impure(void)
 {
 	if unlikely(pure) throw_error("Invalid operation for pure function");
 }
@@ -1967,7 +1967,7 @@ static void VAR(set)(BOX b, ANY a)
 	*b = a;
 }
 
-static void VAR(debug)()
+static void VAR(debug)(void)
 {
 #ifdef DEBUG
 	debug = 1;
