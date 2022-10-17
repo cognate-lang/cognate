@@ -22,6 +22,6 @@ test: $(TESTS)
 	@! grep -c "^FAIL" tests/*.log --color
 
 $(TESTS): cognac
-	@rm -f tests/$@.log
+	@rm -f tests/$@.log tests/$@.c tests/$@
 	./cognac tests/$@.cog > tests/$@.log
-	./a.out >> tests/$@.log
+	./tests/$@ >> tests/$@.log

@@ -287,6 +287,7 @@ module_t* create_module(char* path)
 
 void module_parse(module_t* mod)
 {
+	assert(!strcmp(mod->path + strlen(mod->path) - 4, ".cog"));
 	pcc_context_t *ctx = pcc_create(mod);
 	while (pcc_parse(ctx, (void*)&mod->tree));
 	pcc_destroy(ctx);
@@ -585,12 +586,15 @@ const char* c_word_name(word_t* word)
 
 void to_exe(module_t* mod)
 {
-	char* c_source_path = malloc(strlen(mod->path) + 3);
-	strcpy(c_source_path, mod->path);
-	strcat(c_source_path, ".c");
+	char* exe_path = strdup(mod->path);
+	exe_path[strlen(exe_path) - 4] = '\0';
+
+	char* c_source_path = strdup(mod->path);
+	c_source_path[strlen(c_source_path) - 2] = '\0';
+
 	char* args[] =
 	{
-		"gcc", c_source_path, "-o", "./a.out",
+		"gcc", c_source_path, "-o", exe_path,
 		"-Ofast", "-flto", //"-Wno-unused", "-Wall", "-Wextra", "-Wpedantic",
 		//"-Og", "-ggdb3", "-g",
 		"-std=gnu11", "-lm", NULL
@@ -619,9 +623,8 @@ void c_emit_funcall(func_t* fn, FILE* c_source, reg_dequeue_t* registers)
 
 void to_c(module_t* mod)
 {
-	char* c_source_path = malloc(strlen(mod->path) + 3);
-	strcpy(c_source_path, mod->path);
-	strcat(c_source_path, ".c");
+	char* c_source_path = strdup(mod->path);
+	c_source_path[strlen(c_source_path) - 2] = '\0';
 	FILE* c_source = fopen(c_source_path, "w");
 	fprintf(c_source, "%.*s", runtime_c_len, (char*)runtime_c);
 	fputc('\n', c_source);
