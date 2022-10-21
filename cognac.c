@@ -19,7 +19,7 @@ static void* alloc(size_t n)
 	// allocate n bytes (leaking). TODO
 }
 
-static _Noreturn void throw_error(char* message, module_t* mod, size_t line_n, size_t column_n)
+_Noreturn void throw_error(char* message, FILE* file, size_t line_n, size_t column_n)
 {
 	// Calculate width of the "[LINE_NUMBER]" bit
 	char number_box[64];
@@ -27,32 +27,31 @@ static _Noreturn void throw_error(char* message, module_t* mod, size_t line_n, s
 	size_t offset = strlen(number_box) + column_n - 1;
 
 	// Ok now we need to actually get the line
-	rewind(mod->file);
+	rewind(file);
 	while (--line_n)
 	{
 		char c;
-		do { c = fgetc(mod->file); } while (c != '\n'); // read one line. TODO this is bad
+		do { c = fgetc(file); } while (c != '\n'); // read one line. TODO this is bad
 	}
 	size_t n = SIZE_MAX;
 	char* line = NULL;
-	getline(&line, &n, mod->file);
+	getline(&line, &n, file);
 
 	// Now we strip leading whitespace
 	size_t whitespace = 0;
 	while (isspace(*line)) line++, offset--;
 
 	// Now print shit
-	fputs("\n\n\033[0;2m", stderr);
-	fputs(number_box, stderr);
-	fprintf(stderr, "\033[0;2m]%s\033[0;1m%s", number_box, line); // Should have newline already(?)
-	while (--offset) fputc(' ', stderr);
-	fprintf(stderr, "\033[31;1m^ %s\033[0m\n", message);
+	fprintf(stderr, "\n\n\033[0;2m%s\033[0;1m%s", number_box, line); // Should have newline already(?)
+	for (int i = 2 ; i < offset ; ++i) fputc(' ', stderr);
+	fprintf(stderr, "\033[31;1m/|\\\n");
+	for (int i = 0 ; i < (int)offset - (int)(strlen(message) / 2) ; ++i) fputc(' ', stderr);
+	fprintf(stderr, "%s\033[0m\n\n", message);
 	exit(EXIT_FAILURE);
 }
 
 
-func_t* unknown_func = &(func_t)
-{
+func_t* unknown_func = &(func_t) {
 	.argc=0,
 	.args=NULL,
 	.returns=false,

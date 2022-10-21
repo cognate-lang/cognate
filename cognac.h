@@ -221,6 +221,7 @@ void fold_defs(module_t*);
 lit_t* mk_lit(val_type_t, const char*);
 word_list_t* builtins();
 const char* c_val_type(val_type_t);
+_Noreturn void throw_error(char*, FILE*, size_t, size_t);
 
 extern FILE* yyin;
 extern ast_list_t* full_ast;

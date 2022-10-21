@@ -495,36 +495,15 @@ char* lc(char* s)
 
 void yyerror(char* str)
 {
-	char header[20];
-	int line_n = yylloc.first_line;
-	sprintf(header, "[%d] ", line_n);
-	int col_n = yylloc.first_column + strlen(header) - 1;
-	fprintf(stderr, "\033[0;2m%s", header);
-	char* line = NULL;
-	rewind(yyin);
-	while (--line_n)
-	{
-		char c;
-		do { c = fgetc(yyin); } while (c != '\n');
-	}
-	size_t n = SIZE_MAX;
-	getline(&line, &n, yyin);
-	int whitespace = 0;
-	while (isspace(line[whitespace])) whitespace++;
-	line += whitespace;
-	col_n -= whitespace;
-	fprintf(stderr, "\033[0;1m%s", line);
-	while (--col_n) fputc(' ', stderr);
-	fprintf(stderr, "\033[31;1m^ %s\033[0m\n", str);
-	exit(EXIT_FAILURE);
+	throw_error(str, yyin, yylloc.first_line, yylloc.first_column);
 }
 
 int brace_depth = 0;
 int last_openbrace_line;
 int last_openbrace_col;
-#line 526 "lexer.c"
+#line 505 "lexer.c"
 
-#line 528 "lexer.c"
+#line 507 "lexer.c"
 
 #define INITIAL 0
 #define BLOCK_COMMENT 1
@@ -740,9 +719,9 @@ YY_DECL
 		}
 
 	{
-#line 53 "lexer.l"
+#line 32 "lexer.l"
 
-#line 746 "lexer.c"
+#line 725 "lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -801,62 +780,62 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 54 "lexer.l"
+#line 33 "lexer.l"
 return DEF;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 55 "lexer.l"
+#line 34 "lexer.l"
 return LET;
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 56 "lexer.l"
+#line 35 "lexer.l"
 return TYPE;
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 58 "lexer.l"
+#line 37 "lexer.l"
 yylval.text=strdup(yytext);       return NUMBER;
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 59 "lexer.l"
+#line 38 "lexer.l"
 yylval.text=lc(strdup(yytext));   return IDENTIFIER;
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 60 "lexer.l"
+#line 39 "lexer.l"
 yylval.text=lc(strdup(yytext+1)); return SYMBOL;
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 61 "lexer.l"
+#line 40 "lexer.l"
 yylval.text=strdup(yytext);       return STRING;
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 62 "lexer.l"
+#line 41 "lexer.l"
 yyerror("unterminated string"); // TODO error message is printing with wrong column.
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 64 "lexer.l"
+#line 43 "lexer.l"
 return ';';
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 65 "lexer.l"
+#line 44 "lexer.l"
 brace_depth++; last_openbrace_line = yylloc.first_line; last_openbrace_col = yylloc.first_column; return '(';
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 67 "lexer.l"
+#line 46 "lexer.l"
 if (brace_depth--) return ')'; yyerror("unbalanced brace");
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(BLOCK_COMMENT):
-#line 69 "lexer.l"
+#line 48 "lexer.l"
 if (brace_depth) { yylloc.first_line = last_openbrace_line;
 	yylloc.first_column = last_openbrace_col;
 	yyerror("unbalanced brace"); } else yyterminate();
@@ -864,57 +843,57 @@ if (brace_depth) { yylloc.first_line = last_openbrace_line;
 case 12:
 /* rule 12 can match eol */
 YY_RULE_SETUP
-#line 73 "lexer.l"
+#line 52 "lexer.l"
 yylloc.first_line++; yylloc.first_column = 1;
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 75 "lexer.l"
+#line 54 "lexer.l"
 /* Ignore informal syntax */
 	YY_BREAK
 case 14:
 /* rule 14 can match eol */
 YY_RULE_SETUP
-#line 76 "lexer.l"
+#line 55 "lexer.l"
 /* Ignore whitespace      */
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 77 "lexer.l"
+#line 56 "lexer.l"
 /* Ignore line comments   */
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 79 "lexer.l"
+#line 58 "lexer.l"
 BEGIN(BLOCK_COMMENT);
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 80 "lexer.l"
+#line 59 "lexer.l"
 BEGIN(INITIAL);
 	YY_BREAK
 case 18:
 /* rule 18 can match eol */
 YY_RULE_SETUP
-#line 81 "lexer.l"
+#line 60 "lexer.l"
 yylloc.first_line++; yylloc.first_column = 1;
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 82 "lexer.l"
+#line 61 "lexer.l"
 
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 84 "lexer.l"
+#line 63 "lexer.l"
 yyerror("invalid token");
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 85 "lexer.l"
+#line 64 "lexer.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 918 "lexer.c"
+#line 897 "lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1880,6 +1859,6 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 85 "lexer.l"
+#line 64 "lexer.l"
 
 

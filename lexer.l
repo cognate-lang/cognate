@@ -16,28 +16,7 @@ char* lc(char* s)
 
 void yyerror(char* str)
 {
-	char header[20];
-	int line_n = yylloc.first_line;
-	sprintf(header, "[%d] ", line_n);
-	int col_n = yylloc.first_column + strlen(header) - 1;
-	fprintf(stderr, "\033[0;2m%s", header);
-	char* line = NULL;
-	rewind(yyin);
-	while (--line_n)
-	{
-		char c;
-		do { c = fgetc(yyin); } while (c != '\n');
-	}
-	size_t n = SIZE_MAX;
-	getline(&line, &n, yyin);
-	int whitespace = 0;
-	while (isspace(line[whitespace])) whitespace++;
-	line += whitespace;
-	col_n -= whitespace;
-	fprintf(stderr, "\033[0;1m%s", line);
-	while (--col_n) fputc(' ', stderr);
-	fprintf(stderr, "\033[31;1m^ %s\033[0m\n", str);
-	exit(EXIT_FAILURE);
+	throw_error(str, yyin, yylloc.first_line, yylloc.first_column);
 }
 
 int brace_depth = 0;
