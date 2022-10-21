@@ -1216,43 +1216,43 @@ yyreduce:
 
   case 7: /* TOKEN: IDENTIFIER  */
 #line 47 "parser.y"
-                             { (yyval.tree) = ast_single(identifier, (void*)lowercase((yyvsp[0].text))); }
+                             { (yyval.tree) = ast_single(identifier, (void*)lowercase((yyvsp[0].text)), pmod); }
 #line 1221 "parser.c"
     break;
 
   case 8: /* TOKEN: '(' EXPRESSION ')'  */
 #line 48 "parser.y"
-                             { (yyval.tree) = ast_single(braces, (void*)(yyvsp[-1].tree)); }
+                             { (yyval.tree) = ast_single(braces, (void*)(yyvsp[-1].tree), pmod); }
 #line 1227 "parser.c"
     break;
 
   case 9: /* TOKEN: NUMBER  */
 #line 49 "parser.y"
-                             { (yyval.tree) = ast_single(literal, mk_lit(number, (yyvsp[0].text))); }
+                             { (yyval.tree) = ast_single(literal, mk_lit(number, (yyvsp[0].text)), pmod); }
 #line 1233 "parser.c"
     break;
 
   case 10: /* TOKEN: STRING  */
 #line 50 "parser.y"
-                             { (yyval.tree) = ast_single(literal, mk_lit(string, (yyvsp[0].text))); }
+                             { (yyval.tree) = ast_single(literal, mk_lit(string, (yyvsp[0].text)), pmod); }
 #line 1239 "parser.c"
     break;
 
   case 11: /* TOKEN: SYMBOL  */
 #line 51 "parser.y"
-                             { (yyval.tree) = ast_single(literal, mk_lit(symbol, (yyvsp[0].text))); }
+                             { (yyval.tree) = ast_single(literal, mk_lit(symbol, (yyvsp[0].text)), pmod); }
 #line 1245 "parser.c"
     break;
 
   case 12: /* TOKEN: DEF IDENTIFIER  */
 #line 52 "parser.y"
-                             { (yyval.tree) = ast_single(def, (void*)lowercase((yyvsp[0].text))); }
+                             { (yyval.tree) = ast_single(def, (void*)lowercase((yyvsp[0].text)), pmod); }
 #line 1251 "parser.c"
     break;
 
   case 13: /* TOKEN: LET IDENTIFIER  */
 #line 53 "parser.y"
-                             { (yyval.tree) = ast_single(let, (void*)lowercase((yyvsp[0].text))); }
+                             { (yyval.tree) = ast_single(let, (void*)lowercase((yyvsp[0].text)), pmod); }
 #line 1257 "parser.c"
     break;
 

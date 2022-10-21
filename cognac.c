@@ -12,13 +12,25 @@
 #include <sys/mman.h>
 
 ast_list_t* full_ast = NULL;
-
+module_t* pmod = NULL;
 char* heap = NULL;
 
 static void* alloc(size_t n)
 {
 	// allocate n bytes (leaking). TODO
 	return (heap += n) - n;
+}
+
+_Noreturn void type_error(val_type_t expected, val_type_t got, ast_t* node)
+{
+	char buf[100];
+	sprintf(buf, "expected %s got %s", print_val_type(expected), print_val_type(got));
+	ast_error(buf, node);
+}
+
+_Noreturn void ast_error(char* message, ast_t* node)
+{
+	throw_error(message, node->mod->file, node->line, node->column);
 }
 
 _Noreturn void throw_error(char* message, FILE* file, size_t line_n, size_t column_n)
@@ -298,6 +310,7 @@ module_t* create_module(char* path)
 void module_parse(module_t* mod)
 {
 	assert(!strcmp(mod->path + strlen(mod->path) - 4, ".cog"));
+	pmod = mod;
 	yyin = mod->file; // imagine having a reentrant parser.
 	yyparse();
 	mod->tree = full_ast;
@@ -468,7 +481,7 @@ void _resolve_scope(ast_list_t* tree, word_list_t* words)
 				for (; w ; w = w->next)
 					if (!strcmp(w->word->name, node->op->string))
 						break;
-				if (!w) printf("cant find %s\n", node->op->string), __builtin_trap();
+				if (!w) ast_error("undefined word", node->op);
 				node->op->type = w->word->calltype;
 				node->op->word = w->word;
 				break;
@@ -533,6 +546,24 @@ const char* c_literal(lit_t* literal)
 	}
 	return literal->string; // TODO
 }
+
+const char* print_val_type(val_type_t type)
+{
+	switch (type)
+	{
+		case number: return "number";
+		case symbol: return "symbol";
+		case string: return "string";
+		case block:  return "block";
+		case list:   return "list";
+		case boolean:return "boolean";
+		case any:    return "any";
+		case box:    return "box";
+		default: __builtin_trap();
+	}
+}
+
+
 
 const char* c_val_type(val_type_t type)
 {
@@ -2332,9 +2363,9 @@ void remove_unused_funcs(module_t* m)
 	}
 }
 
-void _add_backlinks(ast_list_t** t)
+void _add_backlinks(ast_list_t** t, module_t* m)
 {
-	ast_list_t* b1 = ast_single(none, NULL);
+	ast_list_t* b1 = ast_single(none, NULL, m);
 	b1->prev = NULL;
 	b1->next = *t;
 	// add prev pointers and buffer elements
@@ -2344,9 +2375,9 @@ void _add_backlinks(ast_list_t** t)
 	{
 		a->prev = prev;
 		prev = prev->next;
-		if (a->op->type == braces) _add_backlinks(&a->op->child);
+		if (a->op->type == braces) _add_backlinks(&a->op->child, m);
 	}
-	ast_list_t* b2 = ast_single(none, NULL);
+	ast_list_t* b2 = ast_single(none, NULL, m);
 	prev->next = b2;
 	b2->prev = prev;
 	b2->next = NULL;
@@ -2355,7 +2386,7 @@ void _add_backlinks(ast_list_t** t)
 
 void add_backlinks(module_t* m)
 {
-	_add_backlinks(&m->tree);
+	_add_backlinks(&m->tree, m);
 }
 
 void inline_values(module_t* m)
@@ -2759,11 +2790,11 @@ ast_list_t* join_ast(ast_list_t* a, ast_list_t* b)
 	return a;
 }
 
-ast_list_t* ast_single(type_t type, void* data)
+ast_list_t* ast_single(type_t type, void* data, module_t* mod)
 {
 	ast_list_t* n = alloc(sizeof *n);
 	ast_t* a = alloc (sizeof *a);
-	*a = (ast_t) {.type=type, .data=data};
+	*a = (ast_t) {.type=type, .data=data, .mod=mod, .line=yylloc.first_line, .column=yylloc.first_column};
 	n->op = a;
 	n->next = n->prev = NULL;
 	return n;
@@ -2811,7 +2842,7 @@ word_list_t* builtins()
 		words = push_word(
 				make_word(b[i].name, calltype,
 					make_value(block,
-						ast_single(closure, fn))), words);
+						ast_single(closure, fn, NULL))), words); // TODO prelude module source.
 	}
 	return words;
 }

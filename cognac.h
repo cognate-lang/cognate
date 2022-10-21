@@ -154,6 +154,7 @@ struct _ast_t
 		ast_list_t* child;
 		val_type_t val_type;
 	};
+	module_t* mod;
 	size_t line;
 	size_t column;
 	type_t type;
@@ -207,7 +208,7 @@ struct _module_t
 
 ast_list_t* join_ast(ast_list_t*, ast_list_t*);
 ast_list_t* push_ast(ast_t*, ast_list_t*);
-ast_list_t* ast_single(type_t, void*);
+ast_list_t* ast_single(type_t, void*, module_t*);
 char* lowercase(const char*);
 int main(int, char**);
 void print_funcs (module_t*);
@@ -221,10 +222,13 @@ void fold_defs(module_t*);
 lit_t* mk_lit(val_type_t, const char*);
 word_list_t* builtins();
 const char* c_val_type(val_type_t);
+const char* print_val_type(val_type_t);
 _Noreturn void throw_error(char*, FILE*, size_t, size_t);
+_Noreturn void ast_error(char*, ast_t*);
 
 extern FILE* yyin;
 extern ast_list_t* full_ast;
+extern module_t* pmod;
 int yylex(void);
 int yyparse (void);
 void yyerror(char*);
