@@ -10,6 +10,15 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+ast_list_t* full_ast = NULL;
+
+char* heap = NULL;
+
+static void* alloc(size_t n)
+{
+	// allocate n bytes (leaking). TODO
+}
+
 static _Noreturn void throw_error(char* message, module_t* mod, size_t line_n, size_t column_n)
 {
 	// Calculate width of the "[LINE_NUMBER]" bit
@@ -111,7 +120,7 @@ word_t* make_word(char* name, type_t calltype, val_t* v)
 	w->used = false;
 	w->name = name;
 	w->shadow_id = shadow_id++;
-	w->used_early = false; // assume early use for now
+	w->used_early = false;
 	w->calltype = calltype;
 	w->val = v;
 	return w;
@@ -288,9 +297,9 @@ module_t* create_module(char* path)
 void module_parse(module_t* mod)
 {
 	assert(!strcmp(mod->path + strlen(mod->path) - 4, ".cog"));
-	pcc_context_t *ctx = pcc_create(mod);
-	while (pcc_parse(ctx, (void*)&mod->tree));
-	pcc_destroy(ctx);
+	yyin = mod->file; // imagine having a reentrant parser.
+	yyparse();
+	mod->tree = full_ast;
 }
 
 ast_list_t* _predeclare(ast_list_t* tree)

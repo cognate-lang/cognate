@@ -221,3 +221,10 @@ void fold_defs(module_t*);
 lit_t* mk_lit(val_type_t, const char*);
 word_list_t* builtins();
 const char* c_val_type(val_type_t);
+
+extern FILE* yyin;
+extern ast_list_t* full_ast;
+int yylex(void);
+int yyparse (void);
+void yyerror(char*);
+char* lc(char*);
