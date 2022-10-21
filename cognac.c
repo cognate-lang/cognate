@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <sys/mman.h>
 
 ast_list_t* full_ast = NULL;
 
@@ -17,6 +18,7 @@ char* heap = NULL;
 static void* alloc(size_t n)
 {
 	// allocate n bytes (leaking). TODO
+	return (heap += n) - n;
 }
 
 _Noreturn void throw_error(char* message, FILE* file, size_t line_n, size_t column_n)
@@ -74,7 +76,7 @@ val_list_t* reverse(val_list_t* v)
 	val_list_t* new = NULL;
 	for (val_list_t* c = v ; c ; c = c->next)
 	{
-		val_list_t* V = malloc(sizeof *V);
+		val_list_t* V = alloc(sizeof *V);
 		V->next = new;
 		V->val = c->val;
 		new = V;
@@ -90,7 +92,7 @@ func_t* call_to_func(ast_t* c)
 
 val_list_t* push_val (val_t* v, val_list_t* rest)
 {
-	val_list_t* a = malloc(sizeof *a);
+	val_list_t* a = alloc(sizeof *a);
 	a->val = v;
 	a->next = rest;
 	return a;
@@ -98,7 +100,7 @@ val_list_t* push_val (val_t* v, val_list_t* rest)
 
 val_t* make_value (val_type_t type, ast_list_t* source)
 {
-	val_t* v = malloc(sizeof *v);
+	val_t* v = alloc(sizeof *v);
 	v->source = source;
 	v->type = type;
 	return v;
@@ -106,7 +108,7 @@ val_t* make_value (val_type_t type, ast_list_t* source)
 
 word_list_t* push_word(word_t* w, word_list_t* next)
 {
-	word_list_t* n = malloc(sizeof *n);
+	word_list_t* n = alloc(sizeof *n);
 	n->word = w;
 	n->next = next;
 	return n;
@@ -115,7 +117,7 @@ word_list_t* push_word(word_t* w, word_list_t* next)
 word_t* make_word(char* name, type_t calltype, val_t* v)
 {
 	static size_t shadow_id = 1;
-	word_t* w = malloc(sizeof *w);
+	word_t* w = alloc(sizeof *w);
 	w->used = false;
 	w->name = name;
 	w->shadow_id = shadow_id++;
@@ -127,7 +129,7 @@ word_t* make_word(char* name, type_t calltype, val_t* v)
 
 func_list_t* push_func(func_t* f, func_list_t* next)
 {
-	func_list_t* n = malloc(sizeof *n);
+	func_list_t* n = alloc(sizeof *n);
 	n->func = f;
 	n->next = next;
 	return n;
@@ -136,14 +138,14 @@ func_list_t* push_func(func_t* f, func_list_t* next)
 char* make_func_name()
 {
 	static size_t fid = 0;
-	char* str = malloc(20);
+	char* str = alloc(20);
 	sprintf(str, "fn%zu", fid++);
 	return str;
 }
 
 func_t* make_func(ast_list_t* tree, char* name)
 {
-	func_t* func = malloc(sizeof *func);
+	func_t* func = alloc(sizeof *func);
 	func->returns = false;
 	func->ops = tree;
 	func->args = NULL;
@@ -165,7 +167,7 @@ func_t* make_func(ast_list_t* tree, char* name)
 
 ast_t* make_op(type_t type, void* data)
 {
-	ast_t* a = malloc(sizeof *a);
+	ast_t* a = alloc(sizeof *a);
 	a->type = type;
 	a->data = data;
 	return a;
@@ -173,7 +175,7 @@ ast_t* make_op(type_t type, void* data)
 
 void insert_op_before(ast_t* op, ast_list_t* current)
 {
-	ast_list_t* n = malloc(sizeof *n);
+	ast_list_t* n = alloc(sizeof *n);
 	n->prev = current->prev;
 	n->next = current;
 	current->prev->next = n;
@@ -183,7 +185,7 @@ void insert_op_before(ast_t* op, ast_list_t* current)
 
 void insert_op_after(ast_t* op, ast_list_t* current)
 {
-	ast_list_t* n = malloc(sizeof *n);
+	ast_list_t* n = alloc(sizeof *n);
 	n->prev = current;
 	n->next = current->next;
 	current->next->prev = n;
@@ -200,7 +202,7 @@ void remove_op(ast_list_t* op)
 reg_t* make_register(val_type_t t, ast_list_t* source)
 {
 	static size_t next_register_id = 0;
-	reg_t* reg = malloc (sizeof *reg);
+	reg_t* reg = alloc (sizeof *reg);
 	reg->type = t;
 	reg->source = source;
 	reg->id = next_register_id++;
@@ -272,7 +274,7 @@ reg_t* pop_register_rear(reg_dequeue_t* registers)
 
 reg_dequeue_t* make_register_dequeue()
 {
-	reg_dequeue_t* r = malloc(sizeof *r);
+	reg_dequeue_t* r = alloc(sizeof *r);
 	r->front = r->rear = NULL;
 	r->len = 0;
 	return r;
@@ -281,7 +283,7 @@ reg_dequeue_t* make_register_dequeue()
 
 module_t* create_module(char* path)
 {
-	module_t* mod = malloc(sizeof *mod);
+	module_t* mod = alloc(sizeof *mod);
 	mod->path = path;
 	mod->file = fopen(path, "r");
 	char* path2 = strdup(path);
@@ -575,7 +577,7 @@ char* sanitize(char* s)
 char* prefix(char* str)
 {
 	size_t len = strlen(str);
-	char* s = malloc(len + 4);
+	char* s = alloc(len + 4);
 	*(int*)s = *(int*)"___\0";
 	strcpy(s+3, str);
 	return s;
@@ -583,7 +585,7 @@ char* prefix(char* str)
 
 const char* c_word_name(word_t* word)
 {
-	char* str = malloc(strlen(word->name) + 20);
+	char* str = alloc(strlen(word->name) + 20);
 	*(uint32_t*)str = *(uint32_t*)"___";
 	if (word->shadow_id)
 		sprintf(str+3, "%s_%zu", word->name, word->shadow_id);
@@ -1007,9 +1009,9 @@ void add_generics(module_t* mod)
 			f->func->generic_variant = NULL;
 			continue;
 		}
-		ast_list_t* tree = malloc(sizeof *tree);
+		ast_list_t* tree = alloc(sizeof *tree);
 		tree->prev = NULL;
-		tree->next = malloc(sizeof *(tree->next));
+		tree->next = alloc(sizeof *(tree->next));
 		tree->op = make_op(none, NULL);
 		tree->next->op = make_op(none, NULL);
 		tree->next->prev = tree;
@@ -1852,7 +1854,7 @@ void print_funcs (module_t* mod)
 
 void* assoc_push(void* from, void* to, ptr_assoc_t* assoc)
 {
-	ptr_assoc_t* new = malloc(sizeof *new);
+	ptr_assoc_t* new = alloc(sizeof *new);
 	new->next = assoc;
 	new->from = from;
 	new->to = to;
@@ -1873,14 +1875,14 @@ void* ptr_assoc_lookup(void* ptr, ptr_assoc_t* assoc)
 
 ast_list_t* clone_func(ast_list_t* ops, ptr_assoc_t* assoc, func_list_t** funcs)
 {
-	ast_list_t* l = malloc (sizeof *l);
-	l->op = malloc(sizeof *(l->op));
+	ast_list_t* l = alloc (sizeof *l);
+	l->op = alloc(sizeof *(l->op));
 	l->op->type = none;
 	l->prev = NULL;
 	ast_list_t* prev = l;
 	for (ast_list_t* op = ops->next ; op ; op = op->next)
 	{
-		ast_list_t* node = malloc(sizeof *node);
+		ast_list_t* node = alloc(sizeof *node);
 		node->next = NULL;
 		node->prev = prev;
 		prev->next = node;
@@ -2389,10 +2391,10 @@ void static_calls(module_t* m)
 
 ast_list_t* make_astlist()
 {
-	ast_list_t* a = malloc(sizeof *a);
-	ast_list_t* b = malloc(sizeof *b);
-	ast_t* A = malloc(sizeof *A);
-	ast_t* B = malloc(sizeof *B);
+	ast_list_t* a = alloc(sizeof *a);
+	ast_list_t* b = alloc(sizeof *b);
+	ast_t* A = alloc(sizeof *A);
+	ast_t* B = alloc(sizeof *B);
 	A->type = none;
 	B->type = none;
 	a->op = A;
@@ -2508,7 +2510,7 @@ void merge_symbols(module_t* m)
 				{
 					if (!strcmp(s->text, ast->op->literal->string)) goto next;
 				}
-				symbol_list_t* S = malloc(sizeof *S);
+				symbol_list_t* S = alloc(sizeof *S);
 				S->text = (char*)ast->op->literal->string;
 				S->next = m->symbols;
 				m->symbols = S;
@@ -2690,6 +2692,9 @@ void end(module_t* m) { exit(EXIT_SUCCESS); }
 
 int main(int argc, char** argv)
 {
+
+	long system_memory = sysconf(_SC_PHYS_PAGES) * 4096;
+	heap = mmap(0, system_memory, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
 	(void)argc; (void)argv;
 	assert(argc == 2);
 	module_t* m = create_module(argv[1]);
@@ -2756,8 +2761,8 @@ ast_list_t* join_ast(ast_list_t* a, ast_list_t* b)
 
 ast_list_t* ast_single(type_t type, void* data)
 {
-	ast_list_t* n = malloc(sizeof *n);
-	ast_t* a = malloc (sizeof *a);
+	ast_list_t* n = alloc(sizeof *n);
+	ast_t* a = alloc (sizeof *a);
 	*a = (ast_t) {.type=type, .data=data};
 	n->op = a;
 	n->next = n->prev = NULL;
@@ -2766,7 +2771,7 @@ ast_list_t* ast_single(type_t type, void* data)
 
 lit_t* mk_lit(val_type_t t, const char* str)
 {
-	lit_t* l = malloc(sizeof *l);
+	lit_t* l = alloc(sizeof *l);
 	l->type = t;
 	l->string = strdup(str);
 	return l;
@@ -2783,7 +2788,7 @@ word_list_t* builtins()
 
 	for (size_t i = 0; b[i].name ; ++i)
 	{
-		func_t* fn = malloc(sizeof *fn);
+		func_t* fn = alloc(sizeof *fn);
 		fn->name = prefix(sanitize(b[i].name));
 		fn->returns = b[i].returns;
 		fn->stack = b[i].stack;
