@@ -46,6 +46,7 @@ static void* alloc(size_t n)
 	// allocate n bytes (leaking). TODO
 	return (heap += n) - n;
 }
+
 where_t* parse_pos()
 {
 	where_t* p = alloc(sizeof *p);
@@ -56,35 +57,31 @@ where_t* parse_pos()
 }
 
 
-_Noreturn void type_error(val_type_t expected, val_type_t got, ast_t* node)
+_Noreturn void type_error(val_type_t expected, val_type_t got, where_t* pos)
 {
 	char buf[100];
-	sprintf(buf, "expected %s got %s", print_val_type(expected), print_val_type(got));
-	ast_error(buf, node);
+	sprintf(buf, "expected %s\ngot %s", print_val_type(expected), print_val_type(got));
+	throw_error(buf, pos);
 }
 
-_Noreturn void ast_error(char* message, ast_t* node)
-{
-	throw_error(message, node->where->mod->file, node->where->line, node->where->col);
-}
-
-_Noreturn void throw_error(char* message, FILE* file, size_t line_n, size_t column_n)
+_Noreturn void throw_error(char* message, where_t* where)
 {
 	// Calculate width of the "[LINE_NUMBER]" bit
+	message = strdup(message);
 	char number_box[64];
-	sprintf(number_box, "[%zu] ", line_n);
-	size_t offset = strlen(number_box) + column_n - 1;
+	sprintf(number_box, "[%zu] ", where->line);
+	size_t offset = strlen(number_box) + where->col - 1;
 
 	// Ok now we need to actually get the line
-	rewind(file);
-	while (--line_n)
+	rewind(where->mod->file);
+	while (--where->line)
 	{
 		char c;
-		do { c = fgetc(file); } while (c != '\n'); // read one line. TODO this is bad
+		do { c = fgetc(where->mod->file); } while (c != '\n'); // read one line. TODO this is bad
 	}
 	size_t n = SIZE_MAX;
 	char* line = NULL;
-	getline(&line, &n, file);
+	getline(&line, &n, where->mod->file);
 
 	// Now we strip leading whitespace
 	size_t whitespace = 0;
@@ -92,10 +89,24 @@ _Noreturn void throw_error(char* message, FILE* file, size_t line_n, size_t colu
 
 	// Now print shit
 	fprintf(stderr, "\n\n\033[0;2m%s\033[0;1m%s", number_box, line); // Should have newline already(?)
-	for (int i = 2 ; i < offset ; ++i) fputc(' ', stderr);
-	fprintf(stderr, "\033[31;1m/|\\\n");
-	for (int i = 0 ; i < (int)offset - (int)(strlen(message) / 2) ; ++i) fputc(' ', stderr);
-	fprintf(stderr, "%s\033[0m\n\n", message);
+	for (int i = 1 ; i < offset ; ++i) fputc(' ', stderr);
+	fprintf(stderr, "\033[31;1m|\\");
+	for (char* p = message + 1; *p != '\n' && *p != '\0' ; p++) fputc('_', stderr);
+	fputc('\n', stderr);
+	for (;;)
+	{
+		char* next = message;
+		for (; *next != '\n' && *next != '\0' ; next++);
+		bool again = *next == '\n';
+		*next = '\0';
+		for (int i = 1 ; i < offset ; ++i) fputc(' ', stderr);
+		fputs("|", stderr);
+		fputs(message, stderr);
+		if (!again) break;
+		fputc('\n', stderr);
+		message = next + 1;
+	}
+	fputs("\033[0m\n\n", stderr);
 	exit(EXIT_FAILURE);
 }
 
@@ -367,7 +378,7 @@ ast_list_t* _predeclare(ast_list_t* tree)
 							make_value(node->op->type==def?block:any, node));
 					node->op->type = bind;
 					node->op->word = new;
-					insert_op_after(make_op(define, new), tree);
+					insert_op_after(make_op(define, new, node->op->where), tree);
 					break;
 				}
 				break;
@@ -517,7 +528,7 @@ void _resolve_scope(ast_list_t* tree, word_list_t* words)
 				for (; w ; w = w->next)
 					if (!strcmp(w->word->name, node->op->string))
 						break;
-				if (!w) ast_error("undefined word", node->op);
+				if (!w) throw_error("undefined word", node->op->where);
 				node->op->type = w->word->calltype;
 				node->op->word = w->word;
 				break;
@@ -1079,12 +1090,12 @@ void add_generics(module_t* mod)
 		ast_list_t* tree = alloc(sizeof *tree);
 		tree->prev = NULL;
 		tree->next = alloc(sizeof *(tree->next));
-		tree->op = make_op(none, NULL);
-		tree->next->op = make_op(none, NULL);
+		tree->op = make_op(none, NULL, NULL);
+		tree->next->op = make_op(none, NULL, NULL);
 		tree->next->prev = tree;
 		tree->next->next = NULL;
 		insert_op_after(
-				make_op(static_call, f->func), tree);
+				make_op(static_call, f->func, NULL), tree);
 		char* name = make_func_name();
 		func_t* f_ = make_func(tree, name);
 		f_->generic = true;
@@ -1181,15 +1192,15 @@ void _add_arguments(func_t* f)
 {
 	for (size_t i = 0 ; i < f->argc ; ++i)
 	{
-		insert_op_after(make_op(unpick, NULL), f->ops);
-		insert_op_after(make_op(load, NULL), f->ops);
+		insert_op_after(make_op(unpick, NULL, NULL), f->ops);
+		insert_op_after(make_op(load, NULL, NULL), f->ops);
 		f->args = push_val(make_value(any, f->ops), f->args);
 	}
 	if (f->returns)
 	{
 		ast_list_t* end = f->ops;
 		while (end->next) end = end->next;
-		insert_op_before(make_op(ret, NULL), end);
+		insert_op_before(make_op(ret, NULL, NULL), end);
 		f->rettype = any;
 	}
 	f->args = reverse(f->args);
@@ -1341,8 +1352,8 @@ void _add_registers(func_t* f)
 					if (registers) registers--;
 					else
 					{
-						insert_op_before(make_op(pop, NULL), n);
-						insert_op_before(make_op(unpick, NULL), n);
+						insert_op_before(make_op(pop, NULL, op->where), n);
+						insert_op_before(make_op(unpick, NULL, op->where), n);
 						f->stack = true;
 					}
 
@@ -1361,8 +1372,8 @@ void _add_registers(func_t* f)
 						f->stack = true;
 						for (size_t i = registers; i > (size_t)v->argc ; --i)
 						{
-							insert_op_before(make_op(pick, NULL), n);
-							insert_op_before(make_op(push, NULL), n);
+							insert_op_before(make_op(pick, NULL, op->where), n);
+							insert_op_before(make_op(push, NULL, op->where), n);
 							registers--;
 						}
 					}
@@ -1374,8 +1385,8 @@ void _add_registers(func_t* f)
 						if (registers) registers--;
 						else
 						{
-							insert_op_before(make_op(pop, NULL), n);
-							insert_op_before(make_op(unpick, NULL), n);
+							insert_op_before(make_op(pop, NULL, op->where), n);
+							insert_op_before(make_op(unpick, NULL, op->where), n);
 							f->stack = true;
 						}
 					}
@@ -1391,8 +1402,8 @@ void _add_registers(func_t* f)
 					if (registers) registers--;
 					else
 					{
-						insert_op_before(make_op(pop, NULL), n);
-						insert_op_before(make_op(unpick, NULL), n);
+						insert_op_before(make_op(pop, NULL, op->where), n);
+						insert_op_before(make_op(unpick, NULL, op->where), n);
 						f->stack = true;
 					}
 				}
@@ -1408,8 +1419,8 @@ void _add_registers(func_t* f)
 						f->stack = true;
 						for (size_t i = registers; i > (size_t)fn->argc ; --i)
 						{
-							insert_op_before(make_op(pick, NULL), n);
-							insert_op_before(make_op(push, NULL), n);
+							insert_op_before(make_op(pick, NULL, op->where), n);
+							insert_op_before(make_op(push, NULL, op->where), n);
 							registers--;
 						}
 					}
@@ -1418,8 +1429,8 @@ void _add_registers(func_t* f)
 						if (registers) registers--;
 						else
 						{
-							insert_op_before(make_op(pop, NULL), n);
-							insert_op_before(make_op(unpick, NULL), n);
+							insert_op_before(make_op(pop, NULL, op->where), n);
+							insert_op_before(make_op(unpick, NULL, op->where), n);
 							f->stack = true;
 						}
 					}
@@ -1432,8 +1443,8 @@ void _add_registers(func_t* f)
 				if (registers) registers--;
 				else
 				{
-					insert_op_before(make_op(pop, NULL), n);
-					insert_op_before(make_op(unpick, NULL), n);
+					insert_op_before(make_op(pop, NULL, op->where), n);
+					insert_op_before(make_op(unpick, NULL, op->where), n);
 					f->stack = true;
 				}
 				break;
@@ -1444,8 +1455,8 @@ void _add_registers(func_t* f)
 		{
 			for (size_t i = 0 ; i < registers ; ++i)
 			{
-				insert_op_before(make_op(pick, NULL), n);
-				insert_op_before(make_op(push, NULL), n);
+				insert_op_before(make_op(pick, NULL, op->where), n);
+				insert_op_before(make_op(push, NULL, op->where), n);
 			}
 			f->stack = true;
 		}
@@ -1538,7 +1549,7 @@ bool add_var_types_forwards(module_t* mod)
 						val_type_t t = pop_register_front(registers)->type;
 						if (t != any && func->func->rettype != t)
 						{
-							if (func->func->rettype != any) unreachable(); // type error
+							if (func->func->rettype != any) type_error(func->func->rettype, t, op->op->where); // type error
 							func->func->rettype = t;
 							changed = 1;
 						}
@@ -1584,7 +1595,7 @@ bool add_var_types_forwards(module_t* mod)
 						val_type_t t = pop_register_front(registers)->type;
 						if (t != any && op->op->word->val->type != t) // Early use needs to be bound to undefined symbol
 						{
-							if (op->op->word->val->type != any) unreachable(); // type error
+							if (op->op->word->val->type != any) type_error(op->op->word->val->type, t, op->op->where); // type error
 							op->op->word->val->type = t;
 							changed = 1;
 						}
@@ -1636,7 +1647,7 @@ bool add_var_types_backwards(module_t* mod)
 						val_type_t t = pop_register_front(registers)->type;
 						if (t != any && op->op->word->val->type != t)
 						{
-							if (op->op->word->val->type != any) unreachable(); // type error
+							if (op->op->word->val->type != any) type_error(op->op->word->val->type, t, op->op->where); // type error
 							op->op->word->val->type = t;
 							changed = true;
 						}
@@ -1698,7 +1709,7 @@ bool add_var_types_backwards(module_t* mod)
 			val_type_t t = args->val->type;
 			if (t != any && v->val->type != t && !func->func->branch)
 			{
-				if (v->val->type != any) unreachable(); // type error
+				if (v->val->type != any) type_error(v->val->type, t, NULL); // TODO position info
 				v->val->type = t;
 				changed = 1;
 			}
@@ -1739,33 +1750,33 @@ void add_typechecks(module_t* mod)
 						if (ar1->type == boolean) {}
 						else if (ar1->type == any)
 						{
-							insert_op_before(make_op(from_any, (void*)boolean), op);
-						} else unreachable();
-						insert_op_before(make_op(unpick, NULL), op);
+							insert_op_before(make_op(from_any, (void*)boolean, op->op->where), op);
+						} else type_error(boolean, ar1->type, op->op->where);
+						insert_op_before(make_op(unpick, NULL, op->op->where), op);
 						val_type_t res = any;
 						if (ar2->type == ar3->type)
 						{
 							res = ar2->type;
-							insert_op_before(make_op(unpick, NULL), op);
+							insert_op_before(make_op(unpick, NULL, op->op->where), op);
 						}
 						else if (ar2->type == any)
 						{
-							insert_op_before(make_op(unpick, NULL), op);
-							insert_op_before(make_op(to_any, (void*)ar3->type), op);
+							insert_op_before(make_op(unpick, NULL, op->op->where), op);
+							insert_op_before(make_op(to_any, (void*)ar3->type, op->op->where), op);
 						}
 						else if (ar3->type == any)
 						{
-							insert_op_before(make_op(to_any, (void*)ar2->type), op);
-							insert_op_before(make_op(unpick, NULL), op);
+							insert_op_before(make_op(to_any, (void*)ar2->type, op->op->where), op);
+							insert_op_before(make_op(unpick, NULL, op->op->where), op);
 						}
 						else
 						{
-							insert_op_before(make_op(to_any, (void*)ar2->type), op);
-							insert_op_before(make_op(unpick, NULL), op);
-							insert_op_before(make_op(to_any, (void*)ar3->type), op);
+							insert_op_before(make_op(to_any, (void*)ar2->type, op->op->where), op);
+							insert_op_before(make_op(unpick, NULL, op->op->where), op);
+							insert_op_before(make_op(to_any, (void*)ar3->type, op->op->where), op);
 						}
-						insert_op_before(make_op(pick, NULL), op);
-						insert_op_before(make_op(pick, NULL), op);
+						insert_op_before(make_op(pick, NULL, op->op->where), op);
+						insert_op_before(make_op(pick, NULL, op->op->where), op);
 						push_register_front(make_register(res, op), registers);
 					}
 					break;
@@ -1792,7 +1803,7 @@ void add_typechecks(module_t* mod)
 					{
 						reg_t* reg = pop_register_front(registers);
 						if (reg->type != any)
-							insert_op_before(make_op(to_any, (void*)reg->type), op);
+							insert_op_before(make_op(to_any, (void*)reg->type, op->op->where), op);
 						break;
 					}
 				case pick:
@@ -1813,8 +1824,8 @@ void add_typechecks(module_t* mod)
 						if (b->type == boolean) {}
 						else if (b->type == any)
 						{
-							insert_op_before(make_op(from_any, (void*)boolean), op);
-						} else unreachable();
+							insert_op_before(make_op(from_any, (void*)boolean, op->op->where), op);
+						} else type_error(boolean, b->type, op->op->where);
 						func_t* fn = op->op->funcs->func;
 						//func_t* fn2 = op->op->funcs->next->func;
 						size_t i = 0;
@@ -1825,16 +1836,16 @@ void add_typechecks(module_t* mod)
 							val_type_t expected = a->val->type;
 							val_type_t got = reg->type;
 							//if (a->val->type != a2->val->type) expected = any; // hmmm
-							insert_op_before(make_op(unpick, NULL), op);
+							insert_op_before(make_op(unpick, NULL, op->op->where), op);
 							if (expected == got) { }
 							else if (expected == any)
-								insert_op_before(make_op(to_any, (void*)got), op);
+								insert_op_before(make_op(to_any, (void*)got, op->op->where), op);
 							else if (got == any)
-								insert_op_before(make_op(from_any, (void*)expected), op);
-							else unreachable();
+								insert_op_before(make_op(from_any, (void*)expected, op->op->where), op);
+							else type_error(expected, got, op->op->where);
 						}
 						for ( int i = 0 ; i < fn->argc ; ++i )
-							insert_op_before(make_op(pick, NULL), op);
+							insert_op_before(make_op(pick, NULL, op->op->where), op);
 						if (fn->returns)
 							push_register_front(make_register(fn->rettype, op), registers);
 						break;
@@ -1852,14 +1863,14 @@ void add_typechecks(module_t* mod)
 							val_type_t got = reg->type;
 							if (expected == got) { }
 							else if (expected == any)
-								insert_op_before(make_op(to_any, (void*)got), op);
+								insert_op_before(make_op(to_any, (void*)got, op->op->where), op);
 							else if (got == any)
-								insert_op_before(make_op(from_any, (void*)expected), op);
-							else unreachable();
-							insert_op_before(make_op(unpick, NULL), op);
+								insert_op_before(make_op(from_any, (void*)expected, op->op->where), op);
+							else type_error(expected, got, op->op->where);
+							insert_op_before(make_op(unpick, NULL, op->op->where), op);
 						}
 						for ( size_t i = 0 ; i < fn->argc ; ++i )
-							insert_op_before(make_op(pick, NULL), op);
+							insert_op_before(make_op(pick, NULL, op->op->where), op);
 						if (fn->returns)
 							push_register_front(make_register(fn->rettype, op), registers);
 						break;
@@ -1871,10 +1882,10 @@ void add_typechecks(module_t* mod)
 						val_type_t got = reg1->type;
 						if (expected == got) { }
 						else if (expected == any)
-							insert_op_before(make_op(to_any, (void*)got), op);
+							insert_op_before(make_op(to_any, (void*)got, op->op->where), op);
 						else if (got == any)
-							insert_op_before(make_op(from_any, (void*)expected), op);
-						else unreachable();
+							insert_op_before(make_op(from_any, (void*)expected, op->op->where), op);
+						else type_error(expected, got, op->op->where);
 						break;
 					}
 				case bind:
@@ -1884,10 +1895,10 @@ void add_typechecks(module_t* mod)
 						val_type_t got = reg1->type;
 						if (expected == got) { }
 						else if (expected == any)
-							insert_op_before(make_op(to_any, (void*)got), op);
+							insert_op_before(make_op(to_any, (void*)got, op->op->where), op);
 						else if (got == any)
-							insert_op_before(make_op(from_any, (void*)expected), op);
-						else unreachable();
+							insert_op_before(make_op(from_any, (void*)expected, op->op->where), op);
+						else type_error(expected, got, op->op->where);
 						break;
 					}
 				case none: break;
@@ -1966,7 +1977,7 @@ ast_list_t* clone_func(ast_list_t* ops, ptr_assoc_t* assoc, func_list_t** funcs)
 								ptr_assoc_lookup(op->op->word->val->source,
 									assoc)));
 					assoc = assoc_push(op->op->word, new_word, assoc);
-					node->op = make_op(define, new_word);
+					node->op = make_op(define, new_word, op->op->where);
 					break;
 				}
 			case bind:
@@ -1977,10 +1988,10 @@ ast_list_t* clone_func(ast_list_t* ops, ptr_assoc_t* assoc, func_list_t** funcs)
 					word_t* new = ptr_assoc_lookup(op->op->word, assoc);
 					if (!new)
 					{
-						node->op = make_op(op->op->type, op->op->word);
+						node->op = make_op(op->op->type, op->op->word, op->op->where);
 						break;
 					}
-					node->op = make_op(op->op->type, new);
+					node->op = make_op(op->op->type, new, op->op->where);
 					break;
 				}
 			case closure:
@@ -1989,12 +2000,12 @@ ast_list_t* clone_func(ast_list_t* ops, ptr_assoc_t* assoc, func_list_t** funcs)
 							clone_func(op->op->func->ops, assoc, funcs),
 							make_func_name());
 					*funcs = push_func(fn, *funcs);
-					node->op = make_op(closure, fn);
+					node->op = make_op(closure, fn, op->op->where);
 					break;
 				}
 			default:
 				node->op = op->op;
-				node->op = make_op(op->op->type, op->op->data);
+				node->op = make_op(op->op->type, op->op->data, op->op->where);
 				break;
 		}
 		assoc = assoc_push(op, node, assoc);
@@ -2528,12 +2539,12 @@ void static_branches(module_t* m)
 											NULL));
 							ast_list_t* op = make_astlist();
 							word_t* b = make_word("", var, NULL);
-							insert_op_after(make_op(fn_branch, fl), op);
-							insert_op_after(make_op(var, b), op);
+							insert_op_after(make_op(fn_branch, fl, op->op->where), op);
+							insert_op_after(make_op(var, b, op->op->where), op);
 							func_t* F = make_func(op, make_func_name());
-							a->op = make_op(closure, F);
-							insert_op_before(make_op(define, b), a);
-							insert_op_before(make_op(bind, b), a);
+							a->op = make_op(closure, F, op->op->where);
+							insert_op_before(make_op(define, b, op->op->where), a);
+							insert_op_before(make_op(bind, b, op->op->where), a);
 							b->val = make_value(any, a->prev);
 							m->funcs = push_func(F, m->funcs);
 							remove_op(i1->source);
@@ -2597,10 +2608,7 @@ void _catch_shadows(ast_list_t* tree)
 			for (word_list_t* w = defined ; w ; w = w->next)
 			{
 				if (!strcmp(w->word->name, a->op->string))
-				{
-					printf("Cannot shadow `%s' in same block\n", w->word->name);
-					unreachable();
-				}
+					throw_error("cannot shadow\nin same block", a->op->where);
 			}
 			word_t* W = make_word(a->op->string, a->op->type, NULL);
 			defined = push_word(W, defined);
@@ -2683,13 +2691,13 @@ void balance_branches(module_t* m)
 							adaptor->args = adapt_args;
 
 							if (adaptor->returns)
-								insert_op_after(make_op(ret, NULL), body);
+								insert_op_after(make_op(ret, NULL, op->where), body);
 							/*
 							else if (fns->func->returns)
 								insert_op_after(make_op(push, NULL), body);
 								*/
 
-							insert_op_after(make_op(static_call, fns->func), body);
+							insert_op_after(make_op(static_call, fns->func, op->where), body);
 
 							/*
 							int remaining = fns->func->argc - adaptor->argc;
@@ -2702,8 +2710,8 @@ void balance_branches(module_t* m)
 
 							for (val_list_t* v = adaptor->args ; v ; v = v->next)
 							{
-								insert_op_after(make_op(unpick, NULL), body);
-								insert_op_after(make_op(load, NULL), body);
+								insert_op_after(make_op(unpick, NULL, op->where), body);
+								insert_op_after(make_op(load, NULL, op->where), body);
 							}
 
 							m->funcs = push_func(adaptor, m->funcs);

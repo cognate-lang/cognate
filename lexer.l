@@ -1,6 +1,6 @@
 %option noyywrap noinput nounput nodefault
 %{
-#define YY_USER_ACTION yylloc.first_column += yyleng;
+#define YY_USER_ACTION yylloc.first_column += yyleng; yylloc.last_column += yyleng;
 
 #include "cognac.h"
 #include "parser.h"
@@ -16,7 +16,7 @@ char* lc(char* s)
 
 void yyerror(char* str)
 {
-	throw_error(str, yyin, yylloc.first_line, yylloc.first_column);
+	throw_error(str, parse_pos());
 }
 
 int brace_depth = 0;

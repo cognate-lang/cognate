@@ -19,6 +19,7 @@ typedef struct _val_t val_t;
 typedef struct _val_list_t val_list_t;
 typedef struct _reg_t reg_t;
 typedef struct _where_t where_t;
+typedef struct _where_list_t where_list_t;
 
 typedef enum _type_t
 {
@@ -212,6 +213,12 @@ struct _where_t
 	size_t col;
 };
 
+struct _where_list_t
+{
+	where_t* where;
+	where_list_t* next;
+};
+
 ast_list_t* join_ast(ast_list_t*, ast_list_t*);
 ast_list_t* push_ast(ast_t*, ast_list_t*);
 ast_list_t* ast_single(type_t, void*, where_t*);
@@ -229,8 +236,7 @@ lit_t* mk_lit(val_type_t, const char*);
 word_list_t* builtins();
 const char* c_val_type(val_type_t);
 const char* print_val_type(val_type_t);
-_Noreturn void throw_error(char*, FILE*, size_t, size_t);
-_Noreturn void ast_error(char*, ast_t*);
+_Noreturn void throw_error(char*, where_t*);
 
 extern FILE* yyin;
 extern ast_list_t* full_ast;
