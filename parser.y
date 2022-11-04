@@ -44,13 +44,13 @@ STATEMENT:
 	;
 
 TOKEN:
-	  IDENTIFIER         { $$ = ast_single(identifier, (void*)lowercase($1), pmod); }
-	| '(' EXPRESSION ')' { $$ = ast_single(braces, (void*)$2, pmod); }
-	| NUMBER             { $$ = ast_single(literal, mk_lit(number, $1), pmod); }
-	| STRING             { $$ = ast_single(literal, mk_lit(string, $1), pmod); }
-	| SYMBOL             { $$ = ast_single(literal, mk_lit(symbol, $1), pmod); }
-	| DEF IDENTIFIER     { $$ = ast_single(def, (void*)lowercase($2), pmod); }
-	| LET IDENTIFIER     { $$ = ast_single(let, (void*)lowercase($2), pmod); }
+	  IDENTIFIER         { $$ = ast_single(identifier, (void*)lowercase($1), parse_pos()); }
+	| '(' EXPRESSION ')' { $$ = ast_single(braces, (void*)$2, parse_pos()); }
+	| NUMBER             { $$ = ast_single(literal, mk_lit(number, $1), parse_pos()); }
+	| STRING             { $$ = ast_single(literal, mk_lit(string, $1), parse_pos()); }
+	| SYMBOL             { $$ = ast_single(literal, mk_lit(symbol, $1), parse_pos()); }
+	| DEF IDENTIFIER     { $$ = ast_single(def, (void*)lowercase($2), parse_pos()); }
+	| LET IDENTIFIER     { $$ = ast_single(let, (void*)lowercase($2), parse_pos()); }
 	;
 
 %%

@@ -46,6 +46,15 @@ static void* alloc(size_t n)
 	// allocate n bytes (leaking). TODO
 	return (heap += n) - n;
 }
+where_t* parse_pos()
+{
+	where_t* p = alloc(sizeof *p);
+	p->mod = pmod;
+	p->line = yylloc.first_line;
+	p->col = yylloc.first_column;
+	return p;
+}
+
 
 _Noreturn void type_error(val_type_t expected, val_type_t got, ast_t* node)
 {
@@ -56,7 +65,7 @@ _Noreturn void type_error(val_type_t expected, val_type_t got, ast_t* node)
 
 _Noreturn void ast_error(char* message, ast_t* node)
 {
-	throw_error(message, node->mod->file, node->line, node->column);
+	throw_error(message, node->where->mod->file, node->where->line, node->where->col);
 }
 
 _Noreturn void throw_error(char* message, FILE* file, size_t line_n, size_t column_n)
@@ -203,11 +212,12 @@ func_t* make_func(ast_list_t* tree, char* name)
 	return func;
 }
 
-ast_t* make_op(type_t type, void* data)
+ast_t* make_op(type_t type, void* data, where_t* pos)
 {
 	ast_t* a = alloc(sizeof *a);
 	a->type = type;
 	a->data = data;
+	a->where = pos;
 	return a;
 }
 
@@ -2389,9 +2399,9 @@ void remove_unused_funcs(module_t* m)
 	}
 }
 
-void _add_backlinks(ast_list_t** t, module_t* m)
+void _add_backlinks(ast_list_t** t)
 {
-	ast_list_t* b1 = ast_single(none, NULL, m);
+	ast_list_t* b1 = ast_single(none, NULL, NULL);
 	b1->prev = NULL;
 	b1->next = *t;
 	// add prev pointers and buffer elements
@@ -2401,9 +2411,9 @@ void _add_backlinks(ast_list_t** t, module_t* m)
 	{
 		a->prev = prev;
 		prev = prev->next;
-		if (a->op->type == braces) _add_backlinks(&a->op->child, m);
+		if (a->op->type == braces) _add_backlinks(&a->op->child);
 	}
-	ast_list_t* b2 = ast_single(none, NULL, m);
+	ast_list_t* b2 = ast_single(none, NULL, NULL);
 	prev->next = b2;
 	b2->prev = prev;
 	b2->next = NULL;
@@ -2412,7 +2422,7 @@ void _add_backlinks(ast_list_t** t, module_t* m)
 
 void add_backlinks(module_t* m)
 {
-	_add_backlinks(&m->tree, m);
+	_add_backlinks(&m->tree);
 }
 
 void inline_values(module_t* m)
@@ -2815,11 +2825,11 @@ ast_list_t* join_ast(ast_list_t* a, ast_list_t* b)
 	return a;
 }
 
-ast_list_t* ast_single(type_t type, void* data, module_t* mod)
+ast_list_t* ast_single(type_t type, void* data, where_t* pos)
 {
 	ast_list_t* n = alloc(sizeof *n);
 	ast_t* a = alloc (sizeof *a);
-	*a = (ast_t) {.type=type, .data=data, .mod=mod, .line=yylloc.first_line, .column=yylloc.first_column};
+	*a = (ast_t) {.type=type, .data=data, .where=pos};
 	n->op = a;
 	n->next = n->prev = NULL;
 	return n;
