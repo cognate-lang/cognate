@@ -10,10 +10,36 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/mman.h>
+#include <execinfo.h>
 
 ast_list_t* full_ast = NULL;
 module_t* pmod = NULL;
 char* heap = NULL;
+
+static void unreachable()
+{
+	char msg[] = "\n\n\033[31;1m"
+	"\t  ___  _\n"
+	"\t / _ \\| |__    _ __   ___\n"
+   "\t| | | | '_ \\  | '_ \\ / _ \\\n"
+   "\t| |_| | | | | | | | | (_) |\n"
+   "\t \\___/|_| |_| |_| |_|\\___/\n\n"
+	"\tERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR\n\n"
+	"\tThe compiler has reached an unreachable state!\n"
+	"\tThis error is my fault not yours, so give\n"
+	"\tyourself a pat on the back for finding a bug\n"
+	"\tin the compiler - then submit a bug report!\n\n"
+	"\tTo make this easier, I'm including a handy\n"
+	"\tbacktrace:\n\n";
+
+	write(STDERR_FILENO, msg, sizeof(msg));
+
+	static void *bt[128];
+	int bt_sz = backtrace(bt, 128);
+	backtrace_symbols_fd(bt, bt_sz, STDERR_FILENO);
+	write(STDERR_FILENO, "\033[0m\n\n", sizeof("\033[0m\n\n"));
+	__builtin_trap();
+}
 
 static void* alloc(size_t n)
 {
@@ -224,7 +250,7 @@ reg_t* make_register(val_type_t t, ast_list_t* source)
 
 void push_register_front(reg_t* reg, reg_dequeue_t* registers)
 {
-	if (!reg) __builtin_trap();
+	if (!reg) unreachable();
 	if (registers->len)
 	{
 		reg->prev = NULL;
@@ -243,7 +269,7 @@ void push_register_front(reg_t* reg, reg_dequeue_t* registers)
 
 void push_register_rear(reg_t* reg, reg_dequeue_t* registers)
 {
-	if (!reg) __builtin_trap();
+	if (!reg) unreachable();
 	if (registers->len)
 	{
 		reg->next = NULL;
@@ -353,7 +379,7 @@ void shorten_references(module_t* mod)
 		{
 			switch (a->op->type)
 			{
-				default: __builtin_trap();
+				default: unreachable();
 				case none:
 				case define:
 					break;
@@ -559,7 +585,7 @@ const char* print_val_type(val_type_t type)
 		case boolean:return "boolean";
 		case any:    return "any";
 		case box:    return "box";
-		default: __builtin_trap();
+		default: unreachable();
 	}
 }
 
@@ -577,7 +603,7 @@ const char* c_val_type(val_type_t type)
 		case boolean:return "BOOLEAN";
 		case any:    return "ANY";
 		case box:    return "BOX";
-		default: __builtin_trap();
+		default: unreachable();
 	}
 }
 
@@ -777,7 +803,7 @@ void to_c(module_t* mod)
 		{
 			switch (op->op->type)
 			{
-				default: __builtin_trap();
+				default: unreachable();
 				case fn_branch:
 					{
 						func_t* v = op->op->funcs->func;
@@ -849,7 +875,7 @@ void to_c(module_t* mod)
 					}
 					break;
 				case none: break;
-				case define: __builtin_trap();
+				case define: unreachable();
 				case push:
 					fprintf(c_source, "\tpush(_%zu);\n", pop_register_front(registers)->id);
 					break;
@@ -1130,7 +1156,7 @@ bool _determine_arguments(func_t* f)
 					argc++;
 				break;
 			case define: case none: case pick: case unpick: break;
-			default: __builtin_trap();
+			default: unreachable();
 		}
 		if (!n->next && registers && !f->entry)
 			returns = true;
@@ -1259,7 +1285,7 @@ bool _determine_registers(func_t* f)
 				else f->stack = true;
 				break;
 			case define: case none: case pick: case unpick: break;
-			default: __builtin_trap();
+			default: unreachable();
 		}
 		if (!n->next && registers)
 			f->stack = true;
@@ -1402,7 +1428,7 @@ void _add_registers(func_t* f)
 				}
 				break;
 			case define: case none: case pick: case unpick: break;
-			default: __builtin_trap();
+			default: unreachable();
 		}
 		if (!n->next)
 		{
@@ -1502,7 +1528,7 @@ bool add_var_types_forwards(module_t* mod)
 						val_type_t t = pop_register_front(registers)->type;
 						if (t != any && func->func->rettype != t)
 						{
-							if (func->func->rettype != any) __builtin_trap(); // type error
+							if (func->func->rettype != any) unreachable(); // type error
 							func->func->rettype = t;
 							changed = 1;
 						}
@@ -1548,7 +1574,7 @@ bool add_var_types_forwards(module_t* mod)
 						val_type_t t = pop_register_front(registers)->type;
 						if (t != any && op->op->word->val->type != t) // Early use needs to be bound to undefined symbol
 						{
-							if (op->op->word->val->type != any) __builtin_trap(); // type error
+							if (op->op->word->val->type != any) unreachable(); // type error
 							op->op->word->val->type = t;
 							changed = 1;
 						}
@@ -1600,7 +1626,7 @@ bool add_var_types_backwards(module_t* mod)
 						val_type_t t = pop_register_front(registers)->type;
 						if (t != any && op->op->word->val->type != t)
 						{
-							if (op->op->word->val->type != any) __builtin_trap(); // type error
+							if (op->op->word->val->type != any) unreachable(); // type error
 							op->op->word->val->type = t;
 							changed = true;
 						}
@@ -1653,7 +1679,7 @@ bool add_var_types_backwards(module_t* mod)
 				case none:
 				case define:
 					break;
-				default: __builtin_trap();
+				default: unreachable();
 			}
 
 		}
@@ -1662,7 +1688,7 @@ bool add_var_types_backwards(module_t* mod)
 			val_type_t t = args->val->type;
 			if (t != any && v->val->type != t && !func->func->branch)
 			{
-				if (v->val->type != any) __builtin_trap(); // type error
+				if (v->val->type != any) unreachable(); // type error
 				v->val->type = t;
 				changed = 1;
 			}
@@ -1704,7 +1730,7 @@ void add_typechecks(module_t* mod)
 						else if (ar1->type == any)
 						{
 							insert_op_before(make_op(from_any, (void*)boolean), op);
-						} else __builtin_trap();
+						} else unreachable();
 						insert_op_before(make_op(unpick, NULL), op);
 						val_type_t res = any;
 						if (ar2->type == ar3->type)
@@ -1778,7 +1804,7 @@ void add_typechecks(module_t* mod)
 						else if (b->type == any)
 						{
 							insert_op_before(make_op(from_any, (void*)boolean), op);
-						} else __builtin_trap();
+						} else unreachable();
 						func_t* fn = op->op->funcs->func;
 						//func_t* fn2 = op->op->funcs->next->func;
 						size_t i = 0;
@@ -1795,7 +1821,7 @@ void add_typechecks(module_t* mod)
 								insert_op_before(make_op(to_any, (void*)got), op);
 							else if (got == any)
 								insert_op_before(make_op(from_any, (void*)expected), op);
-							else __builtin_trap();
+							else unreachable();
 						}
 						for ( int i = 0 ; i < fn->argc ; ++i )
 							insert_op_before(make_op(pick, NULL), op);
@@ -1819,7 +1845,7 @@ void add_typechecks(module_t* mod)
 								insert_op_before(make_op(to_any, (void*)got), op);
 							else if (got == any)
 								insert_op_before(make_op(from_any, (void*)expected), op);
-							else __builtin_trap();
+							else unreachable();
 							insert_op_before(make_op(unpick, NULL), op);
 						}
 						for ( size_t i = 0 ; i < fn->argc ; ++i )
@@ -1838,7 +1864,7 @@ void add_typechecks(module_t* mod)
 							insert_op_before(make_op(to_any, (void*)got), op);
 						else if (got == any)
 							insert_op_before(make_op(from_any, (void*)expected), op);
-						else __builtin_trap();
+						else unreachable();
 						break;
 					}
 				case bind:
@@ -1851,12 +1877,12 @@ void add_typechecks(module_t* mod)
 							insert_op_before(make_op(to_any, (void*)got), op);
 						else if (got == any)
 							insert_op_before(make_op(from_any, (void*)expected), op);
-						else __builtin_trap();
+						else unreachable();
 						break;
 					}
 				case none: break;
 				case define: break;
-				default: __builtin_trap();
+				default: unreachable();
 			}
 		}
 	}
@@ -2035,7 +2061,7 @@ void _compute_sources(ast_list_t* a)
 			case none:
 			case define:
 				break;
-			default: __builtin_trap();
+			default: unreachable();
 		}
 	}
 }
@@ -2446,7 +2472,7 @@ void static_branches(module_t* m)
 		{
 			switch (a->op->type)
 			{
-				default: __builtin_trap();
+				default: unreachable();
 				case none:
 				case define:
 					break;
@@ -2563,7 +2589,7 @@ void _catch_shadows(ast_list_t* tree)
 				if (!strcmp(w->word->name, a->op->string))
 				{
 					printf("Cannot shadow `%s' in same block\n", w->word->name);
-					__builtin_trap();
+					unreachable();
 				}
 			}
 			word_t* W = make_word(a->op->string, a->op->type, NULL);
@@ -2723,7 +2749,6 @@ void end(module_t* m) { exit(EXIT_SUCCESS); }
 
 int main(int argc, char** argv)
 {
-
 	long system_memory = sysconf(_SC_PHYS_PAGES) * 4096;
 	heap = mmap(0, system_memory, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
 	(void)argc; (void)argv;
