@@ -20,6 +20,7 @@ typedef struct _val_list_t val_list_t;
 typedef struct _reg_t reg_t;
 typedef struct _where_t where_t;
 typedef struct _where_list_t where_list_t;
+typedef struct _module_list_t module_list_t;
 
 typedef enum _type_t
 {
@@ -27,8 +28,10 @@ typedef enum _type_t
 	// original AST only
 	let, // STRING
 	def, // STRING
+	use, // STRING
 	braces, // CHILD
 	identifier, // STRING
+	module_identifier, // STRING
 	// Both
 	literal,
 	// IR specific
@@ -129,6 +132,7 @@ struct _word_t
 {
 	char* name;
 	size_t shadow_id;
+	module_t* mod;
 	type_t calltype;
 	val_t* val;
 	bool used_early;
@@ -154,6 +158,7 @@ struct _ast_t
 		word_t* word;
 		lit_t* literal;
 		ast_list_t* child;
+		module_t* mod;
 		val_type_t val_type;
 	};
 	where_t* where;
@@ -204,6 +209,13 @@ struct _module_t
 	func_list_t* funcs;
 	func_t* entry;
 	symbol_list_t* symbols;
+	module_list_t* uses;
+};
+
+struct _module_list_t
+{
+	module_t* mod;
+	module_list_t* next;
 };
 
 struct _where_t

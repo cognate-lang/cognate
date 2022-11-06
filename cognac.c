@@ -15,6 +15,7 @@
 ast_list_t* full_ast = NULL;
 module_t* pmod = NULL;
 char* heap = NULL;
+module_t prelude = { .prefix = "prelude" };
 
 static void unreachable()
 {
@@ -43,7 +44,7 @@ static void unreachable()
 
 static void* alloc(size_t n)
 {
-	// allocate n bytes (leaking). TODO
+	// allocate n bytes (leaking).
 	return (heap += n) - n;
 }
 
@@ -73,7 +74,9 @@ _Noreturn void throw_error(char* message, where_t* where)
 	size_t offset = strlen(number_box) + where->col - 1;
 
 	// Ok now we need to actually get the line
-	rewind(where->mod->file);
+	fclose(where->mod->file);
+	where->mod->file = fopen(where->mod->path, "r");
+	printf("%zi lines\n1", where->line);
 	while (--where->line)
 	{
 		char c;
@@ -172,7 +175,7 @@ word_list_t* push_word(word_t* w, word_list_t* next)
 	return n;
 }
 
-word_t* make_word(char* name, type_t calltype, val_t* v)
+word_t* make_word(char* name, type_t calltype, val_t* v, module_t* mod)
 {
 	static size_t shadow_id = 1;
 	word_t* w = alloc(sizeof *w);
@@ -180,6 +183,7 @@ word_t* make_word(char* name, type_t calltype, val_t* v)
 	w->name = name;
 	w->shadow_id = shadow_id++;
 	w->used_early = false;
+	w->mod = mod;
 	w->calltype = calltype;
 	w->val = v;
 	return w;
@@ -359,11 +363,13 @@ void module_parse(module_t* mod)
 	assert(!strcmp(mod->path + strlen(mod->path) - 4, ".cog"));
 	pmod = mod;
 	yyin = mod->file; // imagine having a reentrant parser.
+	yylloc.first_line = 1;
+	yylloc.first_column = 1;
 	yyparse();
 	mod->tree = full_ast;
 }
 
-ast_list_t* _predeclare(ast_list_t* tree)
+ast_list_t* _predeclare(ast_list_t* tree, module_t* mod)
 {
 	for (ast_list_t* node = tree ; node ; node = node->next)
 	{
@@ -375,7 +381,7 @@ ast_list_t* _predeclare(ast_list_t* tree)
 					word_t* new = make_word(
 							node->op->string,
 							node->op->type==let?var:call,
-							make_value(node->op->type==def?block:any, node));
+							make_value(node->op->type==def?block:any, node), node->op->where->mod);
 					node->op->type = bind;
 					node->op->word = new;
 					insert_op_after(make_op(define, new, node->op->where), tree);
@@ -383,7 +389,7 @@ ast_list_t* _predeclare(ast_list_t* tree)
 				}
 				break;
 			case braces:
-				node->op->child = _predeclare(node->op->child);
+				node->op->child = _predeclare(node->op->child, mod);
 				break;
 			default: break;
 		}
@@ -511,23 +517,42 @@ end:;
 
 void predeclare(module_t* mod)
 {
-	mod->tree = _predeclare(mod->tree);
+	mod->tree = _predeclare(mod->tree, mod);
 }
 
-void _resolve_scope(ast_list_t* tree, word_list_t* words)
+void _resolve_scope(ast_list_t* tree, word_list_t* words, module_t* m)
 {
 	for (ast_list_t* node = tree ; node ; node = node->next)
 	{
 		switch(node->op->type)
 		{
 			case braces:
-				_resolve_scope(node->op->child, words);
+				_resolve_scope(node->op->child, words, m);
 				break;
 			case identifier:;
 				word_list_t* w = words;
 				for (; w ; w = w->next)
-					if (!strcmp(w->word->name, node->op->string))
+				{
+					printf("%s == %s, %s == %s\n", w->word->name, node->op->string, w->word->mod->prefix, node->op->where->mod->prefix);
+					if (!strcmp(w->word->name, node->op->string) && (w->word->mod == node->op->where->mod || w->word->mod == &prelude))
 						break;
+				}
+				if (!w) throw_error("undefined word", node->op->where);
+				node->op->type = w->word->calltype;
+				node->op->word = w->word;
+				break;
+			case module_identifier:;
+				w = words;
+				char* mod_name = strdup(node->op->string);
+				char* i = mod_name;
+				while (*i != ':') ++i;
+				*i = '\0';
+				char* ident = i + 1;
+				for (; w ; w = w->next)
+				{
+					if (!strcmp(w->word->name, ident) && !strcmp(mod_name, w->word->mod->prefix))
+						break;
+				}
 				if (!w) throw_error("undefined word", node->op->where);
 				node->op->type = w->word->calltype;
 				node->op->word = w->word;
@@ -542,7 +567,7 @@ void _resolve_scope(ast_list_t* tree, word_list_t* words)
 
 void resolve_scope(module_t* mod)
 {
-	_resolve_scope(mod->tree, builtins());
+	_resolve_scope(mod->tree, builtins(), mod);
 }
 
 func_t* _flatten_ast(ast_list_t* tree, func_list_t** rest)
@@ -1176,7 +1201,7 @@ bool _determine_arguments(func_t* f)
 				else if (can_use_args && f->argc < 255 && !f->entry)
 					argc++;
 				break;
-			case define: case none: case pick: case unpick: break;
+			 case define: case none: case pick: case unpick: break;
 			default: unreachable();
 		}
 		if (!n->next && registers && !f->entry)
@@ -1975,7 +2000,7 @@ ast_list_t* clone_func(ast_list_t* ops, ptr_assoc_t* assoc, func_list_t** funcs)
 							op->op->word->calltype,
 							make_value(op->op->word->val->type,
 								ptr_assoc_lookup(op->op->word->val->source,
-									assoc)));
+									assoc)), op->op->word->mod);
 					assoc = assoc_push(op->op->word, new_word, assoc);
 					node->op = make_op(define, new_word, op->op->where);
 					break;
@@ -2538,7 +2563,7 @@ void static_branches(module_t* m)
 										push_func(i2->source->op->func,
 											NULL));
 							ast_list_t* op = make_astlist();
-							word_t* b = make_word("", var, NULL);
+							word_t* b = make_word("", var, NULL, NULL);
 							insert_op_after(make_op(fn_branch, fl, op->op->where), op);
 							insert_op_after(make_op(var, b, op->op->where), op);
 							func_t* F = make_func(op, make_func_name());
@@ -2598,7 +2623,7 @@ next:;
 	}
 }
 
-void _catch_shadows(ast_list_t* tree)
+void _catch_shadows(ast_list_t* tree, module_t* m)
 {
 	word_list_t* defined = NULL;
 	for (ast_list_t* a = tree ; a ; a = a->next)
@@ -2607,19 +2632,19 @@ void _catch_shadows(ast_list_t* tree)
 		{
 			for (word_list_t* w = defined ; w ; w = w->next)
 			{
-				if (!strcmp(w->word->name, a->op->string))
+				if (!strcmp(w->word->name, a->op->string) && w->word->mod == a->op->where->mod)
 					throw_error("cannot shadow\nin same block", a->op->where);
 			}
-			word_t* W = make_word(a->op->string, a->op->type, NULL);
+			word_t* W = make_word(a->op->string, a->op->type, NULL, m);
 			defined = push_word(W, defined);
 		}
-		else if (a->op->type == braces) _catch_shadows(a->op->child);
+		else if (a->op->type == braces) _catch_shadows(a->op->child, m);
 	}
 }
 
 void catch_shadows(module_t* m)
 {
-	_catch_shadows(m->tree);
+	_catch_shadows(m->tree, m);
 }
 
 bool consistent(func_t* f1, func_t* f2)
@@ -2765,6 +2790,74 @@ end:;
 
 void end(module_t* m) { exit(EXIT_SUCCESS); }
 
+void _compute_modules(ast_list_t* A, module_t* m)
+{
+	for (ast_list_t* a = A ; a ; a = a->next)
+	{
+		if (a->op->type == module_identifier)
+		{
+			char* mod_name = strdup(a->op->string);
+			char* i = mod_name;
+			while (*i != ':') ++i;
+			*i = '\0';
+			char* ident = i + 1;
+			char* filename = alloc(strlen(mod_name) + 5);
+			*filename = '\0';
+			strcpy(filename, mod_name);
+			strcat(filename, ".cog");
+			//printf("FOUND %s in %s\n", ident, filename);
+			// TODO case for prelude.
+			for (module_list_t* mm = m->uses ; mm ; mm = mm->next)
+				if (!strcmp(mm->mod->path, filename)) goto end;
+			module_t* M = create_module(filename);
+			module_parse(M);
+			add_backlinks(M);
+			_compute_modules(M->tree, m);
+			module_list_t* mm = alloc(sizeof *mm);
+			mm->next = m->uses;
+			mm->mod = M;
+			m->uses = mm;
+		}
+		else if (a->op->type == braces) _compute_modules(a->op->child, m);
+end:;
+	}
+}
+
+void compute_modules(module_t* m)
+{
+	_compute_modules(m->tree, m);
+}
+
+void demodulize(module_t* m)
+{
+	where_t* anywhere = alloc(sizeof *anywhere);
+	anywhere->mod = m;
+	for (module_list_t* mm = m->uses ; mm ; mm = mm->next)
+	{
+		demodulize(mm->mod);
+		ast_list_t* ptr = make_astlist();
+		ast_list_t* ptr_start = ptr;
+		for (ast_list_t* tree = mm->mod->tree ; tree ; tree = tree->next)
+			if (tree->op->type != none)
+			{
+				insert_op_after(tree->op, ptr);
+				ptr = ptr->next;
+			}
+		// We make a function call that will hopefully be inlined later.
+		insert_op_after(make_op(braces, m->tree, NULL), ptr);
+		ptr=ptr->next;
+		static size_t id = 0;
+		char fn[20];
+		sprintf(fn, "module_%zi", id);
+		char* s = strdup(fn);
+		insert_op_after(make_op(def, s, anywhere), ptr);
+		ptr=ptr->next;
+		insert_op_after(make_op(identifier, s, anywhere), ptr);
+		m->tree = ptr_start;
+	}
+	print_ast(m->tree, 0);
+}
+
 int main(int argc, char** argv)
 {
 	long system_memory = sysconf(_SC_PHYS_PAGES) * 4096;
@@ -2786,10 +2879,13 @@ int main(int argc, char** argv)
 		 */
 		module_parse,
 		add_backlinks,
+		compute_modules,
+		demodulize,
 		catch_shadows,
 		predeclare,
 		resolve_scope,
 		flatten_ast,
+		print_funcs,
 		merge_symbols,
 		compute_stack,
 		compute_sources,
@@ -2885,7 +2981,7 @@ word_list_t* builtins()
 		words = push_word(
 				make_word(b[i].name, calltype,
 					make_value(block,
-						ast_single(closure, fn, NULL))), words); // TODO prelude module source.
+						ast_single(closure, fn, NULL)), &prelude), words); // TODO prelude module source.
 	}
 	return words;
 }

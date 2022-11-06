@@ -56,11 +56,12 @@ extern int yydebug;
     YYUNDEF = 257,                 /* "invalid token"  */
     NUMBER = 258,                  /* NUMBER  */
     IDENTIFIER = 259,              /* IDENTIFIER  */
-    STRING = 260,                  /* STRING  */
-    SYMBOL = 261,                  /* SYMBOL  */
-    TYPE = 262,                    /* TYPE  */
-    DEF = 263,                     /* DEF  */
-    LET = 264                      /* LET  */
+    MODULE_IDENTIFIER = 260,       /* MODULE_IDENTIFIER  */
+    STRING = 261,                  /* STRING  */
+    SYMBOL = 262,                  /* SYMBOL  */
+    USE = 263,                     /* USE  */
+    DEF = 264,                     /* DEF  */
+    LET = 265                      /* LET  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -74,7 +75,7 @@ union YYSTYPE
 	char* text;
 	ast_list_t* tree;
 
-#line 78 "parser.h"
+#line 79 "parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

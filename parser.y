@@ -12,9 +12,10 @@
 %token
 	<text> NUMBER
 	<text> IDENTIFIER
+	<text> MODULE_IDENTIFIER
 	<text> STRING
 	<text> SYMBOL
-	TYPE
+	USE
 	DEF
 	LET
 	';'
@@ -45,6 +46,7 @@ STATEMENT:
 
 TOKEN:
 	  IDENTIFIER         { $$ = ast_single(identifier, (void*)lowercase($1), parse_pos()); }
+	| MODULE_IDENTIFIER  { $$ = ast_single(module_identifier, (void*)lowercase($1), parse_pos()); }
 	| '(' EXPRESSION ')' { $$ = ast_single(braces, (void*)$2, parse_pos()); }
 	| NUMBER             { $$ = ast_single(literal, mk_lit(number, $1), parse_pos()); }
 	| STRING             { $$ = ast_single(literal, mk_lit(string, $1), parse_pos()); }

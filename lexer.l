@@ -32,10 +32,11 @@ FORMAL    [A-Z\-\?\!\+\/\*\>\<\=\^]
 %%
 D[eE][fF] return DEF;
 L[eE][tT] return LET;
-T[yY][pP][eE] return TYPE;
+U[sS][eE] return USE;
 
 \-?[0-9]+(\.[0-9]+)? yylval.text=strdup(yytext);       return NUMBER;
 {FORMAL}{ALLOWCHAR}* yylval.text=lc(strdup(yytext));   return IDENTIFIER;
+{ALLOWCHAR}+:{FORMAL}{ALLOWCHAR}* yylval.text=lc(strdup(yytext)); return MODULE_IDENTIFIER;
 \\{ALLOWCHAR}+       yylval.text=lc(strdup(yytext+1)); return SYMBOL;
 \"(\\.|[^\n"\\])*\"  yylval.text=strdup(yytext);       return STRING;
 \"                   yyerror("unterminated string"); // TODO error message is printing with wrong column.
