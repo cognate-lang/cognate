@@ -533,7 +533,6 @@ void _resolve_scope(ast_list_t* tree, word_list_t* words, module_t* m)
 				word_list_t* w = words;
 				for (; w ; w = w->next)
 				{
-					printf("%s == %s, %s == %s\n", w->word->name, node->op->string, w->word->mod->prefix, node->op->where->mod->prefix);
 					if (!strcmp(w->word->name, node->op->string) && (w->word->mod == node->op->where->mod || w->word->mod == &prelude))
 						break;
 				}
@@ -2855,7 +2854,6 @@ void demodulize(module_t* m)
 		insert_op_after(make_op(identifier, s, anywhere), ptr);
 		m->tree = ptr_start;
 	}
-	print_ast(m->tree, 0);
 }
 
 int main(int argc, char** argv)
@@ -2885,7 +2883,6 @@ int main(int argc, char** argv)
 		predeclare,
 		resolve_scope,
 		flatten_ast,
-		print_funcs,
 		merge_symbols,
 		compute_stack,
 		compute_sources,
