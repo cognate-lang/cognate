@@ -2795,10 +2795,13 @@ void _compute_modules(ast_list_t* A, module_t* m)
 	{
 		if (a->op->type == module_identifier)
 		{
+			// There's a lot of graph theory i could do here but TODO.
 			char* mod_name = strdup(a->op->string);
 			char* i = mod_name;
 			while (*i != ':') ++i;
 			*i = '\0';
+			for (module_list_t* mm = m->uses ; mm ; mm = mm->next)
+				if (!strcmp(mm->mod->prefix, mod_name)) goto end;
 			char* ident = i + 1;
 			char* filename = alloc(strlen(mod_name) + 5);
 			*filename = '\0';
@@ -2806,16 +2809,14 @@ void _compute_modules(ast_list_t* A, module_t* m)
 			strcat(filename, ".cog");
 			//printf("FOUND %s in %s\n", ident, filename);
 			// TODO case for prelude.
-			for (module_list_t* mm = m->uses ; mm ; mm = mm->next)
-				if (!strcmp(mm->mod->path, filename)) goto end;
 			module_t* M = create_module(filename);
-			module_parse(M);
-			add_backlinks(M);
-			_compute_modules(M->tree, m);
 			module_list_t* mm = alloc(sizeof *mm);
 			mm->next = m->uses;
 			mm->mod = M;
 			m->uses = mm;
+			module_parse(M);
+			add_backlinks(M);
+			_compute_modules(M->tree, m);
 		}
 		else if (a->op->type == braces) _compute_modules(a->op->child, m);
 end:;
