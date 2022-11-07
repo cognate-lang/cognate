@@ -10,12 +10,26 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/mman.h>
+#include <sys/wait.h>
 #include <execinfo.h>
 
 ast_list_t* full_ast = NULL;
 module_t* pmod = NULL;
 char* heap = NULL;
 module_t prelude = { .prefix = "prelude" };
+
+static void print_banner()
+{
+	char* banner =
+	"\t   ______                        ______\n"
+	"\t  / ____/___  ____ _____  ____ _/ ____/\n"
+	"\t / /   / __ \\/ __ `/ __ \\/ __ `/ /\n"
+	"\t/ /___/ /_/ / /_/ / / / / /_/ / /___\n"
+	"\t\\____/\\____/\\__, /_/ /_/\\__,_/\\____/\n"
+	"\t           /____/\n"
+	"\t                  Cognate Compiler";
+	puts(banner);
+}
 
 static void unreachable()
 {
@@ -711,7 +725,11 @@ void to_exe(module_t* mod)
 		//"-Og", "-ggdb3", "-g",
 		"-std=gnu11", "-lm", NULL
 	};
-	execvp(args[0], args);
+	pid_t p = fork();
+	if (!p) execvp(args[0], args);
+	printf("\n%s ", mod->path);
+	while (!waitpid(p, NULL, WNOHANG)) usleep(10000), fputc('>', stdout), fflush(stdout);
+	printf(" %s\n", exe_path);
 }
 
 void c_emit_funcall(func_t* fn, FILE* c_source, reg_dequeue_t* registers)
@@ -2859,6 +2877,7 @@ void demodulize(module_t* m)
 
 int main(int argc, char** argv)
 {
+	print_banner();
 	long system_memory = sysconf(_SC_PHYS_PAGES) * 4096;
 	heap = mmap(0, system_memory, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
 	(void)argc; (void)argv;
