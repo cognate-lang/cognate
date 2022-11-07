@@ -721,9 +721,9 @@ void to_exe(module_t* mod)
 	char* args[] =
 	{
 		"gcc", c_source_path, "-o", exe_path,
-		"-Ofast", "-flto", //"-Wno-unused", "-Wall", "-Wextra", "-Wpedantic",
+		"-Ofast", "-flto", "-s",
 		//"-Og", "-ggdb3", "-g",
-		"-std=gnu11", "-lm", NULL
+		"-lm", NULL
 	};
 	pid_t p = fork();
 	if (!p) execvp(args[0], args);
@@ -1751,7 +1751,7 @@ bool add_var_types_backwards(module_t* mod)
 			val_type_t t = args->val->type;
 			if (t != any && v->val->type != t && !func->func->branch)
 			{
-				if (v->val->type != any) type_error(v->val->type, t, NULL); // TODO position info
+				if (v->val->type != any) type_error(v->val->type, t, op->op->where);
 				v->val->type = t;
 				changed = 1;
 			}
@@ -2557,17 +2557,6 @@ void static_branches(module_t* m)
 					break;
 				case branch:
 					{
-						/* TODO
-						 *
-						 * Ok what's the problem here?
-						 *
-						 * Essentially, this optimization replaces If Cond () else ()
-						 * With a single closure that pops the boolean and dispatches
-						 * In the Do If case this works great, but not all blocks passed
-						 * to If are evaluated immediately - hence the issue. Shouldn't
-						 * be *too* difficult to fix probably hopefully fingers crossed.
-						 */
-
 						pop_register_front(regs); // bool
 						reg_t* i1 = pop_register_front(regs);
 						reg_t* i2 = pop_register_front(regs);
@@ -2581,12 +2570,12 @@ void static_branches(module_t* m)
 											NULL));
 							ast_list_t* op = make_astlist();
 							word_t* b = make_word("", var, NULL, NULL);
-							insert_op_after(make_op(fn_branch, fl, op->op->where), op);
-							insert_op_after(make_op(var, b, op->op->where), op);
+							insert_op_after(make_op(fn_branch, fl, a->op->where), op);
+							insert_op_after(make_op(var, b, a->op->where), op);
 							func_t* F = make_func(op, make_func_name());
-							a->op = make_op(closure, F, op->op->where);
-							insert_op_before(make_op(define, b, op->op->where), a);
-							insert_op_before(make_op(bind, b, op->op->where), a);
+							a->op = make_op(closure, F, a->op->where);
+							insert_op_before(make_op(define, b, a->op->where), a);
+							insert_op_before(make_op(bind, b, a->op->where), a);
 							b->val = make_value(any, a->prev);
 							m->funcs = push_func(F, m->funcs);
 							remove_op(i1->source);
@@ -2707,22 +2696,6 @@ void balance_branches(module_t* m)
 						val_list_t* adapt_args = NULL;
 						for (int i = 0 ; i < min_argc ; ++i)
 							adapt_args = push_val(make_value(any, NULL), adapt_args);
-
-						/*
-						 * TODO
-						 * We can optimize Do If X then () else (+ 1) 12;
-						 * we just need to change () into the identity functions
-						 * that way the runtime stack is not needed.
-						 *
-						 * Counterpoint:
-						 *
-						 * 	Do If True () else (Print);
-						 *
-						 * is a valid program but will not run with the above
-						 * optimization.
-						 * TODO
-						 */
-
 						// generate adaptor functions.
 						for (func_list_t* fns = op->funcs ; fns ; fns = fns->next)
 						{
