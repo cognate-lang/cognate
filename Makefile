@@ -1,9 +1,18 @@
 CC=gcc
 CFLAGS=-Og -ggdb3 -g -rdynamic
+PREFIX=`echo ~`/.local
+BINDIR=$(PREFIX)/bin
 TESTS=block booleans filter for functions if io lists map maths parsing regex stack strings symbols variables trig other-math
 
 cognac: cognac.h cognac.c parser.c parser.h lexer.c runtime.h
 	$(CC) $(CFLAGS) lexer.c parser.c cognac.c -o cognac
+
+install: cognac
+	mkdir -p $(BINDIR)
+	cp cognac $(BINDIR)/cognac
+
+uninstall:
+	rm -rf $(BINDIR)/cognac
 
 runtime.h: runtime.c
 	xxd -i runtime.c > runtime.h

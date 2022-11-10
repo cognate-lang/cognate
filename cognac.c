@@ -374,7 +374,11 @@ module_t* create_module(char* path)
 
 void module_parse(module_t* mod)
 {
-	assert(!strcmp(mod->path + strlen(mod->path) - 4, ".cog"));
+	if (strcmp(mod->path + strlen(mod->path) - 4, ".cog"))
+	{
+		fprintf(stderr, "Source file must end with .cog file extension!\n");
+		exit(EXIT_FAILURE);
+	}
 	pmod = mod;
 	yyin = mod->file; // imagine having a reentrant parser.
 	yylloc.first_line = 1;
@@ -2850,11 +2854,15 @@ void demodulize(module_t* m)
 
 int main(int argc, char** argv)
 {
+	if (argc != 2)
+	{
+		fprintf(stderr, "USAGE: cognac filename.cog\n");
+		return EXIT_FAILURE;
+	}
 	print_banner();
 	long system_memory = sysconf(_SC_PHYS_PAGES) * 4096;
 	heap = mmap(0, system_memory, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
 	(void)argc; (void)argv;
-	assert(argc == 2);
 	module_t* m = create_module(argv[1]);
 	void(*stages[])(module_t*)
 	= {
