@@ -391,6 +391,7 @@ int main(int argc, char** argv)
 	if (getenv("COG_DEBUG")) debug=1;
 #endif
 	fn0();
+	cleanup();
 }
 static void cleanup(void)
 {
