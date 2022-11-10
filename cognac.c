@@ -735,8 +735,10 @@ void to_exe(module_t* mod)
 	pid_t p = fork();
 	if (!p) execvp(args[0], args);
 	printf("\n%s ", mod->path);
-	while (!waitpid(p, NULL, WNOHANG)) usleep(10000), fputc('>', stdout), fflush(stdout);
+	int status;
+	while (!waitpid(p, &status, WNOHANG)) usleep(10000), fputc('>', stdout), fflush(stdout);
 	printf(" %s\n", exe_path);
+	if (status != EXIT_SUCCESS) exit(status);
 }
 
 void c_emit_funcall(func_t* fn, FILE* c_source, reg_dequeue_t* registers)
@@ -766,9 +768,7 @@ void to_c(module_t* mod)
 	fprintf(c_source, "%.*s", runtime_c_len, (char*)runtime_c);
 	fputc('\n', c_source);
 	for (symbol_list_t* syms = mod->symbols ; syms ; syms = syms->next)
-	{
 		fprintf(c_source, "SYMBOL $%s = \"%s\";\n", syms->text, syms->text);
-	}
 	if (mod->symbols) fputc('\n', c_source);
 	for (func_list_t* func = mod->funcs ; func ; func = func->next)
 	{
@@ -798,7 +798,6 @@ void to_c(module_t* mod)
 		if (!func->func->generic && !func->func->captures && !func->func->argc)
 			fprintf(c_source, "void");
 		fprintf(c_source, ");\n");
-
 	}
 	fputc('\n', c_source);
 	for (func_list_t* func = mod->funcs ; func ; func = func->next)

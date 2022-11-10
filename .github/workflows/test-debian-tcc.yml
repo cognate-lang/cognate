@@ -14,7 +14,7 @@ jobs:
       - name: Aquire dependencies and compile
         shell: bash
         run: |
-          sudo apt install flex bison tcc -y
+          sudo apt install tcc -y
           cd $GITHUB_WORKSPACE
           make CC=tcc
       - name: Run test script
