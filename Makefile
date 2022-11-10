@@ -1,11 +1,11 @@
 CC=gcc
-CFLAGS=-Og -ggdb3 -g -rdynamic
+CFLAGS=-Og -ggdb3 -g -rdynamic -Wall -Wpedantic
 PREFIX=`echo ~`/.local
 BINDIR=$(PREFIX)/bin
 TESTS=block booleans filter for functions if io lists map maths parsing regex stack strings symbols variables trig other-math
 
 cognac: cognac.h cognac.c parser.c parser.h lexer.c runtime.h
-	$(CC) $(CFLAGS) lexer.c parser.c cognac.c -o cognac
+	$(CC) $(CFLAGS) lexer.c parser.c cognac.c -o cognac -DCC=$(CC)
 
 install: cognac
 	mkdir -p $(BINDIR)

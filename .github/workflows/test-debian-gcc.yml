@@ -1,0 +1,30 @@
+name: Debian (gcc)
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    steps:
+      - uses: actions/checkout@v2
+      - name: Aquire dependencies and compile
+        shell: bash
+        run: |
+          sudo apt install flex bison gcc -y
+          cd $GITHUB_WORKSPACE
+          make CC=gcc
+      - name: Run test script
+        shell: bash
+        run: |
+          cd $GITHUB_WORKSPACE
+          make test -j8
+      - name: Upload test output
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: tests-debian-gcc
+          path: tests/*.*

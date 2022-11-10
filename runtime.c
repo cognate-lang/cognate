@@ -22,7 +22,6 @@
 #include <math.h>
 #include <sys/mman.h>
 #include <math.h>
-#include <regex.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -281,7 +280,7 @@ static void ___write(STRING, ANY);
 static LIST ___parameters(void);
 static void ___stop(void);
 static STRING ___show(ANY);
-static BLOCK ___regex(STRING);
+//static BLOCK ___regex(STRING);
 static NUMBER ___ordinal(STRING);
 static STRING ___character(NUMBER);
 static NUMBER ___floor(NUMBER);

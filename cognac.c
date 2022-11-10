@@ -13,6 +13,9 @@
 #include <sys/wait.h>
 #include <execinfo.h>
 
+#define STRING_(x) #x
+#define STRING(x) STRING_(x)
+
 ast_list_t* full_ast = NULL;
 module_t* pmod = NULL;
 char* heap = NULL;
@@ -53,7 +56,7 @@ static void unreachable()
 	int bt_sz = backtrace(bt, 128);
 	backtrace_symbols_fd(bt, bt_sz, STDERR_FILENO);
 	write(STDERR_FILENO, "\033[0m\n\n", sizeof("\033[0m\n\n"));
-	__builtin_trap();
+	abort();
 }
 
 static void* alloc(size_t n)
@@ -724,8 +727,8 @@ void to_exe(module_t* mod)
 
 	char* args[] =
 	{
-		"gcc", c_source_path, "-o", exe_path,
-		"-Ofast", "-flto", "-s",
+		STRING(CC), c_source_path, "-o", exe_path,
+		"-Ofast", "-flto", "-s", "-w",
 		//"-Og", "-ggdb3", "-g",
 		"-lm", NULL
 	};
