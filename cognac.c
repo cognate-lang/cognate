@@ -34,7 +34,7 @@ static void print_banner()
 	puts(banner);
 }
 
-static void unreachable()
+_Noreturn static void unreachable()
 {
 	char msg[] = "\n\n\033[31;1m"
 	"\t  ___  _\n"
@@ -104,7 +104,6 @@ _Noreturn void throw_error(char* message, where_t* where)
 	getline(&line, &n, where->mod->file);
 
 	// Now we strip leading whitespace
-	size_t whitespace = 0;
 	while (isspace(*line)) line++, offset--;
 
 	// Now print shit
@@ -149,8 +148,6 @@ func_t* word_func(word_t* w)
 
 val_list_t* reverse(val_list_t* v)
 {
-	val_list_t* prev = NULL;
-	val_list_t* current = v;
 	val_list_t* new = NULL;
 	for (val_list_t* c = v ; c ; c = c->next)
 	{
@@ -653,6 +650,7 @@ const char* print_val_type(val_type_t type)
 		case box:    return "box";
 		default: unreachable();
 	}
+	return NULL;
 }
 
 
@@ -671,6 +669,7 @@ const char* c_val_type(val_type_t type)
 		case box:    return "BOX";
 		default: unreachable();
 	}
+	return NULL;
 }
 
 char* sanitize(char* s)
@@ -789,7 +788,7 @@ void to_c(module_t* mod)
 			fprintf(c_source, "void* env[%zu]", num_words);
 			if (func->func->argc) fprintf(c_source, ", ");
 		}
-		reg_dequeue_t* ar = make_register_dequeue();
+		//reg_dequeue_t* ar = make_register_dequeue();
 		for (val_list_t* v = func->func->args ; v ; v = v->next)
 		{
 			fprintf(c_source, "%s", c_val_type(v->val->type));
@@ -827,7 +826,7 @@ void to_c(module_t* mod)
 		reg_dequeue_t* ar = make_register_dequeue();
 		for (val_list_t* v = func->func->args ; v ; v = v->next)
 		{
-			reg_t* r = make_register(v->val->type, NULL), args;
+			reg_t* r = make_register(v->val->type, NULL);
 			fprintf(c_source, "%s _%zu", c_val_type(v->val->type), r->id);
 			push_register_front(r, ar);
 			if (v->next) fprintf(c_source, ", ");
@@ -895,7 +894,7 @@ void to_c(module_t* mod)
 								else
 								{
 									c_emit_funcall(f->func, c_source, registers);
-									fprintf(c_source, ";\n", sanitize(f->func->name));
+									fprintf(c_source, ";\n");
 								}
 								*registers = saved;
 								pop_register_front(registers);
@@ -1013,7 +1012,7 @@ void to_c(module_t* mod)
 					break;
 				case static_call:
 					{
-						reg_t* ret;
+						reg_t* ret = NULL;
 						func_t* fn = op->op->func;
 						if (fn->returns)
 						{
@@ -1810,18 +1809,18 @@ void add_typechecks(module_t* mod)
 						else if (ar2->type == any)
 						{
 							insert_op_before(make_op(unpick, NULL, op->op->where), op);
-							insert_op_before(make_op(to_any, (void*)ar3->type, op->op->where), op);
+							insert_op_before(make_op(to_any, (void*)(uintptr_t)ar3->type, op->op->where), op);
 						}
 						else if (ar3->type == any)
 						{
-							insert_op_before(make_op(to_any, (void*)ar2->type, op->op->where), op);
+							insert_op_before(make_op(to_any, (void*)(uintptr_t)ar2->type, op->op->where), op);
 							insert_op_before(make_op(unpick, NULL, op->op->where), op);
 						}
 						else
 						{
-							insert_op_before(make_op(to_any, (void*)ar2->type, op->op->where), op);
+							insert_op_before(make_op(to_any, (void*)(uintptr_t)ar2->type, op->op->where), op);
 							insert_op_before(make_op(unpick, NULL, op->op->where), op);
-							insert_op_before(make_op(to_any, (void*)ar3->type, op->op->where), op);
+							insert_op_before(make_op(to_any, (void*)(uintptr_t)ar3->type, op->op->where), op);
 						}
 						insert_op_before(make_op(pick, NULL, op->op->where), op);
 						insert_op_before(make_op(pick, NULL, op->op->where), op);
@@ -1851,7 +1850,7 @@ void add_typechecks(module_t* mod)
 					{
 						reg_t* reg = pop_register_front(registers);
 						if (reg->type != any)
-							insert_op_before(make_op(to_any, (void*)reg->type, op->op->where), op);
+							insert_op_before(make_op(to_any, (void*)(uintptr_t)reg->type, op->op->where), op);
 						break;
 					}
 				case pick:
@@ -1872,11 +1871,11 @@ void add_typechecks(module_t* mod)
 						if (b->type == boolean) {}
 						else if (b->type == any)
 						{
-							insert_op_before(make_op(from_any, (void*)boolean, op->op->where), op);
+							insert_op_before(make_op(from_any, (void*)(uintptr_t)boolean, op->op->where), op);
 						} else type_error(boolean, b->type, op->op->where);
 						func_t* fn = op->op->funcs->func;
 						//func_t* fn2 = op->op->funcs->next->func;
-						size_t i = 0;
+						//size_t i = 0;
 						//for ( val_list_t *a = fn->args, *a2=fn2->args ; a ; a = a->next, a2=a2->next )
 						for ( val_list_t *a = fn->args ; a ; a = a->next )
 						{
@@ -1887,9 +1886,9 @@ void add_typechecks(module_t* mod)
 							insert_op_before(make_op(unpick, NULL, op->op->where), op);
 							if (expected == got) { }
 							else if (expected == any)
-								insert_op_before(make_op(to_any, (void*)got, op->op->where), op);
+								insert_op_before(make_op(to_any, (void*)(uintptr_t)got, op->op->where), op);
 							else if (got == any)
-								insert_op_before(make_op(from_any, (void*)expected, op->op->where), op);
+								insert_op_before(make_op(from_any, (void*)(uintptr_t)expected, op->op->where), op);
 							else type_error(expected, got, op->op->where);
 						}
 						for ( int i = 0 ; i < fn->argc ; ++i )
@@ -1903,7 +1902,6 @@ void add_typechecks(module_t* mod)
 				case static_call:
 					{
 						func_t* fn = call_to_func(op->op);
-						size_t i = 0;
 						for ( val_list_t* a = fn->args ; a ; a = a->next )
 						{
 							reg_t* reg = pop_register_front(registers);
@@ -1911,9 +1909,9 @@ void add_typechecks(module_t* mod)
 							val_type_t got = reg->type;
 							if (expected == got) { }
 							else if (expected == any)
-								insert_op_before(make_op(to_any, (void*)got, op->op->where), op);
+								insert_op_before(make_op(to_any, (void*)(uintptr_t)got, op->op->where), op);
 							else if (got == any)
-								insert_op_before(make_op(from_any, (void*)expected, op->op->where), op);
+								insert_op_before(make_op(from_any, (void*)(uintptr_t)expected, op->op->where), op);
 							else type_error(expected, got, op->op->where);
 							insert_op_before(make_op(unpick, NULL, op->op->where), op);
 						}
@@ -1930,9 +1928,9 @@ void add_typechecks(module_t* mod)
 						val_type_t got = reg1->type;
 						if (expected == got) { }
 						else if (expected == any)
-							insert_op_before(make_op(to_any, (void*)got, op->op->where), op);
+							insert_op_before(make_op(to_any, (void*)(uintptr_t)got, op->op->where), op);
 						else if (got == any)
-							insert_op_before(make_op(from_any, (void*)expected, op->op->where), op);
+							insert_op_before(make_op(from_any, (void*)(uintptr_t)expected, op->op->where), op);
 						else type_error(expected, got, op->op->where);
 						break;
 					}
@@ -1943,9 +1941,9 @@ void add_typechecks(module_t* mod)
 						val_type_t got = reg1->type;
 						if (expected == got) { }
 						else if (expected == any)
-							insert_op_before(make_op(to_any, (void*)got, op->op->where), op);
+							insert_op_before(make_op(to_any, (void*)(uintptr_t)got, op->op->where), op);
 						else if (got == any)
-							insert_op_before(make_op(from_any, (void*)expected, op->op->where), op);
+							insert_op_before(make_op(from_any, (void*)(uintptr_t)expected, op->op->where), op);
 						else type_error(expected, got, op->op->where);
 						break;
 					}
@@ -2032,7 +2030,6 @@ ast_list_t* clone_func(ast_list_t* ops, ptr_assoc_t* assoc, func_list_t** funcs)
 			case var:
 			case call:
 				{
-					size_t i = 0;
 					word_t* new = ptr_assoc_lookup(op->op->word, assoc);
 					if (!new)
 					{
@@ -2799,7 +2796,6 @@ void _compute_modules(ast_list_t* A, module_t* m)
 			*i = '\0';
 			for (module_list_t* mm = m->uses ; mm ; mm = mm->next)
 				if (!strcmp(mm->mod->prefix, mod_name)) goto end;
-			char* ident = i + 1;
 			char* filename = alloc(strlen(mod_name) + 5);
 			*filename = '\0';
 			strcpy(filename, mod_name);

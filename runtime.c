@@ -36,7 +36,7 @@
 
 #define CHK(thing) if (!thing->defined) throw_error("undefined thing")
 
-typedef unsigned long ANY;
+typedef struct cognate_object ANY;
 typedef ANY* restrict ANYPTR;
 typedef ANY* restrict BOX;
 typedef struct cognate_block* restrict BLOCK;
@@ -45,41 +45,50 @@ typedef double NUMBER;
 typedef const char* restrict STRING;
 typedef const struct cognate_list* restrict LIST;
 typedef const char* restrict SYMBOL;
-typedef struct cognate_record* restrict RECORD;
-
-typedef struct _early_ANY { ANY value ; _Bool defined ; } early_ANY;
-typedef struct _early_BOX { BOX value ; _Bool defined ; } early_BOX;
-typedef struct _early_BLOCK { BLOCK value ; _Bool defined ; } early_BLOCK;
-typedef struct _early_BOOLEAN { BOOLEAN value ; _Bool defined ; } early_BOOLEAN;
-typedef struct _early_NUMBER { NUMBER value ; _Bool defined ; } early_NUMBER;
-typedef struct _early_STRING { STRING value ; _Bool defined ; } early_STRING;
-typedef struct _early_LIST { LIST value ; _Bool defined ; } early_LIST;
-typedef struct _early_SYMBOL { SYMBOL value ; _Bool defined ; } early_SYMBOL;
-typedef struct _early_RECORD { RECORD value ; _Bool defined ; } early_RECORD;
 
 typedef enum cognate_type
 {
+	NIL     = 0,
 	box     = 1,
 	boolean = 2,
 	string  = 3,
 	list    = 4,
-	record  = 5,
-	block   = 6,
-	symbol  = 7,
+	block   = 5,
+	symbol  = 6,
 	number  = 8,
 } cognate_type;
+
+typedef struct cognate_object
+{
+	union
+	{
+		BOX box;
+		BOOLEAN boolean;
+		STRING string;
+		LIST list;
+		BLOCK block;
+		SYMBOL symbol;
+		NUMBER number;
+	};
+	cognate_type type;
+} cognate_object;
+
+#define MKEARLY(T) typedef struct _early_##T { T value ; _Bool defined ; } early_##T
+
+MKEARLY(ANY);
+MKEARLY(BOX);
+MKEARLY(BLOCK);
+MKEARLY(BOOLEAN);
+MKEARLY(NUMBER);
+MKEARLY(STRING);
+MKEARLY(LIST);
+MKEARLY(SYMBOL);
 
 typedef struct cognate_block
 {
 	void (*fn)(void*[]);
 	void* env[0];
 } cognate_block;
-
-typedef struct cognate_record
-{
-	size_t id;
-	ANY items[1];
-} cognate_record;
 
 typedef struct cognate_list
 {
@@ -114,10 +123,7 @@ typedef struct var_info
 
 #endif
 
-#define NAN_MASK 0x7ff8000000000000
 #define PTR_MASK 0x0000ffffffffffff
-#define TYP_MASK 0x0007000000000000
-#define NIL_OBJ  0x7ff8000000000000
 
 #define SET_FUNCTION_STACK_START() \
 	function_stack_start = __builtin_frame_address(0); \
@@ -134,9 +140,7 @@ typedef struct var_info
 #define unlikely(expr) (__builtin_expect((_Bool)(expr), 0))
 #define likely(expr)	 (__builtin_expect((_Bool)(expr), 1))
 
-#define ALLOC_RECORD(n) (gc_malloc(sizeof(size_t)+n*sizeof(ANY)))
-
-static ANY* space[2] = {NULL,NULL};
+static uintptr_t* space[2] = {NULL,NULL};
 static char* bitmap[2] = {NULL,NULL};
 static size_t alloc[2] = {0, 0};
 static _Bool z = 0;
@@ -153,9 +157,6 @@ static const backtrace* trace = NULL;
 static const var_info* vars = NULL;
 #endif
 
-extern char *record_info[][64];
-char *record_info[][64] = {0}; // TODO
-
 extern char *source_file_lines[];
 extern _Bool breakpoints[];
 extern const size_t source_line_num;
@@ -168,7 +169,6 @@ static rlim_t function_stack_size;
 
 // Variables and	needed by functions.c defined in runtime.c
 static void init_stack(void);
-static void check_record_id(size_t, RECORD);
 static void set_function_stack_start(void);
 static void expand_stack(void);
 static char* show_object(const ANY object, const _Bool);
@@ -177,7 +177,6 @@ static void _Noreturn throw_error(const char* restrict const);
 static _Bool compare_objects(ANY, ANY);
 static _Bool match_objects(ANY, ANY);
 static void destructure_lists(LIST, LIST);
-static void destructure_records(RECORD, RECORD);
 static void destructure_objects(ANY, ANY);
 #ifdef DEBUG
 static void print_backtrace(int, const backtrace*, int);
@@ -190,8 +189,6 @@ static char* gc_strdup(char*);
 static char* gc_strndup(char*, size_t);
 
 // Variables and functions needed by compiled source file defined in runtime.c
-static cognate_type get_type(ANY);
-static _Bool is_nan(ANY);
 static NUMBER unbox_NUMBER(ANY);
 static BOX unbox_BOX(ANY);
 static ANY box_BOX(BOX);
@@ -202,8 +199,6 @@ static STRING unbox_STRING(ANY);
 static ANY box_STRING(STRING);
 static LIST unbox_LIST(ANY);
 static ANY box_LIST(LIST);
-static RECORD unbox_RECORD(ANY);
-static ANY box_RECORD(RECORD);
 static SYMBOL unbox_SYMBOL(ANY);
 static ANY box_SYMBOL(SYMBOL);
 static BLOCK unbox_BLOCK(ANY);
@@ -333,8 +328,6 @@ static NUMBER ___tanh(NUMBER);
 
 static const char *lookup_type(cognate_type);
 static _Bool compare_lists(LIST, LIST);
-static _Bool compare_records(RECORD, RECORD);
-static _Bool match_records(RECORD, RECORD);
 static _Bool match_lists(LIST, LIST);
 static void handle_error_signal(int);
 static void assert_impure();
@@ -395,8 +388,8 @@ int main(int argc, char** argv)
 }
 static void cleanup(void)
 {
-	if unlikely(stack.top != stack.start || stack.cache != NIL_OBJ)
-		throw_error_fmt("Exiting with %ti object(s) on the stack", stack.top - stack.start + (stack.cache != NIL_OBJ));
+	if unlikely(stack.top != stack.start || stack.cache.type)
+		throw_error_fmt("Exiting with %ti object(s) on the stack", stack.top - stack.start + (stack.cache.type != 0));
 }
 
 static void check_function_stack_size(void)
@@ -635,8 +628,9 @@ static char* show_object (const ANY object, const _Bool raw_strings)
 	static char* buffer;
 	static size_t depth = 0;
 	if (depth++ == 0) buffer = (char*)(space[z] + alloc[z]); // i dont like resizing buffers
-	switch (get_type(object))
+	switch (object.type)
 	{
+		case NIL: throw_error("This shouldn't happen");
 		case number: sprintf(buffer, "%.14g", unbox_NUMBER(object));
 						 buffer += strlen(buffer);
 						 break;
@@ -681,27 +675,6 @@ static char* show_object (const ANY object, const _Bool raw_strings)
 		case block:	  sprintf(buffer, "<block %p>", (void*)unbox_BLOCK(object));
 						  buffer += strlen(buffer);
 						  break;
-		case record:
-		{
-			RECORD r = unbox_RECORD(object);
-			*buffer++ = '<';
-			buffer += strlen(strcpy(buffer, record_info[r->id][0]));
-			*buffer++ = ':';
-			*buffer++ = ' ';
-			for (size_t i = 0;;++i)
-			{
-				if (record_info[r->id][i+1])
-					buffer+=strlen(strcpy(buffer, record_info[r->id][i+1]));
-				else break;
-				*buffer++ = ' ';
-				show_object(r->items[i], 0);
-				if (!record_info[r->id][i+2]) break;
-				*buffer++ = ',';
-				*buffer++ = ' ';
-			}
-			*buffer++ = '>';
-		}
-		break;
 		case box:
 			*buffer++ = '[';
 			show_object(*unbox_BOX(object), 0);
@@ -721,13 +694,13 @@ static void init_stack(void)
 {
 	stack.absolute_start = stack.top = stack.start
 		= mmap(0, system_memory/10, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
-	stack.cache = NIL_OBJ;
+	stack.cache.type = 0;
 }
 
 __attribute__((hot))
 static void push(ANY object)
 {
-	if likely(stack.cache == NIL_OBJ) { stack.cache = object; return; }
+	if likely(stack.cache.type == NIL) { stack.cache = object; return; }
 	*stack.top++ = stack.cache;
 	stack.cache = object;
 }
@@ -735,7 +708,7 @@ static void push(ANY object)
 __attribute__((hot))
 static ANY pop(void)
 {
-	if likely(stack.cache != NIL_OBJ) { const ANY a = stack.cache; stack.cache = NIL_OBJ; return a; }
+	if likely(stack.cache.type != NIL) { const ANY a = stack.cache; stack.cache.type = NIL; return a; }
 	if unlikely(stack.top == stack.start) throw_error("Stack underflow");
 	return *--stack.top;
 }
@@ -743,21 +716,21 @@ static ANY pop(void)
 __attribute__((hot))
 static ANY peek(void)
 {
-	if likely(stack.cache != NIL_OBJ) return stack.cache;
+	if likely(stack.cache.type != NIL) return stack.cache;
 	if unlikely(stack.top == stack.start) throw_error("Stack underflow");
 	return *(stack.top - 1);
 }
 
 static void flush_stack_cache(void)
 {
-	if (stack.cache == NIL_OBJ) return;
+	if (stack.cache.type == NIL) return;
 	push(stack.cache);
 	pop();
 }
 
 static int stack_length(void)
 {
-	return stack.top - stack.start + (stack.cache != NIL_OBJ);
+	return stack.top - stack.start + (stack.cache.type != NIL);
 }
 
 static const char* lookup_type(cognate_type type)
@@ -769,7 +742,6 @@ static const char* lookup_type(cognate_type type)
 		case number:  return "number";
 		case list:    return "list";
 		case block:   return "block";
-		case record:  return "record";
 		case symbol:  return "symbol";
 		case boolean: return "boolean";
 		default:      return NULL;
@@ -790,32 +762,11 @@ static _Bool compare_lists(LIST lst1, LIST lst2)
 	return 0;
 }
 
-static _Bool compare_records(RECORD r1, RECORD r2)
-{
-	if (r1->id != r2->id) return 0;
-	for (size_t i = 0; record_info[r1->id][i+1]; ++i)
-	{
-		if (!compare_objects(r1->items[i], r2->items[i])) return 0;
-	}
-	return 1;
-}
-
-static _Bool match_records(RECORD patt, RECORD obj)
-{
-	if (patt->id != obj->id) return 0;
-	for (size_t i = 0; record_info[patt->id][i+1]; ++i)
-	{
-		if (!match_objects(patt->items[i], obj->items[i])) return 0;
-	}
-	return 1;
-}
-
 
 static _Bool compare_objects(ANY ob1, ANY ob2)
 {
-	if (ob1 == ob2) return 1;
-	if (get_type(ob1) != get_type(ob2)) return 0;
-	switch (get_type(ob1))
+	if (ob1.type != ob2.type) return 0;
+	switch (ob1.type)
 	{
 		case number:
 			return fabs(unbox_NUMBER(ob1) - unbox_NUMBER(ob2))
@@ -824,7 +775,6 @@ static _Bool compare_objects(ANY ob1, ANY ob2)
 		case string:  return !strcmp(unbox_STRING(ob1), unbox_STRING(ob2));
 		case symbol:  return unbox_SYMBOL(ob1) == unbox_SYMBOL(ob2);
 		case list:    return compare_lists(unbox_LIST(ob1), unbox_LIST(ob2));
-		case record:  return compare_records(unbox_RECORD(ob1), unbox_RECORD(ob2));
 		case block:   throw_error("Cannot compare blocks");
 		case box:     return compare_objects(*unbox_BOX(ob1), *unbox_BOX(ob2));
 		default:      return 0; // really shouldn't happen
@@ -852,15 +802,14 @@ static void call_block(BLOCK b)
 
 static _Bool match_objects(ANY patt, ANY obj)
 {
-	if (patt == obj) return 1;
-	cognate_type T = get_type(patt);
+	cognate_type T = patt.type;
 	if (T == block)
 	{
 		push (obj);
 		call_block(unbox_BLOCK(patt));
 		return unbox_BOOLEAN(pop());
 	}
-	else if (T != get_type(obj)) return 0;
+	else if (T != obj.type) return 0;
 	switch (T)
 	{
 		case number:
@@ -870,7 +819,6 @@ static _Bool match_objects(ANY patt, ANY obj)
 		case string:  return !strcmp(unbox_STRING(patt), unbox_STRING(obj));
 		case symbol:  return unbox_SYMBOL(patt) == unbox_SYMBOL(obj);
 		case list:    return match_lists(unbox_LIST(patt), unbox_LIST(obj));
-		case record:  return match_records(unbox_RECORD(patt), unbox_RECORD(obj));
 		case box:     return match_objects(*unbox_BOX(patt), *unbox_BOX(obj));
 		default:      return 0; // really shouldn't happen
 	}
@@ -883,41 +831,20 @@ static void destructure_lists(LIST patt, LIST obj)
 	destructure_objects(patt->object, obj->object);
 }
 
-static void destructure_records(RECORD patt, RECORD obj)
-{
-	ssize_t i;
-	for (i = 0; record_info[patt->id][i+1]; ++i);
-	for (; i >= 0; --i) destructure_objects(patt->items[i], obj->items[i]);
-}
-
 static void destructure_objects(ANY patt, ANY obj)
 {
-	if (get_type(patt) == block)
+	if (patt.type == block)
 	{
 		push(obj);
 		return;
 	}
-	switch (get_type(patt))
+	switch (patt.type)
 	{
 		case list:   destructure_lists(unbox_LIST(patt), unbox_LIST(obj)); break;
-		case record: destructure_records(unbox_RECORD(patt), unbox_RECORD(obj)); break;
 		case box:    destructure_objects(*unbox_BOX(patt), *unbox_BOX(obj)); break;
 		default:;
 	}
 
-}
-
-__attribute__((hot))
-static _Bool is_nan(ANY box)
-{
-	// Mostly works with -ffast-math
-	return (box & NAN_MASK) == NAN_MASK;
-}
-
-static cognate_type get_type(ANY box)
-{
-	if (is_nan(box)) return (TYP_MASK & box) >> 48;
-	else return number;
 }
 
 static _Noreturn void type_error(char* expected, ANY got)
@@ -932,107 +859,86 @@ static _Noreturn void type_error(char* expected, ANY got)
 __attribute__((hot))
 static NUMBER unbox_NUMBER(ANY box)
 {
-	if unlikely(is_nan(box))
-		type_error("number", box);
-	return *(NUMBER*)&box;
+	if likely (box.type == number) return box.number;
+	type_error("number", box);
 }
 
 __attribute__((hot))
 static ANY box_NUMBER(NUMBER num)
 {
-	return *(ANY*)&num;
+	return (ANY) {.type = number, .number = num};
 }
 
 __attribute__((hot))
 static BOX unbox_BOX(ANY b)
 {
-	if unlikely(!is_nan(b) || (TYP_MASK & b) != (long)box << 48)
-		type_error("box", b);
-	return (BOX)(PTR_MASK & b);
+	if likely (b.type == box) return b.box;
+	type_error("box", b);
 }
 
 __attribute__((hot))
 static ANY box_BOX(BOX b)
 {
-	return NAN_MASK | ((long)box << 48) | (long)b;
+	return (ANY) {.type = box, .box = b};
 }
 
 __attribute__((hot))
 static BOOLEAN unbox_BOOLEAN(ANY box)
 {
-	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)boolean << 48)
-		type_error("boolean", box);
-	return (BOOLEAN)(PTR_MASK & box);
+	if likely (box.type == boolean) return box.boolean;
+	type_error("boolean", box);
 }
 
 __attribute__((hot))
 static ANY box_BOOLEAN(BOOLEAN b)
 {
-	return NAN_MASK | ((long)boolean << 48) | b;
+	return (ANY) {.type = boolean, .boolean = b};
 }
 
 __attribute__((hot))
 static STRING unbox_STRING(ANY box)
 {
-	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)string << 48)
-		type_error("string", box);
-	return (STRING)(PTR_MASK & box);
+	if likely (box.type == string) return box.string;
+	type_error("string", box);
 }
 
 __attribute__((hot))
 static ANY box_STRING(STRING s)
 {
-	return NAN_MASK | ((long)string << 48) | (long)s;
+	return (ANY) {.type = string, .string = s};
 }
 
 __attribute__((hot))
 static LIST unbox_LIST(ANY box)
 {
-	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)list << 48)
-		type_error("list", box);
-	return (LIST)(PTR_MASK & box);
+	if likely (box.type == list) return box.list;
+	type_error("list", box);
 }
 
 __attribute__((hot))
 static ANY box_LIST(LIST s)
 {
-	return NAN_MASK | ((long)list << 48) | (long)s;
-}
-
-__attribute__((hot))
-static RECORD unbox_RECORD(ANY box)
-{
-	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)record << 48)
-		type_error("record", box);
-	return (RECORD)(PTR_MASK & box);
-}
-
-__attribute__((hot))
-static ANY box_RECORD(RECORD s)
-{
-	return NAN_MASK | ((long)record << 48) | (long)s;
+	return (ANY) {.type = list, .list = s};
 }
 
 __attribute__((hot))
 static SYMBOL unbox_SYMBOL(ANY box)
 {
-	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)symbol << 48)
-		type_error("symbol", box);
-	return (SYMBOL)(PTR_MASK & box);
+	if likely (box.type == symbol) return box.symbol;
+	type_error("list", box);
 }
 
 __attribute__((hot))
 static ANY box_SYMBOL(SYMBOL s)
 {
-	return NAN_MASK | ((long)symbol << 48) | (long)s;
+	return (ANY) {.type = symbol, .symbol = s};
 }
 
 __attribute__((hot))
 static BLOCK unbox_BLOCK(ANY box)
 {
-	if unlikely(!is_nan(box) || (TYP_MASK & box) != (long)block << 48)
-		type_error("block", box);
-	return (BLOCK)(PTR_MASK & box);
+	if likely (box.type == block) return box.block;
+	type_error("block", box);
 }
 /*
 BLOCK block_copy(BLOCK b)
@@ -1054,16 +960,7 @@ BLOCK block_copy(BLOCK b)
 __attribute__((hot))
 static ANY box_BLOCK(BLOCK s)
 {
-	ANY a =  NAN_MASK | ((long)block << 48) | (long)s;
-	return a;
-}
-
-__attribute__((hot))
-static void check_record_id(size_t i, RECORD r)
-{
-	if unlikely(i != r->id)
-		throw_error_fmt("Expected a %.64s but got %.64s which is a %s", record_info[i][0], show_object(box_RECORD(r), 0), record_info[r->id][0]);
-
+	return (ANY) {.type = block, .block = s};
 }
 
 #define PAGE_SIZE 4096
@@ -1087,7 +984,7 @@ static void gc_init(void)
 __attribute__((hot))
 static _Bool is_heap_ptr(void* ptr)
 {
-	const uint64_t index = (ANY*)ptr - space[!z];
+	const uint64_t index = (uintptr_t*)ptr - space[!z];
 	if (index >= alloc[!z]) return 0;
 	return 1;
 }
@@ -1131,42 +1028,42 @@ static void* gc_flatmalloc(size_t sz)
 }
 
 __attribute__((hot))
-static _Bool is_gc_ptr(ANY object)
+static _Bool is_gc_ptr(uintptr_t object)
 {
-	const ANY upper_bits = object & ~PTR_MASK;
-	if (upper_bits && !is_nan(object)) return 0;
-	const ANY index = (ANY*)(object & PTR_MASK & ~7) - space[!z];
+	const uintptr_t upper_bits = object & ~PTR_MASK;
+	if (upper_bits) return 0;
+	const uintptr_t index = (uintptr_t*)(object & PTR_MASK & ~7) - space[!z];
 	if (index >= alloc[!z]) return 0;
 	return 1;
 }
 
 __attribute__((hot))
-static void gc_collect_root(ANY* restrict addr)
+static void gc_collect_root(uintptr_t* restrict addr)
 {
 	if (!is_gc_ptr(*addr)) return;
 	struct action {
-		ANY from;
-		ANY* restrict to;
+		uintptr_t from;
+		uintptr_t* restrict to;
 	};
 	struct action* restrict act_stk_start = (struct action*)space[!z] + alloc[!z];
 	struct action* restrict act_stk_top = act_stk_start;
 	*act_stk_top++ = (struct action) { .from=*addr, .to=addr };
 	while (act_stk_top-- != act_stk_start)
 	{
-		ANY from = act_stk_top->from;
-		ANY* to = act_stk_top->to;
-		const ANY upper_bits = from & ~PTR_MASK;
-		const ANY lower_bits = from & 7;
-		ANY index = (ANY*)(from & PTR_MASK & ~7) - space[!z];
+		uintptr_t from = act_stk_top->from;
+		uintptr_t* to = act_stk_top->to;
+		const uintptr_t upper_bits = from & ~PTR_MASK;
+		const uintptr_t lower_bits = from & 7;
+		uintptr_t index = (uintptr_t*)(from & PTR_MASK & ~7) - space[!z];
 		ptrdiff_t offset = 0;
 		while (bitmap[!z][index] == EMPTY) index--, offset++; // Ptr to middle of object
 		if (bitmap[!z][index] == FORWARD)
-			*to = lower_bits | upper_bits | (ANY)((ANY*)space[!z][index] + offset);
+			*to = lower_bits | upper_bits | (uintptr_t)((uintptr_t*)space[!z][index] + offset);
 		else
 		{
 			_Bool flat = bitmap[!z][index] == FLATALLOC;
 			//assert(bitmap[!z][index] == ALLOC);
-			ANY* buf = space[z] + alloc[z]; // Buffer in newspace
+			uintptr_t* buf = space[z] + alloc[z]; // Buffer in newspace
 			//assert(bitmap[z][alloc[z]] == ALLOC);
 			size_t sz = 1;
 			for (;bitmap[!z][index+sz] == EMPTY;sz++);
@@ -1175,14 +1072,14 @@ static void gc_collect_root(ANY* restrict addr)
 			bitmap[z][alloc[z]] = ALLOC;
 			for (size_t i = 0;i < sz;i++)
 			{
-				ANY from = space[!z][index+i];
+				uintptr_t from = space[!z][index+i];
 				if (!flat && is_gc_ptr(from))
 					*act_stk_top++ = (struct action) { .from=from, .to=buf+i };
 				else buf[i] = from;
 			}
-			space[!z][index] = (ANY)buf; // Set forwarding address
+			space[!z][index] = (uintptr_t)buf; // Set forwarding address
 			bitmap[!z][index] = FORWARD;
-			*to = lower_bits | upper_bits | (ANY)(buf + offset);
+			*to = lower_bits | upper_bits | (uintptr_t)(buf + offset);
 		}
 	}
 }
@@ -1202,13 +1099,13 @@ static __attribute__((noinline,hot)) void gc_collect(void)
 	bitmap[z][0] = ALLOC;
 
 	flush_stack_cache();
-	for (ANY* root = stack.absolute_start; root != stack.top; ++root)
+	for (uintptr_t* root = (uintptr_t*)stack.absolute_start; root != (uintptr_t*)stack.top; ++root)
 		gc_collect_root(root);
 
 	jmp_buf a;
 	if (setjmp(a)) return;
 
-	for (ANY* root = (ANY*)&a; root < (ANY*)function_stack_start; ++root)
+	for (uintptr_t* root = (uintptr_t*)&a; root < (uintptr_t*)function_stack_start; ++root)
 		gc_collect_root(root); // Watch me destructively modify the call stack
 
 	/*
@@ -1278,52 +1175,12 @@ static void ___print(ANY a) { assert_impure(); puts(show_object(a, 1)); }
 //static void ___prints(BLOCK b) { assert_impure(); ___for(___list(b), ^{___put(pop()); }); putc('\n', stdout); }
 
 static NUMBER ___P(NUMBER a, NUMBER b) { return a + b; } // Add cannot produce NaN.
-
-static NUMBER ___M(NUMBER a, NUMBER b)
-{
-	const double r = a * b;
-	if unlikely(is_nan(*(long*)&r))
-		throw_error_fmt("Multiplication by %.14g of %.14g yields invalid result", a, b);
-	return r;
-}
-
-static NUMBER ___D(NUMBER a, NUMBER b)
-{
-	const double r = b - a;
-	if unlikely(is_nan(*(long*)&r))
-		throw_error_fmt("Subtraction of %.14g from %.14g yields invalid result", a, b);
-	return r;
-}
-
-static NUMBER ___S(NUMBER a, NUMBER b)
-{
-	const double r = b / a;
-	if unlikely(is_nan(*(long*)&r))
-		throw_error_fmt("Division by %.14g of %.14g yields invalid result", a, b);
-	return r;
-}
-
-static NUMBER ___C(NUMBER a, NUMBER b)
-{
-	const double r = pow(b, a);
-	if unlikely(is_nan(*(long*)&r))
-		throw_error_fmt("Raising %.14g to the power of %.14g yeilds invalid result", b, a);
-	return r;
-}
-
-static NUMBER ___modulo(NUMBER a, NUMBER b)
-{
-	const double r = b - a * floor(b / a);
-	if unlikely(is_nan(*(long*)&r))
-		throw_error_fmt("Modulo by %.14g of %.14g yields invalid result", a, b);
-	return r;
-}
-
-static NUMBER ___sqrt(NUMBER a)
-{
-	return sqrt(a);
-}
-
+static NUMBER ___M(NUMBER a, NUMBER b) { return a * b; }
+static NUMBER ___D(NUMBER a, NUMBER b) { return b - a; }
+static NUMBER ___S(NUMBER a, NUMBER b) { return b / a; }
+static NUMBER ___C(NUMBER a, NUMBER b) { return pow(b, a); }
+static NUMBER ___modulo(NUMBER a, NUMBER b) { return b - a * floor(b / a); }
+static NUMBER ___sqrt(NUMBER a) { return sqrt(a); }
 static NUMBER ___random(NUMBER low, NUMBER high)
 {
 	NUMBER step = 1;
@@ -1338,13 +1195,12 @@ static NUMBER ___random(NUMBER low, NUMBER high)
 		| ((long)(short)rand() << 45)
 		| ((long)				rand() << 60);
 	const double r = low + (NUMBER)(num % (unsigned long)(high - low));
-	if unlikely(is_nan(*(long*)&r)) goto invalid_range;
 	return r;
 invalid_range:
 	throw_error_fmt("Invalid range %.14g..%.14g", low, high);
 }
 
-static void ___clear(void) { stack.cache = NIL_OBJ; stack.top=stack.start; }
+static void ___clear(void) { stack.cache.type = NIL; stack.top=stack.start; }
 
 static BOOLEAN ___true(void)  { return 1; }
 static BOOLEAN ___false(void) { return 0; }
@@ -1358,13 +1214,13 @@ static BOOLEAN ___G(NUMBER a, NUMBER b)  { return a < b; }
 static BOOLEAN ___L(NUMBER a, NUMBER b)  { return a > b; }
 static BOOLEAN ___GE(NUMBER a, NUMBER b) { return a <= b; }
 static BOOLEAN ___LE(NUMBER a, NUMBER b) { return a >= b; }
-static BOOLEAN ___numberQ(ANY a)  { return get_type(a)==number; }
-static BOOLEAN ___listQ(ANY a)    { return get_type(a)==list;   }
-static BOOLEAN ___stringQ(ANY a)  { return get_type(a)==string; }
+static BOOLEAN ___numberQ(ANY a)  { return a.type==number; }
+static BOOLEAN ___listQ(ANY a)    { return a.type==list;   }
+static BOOLEAN ___stringQ(ANY a)  { return a.type==string; }
 static BOOLEAN ___anyQ(ANY a)     { (void)a; return 1; }
-static BOOLEAN ___blockQ(ANY a)   { return get_type(a)==block;  }
-static BOOLEAN ___booleanQ(ANY a) { return get_type(a)==boolean;}
-static BOOLEAN ___symbolQ(ANY a)  { return get_type(a)==symbol; }
+static BOOLEAN ___blockQ(ANY a)   { return a.type==block;  }
+static BOOLEAN ___booleanQ(ANY a) { return a.type==boolean;}
+static BOOLEAN ___symbolQ(ANY a)  { return a.type==symbol; }
 static BOOLEAN ___integerQ(ANY a) { return ___numberQ(a) && unbox_NUMBER(a) == floor(unbox_NUMBER(a)); }
 static BOOLEAN ___zeroQ(ANY a)    { return ___numberQ(a) && unbox_NUMBER(a) == 0; }
 
@@ -1393,8 +1249,8 @@ static BOOLEAN ___match(ANY patt, ANY obj) { return match_objects(patt,obj); }
 /*
 static BLOCK ___case(ANY patt, ANY if_match, ANY if_not_match)
 {
-	_Bool block1 = get_type(if_match) == block;
-	_Bool block2 = get_type(if_not_match) == block;
+	_Bool block1 = if_match.type == block;
+	_Bool block2 = if_not_match.type == block;
 	if (block1 && block2)
 	{
 		const BLOCK b1 = unbox_BLOCK(if_match);
@@ -1601,8 +1457,6 @@ static NUMBER ___number(STRING str)
 	char* end;
 	NUMBER num = strtod(str, &end);
 	if (end == str || *end != '\0') goto cannot_parse;
-	if unlikely(is_nan(*(long*)&num))
-		goto cannot_parse;
 	return num;
 cannot_parse:
 	throw_error_fmt("Cannot parse '%.32s' to a number", str);
@@ -2045,8 +1899,6 @@ static NUMBER ___sind(NUMBER a)
 {
 	double rad = degrees_to_radians(a);
 	double sinrad = sin(rad);
-	if unlikely(is_nan(*(long*)&sinrad))
-		     throw_error_fmt("sind(%.14g) yields invalid result", a);
 	return sinrad;
 }
 
@@ -2054,8 +1906,6 @@ static NUMBER ___cosd(NUMBER a)
 {
 	double rad = degrees_to_radians(a);
 	double cosrad = cos(rad);
-	if unlikely(is_nan(*(long*)&cosrad))
-		     throw_error_fmt("cosd(%.14g) yields invalid result", a);
 	return cosrad;
 }
 
@@ -2063,41 +1913,27 @@ static NUMBER ___tand(NUMBER a)
 {
 	double rad = degrees_to_radians(a);
 	double tanrad = tan(rad);
-	if unlikely(is_nan(*(long*)&tanrad))
-		     throw_error_fmt("tand(%.14g) yields invalid result", a);
 	return tanrad;
 }
 
 static NUMBER ___sin(NUMBER a)
 {
-	double tmp = sin(a);
-	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("sin(%.14g) yields invalid result", a);
-	return tmp;
+	return sin(a);
 }
 
 static NUMBER ___cos(NUMBER a)
 {
-	double tmp = cos(a);
-	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("cos(%.14g) yields invalid result", a);
-	return tmp;
+	return cos(a);
 }
 
 static NUMBER ___tan(NUMBER a)
 {
-	double tmp = tan(a);
-	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("tan(%.14g) yields invalid result", a);
-	return tmp;
+	return tan(a);
 }
 
 static NUMBER ___exp(NUMBER a)
 {
-	double tmp = exp(a);
-	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("exp(%.14g) yields invalid result", a);
-	return tmp;
+	return exp(a);
 }
 
 static NUMBER ___log(NUMBER a, NUMBER b)
@@ -2108,114 +1944,73 @@ static NUMBER ___log(NUMBER a, NUMBER b)
 	*/
 	const double top = log(b);
 	const double bottom = log(a);
-	if unlikely(is_nan(*(long*)&top) || is_nan(*(long*)&bottom))
-		     throw_error_fmt("Log base %.14g (%.14g) yields invalid result", a, b);
 	return top / bottom;
 }
 
 static NUMBER ___ln(NUMBER a)
 {
-	double tmp = log(a);
-	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("ln(%.14g) yields invalid result", a);
-	return tmp;
+	return log(a);
 }
 
 
 static NUMBER ___asind(NUMBER a)
 {
-	double tmp = radians_to_degrees(asin(a));
-	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("asind(%.14g) yields invalid result", a);
-	return tmp;
+	return radians_to_degrees(asin(a));
 }
 
 static NUMBER ___acosd(NUMBER a)
 {
-	double tmp = radians_to_degrees(acos(a));
-	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("acosd(%.14g) yields invalid result", a);
-	return tmp;
+	return radians_to_degrees(acos(a));
 }
 
 static NUMBER ___atand(NUMBER a)
 {
-	double tmp = radians_to_degrees(atan(a));
-	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("atand(%.14g) yields invalid result", a);
-	return tmp;
+	return radians_to_degrees(atan(a));
 }
 
 static NUMBER ___asin(NUMBER a)
 {
-	double tmp = asin(a);
-	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("asin(%.14g) yields invalid result", a);
-	return tmp;
+	return asin(a);
 }
 
 static NUMBER ___acos(NUMBER a)
 {
-	double tmp = acos(a);
-	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("acos(%.14g) yields invalid result", a);
-	return tmp;
+	return acos(a);
 }
 
 static NUMBER ___atan(NUMBER a)
 {
-  	double tmp = atan(a);
-	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("atan(%.14g) yields invalid result", a);
-	return tmp;
+  	return atan(a);
 }
 
 static NUMBER ___sinhd(NUMBER a)
 {
-	double tmp = radians_to_degrees(sinh(a));
-	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("sinhd(%.14g) yields invalid result", a);
-	return tmp;
+	return radians_to_degrees(sinh(a));
 }
 
 static NUMBER ___coshd(NUMBER a)
 {
-	double tmp = radians_to_degrees(cosh(a));
-	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("coshd(%.14g) yields invalid result", a);
-	return tmp;
+	return radians_to_degrees(cosh(a));
 }
 
 static NUMBER ___tanhd(NUMBER a)
 {
-	double tmp = radians_to_degrees(tanh(a));
-	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("tanhd(%.14g) yields invalid result", a);
-	return tmp;
+	return radians_to_degrees(tanh(a));
 }
 
 static NUMBER ___sinh(NUMBER a)
 {
-	double tmp = sinh(a);
-	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("sinh(%.14g) yields invalid result", a);
-	return tmp;
+	return sinh(a);
 }
 
 static NUMBER ___cosh(NUMBER a)
 {
-	double tmp = cosh(a);
-	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("cosh(%.14g) yields invalid result", a);
-	return tmp;
+	return cosh(a);
 }
 
 static NUMBER ___tanh(NUMBER a)
 {
-  	double tmp = tanh(a);
-	if unlikely(is_nan(*(long*)&tmp))
-		     throw_error_fmt("tanh(%.14g) yields invalid result", a);
-	return tmp;
+	return tanh(a);
 }
 
 static void undefined_func_body(void* env[0])
