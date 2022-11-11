@@ -1282,7 +1282,10 @@ static NUMBER VAR(modulo)(NUMBER a, NUMBER b)
 
 static NUMBER VAR(sqrt)(NUMBER a)
 {
-	return sqrt(a);
+	const double t = sqrt(a);
+	if unlikely(is_nan(t))
+		throw_error_fmt("Sqrt of %.14g yields invalid result", a);
+	return t;
 }
 
 static NUMBER VAR(random)(NUMBER low, NUMBER high)
