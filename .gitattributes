@@ -1,0 +1,5 @@
+lexer.c linguist-generated
+lexer.l linguist-language=Flex
+parser.h linguist-generated
+parser.c linguist-generated
+parser.y linguist-language=Bison
