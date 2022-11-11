@@ -627,9 +627,10 @@ const char* c_literal(lit_t* literal)
 {
 	if (literal->type == symbol)
 	{
-		char s[strlen(literal->string) + 2];
-		s[0] = '$';
-		s[1] = '\0';
+		char* prefix = "SYM";
+		char s[strlen(literal->string) + strlen(prefix) + 1];
+		s[0] = '\0';
+		strcat(s, prefix);
 		strcat(s, literal->string);
 		return strdup(s);
 	}
@@ -767,7 +768,7 @@ void to_c(module_t* mod)
 	fprintf(c_source, "%.*s", runtime_c_len, (char*)runtime_c);
 	fputc('\n', c_source);
 	for (symbol_list_t* syms = mod->symbols ; syms ; syms = syms->next)
-		fprintf(c_source, "SYMBOL $%s = \"%s\";\n", syms->text, syms->text);
+		fprintf(c_source, "SYMBOL SYM%s = \"%s\";\n", syms->text, syms->text);
 	if (mod->symbols) fputc('\n', c_source);
 	for (func_list_t* func = mod->funcs ; func ; func = func->next)
 	{
