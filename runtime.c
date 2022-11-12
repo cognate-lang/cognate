@@ -45,17 +45,19 @@ typedef double NUMBER;
 typedef const char* restrict STRING;
 typedef const struct cognate_list* restrict LIST;
 typedef const char* restrict SYMBOL;
+typedef struct cognate_file* IO;
 
 typedef enum cognate_type
 {
-	NIL     = 0,
-	box     = 1,
-	boolean = 2,
-	string  = 3,
-	list    = 4,
-	block   = 5,
-	symbol  = 6,
-	number  = 8,
+	NIL = 0,
+	box,
+	boolean,
+	list,
+	block,
+	symbol,
+	number,
+	string,
+	io,
 } cognate_type;
 
 typedef struct cognate_object
@@ -69,6 +71,7 @@ typedef struct cognate_object
 		BLOCK block;
 		SYMBOL symbol;
 		NUMBER number;
+		IO io;
 	};
 	cognate_type type;
 } cognate_object;
@@ -95,6 +98,13 @@ typedef struct cognate_list
 	LIST next;
 	ANY object;
 } cognate_list;
+
+typedef struct cognate_file
+{
+	STRING path;
+	STRING mode;
+	FILE* file;
+} cognate_file;
 
 typedef struct cognate_stack
 {
@@ -203,6 +213,8 @@ static SYMBOL unbox_SYMBOL(ANY);
 static ANY box_SYMBOL(SYMBOL);
 static BLOCK unbox_BLOCK(ANY);
 static ANY box_BLOCK(BLOCK);
+static IO unbox_IO(ANY);
+static ANY box_IO(IO);
 
 static NUMBER radians_to_degrees(NUMBER);
 static NUMBER degrees_to_radians(NUMBER);
@@ -267,11 +279,11 @@ static STRING ___join(NUMBER);
 static NUMBER ___stringDlength(STRING);
 static STRING ___substring(NUMBER, NUMBER, STRING);
 static STRING ___input(void);
-static STRING ___read(STRING);
+static IO ___open(STRING, STRING);
+static void ___close(IO);
 static NUMBER ___number(STRING);
 static STRING ___path(void);
 static LIST ___stack(void);
-static void ___write(STRING, ANY);
 static LIST ___parameters(void);
 static void ___stop(void);
 static STRING ___show(ANY);
@@ -963,6 +975,20 @@ static ANY box_BLOCK(BLOCK s)
 	return (ANY) {.type = block, .block = s};
 }
 
+__attribute__((hot))
+static ANY box_IO(IO i)
+{
+	return (ANY) {.type = io, .io = i};
+}
+
+
+__attribute__((hot))
+static IO unbox_IO(ANY box)
+{
+	if likely (box.type == io) return box.io;
+	type_error("io", box);
+}
+
 #define PAGE_SIZE 4096
 
 #define EMPTY     0x0
@@ -1434,23 +1460,6 @@ static STRING ___input(void)
 	return ret;
 }
 
-static STRING ___read(STRING filename)
-{
-	assert_impure();
-	// Read a file to a string.
-	FILE *fp = fopen(filename, "ro");
-	if unlikely(fp == NULL) throw_error_fmt("Cannot open file '%s'", filename);
-	struct stat st;
-	fstat(fileno(fp), &st);
-	char* const text = gc_flatmalloc (st.st_size + 1);
-	if (fread(text, sizeof(char), st.st_size, fp) != (unsigned long)st.st_size)
-		throw_error_fmt("Error reading file '%s'", filename);
-	fclose(fp);
-	text[st.st_size] = '\0'; // Remove trailing eof.
-	return text;
-	// TODO: single line (or delimited) file read function for better IO performance
-}
-
 static NUMBER ___number(STRING str)
 {
 	// casts string to number.
@@ -1484,16 +1493,6 @@ static LIST ___stack(void)
 		lst = tmp;
 	}
 	return lst;
-}
-
-static void ___write(STRING filename, ANY obj)
-{
-	assert_impure();
-	// Write object to end of file, without a newline.
-	FILE* const fp = fopen(filename, "a");
-	if unlikely(fp == NULL) throw_error_fmt("Cannot open file '%s'", filename);
-	fputs(show_object(obj, 1), fp);
-	fclose(fp);
 }
 
 static LIST ___parameters(void)
@@ -2013,15 +2012,6 @@ static NUMBER ___tanh(NUMBER a)
 	return tanh(a);
 }
 
-static void undefined_func_body(void* env[0])
-{
-	(void)env;
-	push(box_SYMBOL("undefined")); // TODO intern!!!
-}
-
-static struct cognate_block undefined_func_helper = { .fn=undefined_func_body };
-static BLOCK undefined_function = &undefined_func_helper;
-
 static void ___times(NUMBER n, BLOCK f)
 {
 	size_t i = n;
@@ -2030,5 +2020,23 @@ static void ___times(NUMBER n, BLOCK f)
 	{
 		call_block(f);
 	}
+}
+
+static IO ___open(STRING path, STRING mode)
+{
+	// TODO mode should definitely be a symbol.
+	FILE* fp = fopen(path, mode);
+	if unlikely(!fp) throw_error_fmt("cannot open file '%s'", path);
+	IO io = gc_malloc(sizeof(IO));
+	io->path = path;
+	io->mode = mode;
+	io->file = fp;
+	return io;
+}
+
+static void ___close(IO io)
+{
+	fclose(io->file);
+	io->file = NULL;
 }
 // ---------- ACTUAL PROGRAM ----------

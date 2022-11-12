@@ -649,7 +649,7 @@ const char* print_val_type(val_type_t type)
 		case boolean:return "boolean";
 		case any:    return "any";
 		case box:    return "box";
-		default: unreachable();
+		case io:     return "io";
 	}
 	return NULL;
 }
@@ -668,7 +668,7 @@ const char* c_val_type(val_type_t type)
 		case boolean:return "BOOLEAN";
 		case any:    return "ANY";
 		case box:    return "BOX";
-		default: unreachable();
+		case io:     return "IO";
 	}
 	return NULL;
 }

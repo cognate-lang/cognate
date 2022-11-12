@@ -63,6 +63,7 @@ typedef enum _val_type_t
 	block,
 	list,
 	box,
+	io,
 	any,
 } val_type_t;
 

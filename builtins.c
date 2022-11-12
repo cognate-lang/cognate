@@ -136,8 +136,8 @@
 #ifndef DISABLEIO
 {.name="parameters",          .calltype=call, .returns=true, .rettype=list},
 {.name="input",               .calltype=call, .returns=true, .rettype=string},
-{.name="read",                .calltype=call, .argc=1, .args={string}, .returns=true, .rettype=string},
-{.name="write",               .calltype=call, .argc=2, .args={string,any}},
+{.name="open",                .calltype=call, .argc=2, .args={string, string}, .returns=true, .rettype=io},
+{.name="close",               .calltype=call, .argc=1, .args={io}},
 {.name="path",                .calltype=call, .returns=true, .rettype=string},
 #endif
 
