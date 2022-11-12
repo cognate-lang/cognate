@@ -181,7 +181,7 @@ static rlim_t function_stack_size;
 static void init_stack(void);
 static void set_function_stack_start(void);
 static void expand_stack(void);
-static char* show_object(const ANY object, const _Bool);
+static STRING show_object(const ANY object, const _Bool);
 static void _Noreturn __attribute__((format(printf, 1, 2))) throw_error_fmt(const char* restrict const, ...);
 static void _Noreturn throw_error(const char* restrict const);
 static _Bool compare_objects(ANY, ANY);
@@ -267,6 +267,7 @@ static BOOLEAN ___stringQ(ANY);
 static BOOLEAN ___blockQ(ANY);
 static BOOLEAN ___booleanQ(ANY);
 static BOOLEAN ___integerQ(ANY);
+static BOOLEAN ___ioQ(ANY);
 static BOOLEAN ___zeroQ(ANY);
 static ANY ___first(LIST);
 static LIST ___rest(LIST);
@@ -635,7 +636,7 @@ static void assert_impure()
 }
 
 
-static char* show_object (const ANY object, const _Bool raw_strings)
+static STRING show_object (const ANY object, const _Bool raw_strings)
 {
 	static char* buffer;
 	static size_t depth = 0;
@@ -643,7 +644,14 @@ static char* show_object (const ANY object, const _Bool raw_strings)
 	switch (object.type)
 	{
 		case NIL: throw_error("This shouldn't happen");
-		case number: sprintf(buffer, "%.14g", unbox_NUMBER(object));
+		case number: sprintf(buffer, "%.14g", object.number);
+						 buffer += strlen(buffer);
+						 break;
+		case io:
+						 if (object.io->file != NULL)
+						 	sprintf(buffer, "{ %s OPEN mode '%s' }", object.io->path, object.io->mode);
+						 else
+						 	sprintf(buffer, "{ %s CLOSED }", object.io->path);
 						 buffer += strlen(buffer);
 						 break;
 		case string:
@@ -1247,6 +1255,7 @@ static BOOLEAN ___anyQ(ANY a)     { (void)a; return 1; }
 static BOOLEAN ___blockQ(ANY a)   { return a.type==block;  }
 static BOOLEAN ___booleanQ(ANY a) { return a.type==boolean;}
 static BOOLEAN ___symbolQ(ANY a)  { return a.type==symbol; }
+static BOOLEAN ___ioQ(ANY a)      { return a.type==io; }
 static BOOLEAN ___integerQ(ANY a) { return ___numberQ(a) && unbox_NUMBER(a) == floor(unbox_NUMBER(a)); }
 static BOOLEAN ___zeroQ(ANY a)    { return ___numberQ(a) && unbox_NUMBER(a) == 0; }
 
@@ -1257,6 +1266,7 @@ static ANY     ___anyX(ANY a)        { return a; }
 static BLOCK   ___blockX(BLOCK a)    { return a; }
 static BOOLEAN ___booleanX(BOOLEAN a){ return a; }
 static SYMBOL  ___symbolX(SYMBOL a)  { return a; }
+static IO      ___ioX(IO a)          { return a; }
 
 static NUMBER ___integerX(NUMBER a)
 {
@@ -2027,7 +2037,7 @@ static IO ___open(STRING path, STRING mode)
 	// TODO mode should definitely be a symbol.
 	FILE* fp = fopen(path, mode);
 	if unlikely(!fp) throw_error_fmt("cannot open file '%s'", path);
-	IO io = gc_malloc(sizeof(IO));
+	IO io = gc_malloc(sizeof *io);
 	io->path = path;
 	io->mode = mode;
 	io->file = fp;
@@ -2039,4 +2049,32 @@ static void ___close(IO io)
 	fclose(io->file);
 	io->file = NULL;
 }
+
+static BOOLEAN ___openQ(IO io)
+{
+	return (BOOLEAN)io->file;
+}
+
+static STRING ___fileDname(IO io)
+{
+	return io->path;
+}
+
+static STRING ___fileDmode(IO io)
+{
+	return io->mode; // TODO symbol
+}
+
+static void ___write(STRING s, IO io)
+{
+	fputs(s, io->file);
+}
+
+static void ___seek(NUMBER n, IO io)
+{
+	size_t p = n;
+	if unlikely(p != n) throw_error_fmt("cannot seek to position %.14g", n);
+	fseek(io->file, p, SEEK_CUR);
+}
+
 // ---------- ACTUAL PROGRAM ----------
