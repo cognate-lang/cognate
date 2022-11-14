@@ -60,6 +60,11 @@ typedef enum cognate_type
 	io,
 } cognate_type;
 
+typedef struct jmp_buf_list {
+	jmp_buf car;
+	struct jmp_buf_list* cdr;
+} jmp_buf_list;
+
 typedef struct cognate_object
 {
 	union
@@ -154,6 +159,8 @@ static uintptr_t* space[2] = {NULL,NULL};
 static char* bitmap[2] = {NULL,NULL};
 static size_t alloc[2] = {0, 0};
 static _Bool z = 0;
+
+static jmp_buf_list* return_bufs = NULL;
 
 static _Bool pure = 0;
 
@@ -2075,6 +2082,26 @@ static void ___seek(NUMBER n, IO io)
 	size_t p = n;
 	if unlikely(p != n) throw_error_fmt("cannot seek to position %.14g", n);
 	fseek(io->file, p, SEEK_CUR);
+}
+
+static void ___return(void)
+{
+	if (!return_bufs) throw_error("oop");
+	jmp_buf_list* LL = return_bufs;
+	return_bufs = return_bufs->cdr;
+	longjmp(LL->car, 1);
+}
+
+static void ___go(BLOCK b)
+{
+	jmp_buf_list l;
+	if(setjmp(l.car) == 0)
+	{
+		l.cdr = return_bufs;
+		return_bufs = &l;
+		call_block(b);
+		return_bufs = return_bufs->cdr;
+	}
 }
 
 // ---------- ACTUAL PROGRAM ----------

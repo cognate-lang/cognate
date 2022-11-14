@@ -1410,10 +1410,12 @@ void _add_registers(func_t* f)
 					for (func_list_t* f = op->funcs ; f ; f = f->next)
 				   	_add_registers(f->func);
 
+					/*
 					for (func_list_t* f = op->funcs ; f ; f = f->next)
 						if (f->func->stack)
 							for (func_list_t* f = op->funcs ; f ; f = f->next)
 								f->func->stack = true;
+								*/
 
 					if (v->stack)
 					{
@@ -1501,12 +1503,15 @@ void _add_registers(func_t* f)
 		}
 		if (!n->next)
 		{
-			for (size_t i = 0 ; i < registers ; ++i)
+			if (registers)
 			{
-				insert_op_before(make_op(pick, NULL, op->where), n);
-				insert_op_before(make_op(push, NULL, op->where), n);
+				for (size_t i = 0 ; i < registers ; ++i)
+				{
+					insert_op_before(make_op(pick, NULL, op->where), n);
+					insert_op_before(make_op(push, NULL, op->where), n);
+				}
+				f->stack = true;
 			}
-			f->stack = true;
 		}
 	}
 }
@@ -1595,7 +1600,7 @@ bool add_var_types_forwards(module_t* mod)
 				case ret:
 					{
 						val_type_t t = pop_register_front(registers)->type;
-						if (t != any && func->func->rettype != t)
+						if (t != any && func->func->rettype != t && !func->func->branch)
 						{
 							if (func->func->rettype != any) type_error(func->func->rettype, t, op->op->where); // type error
 							func->func->rettype = t;
@@ -1657,7 +1662,10 @@ bool add_var_types_forwards(module_t* mod)
 }
 bool add_var_types_backwards(module_t* mod)
 {
+
 	bool changed = 0;
+	for (func_list_t* ff = mod->funcs ; ff ; ff = ff->next)
+		ff->func->tentative_rettype = ff->func->rettype;
 	for (func_list_t* func = mod->funcs ; func ; func = func->next)
 	{
 		ast_list_t* op = func->func->ops;
@@ -1682,7 +1690,20 @@ bool add_var_types_backwards(module_t* mod)
 						// hopefully balanced
 						func_t* fn = op->op->funcs->func;
 						if (fn->returns)
-							pop_register_front(registers);
+						{
+							reg_t* r = pop_register_front(registers);
+							if (r->type != any)
+								for (func_list_t* ff = op->op->funcs ; ff ; ff = ff->next)
+								{
+									if (ff->func->tentative_rettype != r->type)
+									{
+										if (ff->func->tentative_rettype != any)
+											type_error(r->type, ff->func->tentative_rettype, op->op->where);
+										ff->func->tentative_rettype = r->type;
+										changed = 1;
+									}
+								}
+						}
 						if (fn->stack) assert(registers->len == 0);
 						val_list_t* reversed_args = reverse(fn->args);
 						for ( val_list_t* a = reversed_args ; a ; a = a->next )
@@ -1735,7 +1756,16 @@ bool add_var_types_backwards(module_t* mod)
 					{
 						func_t* fn = call_to_func(op->op);
 						if (fn->returns)
-							pop_register_front(registers);
+						{
+							reg_t* r = pop_register_front(registers);
+							if (fn->tentative_rettype != r->type && r->type != any)
+							{
+								if (fn->tentative_rettype != any)
+									type_error(r->type, fn->tentative_rettype, op->op->where);
+								fn->tentative_rettype = r->type;
+								changed = 1;
+							}
+						}
 						if (fn->stack) assert(registers->len == 0);
 						val_list_t* reversed_args = reverse(fn->args);
 						for ( val_list_t* a = reversed_args ; a ; a = a->next )
@@ -1765,6 +1795,8 @@ bool add_var_types_backwards(module_t* mod)
 		}
 
 	}
+	for (func_list_t* ff = mod->funcs ; ff ; ff = ff->next)
+		ff->func->rettype = ff->func->tentative_rettype;
 	return changed;
 }
 
@@ -2886,7 +2918,7 @@ int main(int argc, char** argv)
 		merge_symbols,
 		compute_stack,
 		compute_sources,
-		inline_functions,
+		inline_functions, // TODO things break without this
 		compute_sources,
 		static_branches,
 		compute_sources,
@@ -2897,7 +2929,7 @@ int main(int argc, char** argv)
 		add_generics,
 		balance_branches,
 		compute_stack,
-		determine_registers,
+		//determine_registers,
 		add_registers,
 		compute_stack,
 		shorten_references,
@@ -2959,7 +2991,7 @@ word_list_t* builtins()
 		fn->name = prefix(sanitize(b[i].name));
 		fn->returns = b[i].returns;
 		fn->stack = b[i].stack;
-		fn->rettype = b[i].rettype;
+		fn->tentative_rettype = fn->rettype = b[i].rettype;
 		fn->argc = b[i].argc;
 		fn->args = NULL;
 		fn->locals = NULL;

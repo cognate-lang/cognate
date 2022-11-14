@@ -181,6 +181,7 @@ struct _func_t
 	func_list_t* calls;
 	val_list_t* args;
 	val_type_t rettype;
+	val_type_t tentative_rettype;
 	size_t argc;
 	char* name;
 	bool returns;
