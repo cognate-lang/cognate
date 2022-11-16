@@ -95,8 +95,7 @@
 {.name="unbox",               .calltype=call, .argc=1, .args={box}, .returns=true, .rettype=any},
 {.name="set",                 .calltype=call, .argc=2, .args={box, any}, .returns=false},
 {.name="debug",               .calltype=call, .argc=0, .returns=false},
-{.name="go",                  .calltype=call, .argc=1, .args={block}, .stack=true},
-{.name="return",              .calltype=call, .argc=0, .stack=true},
+{.name="begin",               .calltype=call, .argc=1, .args={block}, .stack=true},
 
 /* math */
 {.name="sind",                   .calltype=call, .argc=1, .args={number},      .returns=true, .rettype=number},

@@ -60,11 +60,6 @@ typedef enum cognate_type
 	io,
 } cognate_type;
 
-typedef struct jmp_buf_list {
-	jmp_buf car;
-	struct jmp_buf_list* cdr;
-} jmp_buf_list;
-
 typedef struct cognate_object
 {
 	union
@@ -159,8 +154,6 @@ static uintptr_t* space[2] = {NULL,NULL};
 static char* bitmap[2] = {NULL,NULL};
 static size_t alloc[2] = {0, 0};
 static _Bool z = 0;
-
-static jmp_buf_list* return_bufs = NULL;
 
 static _Bool pure = 0;
 
@@ -2084,23 +2077,28 @@ static void ___seek(NUMBER n, IO io)
 	fseek(io->file, p, SEEK_CUR);
 }
 
-static void ___return(void)
+static void invalid_jump(void* env[1])
 {
-	if (!return_bufs) throw_error("oop");
-	jmp_buf_list* LL = return_bufs;
-	return_bufs = return_bufs->cdr;
-	longjmp(LL->car, 1);
+	throw_error("cannot resume expired continuation");
 }
 
-static void ___go(BLOCK b)
+static void oh_no(void* env[1])
 {
-	jmp_buf_list l;
-	if(setjmp(l.car) == 0)
+	char a;
+	longjmp(*(jmp_buf*)env[0], 1);
+}
+
+static void ___begin(BLOCK f)
+{
+	jmp_buf b;
+	if (!setjmp(b))
 	{
-		l.cdr = return_bufs;
-		return_bufs = &l;
-		call_block(b);
-		return_bufs = return_bufs->cdr;
+		BLOCK a = gc_malloc(sizeof(void*) * 2);
+		a->fn = oh_no;
+		a->env[0] = &b;
+		push(box_BLOCK(a));
+		call_block(f);
+		a->fn = invalid_jump;
 	}
 }
 
