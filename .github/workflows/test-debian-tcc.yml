@@ -1,9 +1,9 @@
 name: Debian (tcc)
 on:
   push:
-    branches: [ master ]
+    branches: [ rewrite ]
   pull_request:
-    branches: [ master ]
+    branches: [ rewrite ]
   workflow_dispatch:
 jobs:
   tests:
