@@ -93,7 +93,6 @@ _Noreturn void throw_error(char* message, where_t* where)
 	// Ok now we need to actually get the line
 	fclose(where->mod->file);
 	where->mod->file = fopen(where->mod->path, "r");
-	printf("%zi lines\n1", where->line);
 	while (--where->line)
 	{
 		char c;
@@ -107,7 +106,7 @@ _Noreturn void throw_error(char* message, where_t* where)
 	while (isspace(*line)) line++, offset--;
 
 	// Now print shit
-	fprintf(stderr, "\n\n\033[0;2m%s\033[0;1m%s", number_box, line); // Should have newline already(?)
+	fprintf(stderr, "\n\033[0;2m%s\033[0;1m%s", number_box, line); // Should have newline already(?)
 	for (int i = 1 ; i < offset ; ++i) fputc(' ', stderr);
 	fprintf(stderr, "\033[31;1m|\\");
 	for (char* p = message + 1; *p != '\n' && *p != '\0' ; p++) fputc('_', stderr);
