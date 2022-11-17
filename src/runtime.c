@@ -248,9 +248,9 @@ static NUMBER ___random(NUMBER, NUMBER);
 static void ___clear(void);
 static BOOLEAN ___true(void);
 static BOOLEAN ___false(void);
-static BOOLEAN ___either(BOOLEAN, BOOLEAN);
-static BOOLEAN ___both(BOOLEAN, BOOLEAN);
-static BOOLEAN ___oneDof(BOOLEAN, BOOLEAN);
+static BOOLEAN ___or(BOOLEAN, BOOLEAN);
+static BOOLEAN ___and(BOOLEAN, BOOLEAN);
+static BOOLEAN ___xor(BOOLEAN, BOOLEAN);
 static BOOLEAN ___not(BOOLEAN);
 static BOOLEAN ___EE(ANY, ANY);
 static BOOLEAN ___XE(ANY, ANY);
@@ -276,7 +276,7 @@ static STRING ___tail(STRING);
 static LIST ___push(ANY, LIST);
 static BOOLEAN ___emptyQ(LIST);
 static LIST ___list(BLOCK);
-static STRING ___join(NUMBER);
+static STRING ___join(STRING, STRING);
 static NUMBER ___stringDlength(STRING);
 static STRING ___substring(NUMBER, NUMBER, STRING);
 static STRING ___input(void);
@@ -389,7 +389,7 @@ int main(int argc, char** argv)
 		cmdline_parameters = tmp;
 	}
 	// Bind error signals.
-	char signals[] = { SIGHUP, SIGSEGV, SIGINT, SIGQUIT, SIGILL, SIGABRT, SIGBUS, SIGFPE, SIGPIPE, SIGTERM, SIGCHLD };
+	char signals[] = { SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGABRT, SIGBUS, SIGFPE, SIGPIPE, SIGTERM, SIGCHLD };
 	for (size_t i = 0; i < sizeof(signals); ++i) signal(signals[i], handle_error_signal);
 	// Initialize the stack.
 	init_stack();
@@ -1238,9 +1238,9 @@ static void ___clear(void) { stack.cache.type = NIL; stack.top=stack.start; }
 
 static BOOLEAN ___true(void)  { return 1; }
 static BOOLEAN ___false(void) { return 0; }
-static BOOLEAN ___either(BOOLEAN a, BOOLEAN b) { return a || b; }
-static BOOLEAN ___both(BOOLEAN a, BOOLEAN b)   { return a && b; }
-static BOOLEAN ___oneDof(BOOLEAN a, BOOLEAN b) { return a ^ b;  }
+static BOOLEAN ___or(BOOLEAN a, BOOLEAN b) { return a || b; }
+static BOOLEAN ___and(BOOLEAN a, BOOLEAN b)   { return a && b; }
+static BOOLEAN ___xor(BOOLEAN a, BOOLEAN b) { return a ^ b;  }
 static BOOLEAN ___not(BOOLEAN a)               { return !a;     }
 static BOOLEAN ___EE(ANY a, ANY b)  { return compare_objects(a,b); }
 static BOOLEAN ___XE(ANY a, ANY b) { return !compare_objects(a,b); }
@@ -1394,27 +1394,14 @@ static LIST ___list(BLOCK expr)
 	return lst;
 }
 
-static STRING ___join(NUMBER n)
+static STRING ___join(STRING s1, STRING s2)
 {
-	// Joins a string to the end of another string.
-	// Define Prefix (Swap, Suffix);
-	size_t n1 = n;
-	if (n != n1) throw_error_fmt("Cannot join %.14g strings", n);
-	const char* strings[n1];
-	size_t result_size = 1;
-	for (size_t i = 0; i < n1; ++i)
-	{
-		const char* str = unbox_STRING(pop());
-		strings[i] = str;
-		result_size += strlen(str);
-	}
-	char* const result = gc_flatmalloc(result_size);
-	result[0] = '\0';
-	for (size_t i = 0; i < n1; ++i)
-	{
-		strcat(result, strings[i]);
-	}
-	return result;
+	size_t l1 = strlen(s1);
+	size_t l2 = strlen(s2);
+	char* result = gc_malloc(l1 + l2 + 1);
+	strcpy(result, s1);
+	strcpy(result+l1, s2);
+ 	return result;
 }
 
 static NUMBER ___stringDlength(STRING str)
@@ -1877,14 +1864,6 @@ static ANY ___unbox(BOX b)
 static void ___set(BOX b, ANY a)
 {
 	*b = a;
-}
-
-static void ___debug()
-{
-#ifdef DEBUG
-	debug = 1;
-	debugger_step();
-#endif
 }
 
 /* math */

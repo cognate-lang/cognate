@@ -375,9 +375,16 @@ void module_parse(module_t* mod)
 {
 	if (strcmp(mod->path + strlen(mod->path) - 4, ".cog"))
 	{
-		fprintf(stderr, "Source file must end with .cog file extension!\n");
+		fprintf(stderr, "\nSource file must end with .cog file extension!\n");
 		exit(EXIT_FAILURE);
 	}
+	FILE* t = fopen(mod->path, "r");
+	if (!t)
+	{
+		fprintf(stderr, "\nCan't open file '%s'!\n", mod->path);
+		exit(EXIT_FAILURE);
+	}
+	fclose(t);
 	pmod = mod;
 	yyin = mod->file; // imagine having a reentrant parser.
 	yylloc.first_line = 1;
@@ -764,7 +771,7 @@ void to_c(module_t* mod)
 	char* c_source_path = strdup(mod->path);
 	c_source_path[strlen(c_source_path) - 2] = '\0';
 	FILE* c_source = fopen(c_source_path, "w");
-	fprintf(c_source, "%.*s", runtime_c_len, (char*)runtime_c);
+	fprintf(c_source, "%.*s", src_runtime_c_len, (char*)src_runtime_c);
 	fputc('\n', c_source);
 	for (symbol_list_t* syms = mod->symbols ; syms ; syms = syms->next)
 		fprintf(c_source, "SYMBOL SYM%s = \"%s\";\n", syms->text, syms->text);

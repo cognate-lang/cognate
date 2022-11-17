@@ -4,8 +4,8 @@ PREFIX=`echo ~`/.local
 BINDIR=$(PREFIX)/bin
 TESTS=block booleans filter for functions if io lists map maths parsing regex stack strings symbols variables trig other-math
 
-cognac: cognac.h cognac.c parser.c parser.h lexer.c runtime.h
-	$(CC) $(CFLAGS) lexer.c parser.c cognac.c -o cognac -DCC=$(CC)
+cognac: src/cognac.h src/cognac.c src/parser.c src/parser.h src/lexer.c src/runtime.h
+	$(CC) $(CFLAGS) src/lexer.c src/parser.c src/cognac.c -o cognac -DCC=$(CC)
 
 install: cognac
 	mkdir -p $(BINDIR)
@@ -14,17 +14,17 @@ install: cognac
 uninstall:
 	rm -rf $(BINDIR)/cognac
 
-runtime.h: runtime.c
-	xxd -i runtime.c > runtime.h
+src/runtime.h: src/runtime.c
+	xxd -i src/runtime.c > src/runtime.h
 
-lexer.c: lexer.l
-	flex -o lexer.c lexer.l
+src/lexer.c: src/lexer.l
+	flex -o src/lexer.c src/lexer.l
 
-parser.c parser.h: parser.y
-	bison parser.y --defines=parser.h -o parser.c
+src/parser.c src/parser.h: src/parser.y
+	bison src/parser.y --defines=src/parser.h -o src/parser.c
 
 clean:
-	rm lexer.c parser.c parser.h cognac runtime.h
+	rm src/lexer.c src/parser.c src/parser.h cognac src/runtime.h
 
 test: $(TESTS)
 	@grep -E "^(PASS|FAIL)" tests/*.log --color
