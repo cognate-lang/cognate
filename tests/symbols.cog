@@ -1,7 +1,0 @@
-Print If != \foo \bar
-	"PASS: Comparing different symbols"
-	"FAIL: Comparing different symbols";
-
-Print If == \foo \foo
-	"PASS: Comparing the same symbol"
-	"FAIL: Comparing the same symbol";

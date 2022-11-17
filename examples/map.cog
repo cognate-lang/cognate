@@ -1,2 +1,0 @@
-Def Square as (* Twin);
-Map (Square) over the List (1 2 3 4 5); Print;

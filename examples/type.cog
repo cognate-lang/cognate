@@ -1,9 +1,0 @@
-Type Pair has First and Rest;
-
-Def Get-string as
-	Case Pair (Any?) (String?) then (Rest)
-	Case Pair (String?) (Any?) then (First)
-	                           else ();
-
-Print Get-string from Pair "hello" 12;
-Print Get-string from Pair \foo "bye";

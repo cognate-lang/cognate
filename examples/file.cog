@@ -1,3 +1,0 @@
-~~ Reads its own source code and prints it.
-Read "file.cog";
-Print;

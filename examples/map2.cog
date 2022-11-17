@@ -1,7 +1,0 @@
-Def Multiple as (== 0 Modulo);
-
-Print Map
-	Case (Multiple of 3) then (Triplet)
-	Case (Multiple of 2) then (Twin)
-	                     else (Drop)
-	over the Range from 1 to 20;

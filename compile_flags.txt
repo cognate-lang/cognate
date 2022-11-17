@@ -1,7 +1,0 @@
--fblocks
--Iinclude
--Wall
--Wextra
--Werror
--Wno-unused
--pedantic-errors
