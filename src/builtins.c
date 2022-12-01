@@ -143,6 +143,8 @@
 {.name="parameters",          .calltype=call, .returns=true, .rettype=list},
 {.name="input",               .calltype=call, .returns=true, .rettype=string},
 {.name="open",                .calltype=call, .argc=2, .args={string, string}, .returns=true, .rettype=io},
+{.name="with",                .calltype=call, .argc=3, .args={string, string, block}, .stack=true},
+{.name="read-file",           .calltype=call, .argc=1, .args={io}, .returns=true, .rettype=string},
 {.name="close",               .calltype=call, .argc=1, .args={io}},
 {.name="path",                .calltype=call, .returns=true, .rettype=string},
 #endif

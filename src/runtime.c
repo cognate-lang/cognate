@@ -283,6 +283,7 @@ static NUMBER ___stringDlength(STRING);
 static STRING ___substring(NUMBER, NUMBER, STRING);
 static STRING ___input(void);
 static IO ___open(STRING, STRING);
+static void ___with(STRING, STRING, BLOCK);
 static void ___close(IO);
 static NUMBER ___number(STRING);
 static STRING ___path(void);
@@ -1721,10 +1722,13 @@ static LIST ___split(STRING sep, STRING str)
 		node->next = lst;
 		lst = node;
 	}
-	cognate_list* node = gc_malloc(sizeof *node);
-	node->object = box_STRING(str);
-	node->next = lst;
-	lst = node;
+	if (*str)
+	{
+		cognate_list* node = gc_malloc(sizeof *node);
+		node->object = box_STRING(str);
+		node->next = lst;
+		lst = node;
+	}
 	cognate_list* prev = NULL;
 	cognate_list* curr = (cognate_list*)lst;
 	while (curr)
@@ -2037,6 +2041,7 @@ static void ___times(NUMBER n, BLOCK f)
 
 static IO ___open(STRING path, STRING mode)
 {
+	assert_impure();
 	// TODO mode should definitely be a symbol.
 	FILE* fp = fopen(path, mode);
 	if unlikely(!fp) throw_error_fmt("cannot open file '%s'", path);
@@ -2047,8 +2052,35 @@ static IO ___open(STRING path, STRING mode)
 	return io;
 }
 
+static void ___with(STRING path, STRING mode, BLOCK blk)
+{
+	assert_impure();
+	IO fp = ___open(path, mode);
+	push(box_IO(fp));
+	call_block(blk);
+	___close(fp);
+}
+
+static STRING ___readDfile(IO io)
+{
+	assert_impure();
+	// Read a file to a string.
+	FILE *fp = io->file;
+	if unlikely(!io->mode) throw_error_fmt("File '%s' is not open", io->path);
+	if unlikely(fp == NULL) throw_error_fmt("Cannot open file '%s'", io->path);
+	struct stat st;
+	fstat(fileno(fp), &st);
+	char* const text = gc_flatmalloc (st.st_size + 1);
+	if (fread(text, sizeof(char), st.st_size, fp) != (unsigned long)st.st_size)
+		throw_error_fmt("Error reading file '%s'", io->path);
+	text[st.st_size] = '\0'; // Remove trailing eof.
+	return text;
+	// TODO: single line (or delimited) file read function for better IO performance
+}
+
 static void ___close(IO io)
 {
+	assert_impure();
 	fclose(io->file);
 	io->file = NULL;
 }
