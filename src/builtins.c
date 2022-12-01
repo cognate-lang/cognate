@@ -99,6 +99,8 @@
 {.name="set",                 .calltype=call, .argc=2, .args={box, any}, .returns=false},
 {.name="debug",               .calltype=call, .argc=0, .returns=false},
 {.name="begin",               .calltype=call, .argc=1, .args={block}, .stack=true},
+{.name="sort",                .calltype=call, .argc=1, .args={list}, .returns=true, .rettype=list},
+{.name="reverse",             .calltype=call, .argc=1, .args={list}, .returns=true, .rettype=list},
 
 /* math */
 {.name="sind",                   .calltype=call, .argc=1, .args={number},      .returns=true, .rettype=number},

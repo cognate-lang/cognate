@@ -1713,14 +1713,17 @@ static LIST ___split(STRING sep, STRING str)
 	while ((found = strstr(str, sep)))
 	{
 		found = strstr(str, sep);
-		char* item = gc_flatmalloc(found - str + 1);
-		memcpy(item, str, found - str);
-		item[found - str] = '\0';
+		if (found != str)
+		{
+			char* item = gc_flatmalloc(found - str + 1);
+			memcpy(item, str, found - str);
+			item[found - str] = '\0';
+			cognate_list* node = gc_malloc(sizeof *node);
+			node->object = box_STRING(item);
+			node->next = lst;
+			lst = node;
+		}
 		str = found + len;
-		cognate_list* node = gc_malloc(sizeof *node);
-		node->object = box_STRING(item);
-		node->next = lst;
-		lst = node;
 	}
 	if (*str)
 	{
@@ -2135,6 +2138,60 @@ static void ___begin(BLOCK f)
 		call_block(f);
 		a->fn = invalid_jump;
 	}
+}
+
+static LIST ___sort(LIST l)
+{
+	if (!l) return l;
+	ANY pivot_ = l->object;
+	NUMBER pivot = unbox_NUMBER(pivot_);
+	const cognate_list* lesser = NULL;
+	const cognate_list* greater = NULL;
+
+	for (l = l->next; l ; l = l->next)
+	{
+		cognate_list* L = gc_malloc(sizeof *L);
+		L->object = l->object;
+		if (unbox_NUMBER(l->object) < pivot)
+		{
+			L->next = lesser;
+			lesser = L;
+		}
+		else
+		{
+			L->next = greater;
+			greater = L;
+		}
+	}
+
+	lesser = ___sort(lesser);
+	greater = ___sort(greater);
+
+ 	cognate_list* p = (cognate_list*)lesser;
+	while (p && p->next) p = (cognate_list*)p->next;
+
+	cognate_list* pivot_node = gc_malloc(sizeof *pivot_node);
+	pivot_node->object = pivot_;
+	pivot_node->next = greater;
+	if (p)
+	{
+		p->next = pivot_node;
+		return p;
+	}
+	return pivot_node;
+}
+
+static LIST ___reverse(LIST l)
+{
+	LIST li = NULL;
+	for (; l ; l = l->next)
+	{
+		cognate_list* n = malloc(sizeof *n);
+		n->object = l->object;
+		n->next = li;
+		li = n;
+	}
+	return li;
 }
 
 // ---------- ACTUAL PROGRAM ----------
