@@ -1692,15 +1692,24 @@ static LIST ___split(STRING sep, STRING str)
 {
 	if (!*sep) throw_error("Empty separator");
 	LIST lst = NULL;
-	str = gc_strdup((char*)str);
-	char* r = (char*)str;
-	while ((str = strtok_r(NULL, sep, &r)))
+	size_t len = strlen(sep);
+	char* found;
+	while ((found = strstr(str, sep)))
 	{
+		found = strstr(str, sep);
+		char* item = gc_flatmalloc(found - str + 1);
+		memcpy(item, str, found - str);
+		item[found - str] = '\0';
+		str = found + len;
 		cognate_list* node = gc_malloc(sizeof *node);
-		node->object = box_STRING(str);
+		node->object = box_STRING(item);
 		node->next = lst;
 		lst = node;
 	}
+	cognate_list* node = gc_malloc(sizeof *node);
+	node->object = box_STRING(str);
+	node->next = lst;
+	lst = node;
 	cognate_list* prev = NULL;
 	cognate_list* curr = (cognate_list*)lst;
 	while (curr)
