@@ -258,6 +258,8 @@ static BOOLEAN ___L(NUMBER, NUMBER);
 static BOOLEAN ___G(NUMBER, NUMBER);
 static BOOLEAN ___LE(NUMBER, NUMBER);
 static BOOLEAN ___GE(NUMBER, NUMBER);
+static NUMBER ___max(NUMBER, NUMBER);
+static NUMBER ___min(NUMBER, NUMBER);
 static BOOLEAN ___match(ANY, ANY);
 static BOOLEAN ___anyQ(ANY);
 static BOOLEAN ___numberQ(ANY);
@@ -299,6 +301,7 @@ static void ___error(STRING);
 static LIST ___map(BLOCK, LIST);
 static LIST ___filter(BLOCK, LIST);
 static void ___for(LIST, BLOCK);
+static void ___fold(BLOCK, ANY, LIST);
 static LIST ___range(NUMBER, NUMBER);
 static ANY ___index(NUMBER, LIST);
 static void ___puts(BLOCK);
@@ -1248,6 +1251,8 @@ static BOOLEAN ___G(NUMBER a, NUMBER b)  { return a < b; }
 static BOOLEAN ___L(NUMBER a, NUMBER b)  { return a > b; }
 static BOOLEAN ___GE(NUMBER a, NUMBER b) { return a <= b; }
 static BOOLEAN ___LE(NUMBER a, NUMBER b) { return a >= b; }
+static NUMBER ___max(NUMBER a, NUMBER b)  { return a > b ? a : b; }
+static NUMBER ___min(NUMBER a, NUMBER b)  { return a < b ? a : b; }
 static BOOLEAN ___numberQ(ANY a)  { return a.type==number; }
 static BOOLEAN ___listQ(ANY a)    { return a.type==list;   }
 static BOOLEAN ___stringQ(ANY a)  { return a.type==string; }
@@ -1622,6 +1627,16 @@ static LIST ___filter(BLOCK blk, LIST lst)
 
 static void ___for(LIST lst, BLOCK blk)
 {
+	for (; lst ; lst = lst->next)
+	{
+		push(lst->object);
+		call_block(blk);
+	}
+}
+
+static void ___fold(BLOCK blk, ANY init, LIST lst)
+{
+	push(init);
 	for (; lst ; lst = lst->next)
 	{
 		push(lst->object);
