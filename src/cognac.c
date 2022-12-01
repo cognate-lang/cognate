@@ -734,8 +734,8 @@ void to_exe(module_t* mod)
 	char* args[] =
 	{
 		STRING(CC), c_source_path, "-o", exe_path,
-		//"-Ofast", "-flto", "-s", "-w",
-		"-Og", "-ggdb3", "-g", "-rdynamic",
+		"-Ofast", "-flto", "-s", "-w",
+		//"-Og", "-ggdb3", "-g", "-rdynamic",
 		"-lm", NULL
 	};
 	pid_t p = fork();
