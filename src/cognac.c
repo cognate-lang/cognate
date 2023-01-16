@@ -1054,7 +1054,7 @@ void to_c(module_t* mod)
 						push_register_front(reg, registers);
 						fprintf(c_source, "\tBLOCK _%zu = gc_malloc(%zu * WORDSZ);\n",
 							reg->id,
-							num_words + 3);
+							num_words + 1);
 						fprintf(c_source, "\t_%zu->fn = %s;\n", reg->id, op->op->func->generic_variant->name);
 						size_t i = 0;
 						for (word_list_t* w = op->op->func->captures ; w ; w = w->next, i++)

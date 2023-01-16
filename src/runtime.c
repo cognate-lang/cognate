@@ -648,6 +648,7 @@ static STRING show_object (const ANY object, const _Bool raw_strings)
 	switch (object.type)
 	{
 		case NIL: throw_error("This shouldn't happen");
+					 break;
 		case number: sprintf(buffer, "%.14g", object.number);
 						 buffer += strlen(buffer);
 						 break;
@@ -1579,6 +1580,7 @@ static void ___error(STRING str)
 	throw_error(str);
 }
 
+/*
 static LIST ___map(BLOCK blk, LIST lst)
 {
 	flush_stack_cache();
@@ -1603,7 +1605,24 @@ static LIST ___map(BLOCK blk, LIST lst)
 	stack.top = stack.start;
 	stack.start = tmp_stack_start;
 	return start.next;
+}
+*/
 
+static LIST ___map(BLOCK blk, LIST lst)
+{
+	cognate_list start = {0};
+	cognate_list* ptr = &start;
+	for (; lst ; lst = lst->next)
+	{
+		push(lst->object);
+		call_block(blk);
+		cognate_list* new = gc_malloc(sizeof *new);
+		new->object = pop();
+		new->next = NULL;
+		ptr->next = new;
+		ptr = new;
+	}
+	return start.next;
 }
 
 static LIST ___filter(BLOCK blk, LIST lst)
