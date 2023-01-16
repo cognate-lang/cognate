@@ -10,14 +10,14 @@
 
 Cognate is a small dynamic quasi-concatenative language for functional programming. Cognate aims to express complex programs in a simple and readable way through its unique syntax, which emphasises embedding comments into statements. This makes programs very readable and helps a programmer better express their intentions.
 
-<img src="screenshots/fizzbuzz.png" width="100%">
+<img src="screenshots/fizzbuzz.png" width="100%" title="Fizzbuzz in Cognate (font is Hermit)">
 
-<img src="screenshots/hanoi.png" width="100%">
+<img src="screenshots/hanoi.png" width="100%" title="Towers of Hanoi in Cognate (font is Hermit)">
 
 ### Cognate is readable
 Cognate's compiler ignores words beginning with lowercase letters, allowing comments and code to be interwoven. This 'informal syntax' being optional allows Cognate to be verbose where detail is needed and concise where it isn't.
 
-<img src="screenshots/comparison.png" width="100%">
+<img src="screenshots/comparison.png" width="100%" title="Map function in Python and Cognate (font is Hermit)">
 
 ### Cognate is efficient
 CognaC (the Cognate Compiler) compiles Cognate sources directly into C. This produces very small and rather fast binaries, allowing Cognate to outperform most dynamic languages. This also makes Cognate a candidate for scripting in embedded environments, such as microcontrollers.
