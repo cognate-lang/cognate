@@ -50,3 +50,14 @@ Def B as (
 );
 
 Do B "PASS: Another block copying test again";
+
+"PASS: Closure loading 2";
+"PASS: Closure loading 1";
+
+Do (
+	Let X;
+	Let Y;
+	Do If True
+		then ( Print X ; Print Y )
+		else ( )
+);

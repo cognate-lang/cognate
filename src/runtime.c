@@ -39,13 +39,19 @@
 typedef struct cognate_object ANY;
 typedef ANY* restrict ANYPTR;
 typedef ANY* restrict BOX;
-typedef struct cognate_block* restrict BLOCK;
+typedef struct cognate_block BLOCK;
 typedef _Bool BOOLEAN;
 typedef double NUMBER;
 typedef const char* restrict STRING;
 typedef const struct cognate_list* restrict LIST;
 typedef const char* restrict SYMBOL;
 typedef struct cognate_file* IO;
+
+typedef struct cognate_block
+{
+	void (*fn)(void*[]);
+	void* env;
+} cognate_block;
 
 typedef enum cognate_type
 {
@@ -86,12 +92,6 @@ MKEARLY(NUMBER);
 MKEARLY(STRING);
 MKEARLY(LIST);
 MKEARLY(SYMBOL);
-
-typedef struct cognate_block
-{
-	void (*fn)(void*[]);
-	void* env[0];
-} cognate_block;
 
 typedef struct cognate_list
 {
@@ -697,7 +697,7 @@ static STRING show_object (const ANY object, const _Bool raw_strings)
 		case symbol:  strcpy(buffer, unbox_SYMBOL(object));
 						  buffer += strlen(buffer);
 						  break;
-		case block:	  sprintf(buffer, "<block %p>", (void*)unbox_BLOCK(object));
+		case block:	  sprintf(buffer, "<block %p>", (void*)unbox_BLOCK(object).fn);
 						  buffer += strlen(buffer);
 						  break;
 		case box:
@@ -822,7 +822,7 @@ static _Bool match_lists(LIST lst1, LIST lst2)
 
 static void call_block(BLOCK b)
 {
-	b->fn(b->env);
+	b.fn(b.env);
 }
 
 static _Bool match_objects(ANY patt, ANY obj)
@@ -2150,12 +2150,12 @@ static void ___begin(BLOCK f)
 	jmp_buf b;
 	if (!setjmp(b))
 	{
-		BLOCK a = gc_malloc(sizeof(void*) * 2);
-		a->fn = oh_no;
-		a->env[0] = &b;
+		BLOCK a = (BLOCK) {.fn=oh_no, .env=&b};
+		a.fn = oh_no;
+		a.env = &b;
 		push(box_BLOCK(a));
 		call_block(f);
-		a->fn = invalid_jump;
+		a.fn = invalid_jump;
 	}
 }
 

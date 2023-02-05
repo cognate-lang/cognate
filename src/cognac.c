@@ -778,7 +778,6 @@ void to_c(module_t* mod)
 	if (mod->symbols) fputc('\n', c_source);
 	for (func_list_t* func = mod->funcs ; func ; func = func->next)
 	{
-		size_t num_words = 0;
 		fprintf(c_source, "%s %s(",
 				func->func->returns ? c_val_type(func->func->rettype) : "void",
 				func->func->name);
@@ -792,7 +791,7 @@ void to_c(module_t* mod)
 		}
 		else
 		{
-			fprintf(c_source, "void* env[%zu]", num_words);
+			fprintf(c_source, "void* env");
 			if (func->func->argc) fprintf(c_source, ", ");
 		}
 		//reg_dequeue_t* ar = make_register_dequeue();
@@ -827,7 +826,7 @@ void to_c(module_t* mod)
 			}
 		else
 		{
-			fprintf(c_source, "void* env[%zu]", num_words);
+			fprintf(c_source, "void* env");
 			if (func->func->argc) fprintf(c_source, ", ");
 		}
 		reg_dequeue_t* ar = make_register_dequeue();
@@ -841,21 +840,27 @@ void to_c(module_t* mod)
 		if (!(func->func->generic) && !func->func->captures && !func->func->args)
 			fprintf(c_source, "void");
 		fprintf(c_source, ") {\n");
-		size_t i = 0;
 		if (func->func->generic)
-			for (word_list_t* w = func->func->captures ; w ; w = w->next, i++)
+			for (word_list_t* w = func->func->captures ; w ; w = w->next)
 			{
 				if (w->word->used_early)
-					fprintf(c_source, "\tearly_%s* %s = env[%zu];\n",
+				{
+					fprintf(c_source, "\tearly_%s %s = *(early_%s*)env;\n",
 						c_val_type(w->word->val->type),
 						c_word_name(w->word),
-						i);
+						c_val_type(w->word->val->type));
+					if (w->next)
+						fprintf(c_source, "\tenv += sizeof(early_%s);\n", c_val_type(w->word->val->type));
+				}
 				else
-					fprintf(c_source, "\t%s %s = *(%s*)&env[%zu];\n",
+				{
+					fprintf(c_source, "\t%s %s = *(%s*)env;\n",
 						c_val_type(w->word->val->type),
 						c_word_name(w->word),
-						c_val_type(w->word->val->type),
-						i);
+						c_val_type(w->word->val->type));
+					if (w->next)
+						fprintf(c_source, "\tenv += sizeof(%s);\n", c_val_type(w->word->val->type));
+				}
 			}
 
 		for (word_list_t* w = func->func->locals ; w ; w = w->next)
@@ -1037,31 +1042,54 @@ void to_c(module_t* mod)
 				case call:
 					// TODO remove call and use var and a do op
 					if (op->op->word->used_early)
-						fprintf(c_source, "\tCHK(%s);\n\t%s->value->fn(%s->value->env);\n",
+						fprintf(c_source, "\tCHK(%s);\n\t%s->value.fn(%s->value.env);\n",
 							c_word_name(op->op->word),
 							c_word_name(op->op->word),
 							c_word_name(op->op->word));
 					else
-						fprintf(c_source, "\t%s->fn(%s->env);\n",
+						fprintf(c_source, "\t%s.fn(%s.env);\n",
 							c_word_name(op->op->word),
 							c_word_name(op->op->word));
 					break;
 				case closure:
 					{
-						size_t num_words = 0;
+						// TODO: variable loading order is a tad funky, could be neater if loaded in reverse
 						for (word_list_t* w = op->op->func->captures ; w ; w = w->next) num_words++;
 						reg_t* reg = make_register(block, NULL);
 						push_register_front(reg, registers);
-						fprintf(c_source, "\tBLOCK _%zu = gc_malloc(%zu * WORDSZ);\n",
-							reg->id,
-							num_words + 1);
-						fprintf(c_source, "\t_%zu->fn = %s;\n", reg->id, op->op->func->generic_variant->name);
+						fprintf(c_source, "\tBLOCK _%zu = (BLOCK) { .fn = %s",
+								reg->id, op->op->func->generic_variant->name);
+						if (op->op->func->captures)
+						{
+							fprintf(c_source, ", .env = gc_malloc(");
+							for (word_list_t* w = op->op->func->captures ; w ; w = w->next)
+							{
+								fprintf(c_source, "sizeof(%s)", c_val_type(w->word->val->type));
+								if (w->next)
+									fprintf(c_source, " + ");
+							}
+							fprintf(c_source, ")");
+						}
+						fprintf(c_source, " };\n");
 						size_t i = 0;
 						for (word_list_t* w = op->op->func->captures ; w ; w = w->next, i++)
 						{
-							fprintf(c_source, "\t_%zu->env[%zu] = *(void**)&%s;\n",
-								reg->id, i,
-								c_word_name(w->word));
+							fprintf(c_source, "\t*(%s*)_%zu.env = %s;\n",
+								c_val_type(w->word->val->type),
+								reg->id, c_word_name(w->word));
+							if (w->next)
+								fprintf(c_source, "\t_%zu.env += sizeof(%s);\n", reg->id, c_val_type(w->word->val->type));
+						}
+						if (op->op->func->captures && op->op->func->captures->next)
+						{
+							fprintf(c_source, "\t_%zu.env -= ", reg->id);
+							for (word_list_t* w = op->op->func->captures ; w->next ; w = w->next)
+							{
+								fprintf(c_source, "sizeof(%s)", c_val_type(w->word->val->type));
+								if (w->next && w->next->next)
+									fprintf(c_source, " + ");
+							}
+							fprintf(c_source, ";");
 						}
 						break;
 					}
