@@ -1,6 +1,6 @@
-~
-Print If == "foo\nbar\n" Read "tests/io.txt"
+Let S be With "tests/io.txt" "r" ( Read-file );
+
+Print If == "foo\nbar\n" S
 	"PASS: Reading multi-line file to string"
 else
 	"FAIL: Reading multi-line file to string";
-	~
