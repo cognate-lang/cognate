@@ -1,0 +1,17 @@
+~~ Towers of Hanoi in Cognate
+
+Def Move discs as (
+
+	Let N be number of discs;
+	Let A be first rod;
+	Let B be second rod;
+	Let C be third rod;
+
+	Unless Zero? N (
+		Move - 1 N discs from A via C to B;
+		Prints ("Move disc " N " from " A " to " C);
+		Move - 1 N discs from B via A to C;
+	)
+);
+
+Move 5 discs from \a via \b to \c
