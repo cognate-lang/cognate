@@ -3044,7 +3044,7 @@ word_list_t* builtins()
 		words = push_word(
 				make_word(b[i].name, calltype,
 					make_value(block,
-						ast_single(closure, fn, NULL)), &prelude), words); // TODO prelude module source.
+						ast_single(closure, fn, NULL)), &prelude), words);
 	}
 	return words;
 }
