@@ -1,0 +1,2 @@
+Def Drop as ( Let X );
+Def Swap as ( Let X ; Let Y ; Y X );
