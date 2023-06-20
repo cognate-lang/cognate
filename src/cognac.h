@@ -212,6 +212,7 @@ struct _module_t
 	func_t* entry;
 	symbol_list_t* symbols;
 	module_list_t* uses;
+	where_t* first_ref;
 };
 
 struct _module_list_t

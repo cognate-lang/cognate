@@ -381,7 +381,12 @@ void module_parse(module_t* mod)
 	FILE* t = fopen(mod->path, "r");
 	if (!t)
 	{
-		fprintf(stderr, "\nCan't open file '%s'!\n", mod->path);
+		if (!mod->first_ref)
+			fprintf(stderr, "\nCan't open file '%s'!\n", mod->path);
+		else
+		{
+			throw_error("can't find module", mod->first_ref);
+		}
 		exit(EXIT_FAILURE);
 	}
 	fclose(t);
@@ -2861,22 +2866,29 @@ void _compute_modules(ast_list_t* A, module_t* m)
 			char* i = mod_name;
 			while (*i != ':') ++i;
 			*i = '\0';
-			for (module_list_t* mm = m->uses ; mm ; mm = mm->next)
+			if (!strcmp(mod_name, "prelude"))
+			{
+				goto end;
+			}
+			else
+			{
+				for (module_list_t* mm = m->uses ; mm ; mm = mm->next)
 				if (!strcmp(mm->mod->prefix, mod_name)) goto end;
-			char* filename = alloc(strlen(mod_name) + 5);
-			*filename = '\0';
-			strcpy(filename, mod_name);
-			strcat(filename, ".cog");
-			//printf("FOUND %s in %s\n", ident, filename);
-			// TODO case for prelude.
-			module_t* M = create_module(filename);
-			module_list_t* mm = alloc(sizeof *mm);
-			mm->next = m->uses;
-			mm->mod = M;
-			m->uses = mm;
-			module_parse(M);
-			add_backlinks(M);
-			_compute_modules(M->tree, m);
+				char* filename = alloc(strlen(mod_name) + 5);
+				*filename = '\0';
+				strcpy(filename, mod_name);
+				strcat(filename, ".cog");
+				//printf("FOUND %s in %s\n", ident, filename);
+				module_t* M = create_module(filename);
+				module_list_t* mm = alloc(sizeof *mm);
+				mm->next = m->uses;
+				mm->mod = M;
+				m->uses = mm;
+				M->first_ref = a->op->where;
+				module_parse(M);
+				add_backlinks(M);
+				_compute_modules(M->tree, m);
+			}
 		}
 		else if (a->op->type == braces) _compute_modules(a->op->child, m);
 end:;

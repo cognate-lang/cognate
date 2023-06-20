@@ -1,3 +1,5 @@
+Def Swap as ( Let X ; Let Y ; Y X );
+
 Def Factor (Zero? Modulo Swap);
 
 Def Primes (
