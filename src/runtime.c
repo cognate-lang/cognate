@@ -234,7 +234,6 @@ static void ___when(BOOLEAN, BLOCK);
 static void ___unless(BOOLEAN, BLOCK);
 static void ___while(BLOCK, BLOCK);
 static void ___until(BLOCK, BLOCK);
-static void ___do(BLOCK);
 static void ___put(ANY);
 static void ___print(ANY);
 static NUMBER ___P(NUMBER, NUMBER);
@@ -1204,8 +1203,6 @@ static void ___until(BLOCK cond, BLOCK body)
 		call_block(cond);
 	}
 }
-
-static void ___do(BLOCK blk) { call_block(blk); }
 
 static void ___put(ANY a)   { assert_impure(); fputs(show_object(a, 1), stdout); fflush(stdout); }
 static void ___print(ANY a) { assert_impure(); puts(show_object(a, 1)); }

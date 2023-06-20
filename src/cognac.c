@@ -1109,7 +1109,7 @@ void to_c(module_t* mod)
 								if (w->next && w->next->next)
 									fprintf(c_source, " + ");
 							}
-							fprintf(c_source, ";");
+							fprintf(c_source, ";\n");
 						}
 						break;
 					}
