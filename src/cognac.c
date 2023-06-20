@@ -363,9 +363,12 @@ module_t* create_module(char* path)
 	mod->path = path;
 	mod->file = fopen(path, "r");
 	char* path2 = strdup(path);
-	for (char* s = path2 ; *s ; ++s) if (*s == '/') path2 = s;
+	char* path3 = path2;
+	for (char* s = path2 ; *s ; ++s) if (*s == '/') path2 = s+1;
 	for (char* s = path2 ; *s ; ++s) if (*s == '.') { *s = '\0'; break; }
+	path2[-1] = '\0';
 	mod->prefix = lowercase(path2);
+	mod->dir = path3;
 	mod->tree = NULL;
 	mod->funcs = NULL;
 	return mod;
@@ -2866,19 +2869,16 @@ void _compute_modules(ast_list_t* A, module_t* m)
 			char* i = mod_name;
 			while (*i != ':') ++i;
 			*i = '\0';
-			if (!strcmp(mod_name, "prelude"))
-			{
-				goto end;
-			}
-			else
+			if (strcmp(mod_name, "prelude"))
 			{
 				for (module_list_t* mm = m->uses ; mm ; mm = mm->next)
 				if (!strcmp(mm->mod->prefix, mod_name)) goto end;
-				char* filename = alloc(strlen(mod_name) + 5);
+				char* filename = alloc(strlen(m->dir) + strlen(mod_name) + 6);
 				*filename = '\0';
-				strcpy(filename, mod_name);
+				strcpy(filename, m->dir);
+				strcat(filename, "/");
+				strcat(filename, mod_name);
 				strcat(filename, ".cog");
-				//printf("FOUND %s in %s\n", ident, filename);
 				module_t* M = create_module(filename);
 				module_list_t* mm = alloc(sizeof *mm);
 				mm->next = m->uses;

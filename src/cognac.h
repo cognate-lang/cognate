@@ -206,6 +206,7 @@ struct _module_t
 {
 	char* path;
 	char* prefix;
+	char* dir;
 	FILE* file;
 	ast_list_t* tree;
 	func_list_t* funcs;
