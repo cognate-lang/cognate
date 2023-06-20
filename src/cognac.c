@@ -1,6 +1,7 @@
 #include "cognac.h"
 #include "parser.h"
 #include "runtime.h"
+#include "prelude.h"
 #include <limits.h>
 #include <assert.h>
 #include <string.h>
@@ -19,7 +20,14 @@
 ast_list_t* full_ast = NULL;
 module_t* pmod = NULL;
 char* heap = NULL;
-module_t prelude = { .prefix = "prelude" };
+module_t prelude1 = { .prefix = "prelude" }; // written in C
+module_t prelude2 = { .prefix = "prelude" }; // written in Cognate
+module_list_t preludes = { .mod=&prelude2, .next = &(module_list_t){.mod=&prelude1, .next=NULL} };
+
+static bool is_prelude(module_t* mod)
+{
+	return mod == &prelude1 || mod == &prelude2;
+}
 
 static void print_banner()
 {
@@ -84,6 +92,13 @@ _Noreturn void type_error(val_type_t expected, val_type_t got, where_t* pos)
 
 _Noreturn void throw_error(char* message, where_t* where)
 {
+
+	/*
+	puts(message);
+	puts(where->mod->prefix);
+	exit(-1);
+	*/
+
 	// Calculate width of the "[LINE_NUMBER]" bit
 	message = strdup(message);
 	char number_box[64];
@@ -371,28 +386,27 @@ module_t* create_module(char* path)
 	mod->dir = path3;
 	mod->tree = NULL;
 	mod->funcs = NULL;
+	mod->uses = &preludes;
 	return mod;
 }
 
 void module_parse(module_t* mod)
 {
-	if (strcmp(mod->path + strlen(mod->path) - 4, ".cog"))
+	if (mod->path)
 	{
-		fprintf(stderr, "\nSource file must end with .cog file extension!\n");
-		exit(EXIT_FAILURE);
-	}
-	FILE* t = fopen(mod->path, "r");
-	if (!t)
-	{
-		if (!mod->first_ref)
-			fprintf(stderr, "\nCan't open file '%s'!\n", mod->path);
-		else
+		FILE* t = fopen(mod->path, "r");
+		if (!t)
 		{
-			throw_error("can't find module", mod->first_ref);
+			if (!mod->first_ref)
+				fprintf(stderr, "\nCan't open file '%s'!\n", mod->path);
+			else
+			{
+				throw_error("can't find module", mod->first_ref);
+			}
+			exit(EXIT_FAILURE);
 		}
-		exit(EXIT_FAILURE);
+		fclose(t);
 	}
-	fclose(t);
 	pmod = mod;
 	yyin = mod->file; // imagine having a reentrant parser.
 	yylloc.first_line = 1;
@@ -565,7 +579,7 @@ void _resolve_scope(ast_list_t* tree, word_list_t* words, module_t* m)
 				word_list_t* w = words;
 				for (; w ; w = w->next)
 				{
-					if (!strcmp(w->word->name, node->op->string) && (w->word->mod == node->op->where->mod || w->word->mod == &prelude))
+					if (!strcmp(w->word->name, node->op->string) && (w->word->mod == node->op->where->mod || is_prelude(w->word->mod)))
 						break;
 				}
 				if (!w) throw_error("undefined word", node->op->where);
@@ -580,10 +594,8 @@ void _resolve_scope(ast_list_t* tree, word_list_t* words, module_t* m)
 				*i = '\0';
 				char* ident = i + 1;
 				for (; w ; w = w->next)
-				{
 					if (!strcmp(w->word->name, ident) && !strcmp(mod_name, w->word->mod->prefix))
 						break;
-				}
 				if (!w) throw_error("undefined word", node->op->where);
 				node->op->type = w->word->calltype;
 				node->op->word = w->word;
@@ -1141,6 +1153,7 @@ void print_ast(ast_list_t* tree, int i)
 	switch (tree->op->type)
 	{
 		case identifier: printf("[ident] %s\n", tree->op->string); break;
+		case module_identifier: printf("[mod_ident] %s\n", tree->op->string); break;
 		case literal:    printf("[literal] %s\n", tree->op->literal->string); break;
 		case braces:     puts("\\"); print_ast(tree->op->child, i+1); break;
 		case closure:    printf("[closure] %s\n", tree->op->func->name); break;
@@ -2869,26 +2882,23 @@ void _compute_modules(ast_list_t* A, module_t* m)
 			char* i = mod_name;
 			while (*i != ':') ++i;
 			*i = '\0';
-			if (strcmp(mod_name, "prelude"))
-			{
-				for (module_list_t* mm = m->uses ; mm ; mm = mm->next)
+			for (module_list_t* mm = m->uses ; mm ; mm = mm->next)
 				if (!strcmp(mm->mod->prefix, mod_name)) goto end;
-				char* filename = alloc(strlen(m->dir) + strlen(mod_name) + 6);
-				*filename = '\0';
-				strcpy(filename, m->dir);
-				strcat(filename, "/");
-				strcat(filename, mod_name);
-				strcat(filename, ".cog");
-				module_t* M = create_module(filename);
-				module_list_t* mm = alloc(sizeof *mm);
-				mm->next = m->uses;
-				mm->mod = M;
-				m->uses = mm;
-				M->first_ref = a->op->where;
-				module_parse(M);
-				add_backlinks(M);
-				_compute_modules(M->tree, m);
-			}
+			char* filename = alloc(strlen(m->dir) + strlen(mod_name) + 6);
+			*filename = '\0';
+			strcpy(filename, m->dir);
+			strcat(filename, "/");
+			strcat(filename, mod_name);
+			strcat(filename, ".cog");
+			module_t* M = create_module(filename);
+			module_list_t* mm = alloc(sizeof *mm);
+			mm->next = m->uses;
+			mm->mod = M;
+			m->uses = mm;
+			M->first_ref = a->op->where;
+			module_parse(M);
+			add_backlinks(M);
+			_compute_modules(M->tree, m);
 		}
 		else if (a->op->type == braces) _compute_modules(a->op->child, m);
 end:;
@@ -2906,26 +2916,29 @@ void demodulize(module_t* m)
 	anywhere->mod = m;
 	for (module_list_t* mm = m->uses ; mm ; mm = mm->next)
 	{
-		demodulize(mm->mod);
-		ast_list_t* ptr = make_astlist();
-		ast_list_t* ptr_start = ptr;
-		for (ast_list_t* tree = mm->mod->tree ; tree ; tree = tree->next)
-			if (tree->op->type != none)
-			{
-				insert_op_after(tree->op, ptr);
-				ptr = ptr->next;
-			}
-		// We make a function call that will hopefully be inlined later.
-		insert_op_after(make_op(braces, m->tree, NULL), ptr);
-		ptr=ptr->next;
-		static size_t id = 0;
-		char fn[20];
-		sprintf(fn, "module_%zi", id);
-		char* s = strdup(fn);
-		insert_op_after(make_op(def, s, anywhere), ptr);
-		ptr=ptr->next;
-		insert_op_after(make_op(identifier, s, anywhere), ptr);
-		m->tree = ptr_start;
+		if (mm->mod != &prelude1)
+		{
+			ast_list_t* ptr = make_astlist();
+			ast_list_t* ptr_start = ptr;
+			for (ast_list_t* tree = mm->mod->tree ; tree ; tree = tree->next)
+				if (tree->op->type != none)
+				{
+					insert_op_after(tree->op, ptr);
+					ptr = ptr->next;
+				}
+			// We make a function call that will hopefully be inlined later.
+			insert_op_after(make_op(braces, m->tree, NULL), ptr);
+			ptr=ptr->next;
+			static size_t id = 0;
+			char fn[20];
+			sprintf(fn, "module_%zi", id++);
+			char* s = strdup(fn);
+			insert_op_after(make_op(def, s, anywhere), ptr);
+			ptr=ptr->next;
+			insert_op_after(make_op(identifier, s, anywhere), ptr);
+			m->tree = ptr_start;
+			demodulize(mm->mod);
+		}
 	}
 }
 
@@ -2937,9 +2950,15 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 	print_banner();
+	if (strcmp(argv[1] + strlen(argv[1]) - 4, ".cog"))
+	{
+		fprintf(stderr, "\nSource file must end with .cog file extension!\n");
+		exit(EXIT_FAILURE);
+	}
 	long system_memory = sysconf(_SC_PHYS_PAGES) * 4096;
 	heap = mmap(0, system_memory, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
 	(void)argc; (void)argv;
+	load_preludes();
 	module_t* m = create_module(argv[1]);
 	void(*stages[])(module_t*)
 	= {
@@ -3056,7 +3075,23 @@ word_list_t* builtins()
 		words = push_word(
 				make_word(b[i].name, calltype,
 					make_value(block,
-						ast_single(closure, fn, NULL)), &prelude), words);
+						ast_single(closure, fn, NULL)), &prelude1), words);
 	}
 	return words;
 }
+
+void load_preludes(void)
+{
+	prelude2.path = NULL;
+	prelude2.file = tmpfile();
+	prelude2.uses = NULL;
+	prelude2.tree = NULL;
+	prelude2.funcs = NULL;
+	prelude2.uses = preludes.next;
+	fprintf(prelude2.file, "%.*s", src_prelude_cog_len, (char*)src_prelude_cog);
+	rewind(prelude2.file);
+	module_parse(&prelude2);
+	add_backlinks(&prelude2);
+}
+
+

@@ -253,6 +253,7 @@ word_list_t* builtins();
 const char* c_val_type(val_type_t);
 const char* print_val_type(val_type_t);
 _Noreturn void throw_error(char*, where_t*);
+void load_preludes(void);
 
 extern FILE* yyin;
 extern ast_list_t* full_ast;
