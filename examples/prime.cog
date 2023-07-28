@@ -2,7 +2,7 @@ Def Factor (Zero? Modulo Swap);
 
 Def Primes (
 	Let U is upper bound;
-	initially List ();
+	initially Empty;
 	For Range 2 to U (
 		Let P is potential prime;
 		Let Primes is found primes;

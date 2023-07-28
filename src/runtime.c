@@ -307,10 +307,8 @@ static void ___wait(NUMBER);
 static LIST ___split(STRING, STRING);
 static NUMBER ___length(LIST);
 static LIST ___take(NUMBER,LIST);
-static LIST ___takeDwhile(BLOCK,LIST);
 static LIST ___discard(NUMBER,LIST);
 static BLOCK ___remember(BLOCK);
-static BOOLEAN ___all(BLOCK,LIST);
 
 static NUMBER ___sind(NUMBER);
 static NUMBER ___cosd(NUMBER);
@@ -1783,44 +1781,6 @@ static BLOCK ___pure(BLOCK b)
 }
 */
 
-static LIST ___takeDwhile(BLOCK predicate, LIST lst)
-{
-	LIST r = NULL;
-	while (lst)
-	{
-		push (lst->object);
-		call_block(predicate);
-		int res = unbox_BOOLEAN(pop());
-		if (!res) break;
-		cognate_list* a = gc_malloc(sizeof *a);
-		a->object = lst->object;
-		a->next = r;
-		r = a;
-		lst = lst->next;
-	}
-	cognate_list* prev = NULL;
-	cognate_list* curr = (cognate_list*)r;
-	while (curr)
-	{
-		cognate_list* next = (cognate_list*)curr->next;
-		curr->next = prev;
-		prev = curr;
-		curr = next;
-	}
-	return prev;
-
-}
-
-static BOOLEAN ___all(BLOCK predicate, LIST lst)
-{
-	for (; lst ; lst = lst->next)
-	{
-		push(lst->object);
-		call_block(predicate);
-		if unlikely(!unbox_BOOLEAN(pop())) return 0;
-	}
-	return 1;
-}
 
 static LIST ___append(ANY a, LIST l)
 {

@@ -467,7 +467,7 @@ void shorten_references(module_t* mod)
 				case to_any:
 				case from_any:
 					pop_register_front(regs);
-					push_register_front(make_register(any, a), regs);
+					push_register_front(make_register(any, a), regs); // preserve source??
 					break;
 				case literal:
 				case closure:
@@ -484,7 +484,7 @@ void shorten_references(module_t* mod)
 					break;
 				case fn_branch:
 					{
-						pop_register_front(regs);
+						pop_register_front(regs); // bool
 						func_t* f = a->op->funcs->func;
 						for ( size_t i = 0 ; i < f->argc ; ++i )
 							pop_register_front(regs);
@@ -515,6 +515,7 @@ void shorten_references(module_t* mod)
 					}
 				case push:
 				case ret:
+				case drop:
 					pop_register_front(regs);
 					break;
 			}
@@ -775,14 +776,15 @@ void c_emit_funcall(func_t* fn, FILE* c_source, reg_dequeue_t* registers)
 	if (!fn->generic)
 		for (word_list_t* w = fn->captures ; w ; w = w->next)
 		{
-			fprintf(c_source, "%s", c_word_name(w->word));
+			fprintf(c_source, "%s%s", w->word->used_early?"&":"", c_word_name(w->word));
 			if (w->next || fn->argc) fprintf(c_source, ",");
 		}
 	else fprintf(c_source, "NULL");
 	for (size_t i = 0 ; i < fn->argc ; ++i)
 	{
 		char* sep = i + 1 == fn->argc ? ")" : ", ";
-		fprintf(c_source, "_%zu%s", pop_register_front(registers)->id, sep);
+		reg_t* r = pop_register_front(registers);
+		fprintf(c_source, "_%zu%s", r->id, sep);
 	}
 	if (fn->argc == 0) fprintf(c_source, ")");
 
@@ -1177,7 +1179,7 @@ void print_ast(ast_list_t* tree, int i)
 		case load:       printf("[load]\n"); break;
 		case ret:        printf("[ret]\n"); break;
 		case static_call:printf("[static_call] %s (%zu args)\n", tree->op->func->name, tree->op->func->argc); break;
-		case fn_branch:  printf("[fn_branch] %s (%zu args) %s (%zu args)\n", tree->op->funcs->func->name, tree->op->funcs->func->argc, tree->op->funcs->next->func->name, tree->op->funcs->next->func->argc); break;
+		case fn_branch:  printf("[fn_branch] %s (%zu args%s) %s (%zu args%s)\n", tree->op->funcs->func->name, tree->op->funcs->func->argc, tree->op->funcs->func->stack?" STACK":"", tree->op->funcs->next->func->name, tree->op->funcs->next->func->argc, tree->op->funcs->next->func->stack?" STACK":""); break;
 		default:         printf("[INVALID %i]\n", tree->op->type); break;
 	}
 	print_ast(tree->next, i);
@@ -1237,7 +1239,7 @@ bool _determine_arguments(func_t* f)
 					else if (can_use_args && f->argc < 255 && !f->entry) argc++;
 					for (func_list_t* f = op->funcs ; f ; f = f->next)
 						changed |= _determine_arguments(f->func);
-					func_t* v = op->funcs->func;
+					func_t* v = op->funcs->func; // balanced arguments?!
 					if (v->stack && registers > v->argc)
 						registers = v->argc;
 					for (size_t i = 0 ; i < v->argc ; ++i)
@@ -1281,7 +1283,9 @@ bool _determine_arguments(func_t* f)
 				else if (can_use_args && f->argc < 255 && !f->entry)
 					argc++;
 				break;
-			 case define: case none: case pick: case unpick: break;
+			case define: case none: case pick: case unpick: break;
+			case drop: if (registers) registers--;
+							  break;
 			default: unreachable();
 		}
 		if (!n->next && registers && !f->entry)
@@ -1434,58 +1438,68 @@ void determine_registers(module_t* mod)
 }
 
 
-void _add_registers(func_t* f)
+bool _add_registers(func_t* f)
 {
-	if (f->has_regs) return;
-	f->has_regs = true;
+	if (f->has_regs) return false;
+	f->has_regs = true; // problem is stack usage in recursive branches?
+	bool changed = false;
 	size_t registers = 0;
 	for (ast_list_t* n = f->ops ; n ; n = n->next)
 	{
 		ast_t* op = n->op;
 		switch(op->type)
 		{
-			case closure:
-				registers++;
+			case none:
+			case define:
+			case pick:
+			case unpick:
+			case to_any:
+			case from_any:
 				break;
+			case closure:
 			case literal:
 			case var:
 			case load:
+			case pop:
 				registers++;
 				break;
 			case fn_branch:
 				{
-					if (registers) registers--;
+					if (registers) registers--; // boolean arg
 					else
 					{
 						insert_op_before(make_op(pop, NULL, op->where), n);
 						insert_op_before(make_op(unpick, NULL, op->where), n);
 						f->stack = true;
+						changed = true;
 					}
 
 					func_t* v = op->funcs->func;
 
 					for (func_list_t* f = op->funcs ; f ; f = f->next)
-				   	_add_registers(f->func);
+				   	changed |= _add_registers(f->func);
 
-					/*
 					for (func_list_t* f = op->funcs ; f ; f = f->next)
 						if (f->func->stack)
+						{
 							for (func_list_t* f = op->funcs ; f ; f = f->next)
 								f->func->stack = true;
-								*/
+							v->stack = true;
+							break;
+						}
 
 					if (v->stack)
 					{
 						f->stack = true;
-						for (size_t i = registers; i > (size_t)v->argc ; --i)
+						while (registers > v->argc)
 						{
+							changed = true;
 							insert_op_before(make_op(pick, NULL, op->where), n);
 							insert_op_before(make_op(push, NULL, op->where), n);
 							registers--;
 						}
+						assert(registers == v->argc);
 					}
-
-					if (v->stack) assert(registers == v->argc);
 
 					for (size_t i = 0 ; i < v->argc ; ++i)
 					{
@@ -1495,11 +1509,10 @@ void _add_registers(func_t* f)
 							insert_op_before(make_op(pop, NULL, op->where), n);
 							insert_op_before(make_op(unpick, NULL, op->where), n);
 							f->stack = true;
+							changed = true;
 						}
 					}
-
 					if (v->stack) assert(!registers);
-
 					if (v->returns) registers++;
 					break;
 				}
@@ -1512,6 +1525,7 @@ void _add_registers(func_t* f)
 						insert_op_before(make_op(pop, NULL, op->where), n);
 						insert_op_before(make_op(unpick, NULL, op->where), n);
 						f->stack = true;
+						changed = true;
 					}
 				}
 				registers++;
@@ -1520,15 +1534,16 @@ void _add_registers(func_t* f)
 			case static_call:
 				{
 					func_t* fn = call_to_func(op);
-					if (fn != unknown_func) _add_registers(fn);
+					if (fn != unknown_func) changed |= _add_registers(fn);
 					if (fn->stack)
 					{
 						f->stack = true;
-						for (size_t i = registers; i > (size_t)fn->argc ; --i)
+						while (registers > fn->argc)
 						{
 							insert_op_before(make_op(pick, NULL, op->where), n);
 							insert_op_before(make_op(push, NULL, op->where), n);
 							registers--;
+							changed = true;
 						}
 					}
 					for (size_t i = 0 ; i < fn->argc ; ++i)
@@ -1539,6 +1554,7 @@ void _add_registers(func_t* f)
 							insert_op_before(make_op(pop, NULL, op->where), n);
 							insert_op_before(make_op(unpick, NULL, op->where), n);
 							f->stack = true;
+							changed = true;
 						}
 					}
 					if (fn->stack) assert(!registers);
@@ -1547,15 +1563,17 @@ void _add_registers(func_t* f)
 				}
 			case bind:
 			case ret:
+			case drop:
+			case push:
 				if (registers) registers--;
 				else
 				{
 					insert_op_before(make_op(pop, NULL, op->where), n);
 					insert_op_before(make_op(unpick, NULL, op->where), n);
 					f->stack = true;
+					changed = true;
 				}
 				break;
-			case define: case none: case pick: case unpick: break;
 			default: unreachable();
 		}
 		if (!n->next)
@@ -1568,17 +1586,26 @@ void _add_registers(func_t* f)
 					insert_op_before(make_op(push, NULL, op->where), n);
 				}
 				f->stack = true;
+				changed = true;
 			}
 		}
 	}
+	return changed;
 }
 
 void add_registers(module_t* mod)
 {
 	for (func_list_t* f = mod->funcs ; f ; f = f->next)
 		f->func->has_regs = false;
-	for (func_list_t* f = mod->funcs ; f ; f = f->next)
-		_add_registers(f->func);
+	bool changed = true;
+	while (changed)
+	{
+		changed = false;
+		for (func_list_t* f = mod->funcs ; f ; f = f->next)
+			changed |= _add_registers(f->func);
+		for (func_list_t* f = mod->funcs ; f ; f = f->next)
+			f->func->has_regs = false;
+	}
 }
 
 bool add_var_types_forwards(module_t* mod)
@@ -2056,7 +2083,7 @@ void print_funcs (module_t* mod)
 {
 	for (func_list_t* f = mod->funcs ; f ; f = f->next)
 	{
-		printf("======== %s ========\n", f->func->name);
+		printf("======== %s ========%s\n", f->func->name, f->func->stack?" (STACK)":"");
 		printf("( ");
 		for (word_list_t* w = f->func->captures ; w ; w = w->next)
 			printf("%s ", w->word->name);
@@ -2085,6 +2112,19 @@ void* ptr_assoc_lookup(void* ptr, ptr_assoc_t* assoc)
 		}
 	}
 	return NULL;
+}
+
+bool does_call(func_t* target, ast_list_t* start)
+{
+	for (ast_list_t* node = start ; node ; node = node->next)
+	{
+		if (node->op->type == call && word_func(node->op->word) == target)
+			return true;
+		else if (node->op->type == closure
+				&& does_call(target, node->op->func->ops))
+			return true;
+	}
+	return false;
 }
 
 ast_list_t* clone_func(ast_list_t* ops, ptr_assoc_t* assoc, func_list_t** funcs)
@@ -2148,19 +2188,6 @@ ast_list_t* clone_func(ast_list_t* ops, ptr_assoc_t* assoc, func_list_t** funcs)
 	return l;
 }
 
-bool does_call(func_t* target, ast_list_t* start)
-{
-	for (ast_list_t* node = start ; node ; node = node->next)
-	{
-		if (node->op->type == call && word_func(node->op->word) == target)
-			return true;
-		else if (node->op->type == closure
-				&& does_call(target, node->op->func->ops))
-			return true;
-	}
-	return false;
-}
-
 void _compute_sources(ast_list_t* a)
 {
 	/*
@@ -2188,7 +2215,6 @@ void _compute_sources(ast_list_t* a)
 					// TODO shorten references
 				}
 				break;
-
 			case bind:
 				{
 					reg_t* r = pop_register_front(regs);
@@ -2217,6 +2243,9 @@ void _compute_sources(ast_list_t* a)
 			case none:
 			case define:
 				break;
+			case drop:
+				pop_register_front(regs);
+				break;
 			default: unreachable();
 		}
 	}
@@ -2228,18 +2257,22 @@ void compute_sources(module_t* m)
 		_compute_sources(f->func->ops);
 }
 
-void _inline_functions(ast_list_t* a, func_list_t** funcs)
+void _inline_functions(func_t* f, func_list_t** funcs, func_list_t* parents)
 {
+	// TODO: we can do better
+	func_list_t p;
+	p.func = f;
+	p.next = parents;
 	for (bool changed = 1 ; changed ;)
 	{
 		changed = 0;
-		_compute_sources(a);
-		for (ast_list_t* node = a ; node ; node = node->next)
+		_compute_sources(f->ops);
+		for (ast_list_t* node = f->ops ; node ; node = node->next)
 		{
 			switch (node->op->type)
 			{
 				case closure:
-					_inline_functions(node->op->func->ops, funcs);
+					_inline_functions(node->op->func, funcs, &p);
 					break;
 				case call:
 					{
@@ -2249,7 +2282,7 @@ void _inline_functions(ast_list_t* a, func_list_t** funcs)
 							if (!fn->ops) break;
 							size_t n = 0;
 							for (ast_list_t* inl = fn->ops ; inl ; inl = inl->next) n++;
-							if (n > 20) break;
+							if (n > 30) break;
 							if (does_call(fn, fn->ops)) break;
 							changed = 1;
 							ast_list_t* inl = clone_func(fn->ops, NULL, funcs);
@@ -2266,7 +2299,7 @@ void _inline_functions(ast_list_t* a, func_list_t** funcs)
 
 void inline_functions(module_t* m)
 {
-	_inline_functions(m->entry->ops, &m->funcs);
+	_inline_functions(m->entry, &m->funcs, NULL);
 }
 
 bool _compute_stack(func_t* f)
@@ -2653,28 +2686,31 @@ void static_branches(module_t* m)
 						pop_register_front(regs); // bool
 						reg_t* i1 = pop_register_front(regs);
 						reg_t* i2 = pop_register_front(regs);
-						if (i1 && i2 &&
-								i1->source->op->type == closure
-								&& i2->source->op->type == closure)
-						{
-							func_list_t* fl
-								= push_func(i1->source->op->func,
-										push_func(i2->source->op->func,
-											NULL));
-							ast_list_t* op = make_astlist();
-							word_t* b = make_word("", var, NULL, NULL);
-							insert_op_after(make_op(fn_branch, fl, a->op->where), op);
-							insert_op_after(make_op(var, b, a->op->where), op);
-							func_t* F = make_func(op, make_func_name());
-							a->op = make_op(closure, F, a->op->where);
-							insert_op_before(make_op(define, b, a->op->where), a);
-							insert_op_before(make_op(bind, b, a->op->where), a);
-							b->val = make_value(any, a->prev);
-							m->funcs = push_func(F, m->funcs);
-							remove_op(i1->source);
-							remove_op(i2->source);
-						}
 						push_register_front(make_register(any, a), regs);
+						if (!i1 || !i2) break;
+						ast_list_t* s1 = i1->source;
+						ast_list_t* s2 = i2->source;
+						while (s1 && s1->op->type == var) s1 = s1->op->word->val->source;
+						while (s2 && s2->op->type == var) s2 = s2->op->word->val->source;
+						if (!s1 || !s2 || s1->op->type != closure || s2->op->type != closure) break;
+						func_list_t* fl
+							= push_func(s1->op->func,
+									push_func(s2->op->func,
+										NULL));
+						ast_list_t* op = make_astlist();
+						word_t* b = make_word("", var, NULL, NULL);
+						insert_op_after(make_op(fn_branch, fl, a->op->where), op);
+						insert_op_after(make_op(var, b, a->op->where), op);
+						func_t* F = make_func(op, make_func_name());
+						a->op = make_op(closure, F, a->op->where);
+						insert_op_before(make_op(define, b, a->op->where), a);
+						insert_op_before(make_op(bind, b, a->op->where), a);
+						b->val = make_value(any, a->prev);
+						m->funcs = push_func(F, m->funcs);
+						assert(i1->source->op->type == var || i1->source->op->type == closure);
+						assert(i2->source->op->type == var || i2->source->op->type == closure);
+						remove_op(i1->source);
+						remove_op(i2->source);
 						break;
 					}
 				case call:
@@ -2689,10 +2725,15 @@ void static_branches(module_t* m)
 						break;
 					}
 				case bind:
-					pop_register_front(regs);
-					break;
+					{
+						reg_t* r = pop_register_front(regs);
+						if (r && r->source)
+							a->op->word->val->source = r->source;
+						break;
+					}
 				case push:
 				case ret:
+				case drop:
 					pop_register_front(regs);
 					break;
 			}
@@ -2985,7 +3026,7 @@ int main(int argc, char** argv)
 		merge_symbols,
 		compute_stack,
 		compute_sources,
-		inline_functions, // TODO things break without this
+		inline_functions,
 		compute_sources,
 		static_branches,
 		compute_sources,
@@ -2998,7 +3039,6 @@ int main(int argc, char** argv)
 		compute_stack,
 		//determine_registers,
 		add_registers,
-		compute_stack,
 		shorten_references,
 		inline_values,
 		compute_variables,
