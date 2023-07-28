@@ -107,6 +107,8 @@ _Noreturn void throw_error(char* message, where_t* where)
 
 	// Ok now we need to actually get the line
 	fclose(where->mod->file);
+	if (!where->mod->path) // probably preludes
+		where->mod->path = "src/prelude.cog";
 	where->mod->file = fopen(where->mod->path, "r");
 	while (--where->line)
 	{

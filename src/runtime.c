@@ -229,11 +229,10 @@ static int stack_length(void);
 static void check_function_stack_size(void);
 
 // Builtin functions needed by compiled source file defined in functions.c
+static LIST ___empty(void);
 static ANY ___if(BOOLEAN, ANY, ANY);
 static void ___when(BOOLEAN, BLOCK);
 static void ___unless(BOOLEAN, BLOCK);
-static void ___while(BLOCK, BLOCK);
-static void ___until(BLOCK, BLOCK);
 static void ___put(ANY);
 static void ___print(ANY);
 static NUMBER ___P(NUMBER, NUMBER);
@@ -257,8 +256,6 @@ static BOOLEAN ___L(NUMBER, NUMBER);
 static BOOLEAN ___G(NUMBER, NUMBER);
 static BOOLEAN ___LE(NUMBER, NUMBER);
 static BOOLEAN ___GE(NUMBER, NUMBER);
-static NUMBER ___max(NUMBER, NUMBER);
-static NUMBER ___min(NUMBER, NUMBER);
 static BOOLEAN ___match(ANY, ANY);
 static BOOLEAN ___anyQ(ANY);
 static BOOLEAN ___numberQ(ANY);
@@ -300,8 +297,6 @@ static void ___assert(STRING, BOOLEAN);
 static void ___error(STRING);
 static LIST ___map(BLOCK, LIST);
 static LIST ___filter(BLOCK, LIST);
-static void ___for(LIST, BLOCK);
-static void ___fold(BLOCK, ANY, LIST);
 static LIST ___range(NUMBER, NUMBER);
 static ANY ___index(NUMBER, LIST);
 static void ___puts(BLOCK);
@@ -1174,41 +1169,8 @@ static ANY ___if(BOOLEAN cond, ANY a, ANY b)
 	return cond ? a : b;
 }
 
-static void ___when(BOOLEAN cond, BLOCK expr)
-{
-	if (cond) call_block(expr);
-}
-
-static void ___unless(BOOLEAN cond, BLOCK expr)
-{
-	if (!cond) call_block(expr);
-}
-
-static void ___while(BLOCK cond, BLOCK body)
-{
-	call_block(cond);
-	while (unbox_BOOLEAN(pop()))
-	{
-		call_block(body);
-		call_block(cond);
-	}
-}
-
-static void ___until(BLOCK cond, BLOCK body)
-{
-	call_block(cond);
-	while (!unbox_BOOLEAN(pop()))
-	{
-		call_block(body);
-		call_block(cond);
-	}
-}
-
 static void ___put(ANY a)   { assert_impure(); fputs(show_object(a, 1), stdout); fflush(stdout); }
 static void ___print(ANY a) { assert_impure(); puts(show_object(a, 1)); }
-
-//static void ___puts(BLOCK b)   { assert_impure(); ___for(___list(b), ^{___put(pop()); }); }
-//static void ___prints(BLOCK b) { assert_impure(); ___for(___list(b), ^{___put(pop()); }); putc('\n', stdout); }
 
 static NUMBER ___P(NUMBER a, NUMBER b) { return a + b; } // Add cannot produce NaN.
 static NUMBER ___M(NUMBER a, NUMBER b) { return a * b; }
@@ -1250,8 +1212,6 @@ static BOOLEAN ___G(NUMBER a, NUMBER b)  { return a < b; }
 static BOOLEAN ___L(NUMBER a, NUMBER b)  { return a > b; }
 static BOOLEAN ___GE(NUMBER a, NUMBER b) { return a <= b; }
 static BOOLEAN ___LE(NUMBER a, NUMBER b) { return a >= b; }
-static NUMBER ___max(NUMBER a, NUMBER b)  { return a > b ? a : b; }
-static NUMBER ___min(NUMBER a, NUMBER b)  { return a < b ? a : b; }
 static BOOLEAN ___numberQ(ANY a)  { return a.type==number; }
 static BOOLEAN ___listQ(ANY a)    { return a.type==list;   }
 static BOOLEAN ___stringQ(ANY a)  { return a.type==string; }
@@ -1642,25 +1602,6 @@ static LIST ___filter(BLOCK blk, LIST lst)
 	return start.next;
 }
 
-static void ___for(LIST lst, BLOCK blk)
-{
-	for (; lst ; lst = lst->next)
-	{
-		push(lst->object);
-		call_block(blk);
-	}
-}
-
-static void ___fold(BLOCK blk, ANY init, LIST lst)
-{
-	push(init);
-	for (; lst ; lst = lst->next)
-	{
-		push(lst->object);
-		call_block(blk);
-	}
-}
-
 static LIST ___range(NUMBER start, NUMBER end)
 {
 	if (end < start)
@@ -2048,16 +1989,6 @@ static NUMBER ___tanh(NUMBER a)
 	return tanh(a);
 }
 
-static void ___times(NUMBER n, BLOCK f)
-{
-	size_t i = n;
-	if unlikely((NUMBER)i != n) throw_error_fmt("cannot repeat Times %.14g", n);
-	while (n--)
-	{
-		call_block(f);
-	}
-}
-
 static IO ___open(STRING path, STRING mode)
 {
 	assert_impure();
@@ -2069,15 +2000,6 @@ static IO ___open(STRING path, STRING mode)
 	io->mode = mode;
 	io->file = fp;
 	return io;
-}
-
-static void ___with(STRING path, STRING mode, BLOCK blk)
-{
-	assert_impure();
-	IO fp = ___open(path, mode);
-	push(box_IO(fp));
-	call_block(blk);
-	___close(fp);
 }
 
 static STRING ___readDfile(IO io)
@@ -2197,17 +2119,9 @@ static LIST ___sort(LIST l)
 	return pivot_node;
 }
 
-static LIST ___reverse(LIST l)
+static LIST ___empty ()
 {
-	LIST li = NULL;
-	for (; l ; l = l->next)
-	{
-		cognate_list* n = malloc(sizeof *n);
-		n->object = l->object;
-		n->next = li;
-		li = n;
-	}
-	return li;
+	return NULL;
 }
 
 // ---------- ACTUAL PROGRAM ----------

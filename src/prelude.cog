@@ -1,3 +1,87 @@
 Def Drop as ( Let X );
 Def Swap as ( Let X ; Let Y ; Y X );
 Def Do as ( Def F ; F );
+
+Def Puts ( Put Fold ( Join ) over List );
+Def Prints ( Print Fold ( Join ) over List );
+
+Def When as (
+	Let Cond;
+	Let Block;
+	Do If Cond then Block else ();
+);
+
+Def Unless as ( When Not );
+
+Def While (
+	Let Condition;
+	Let Block;
+	Let Result be Do Condition;
+	When Result then ( Do Block ; While Condition Block )
+);
+
+Def Until (
+	Let Condition;
+	Let Block;
+	Let Result be Do Condition;
+	When Not Result then ( Do Block ; While Condition Block ) else ()
+);
+
+Def Times (
+	Let I be Integer!;
+	Let B be Block!;
+	When >= 0 I then ( Do B ; Times - 1 I B )
+);
+
+
+Def With (
+	Let Fp be Open;
+	Do Swap Fp;
+	Close Fp
+);
+
+
+Def Reverse (
+	Let L be List!;
+	Empty ; For each in L ( Push )
+);
+
+
+Def For (
+	Let L;
+	Let B;
+	When Not Empty? L (
+		Do B First L;
+		For each in Rest L do B;
+	)
+);
+
+Def Fold (
+	Let B;
+	Let I;
+	Let L;
+	I ; For each in L do B;
+);
+
+Def Filter (
+	Def Predicate;
+	Let L;
+	Empty;
+	For each in L (
+		Let I;
+		When Predicate I ( Push I );
+	);
+	Reverse;
+);
+
+Def Min as (
+	Let A;
+	Let B;
+	If < A B then B else A;
+);
+
+Def Max as (
+	Let A;
+	Let B;
+	If < A B then A else B;
+);
