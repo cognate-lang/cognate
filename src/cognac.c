@@ -2257,12 +2257,9 @@ void compute_sources(module_t* m)
 		_compute_sources(f->func->ops);
 }
 
-void _inline_functions(func_t* f, func_list_t** funcs, func_list_t* parents)
+void _inline_functions(func_t* f, func_list_t** funcs)
 {
 	// TODO: we can do better
-	func_list_t p;
-	p.func = f;
-	p.next = parents;
 	for (bool changed = 1 ; changed ;)
 	{
 		changed = 0;
@@ -2272,7 +2269,7 @@ void _inline_functions(func_t* f, func_list_t** funcs, func_list_t* parents)
 			switch (node->op->type)
 			{
 				case closure:
-					_inline_functions(node->op->func, funcs, &p);
+					_inline_functions(node->op->func, funcs);
 					break;
 				case call:
 					{
@@ -2299,7 +2296,7 @@ void _inline_functions(func_t* f, func_list_t** funcs, func_list_t* parents)
 
 void inline_functions(module_t* m)
 {
-	_inline_functions(m->entry, &m->funcs, NULL);
+	_inline_functions(m->entry, &m->funcs);
 }
 
 bool _compute_stack(func_t* f)
