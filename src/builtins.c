@@ -74,7 +74,6 @@
 {.name="wait",                .calltype=call, .argc=1, .args={number},  .returns=false},
 {.name="stop",                .calltype=call, .argc=0, .returns=false},
 {.name="show",                .calltype=call, .argc=1, .args={any},     .returns=true, .rettype=string},
-{.name="case",                .calltype=call, .argc=3, .args={any, any, any}, .returns=true, .rettype=block},
 {.name="stack",               .calltype=call, .returns=true, .rettype=list, .stack=true},
 {.name="clear",               .calltype=call, .argc=0, .stack=true},
 {.name="length",              .calltype=call, .argc=1, .args={list},    .returns=true, .rettype=number},

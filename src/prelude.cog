@@ -136,6 +136,17 @@ Def Sort (
 	)
 );
 
+Def Case as (
+	Def Pred;
+	Def If-true;
+	Def If-false;
+	(
+		Let X;
+		Let B be Pred X;
+		Do If B then (If-true X) else (If-false X)
+	);
+);
+
 ~
 Def Sort
 	Case (Empty?) ()

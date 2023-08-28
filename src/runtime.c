@@ -303,7 +303,6 @@ static void ___puts(BLOCK);
 static void ___prints(BLOCK);
 static BLOCK ___precompute(BLOCK);
 static void ___wait(NUMBER);
-//static BLOCK ___case(ANY, ANY, ANY);
 static LIST ___split(STRING, STRING);
 static NUMBER ___length(LIST);
 static LIST ___take(NUMBER,LIST);
@@ -1243,53 +1242,6 @@ static BOOLEAN ___zeroX(NUMBER a)
 }
 
 static BOOLEAN ___match(ANY patt, ANY obj) { return match_objects(patt,obj); }
-
-/*
-static BLOCK ___case(ANY patt, ANY if_match, ANY if_not_match)
-{
-	_Bool block1 = if_match.type == block;
-	_Bool block2 = if_not_match.type == block;
-	if (block1 && block2)
-	{
-		const BLOCK b1 = unbox_BLOCK(if_match);
-		const BLOCK b2 = unbox_BLOCK(if_not_match);
-		return Block_copy(^{
-			if (match_objects(patt, peek()))
-			{
-				destructure_objects(patt, pop());
-				b1();
-			}
-			else b2();
-		});
-	}
-	if (block1)
-	{
-		const BLOCK b1 = unbox_BLOCK(if_match);
-		return Block_copy(^{
-			ANY a = pop();
-			if (match_objects(patt, a))
-			{
-				destructure_objects(patt, a);
-				b1();
-			}
-			else push(if_not_match);
-		});
-	}
-	if (block2)
-	{
-		const BLOCK b2 = unbox_BLOCK(if_not_match);
-		return Block_copy(^{
-			if (match_objects(patt, peek())) { pop(); push(if_match); }
-			else b2();
-		});
-	}
-	else return Block_copy(^{
-		ANY a = pop();
-		if (match_objects(patt, a)) push(if_match);
-		else push(if_not_match);
-	});
-}
-*/
 
 static ANY ___first(LIST lst)
 {
