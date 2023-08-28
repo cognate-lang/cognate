@@ -52,7 +52,6 @@
 {.name="head",                .calltype=call, .argc=1, .args={string},    .returns=true, .rettype=string},
 {.name="tail",                .calltype=call, .argc=1, .args={string},    .returns=true, .rettype=string},
 {.name="push",                .calltype=call, .argc=2, .args={any, list}, .returns=true, .rettype=list},
-{.name="append",              .calltype=call, .argc=2, .args={any, list}, .returns=true, .rettype=list},
 {.name="empty?",              .calltype=call, .argc=1, .args={list},      .returns=true, .rettype=boolean},
 {.name="join",                .calltype=call, .argc=2, .args={string, string}, .returns=true, .rettype=string},
 {.name="string-length",       .calltype=call, .argc=1, .args={string},    .returns=true, .rettype=number},
@@ -88,8 +87,6 @@
 {.name="set",                 .calltype=call, .argc=2, .args={box, any}, .returns=false},
 {.name="debug",               .calltype=call, .argc=0, .returns=false},
 {.name="begin",               .calltype=call, .argc=1, .args={block}, .stack=true},
-{.name="sort",                .calltype=call, .argc=1, .args={list}, .returns=true, .rettype=list},
-{.name="reverse",             .calltype=call, .argc=1, .args={list}, .returns=true, .rettype=list},
 
 /* math */
 {.name="sind",                   .calltype=call, .argc=1, .args={number},      .returns=true, .rettype=number},

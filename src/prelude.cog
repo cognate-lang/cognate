@@ -112,3 +112,39 @@ Def All (
 			else ( All P of Rest of L );
 	)
 );
+
+Def Append (
+	Let L2;
+	Let L1;
+	L2;
+	For each in Reverse L1 (
+		Push;
+	)
+);
+
+Def Prepend ( Swap ; Append );
+
+Def Sort (
+	Let L;
+	Do If Empty? L ( return L )
+	else (
+		Let Pivot be First of L;
+		Sort Filter (<  Pivot) L;
+		Sort Filter (>= Pivot) Rest L;
+		Push Pivot;
+		Append
+	)
+);
+
+~
+Def Sort
+	Case (Empty?) ()
+	else (
+		Let L;
+		Let Pivot be First of L;
+		Sort Filter (<  Pivot) L;
+		Sort Filter (>= Pivot) Rest of L;
+		Push Pivot;
+		Append
+	);
+~

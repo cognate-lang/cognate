@@ -1782,21 +1782,6 @@ static BLOCK ___pure(BLOCK b)
 */
 
 
-static LIST ___append(ANY a, LIST l)
-{
-	// TODO iterative version.
-	cognate_list* ll = gc_malloc(sizeof(*l));
-	if (!l)
-	{
-		ll->next = NULL;
-		ll->object = a;
-		return ll;
-	}
-	ll->object = l->object;
-	ll->next = ___append(a, l->next);
-	return ll;
-}
-
 static BOX ___box(ANY a) // boxes seem to break the GC sometimes TODO
 {
 	ANY* b = gc_malloc(sizeof *b);
@@ -2036,47 +2021,6 @@ static void ___begin(BLOCK f)
 		call_block(f);
 		a.fn = invalid_jump;
 	}
-}
-
-static LIST ___sort(LIST l)
-{
-	if (!l) return l;
-	ANY pivot_ = l->object;
-	NUMBER pivot = unbox_NUMBER(pivot_);
-	const cognate_list* lesser = NULL;
-	const cognate_list* greater = NULL;
-
-	for (l = l->next; l ; l = l->next)
-	{
-		cognate_list* L = gc_malloc(sizeof *L);
-		L->object = l->object;
-		if (unbox_NUMBER(l->object) < pivot)
-		{
-			L->next = lesser;
-			lesser = L;
-		}
-		else
-		{
-			L->next = greater;
-			greater = L;
-		}
-	}
-
-	lesser = ___sort(lesser);
-	greater = ___sort(greater);
-
- 	cognate_list* p = (cognate_list*)lesser;
-	while (p && p->next) p = (cognate_list*)p->next;
-
-	cognate_list* pivot_node = gc_malloc(sizeof *pivot_node);
-	pivot_node->object = pivot_;
-	pivot_node->next = greater;
-	if (p)
-	{
-		p->next = pivot_node;
-		return p;
-	}
-	return pivot_node;
 }
 
 static LIST ___empty ()
