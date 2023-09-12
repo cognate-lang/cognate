@@ -4,22 +4,15 @@
 
 #include <stddef.h>
 #include <stdio.h>
-#include <ctype.h>
 #include <assert.h>
-#include <setjmp.h>
-#include <string.h>
-#include <sys/mman.h>
 #include <limits.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <locale.h>
 #include <signal.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/resource.h>
 #include <time.h>
-#include <math.h>
 #include <sys/mman.h>
 #include <math.h>
 #include <stdlib.h>
