@@ -69,7 +69,8 @@ Def Filter (
 	Empty;
 	For each in L (
 		Let I;
-		When Predicate I ( Push I );
+		Let R be Predicate I;
+		When R ( Push I );
 	);
 	Reverse;
 );

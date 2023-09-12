@@ -3033,11 +3033,11 @@ int main(int argc, char** argv)
 		shorten_references,
 		inline_values,
 		compute_variables,
-		remove_unused_funcs,
 		resolve_early_use,
 		determine_unique_calls,
 		add_var_types,
 		add_typechecks,
+		remove_unused_funcs,
 		// TODO renaming pass to renumber registers and shadow_ids
 		to_c,
 		to_exe
