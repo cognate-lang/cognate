@@ -2984,17 +2984,12 @@ void demodulize(module_t* m)
 
 int main(int argc, char** argv)
 {
-	if (argc != 2)
+	if (argc != 2 || (strcmp(argv[1] + strlen(argv[1]) - 4, ".cog")))
 	{
 		fprintf(stderr, "USAGE: cognac filename.cog\n");
 		return EXIT_FAILURE;
 	}
 	print_banner();
-	if (strcmp(argv[1] + strlen(argv[1]) - 4, ".cog"))
-	{
-		fprintf(stderr, "\nSource file must end with .cog file extension!\n");
-		exit(EXIT_FAILURE);
-	}
 	long system_memory = sysconf(_SC_PHYS_PAGES) * 4096;
 	heap = mmap(0, system_memory, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
 	(void)argc; (void)argv;
@@ -3034,7 +3029,6 @@ int main(int argc, char** argv)
 		add_generics,
 		balance_branches,
 		compute_stack,
-		//determine_registers,
 		add_registers,
 		shorten_references,
 		inline_values,
