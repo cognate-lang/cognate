@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include <sys/stat.h>
 #include <setjmp.h>
+#include <immintrin.h>
 
 #define WORDSZ (sizeof(void*))
 
@@ -347,18 +348,11 @@ int main(int argc, char** argv)
 	_argv = argv;
 	// Set locale for strings.
 	if unlikely(setlocale(LC_ALL, "") == NULL)
-	{
 		throw_error("Cannot set locale");
-	}
 	// Init GC
 	gc_init();
 	// Seed the random number generator properly.
-	struct timespec ts;
-	if unlikely(clock_gettime(CLOCK_REALTIME, &ts) == -1)
-	{
-		throw_error("Cannot get system time");
-	}
-	srand(ts.tv_nsec ^ ts.tv_sec); // TODO make random more random.
+	srand(_rdtsc());
 	// Load parameters
 	while (argc --> 1)
 	{
