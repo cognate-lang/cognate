@@ -135,9 +135,6 @@ typedef struct var_info
 
 #define PTR_MASK 0x0000ffffffffffff
 
-#define SET_FUNCTION_STACK_START() \
-	function_stack_start = __builtin_frame_address(0); \
-	function_stack_top = function_stack_start - function_stack_size;
 
 #define ___name ___##name
 #define SYM(name) ____##name
@@ -173,13 +170,10 @@ extern const size_t source_line_num;
 
 extern int main(int, char**);
 
-static const char* restrict function_stack_top;
 static const char* restrict function_stack_start;
-static rlim_t function_stack_size;
 
 // Variables and	needed by functions.c defined in runtime.c
 static void init_stack(void);
-static void set_function_stack_start(void);
 static void expand_stack(void);
 static STRING show_object(const ANY object, const _Bool);
 static void _Noreturn __attribute__((format(printf, 1, 2))) throw_error_fmt(const char* restrict const, ...);
@@ -226,7 +220,6 @@ static ANY pop(void);
 static ANY peek(void);
 static void flush_stack_cache(void);
 static int stack_length(void);
-static void check_function_stack_size(void);
 
 // Builtin functions needed by compiled source file defined in functions.c
 static LIST ___empty(void);
@@ -353,14 +346,9 @@ void fn0();
 
 int main(int argc, char** argv)
 {
+	function_stack_start = __builtin_frame_address(0);
 	_argc = argc;
 	_argv = argv;
-	struct rlimit stack_limit;
-	if unlikely(getrlimit(RLIMIT_STACK, &stack_limit) == -1)
-		throw_error("Cannot get return stack limit");
-	function_stack_size = stack_limit.rlim_cur;
-	SET_FUNCTION_STACK_START();
-	if (function_stack_size == ULONG_MAX) function_stack_top = NULL;
 	// Set locale for strings.
 	if unlikely(setlocale(LC_ALL, "") == NULL)
 	{
@@ -398,13 +386,6 @@ static void cleanup(void)
 {
 	if unlikely(stack.top != stack.start || stack.cache.type)
 		throw_error_fmt("Exiting with %ti object(s) on the stack", stack.top - stack.start + (stack.cache.type != 0));
-}
-
-static void check_function_stack_size(void)
-{
-	const char sp;
-	if unlikely(&sp < function_stack_top + STACK_MARGIN_KB * 1024)
-		throw_error("Maximum recursion depth exceeded");
 }
 
 #ifdef DEBUG
