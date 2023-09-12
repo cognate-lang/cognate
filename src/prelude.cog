@@ -124,18 +124,6 @@ Def Append (
 
 Def Prepend ( Swap ; Append );
 
-Def Sort (
-	Let L;
-	Do If Empty? L ( return L )
-	else (
-		Let Pivot be First of L;
-		Sort Filter (<  Pivot) L;
-		Sort Filter (>= Pivot) Rest L;
-		Push Pivot;
-		Append
-	)
-);
-
 Def Case as (
 	Def Pred;
 	Def If-true;
@@ -147,7 +135,6 @@ Def Case as (
 	);
 );
 
-~
 Def Sort
 	Case (Empty?) ()
 	else (
@@ -158,4 +145,3 @@ Def Sort
 		Push Pivot;
 		Append
 	);
-~
