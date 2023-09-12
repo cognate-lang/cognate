@@ -36,6 +36,9 @@
 
 #define CHK(thing) if (!thing->defined) throw_error("undefined thing")
 
+#define MEM_PROT PROT_READ|PROT_WRITE
+#define MEM_FLAGS MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE
+
 typedef struct cognate_object ANY;
 typedef ANY* restrict ANYPTR;
 typedef ANY* restrict BOX;
@@ -690,7 +693,7 @@ static STRING show_object (const ANY object, const _Bool raw_strings)
 static void init_stack(void)
 {
 	stack.absolute_start = stack.top = stack.start
-		= mmap(0, system_memory/10, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
+		= mmap(0, system_memory/10, MEM_PROT, MEM_FLAGS, -1, 0);
 	stack.cache.type = 0;
 }
 
@@ -984,10 +987,10 @@ static IO unbox_IO(ANY box)
 static void gc_init(void)
 {
 	system_memory = sysconf(_SC_PHYS_PAGES) * 4096;
-	bitmap[0] = mmap(0, system_memory/18, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
-	bitmap[1] = mmap(0, system_memory/18, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
-	space[0]  = mmap(0, (system_memory/18)*8, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
-	space[1]  = mmap(0, (system_memory/18)*8, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
+	bitmap[0] = mmap(0, system_memory/18, MEM_PROT, MEM_FLAGS, -1, 0);
+	bitmap[1] = mmap(0, system_memory/18, MEM_PROT, MEM_FLAGS, -1, 0);
+	space[0]  = mmap(0, (system_memory/18)*8, MEM_PROT, MEM_FLAGS, -1, 0);
+	space[1]  = mmap(0, (system_memory/18)*8, MEM_PROT, MEM_FLAGS, -1, 0);
 	bitmap[0][0] = ALLOC;
 	bitmap[1][0] = ALLOC;
 }
