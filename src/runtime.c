@@ -27,7 +27,7 @@
 #define INITIAL_READ_SIZE 64
 #define STACK_MARGIN_KB		50
 
-#define CHK(thing) if (!thing->defined) throw_error("undefined thing")
+#define CHK(thing) if (!thing->defined) throw_error(#thing" called before definition")
 
 #define MEM_PROT PROT_READ|PROT_WRITE
 #define MEM_FLAGS MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE
@@ -246,7 +246,6 @@ static BOOLEAN ___G(NUMBER, NUMBER);
 static BOOLEAN ___LE(NUMBER, NUMBER);
 static BOOLEAN ___GE(NUMBER, NUMBER);
 static BOOLEAN ___match(ANY, ANY);
-static BOOLEAN ___anyQ(ANY);
 static BOOLEAN ___numberQ(ANY);
 static BOOLEAN ___symbolQ(ANY);
 static BOOLEAN ___listQ(ANY);
@@ -1189,7 +1188,6 @@ static BOOLEAN ___LE(NUMBER a, NUMBER b) { return a >= b; }
 static BOOLEAN ___numberQ(ANY a)  { return a.type==number; }
 static BOOLEAN ___listQ(ANY a)    { return a.type==list;   }
 static BOOLEAN ___stringQ(ANY a)  { return a.type==string; }
-static BOOLEAN ___anyQ(ANY a)     { (void)a; return 1; }
 static BOOLEAN ___blockQ(ANY a)   { return a.type==block;  }
 static BOOLEAN ___booleanQ(ANY a) { return a.type==boolean;}
 static BOOLEAN ___symbolQ(ANY a)  { return a.type==symbol; }

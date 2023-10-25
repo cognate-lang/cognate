@@ -56,6 +56,7 @@ typedef enum _type_t
 
 typedef enum _val_type_t
 {
+	NIL=0,
 	number,
 	symbol,
 	string,
@@ -115,6 +116,7 @@ struct _builtin_t
 	type_t calltype;
 	val_type_t storagetype;
 	val_type_t rettype;
+	val_type_t checks;
 };
 
 struct _val_list_t
@@ -181,6 +183,7 @@ struct _func_t
 	func_list_t* calls;
 	val_list_t* args;
 	val_type_t rettype;
+	val_type_t checks;
 	val_type_t tentative_rettype;
 	size_t argc;
 	char* name;

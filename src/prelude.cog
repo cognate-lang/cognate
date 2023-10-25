@@ -1,6 +1,7 @@
 Def Drop as ( Let X );
 Def Swap as ( Let X ; Let Y ; Y X );
 Def Do as ( Def F ; F );
+Def Any? ( True Drop );
 
 Def Puts ( Put Fold ( Join ) over List );
 Def Prints ( Print Fold ( Join ) over List );
@@ -146,3 +147,4 @@ Def Sort
 		Push Pivot;
 		Append
 	);
+

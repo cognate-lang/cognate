@@ -679,6 +679,7 @@ const char* print_val_type(val_type_t type)
 		case any:    return "any";
 		case box:    return "box";
 		case io:     return "io";
+		case NIL:    return "NIL";
 	}
 	return NULL;
 }
@@ -698,6 +699,7 @@ const char* c_val_type(val_type_t type)
 		case any:    return "ANY";
 		case box:    return "BOX";
 		case io:     return "IO";
+		case NIL:    __builtin_trap();
 	}
 	return NULL;
 }
@@ -776,7 +778,7 @@ void c_emit_funcall(func_t* fn, FILE* c_source, reg_dequeue_t* registers)
 	if (!fn->generic)
 		for (word_list_t* w = fn->captures ; w ; w = w->next)
 		{
-			fprintf(c_source, "%s%s", w->word->used_early?"&":"", c_word_name(w->word));
+			fprintf(c_source, "%s", c_word_name(w->word));
 			if (w->next || fn->argc) fprintf(c_source, ",");
 		}
 	else fprintf(c_source, "NULL");
@@ -815,7 +817,7 @@ void to_c(module_t* mod)
 		}
 		else
 		{
-			fprintf(c_source, "void* env");
+			fprintf(c_source, "void* env[]");
 			if (func->func->argc) fprintf(c_source, ", ");
 		}
 		//reg_dequeue_t* ar = make_register_dequeue();
@@ -850,7 +852,7 @@ void to_c(module_t* mod)
 			}
 		else
 		{
-			fprintf(c_source, "void* env");
+			fprintf(c_source, "void* env[]");
 			if (func->func->argc) fprintf(c_source, ", ");
 		}
 		reg_dequeue_t* ar = make_register_dequeue();
@@ -869,12 +871,12 @@ void to_c(module_t* mod)
 			{
 				if (w->word->used_early)
 				{
-					fprintf(c_source, "\tearly_%s %s = *(early_%s*)env;\n",
+					fprintf(c_source, "\tearly_%s* %s = *(early_%s**)env;\n",
 						c_val_type(w->word->val->type),
 						c_word_name(w->word),
 						c_val_type(w->word->val->type));
 					if (w->next)
-						fprintf(c_source, "\tenv += sizeof(early_%s);\n", c_val_type(w->word->val->type));
+						fprintf(c_source, "\tenv += sizeof(early_%s*);\n", c_val_type(w->word->val->type));
 				}
 				else
 				{
@@ -1098,6 +1100,11 @@ void to_c(module_t* mod)
 						size_t i = 0;
 						for (word_list_t* w = op->op->func->captures ; w ; w = w->next, i++)
 						{
+							if (w->word->used_early)
+								fprintf(c_source, "\t*(early_%s**)_%zu.env = %s;\n",
+									c_val_type(w->word->val->type),
+									reg->id, c_word_name(w->word));
+							else
 							fprintf(c_source, "\t*(%s*)_%zu.env = %s;\n",
 								c_val_type(w->word->val->type),
 								reg->id, c_word_name(w->word));
@@ -2019,6 +2026,26 @@ void add_typechecks(module_t* mod)
 				case static_call:
 					{
 						func_t* fn = call_to_func(op->op);
+						/*
+						if (fn->checks)
+						{
+							// typecheck function
+							// TODO this should happen much earlier in the process.
+							reg_t* r = pop_register_front(registers);
+							if (r->type != any)
+							{
+								op->op->type = literal;
+								op->op->literal = alloc(sizeof *op->op->literal);
+								op->op->literal->type = boolean;
+								op->op->literal->string = r->type==fn->checks?"1":"0";
+								insert_op_before(make_op(drop, NULL, op->op->where), op);
+								push_register_front(make_register(boolean, op), registers);
+								break;
+							}
+							else
+								push_register_front(r, registers);
+						}
+						*/
 						for ( val_list_t* a = fn->args ; a ; a = a->next )
 						{
 							reg_t* reg = pop_register_front(registers);
@@ -3090,6 +3117,7 @@ word_list_t* builtins()
 		fn->returns = b[i].returns;
 		fn->stack = b[i].stack;
 		fn->tentative_rettype = fn->rettype = b[i].rettype;
+		fn->checks = b[i].checks;
 		fn->argc = b[i].argc;
 		fn->args = NULL;
 		fn->locals = NULL;
