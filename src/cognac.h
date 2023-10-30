@@ -116,7 +116,7 @@ struct _builtin_t
 	type_t calltype;
 	val_type_t storagetype;
 	val_type_t rettype;
-	val_type_t checks;
+	//val_type_t checks;
 };
 
 struct _val_list_t

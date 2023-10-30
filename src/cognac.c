@@ -2027,10 +2027,12 @@ void add_typechecks(module_t* mod)
 				case static_call:
 					{
 						func_t* fn = call_to_func(op->op);
+						/*
+						 * TODO perhaps this could work in some ideal world.
+						 * doubtful tho
 						if (fn->checks)
 						{
 							// typecheck function
-							// TODO this should happen much earlier in the process.
 							reg_t* r = pop_register_front(registers);
 							if (r->type != any)
 							{
@@ -2045,6 +2047,7 @@ void add_typechecks(module_t* mod)
 							else
 								push_register_front(r, registers);
 						}
+						*/
 						for ( val_list_t* a = fn->args ; a ; a = a->next )
 						{
 							reg_t* reg = pop_register_front(registers);
@@ -3119,7 +3122,7 @@ word_list_t* builtins()
 		fn->returns = b[i].returns;
 		fn->stack = b[i].stack;
 		fn->tentative_rettype = fn->rettype = b[i].rettype;
-		fn->checks = b[i].checks;
+		//fn->checks = b[i].checks;
 		fn->argc = b[i].argc;
 		fn->args = NULL;
 		fn->locals = NULL;

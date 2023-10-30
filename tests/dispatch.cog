@@ -1,0 +1,4 @@
+Let N be "PASS: dynamic dispatch";
+
+Do If Number? N (Print N)
+	else (Print + 1 N);

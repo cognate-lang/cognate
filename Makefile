@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-Og -ggdb3 -g -rdynamic -Wall -Wpedantic
 PREFIX=`echo ~`/.local
 BINDIR=$(PREFIX)/bin
-TESTS=block booleans filter for functions if io lists map maths parsing regex stack strings symbols variables trig other-math
+TESTS=block booleans filter for functions if io lists map maths parsing regex stack strings symbols variables trig other-math dispatch
 
 cognac: src/cognac.h src/cognac.c src/parser.c src/parser.h src/lexer.c src/runtime.h src/prelude.h
 	$(CC) $(CFLAGS) src/lexer.c src/parser.c src/cognac.c -o cognac -DCC=$(CC)
