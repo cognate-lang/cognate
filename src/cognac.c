@@ -294,6 +294,7 @@ void remove_op(ast_list_t* op)
 
 reg_t* make_register(val_type_t t, ast_list_t* source)
 {
+	if (!t) __builtin_trap();
 	static size_t next_register_id = 0;
 	reg_t* reg = alloc (sizeof *reg);
 	reg->type = t;
@@ -2026,7 +2027,6 @@ void add_typechecks(module_t* mod)
 				case static_call:
 					{
 						func_t* fn = call_to_func(op->op);
-						/*
 						if (fn->checks)
 						{
 							// typecheck function
@@ -2045,7 +2045,6 @@ void add_typechecks(module_t* mod)
 							else
 								push_register_front(r, registers);
 						}
-						*/
 						for ( val_list_t* a = fn->args ; a ; a = a->next )
 						{
 							reg_t* reg = pop_register_front(registers);
@@ -2861,6 +2860,7 @@ void balance_branches(module_t* m)
 							func_t* adaptor = make_func(body, make_func_name());
 							adaptor->argc = min_argc;
 							adaptor->returns = all_return;
+							adaptor->rettype = any;
 							adaptor->args = adapt_args;
 
 							if (adaptor->returns)
@@ -3057,7 +3057,7 @@ int main(int argc, char** argv)
 		balance_branches,
 		compute_stack,
 		add_registers,
-		shorten_references,
+		//shorten_references,
 		inline_values,
 		compute_variables,
 		resolve_early_use,
@@ -3070,7 +3070,9 @@ int main(int argc, char** argv)
 		to_exe
 	};
 	for (size_t i = 0 ; i < sizeof stages / sizeof stages[0] ; ++i)
+	{
 		stages[i](m);
+	}
 	return EXIT_SUCCESS;
 }
 
