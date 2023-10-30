@@ -66,6 +66,7 @@ typedef enum _val_type_t
 	box,
 	io,
 	any,
+	dispatch,
 } val_type_t;
 
 struct _ptr_assoc_t
@@ -116,7 +117,6 @@ struct _builtin_t
 	type_t calltype;
 	val_type_t storagetype;
 	val_type_t rettype;
-	//val_type_t checks;
 };
 
 struct _val_list_t
@@ -183,7 +183,6 @@ struct _func_t
 	func_list_t* calls;
 	val_list_t* args;
 	val_type_t rettype;
-	val_type_t checks;
 	val_type_t tentative_rettype;
 	size_t argc;
 	char* name;

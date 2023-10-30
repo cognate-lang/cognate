@@ -681,6 +681,7 @@ const char* print_val_type(val_type_t type)
 		case box:    return "box";
 		case io:     return "io";
 		case NIL:    return "NIL";
+		case dispatch: return "dispatch";
 	}
 	return NULL;
 }
@@ -700,6 +701,7 @@ const char* c_val_type(val_type_t type)
 		case any:    return "ANY";
 		case box:    return "BOX";
 		case io:     return "IO";
+		case dispatch: __builtin_trap();
 		case NIL:    __builtin_trap();
 	}
 	return NULL;
@@ -1662,7 +1664,6 @@ bool add_var_types_forwards(module_t* mod)
 									registers);
 						break;
 					}
-
 				case literal:
 					push_register_front(
 							make_register(op->op->literal->type, op),
