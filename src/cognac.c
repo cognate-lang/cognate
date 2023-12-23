@@ -294,7 +294,7 @@ void remove_op(ast_list_t* op)
 
 reg_t* make_register(val_type_t t, ast_list_t* source)
 {
-	if (!t) __builtin_trap();
+	if (!t) unreachable();
 	static size_t next_register_id = 0;
 	reg_t* reg = alloc (sizeof *reg);
 	reg->type = t;
@@ -702,7 +702,7 @@ const char* c_val_type(val_type_t type)
 		case box:    return "BOX";
 		case io:     return "IO";
 		case strong_any:
-		case NIL:    __builtin_trap();
+		case NIL:    unreachable();
 	}
 	return NULL;
 }
