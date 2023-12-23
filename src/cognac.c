@@ -681,7 +681,7 @@ const char* print_val_type(val_type_t type)
 		case box:    return "box";
 		case io:     return "io";
 		case NIL:    return "NIL";
-		case dispatch: return "dispatch";
+		case strong_any: return "strong_any";
 	}
 	return NULL;
 }
@@ -701,7 +701,7 @@ const char* c_val_type(val_type_t type)
 		case any:    return "ANY";
 		case box:    return "BOX";
 		case io:     return "IO";
-		case dispatch: __builtin_trap();
+		case strong_any:
 		case NIL:    __builtin_trap();
 	}
 	return NULL;
@@ -1664,6 +1664,7 @@ bool add_var_types_forwards(module_t* mod)
 									registers);
 						break;
 					}
+
 				case literal:
 					push_register_front(
 							make_register(op->op->literal->type, op),
@@ -1693,10 +1694,12 @@ bool add_var_types_forwards(module_t* mod)
 				case ret:
 					{
 						val_type_t t = pop_register_front(registers)->type;
-						if (t != any && func->func->rettype != t && !func->func->branch)
+						if (func->func->rettype != strong_any && t != any && func->func->rettype != t && !func->func->branch)
 						{
-							if (func->func->rettype != any) type_error(func->func->rettype, t, op->op->where); // type error
-							func->func->rettype = t;
+							if (func->func->rettype != any)
+								func->func->rettype = strong_any;
+							else
+								func->func->rettype = t;
 							changed = 1;
 						}
 						break;
@@ -1722,7 +1725,7 @@ bool add_var_types_forwards(module_t* mod)
 						for ( val_list_t* v = fn->args ; v ; v = v->next )
 						{
 							val_type_t t = pop_register_front(registers)->type;
-							if (fn->unique && v->val->type == any && t != any)
+							if (v->val->type != strong_any && fn->unique && v->val->type == any && t != any)
 								// yay we're allowed to mess with it
 							{
 								v->val->type = t; // kinda dodgy
@@ -1739,10 +1742,12 @@ bool add_var_types_forwards(module_t* mod)
 				case bind:
 					{
 						val_type_t t = pop_register_front(registers)->type;
-						if (t != any && op->op->word->val->type != t) // Early use needs to be bound to undefined symbol
+						if (op->op->word->val->type != strong_any && t != any && op->op->word->val->type != t) // Early use needs to be bound to undefined symbol
 						{
-							if (op->op->word->val->type != any) type_error(op->op->word->val->type, t, op->op->where); // type error
-							op->op->word->val->type = t;
+							if (op->op->word->val->type != any)
+								op->op->word->val->type = strong_any;
+							else
+								op->op->word->val->type = t;
 							changed = 1;
 						}
 						break;
@@ -1788,11 +1793,12 @@ bool add_var_types_backwards(module_t* mod)
 							if (r->type != any)
 								for (func_list_t* ff = op->op->funcs ; ff ; ff = ff->next)
 								{
-									if (ff->func->tentative_rettype != r->type)
+									if (ff->func->tentative_rettype != strong_any && ff->func->tentative_rettype != r->type)
 									{
 										if (ff->func->tentative_rettype != any)
-											type_error(r->type, ff->func->tentative_rettype, op->op->where);
-										ff->func->tentative_rettype = r->type;
+											ff->func->tentative_rettype = strong_any;
+										else
+											ff->func->tentative_rettype = r->type;
 										changed = 1;
 									}
 								}
@@ -1807,10 +1813,12 @@ bool add_var_types_backwards(module_t* mod)
 				case var:
 					{
 						val_type_t t = pop_register_front(registers)->type;
-						if (t != any && op->op->word->val->type != t)
+						if (op->op->word->val->type != strong_any && t != any && op->op->word->val->type != t)
 						{
-							if (op->op->word->val->type != any) type_error(op->op->word->val->type, t, op->op->where); // type error
-							op->op->word->val->type = t;
+							if (op->op->word->val->type != any)
+								op->op->word->val->type = strong_any;
+							else
+								op->op->word->val->type = t;
 							changed = true;
 						}
 					}
@@ -1851,11 +1859,12 @@ bool add_var_types_backwards(module_t* mod)
 						if (fn->returns)
 						{
 							reg_t* r = pop_register_front(registers);
-							if (fn->tentative_rettype != r->type && r->type != any)
+							if (fn->tentative_rettype != strong_any && fn->tentative_rettype != r->type && r->type != any)
 							{
 								if (fn->tentative_rettype != any)
-									type_error(r->type, fn->tentative_rettype, op->op->where);
-								fn->tentative_rettype = r->type;
+									fn->tentative_rettype = strong_any;
+								else
+									fn->tentative_rettype = r->type;
 								changed = 1;
 							}
 						}
@@ -1878,10 +1887,12 @@ bool add_var_types_backwards(module_t* mod)
 		for (val_list_t* v = func->func->args; v ; v = v->next)
 		{
 			val_type_t t = args->val->type;
-			if (t != any && v->val->type != t && !func->func->branch)
+			if (v->val->type != strong_any && t != any && v->val->type != t && !func->func->branch)
 			{
-				if (v->val->type != any) type_error(v->val->type, t, op->op->where);
-				v->val->type = t;
+				if (v->val->type != any)
+					v->val->type = strong_any;
+				else
+					v->val->type = t;
 				changed = 1;
 			}
 			args = args->next;
@@ -1902,6 +1913,9 @@ void add_var_types(module_t* mod)
 		changed |= add_var_types_forwards(mod);
 		changed |= add_var_types_backwards(mod);
 	}
+	for (func_list_t* func = mod->funcs ; func ; func = func->next)
+		for (word_list_t* w = func->func->locals ; w ; w = w->next)
+			if (w->word->val->type == strong_any) w->word->val->type = any;
 }
 
 void add_typechecks(module_t* mod)
@@ -3062,7 +3076,7 @@ int main(int argc, char** argv)
 		compute_stack,
 		add_registers,
 		//shorten_references,
-		inline_values,
+		//inline_values,
 		compute_variables,
 		resolve_early_use,
 		determine_unique_calls,

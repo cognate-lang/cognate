@@ -287,8 +287,6 @@ static LIST ___map(BLOCK, LIST);
 static LIST ___filter(BLOCK, LIST);
 static LIST ___range(NUMBER, NUMBER);
 static ANY ___index(NUMBER, LIST);
-static void ___puts(BLOCK);
-static void ___prints(BLOCK);
 static BLOCK ___precompute(BLOCK);
 static void ___wait(NUMBER);
 static LIST ___split(STRING, STRING);

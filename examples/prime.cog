@@ -1,3 +1,5 @@
+~~ TODO prelude break this oop
+
 Def Factor (Zero? Modulo Swap);
 
 Def Primes (
