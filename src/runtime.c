@@ -45,7 +45,7 @@ typedef struct cognate_file* IO;
 
 typedef struct cognate_block
 {
-	void (*fn)(void*[]);
+	void (*fn)(void*);
 	void* env;
 } cognate_block;
 
@@ -220,8 +220,6 @@ static int stack_length(void);
 // Builtin functions needed by compiled source file defined in functions.c
 static LIST ___empty(void);
 static ANY ___if(BOOLEAN, ANY, ANY);
-static void ___when(BOOLEAN, BLOCK);
-static void ___unless(BOOLEAN, BLOCK);
 static void ___put(ANY);
 static void ___print(ANY);
 static NUMBER ___P(NUMBER, NUMBER);
@@ -1923,15 +1921,15 @@ static void ___seek(NUMBER n, IO io)
 	fseek(io->file, p, SEEK_CUR);
 }
 
-static void invalid_jump(void* env[1])
+static void invalid_jump(void* env)
 {
 	throw_error("cannot resume expired continuation");
 }
 
-static void oh_no(void* env[1])
+static void oh_no(void* env)
 {
 	char a;
-	longjmp(*(jmp_buf*)env[0], 1);
+	longjmp(*(jmp_buf*)env, 1);
 }
 
 static void ___begin(BLOCK f)

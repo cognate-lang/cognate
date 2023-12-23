@@ -2,5 +2,5 @@ Def Fib
 	Case (< 3) then (1 Drop)
 	else (Let N ; Fib of - 1 N ; + Fib of - 2 N)
 
-Put "The 40th fibonacci number is... ";
-Print the Fib of 40;
+Put "The 50th fibonacci number is... ";
+Print the Fib of 50;

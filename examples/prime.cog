@@ -10,7 +10,7 @@ Def Primes (
 		Let Primes is found primes;
 		Let To-check be Take-while (<= Sqrt P) Primes;
 		When All (Not Factor of P) To-check
-			(Append P) to Primes
+			(Append List(P)) to Primes;
 	)
 );
 

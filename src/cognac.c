@@ -92,6 +92,7 @@ _Noreturn void type_error(val_type_t expected, val_type_t got, where_t* pos)
 
 _Noreturn void throw_error(char* message, where_t* where)
 {
+	// TODO this segfaults if the error is in prelude
 
 	/*
 	puts(message);
@@ -820,7 +821,7 @@ void to_c(module_t* mod)
 		}
 		else
 		{
-			fprintf(c_source, "void* env[]");
+			fprintf(c_source, "void* env");
 			if (func->func->argc) fprintf(c_source, ", ");
 		}
 		//reg_dequeue_t* ar = make_register_dequeue();
@@ -855,7 +856,7 @@ void to_c(module_t* mod)
 			}
 		else
 		{
-			fprintf(c_source, "void* env[]");
+			fprintf(c_source, "void* env");
 			if (func->func->argc) fprintf(c_source, ", ");
 		}
 		reg_dequeue_t* ar = make_register_dequeue();
@@ -1914,8 +1915,14 @@ void add_var_types(module_t* mod)
 		changed |= add_var_types_backwards(mod);
 	}
 	for (func_list_t* func = mod->funcs ; func ; func = func->next)
+	{
 		for (word_list_t* w = func->func->locals ; w ; w = w->next)
 			if (w->word->val->type == strong_any) w->word->val->type = any;
+		for (val_list_t* v = func->func->args ; v ; v = v->next)
+			if (v->val->type == strong_any) v->val->type = any;
+		if (func->func->rettype == strong_any)
+			func->func->rettype = any;
+	}
 }
 
 void add_typechecks(module_t* mod)
