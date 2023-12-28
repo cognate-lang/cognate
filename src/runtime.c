@@ -1579,7 +1579,7 @@ static BLOCK ___precompute(BLOCK blk)
 
 static STRING ___show(ANY o)
 {
-	return show_object(o, 0);
+	return show_object(o, 1);
 }
 
 static LIST ___split(STRING sep, STRING str)

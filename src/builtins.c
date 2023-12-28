@@ -17,8 +17,6 @@
 {.name="if",                  .calltype=branch, .argc=3, .args={boolean, any, any},   .returns=true, .rettype=any},
 {.name="print",               .calltype=call, .argc=1, .args={any}},
 {.name="put",                 .calltype=call, .argc=1, .args={any}},
-{.name="prints",              .calltype=call, .argc=1, .args={block}},
-{.name="puts",                .calltype=call, .argc=1, .args={block}},
 {.name="do",                  .calltype=call, .argc=1, .args={block}, .stack=true},
 {.name="random",              .calltype=call, .argc=2, .args={number, number},   .returns=true, .rettype=number},
 {.name="modulo",              .calltype=call, .argc=2, .args={number, number},   .returns=true, .rettype=number},
