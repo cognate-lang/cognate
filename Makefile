@@ -1,4 +1,4 @@
-CC=gcc
+CC=cc
 CFLAGS=-Og -ggdb3 -g -rdynamic -Wall -Wpedantic
 PREFIX=`echo ~`/.local
 BINDIR=$(PREFIX)/bin
