@@ -30,8 +30,8 @@ Def Until (
 
 Def Times (
 	Let I be Integer!;
-	Let B be Block!;
-	When >= 0 I then ( Do B ; Times - 1 I B )
+	Def B;
+	( When >= 0 I then ( B ; Do Times - 1 I (B) ) )
 );
 
 

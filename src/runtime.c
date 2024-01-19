@@ -1202,7 +1202,7 @@ static IO      ___ioX(IO a)          { return a; }
 
 static NUMBER ___integerX(NUMBER a)
 {
-	if unlikely(a != (size_t)a) type_error("integer", box_NUMBER(a));
+	if unlikely(a != (long)a) type_error("integer", box_NUMBER(a));
 	return a;
 }
 
