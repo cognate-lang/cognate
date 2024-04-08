@@ -166,6 +166,7 @@ struct _ast_t
 		val_type_t val_type;
 	};
 	where_t* where;
+	size_t sqnum;
 	type_t type;
 };
 

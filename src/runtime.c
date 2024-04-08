@@ -27,7 +27,7 @@
 #define INITIAL_READ_SIZE 64
 #define STACK_MARGIN_KB		50
 
-#define CHK(thing) if (!thing->defined) throw_error(#thing" called before definition")
+#define CHECK_DEFINED(str, thing) if (!thing->defined) throw_error(#str" called before definition")
 
 #define MEM_PROT PROT_READ|PROT_WRITE
 #define MEM_FLAGS MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE

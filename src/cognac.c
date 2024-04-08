@@ -156,10 +156,12 @@ func_t* unknown_func = &(func_t) {
 	.unique=false,
 };
 
-func_t* word_func(word_t* w)
+func_t* call_to_func(ast_t* op)
 {
-	return w->val->source && w->val->source->op->type == closure
-		? w->val->source->op->func
+	return op->type==call
+			&& op->word->val->source
+			&& op->word->val->source->op->type==closure
+		? op->word->val->source->op->func
 		: unknown_func;
 }
 
@@ -176,7 +178,7 @@ val_list_t* reverse(val_list_t* v)
 	return new;
 }
 
-func_t* call_to_func(ast_t* c)
+func_t* static_call_to_func(ast_t* c)
 {
 	if (c->type == call) return unknown_func;
 	else return c->func;
@@ -499,7 +501,7 @@ void shorten_references(module_t* mod)
 				case call:
 				case static_call:
 					{
-						func_t* f = call_to_func(a->op);
+						func_t* f = static_call_to_func(a->op);
 						for ( size_t i = 0 ; i < f->argc ; ++i )
 							pop_register_front(regs);
 						if (f->stack) assert(regs->len == 0);
@@ -1029,7 +1031,9 @@ void to_c(module_t* mod)
 						reg_t* reg = make_register(op->op->word->val->type, NULL);
 						push_register_front(reg, registers);
 						if (op->op->word->used_early)
-							fprintf(c_source, "\tCHK(%s);\n\t%s _%zu = %s->value;\n",
+							fprintf(c_source, "\tCHECK_DEFINED(%c%s, %s);\n\t%s _%zu = %s->value;\n",
+								toupper(op->op->word->name[0]),
+								op->op->word->name+1,
 								c_word_name(op->op->word),
 								c_val_type(op->op->word->val->type),
 								reg->id,
@@ -1072,7 +1076,9 @@ void to_c(module_t* mod)
 				case call:
 					// TODO remove call and use var and a do op
 					if (op->op->word->used_early)
-						fprintf(c_source, "\tCHK(%s);\n\t%s->value.fn(%s->value.env);\n",
+						fprintf(c_source, "\tCHECK_DEFINED(%c%s, %s);\n\t%s->value.fn(%s->value.env);\n",
+							toupper(op->op->word->name[0]),
+							op->op->word->name+1,
 							c_word_name(op->op->word),
 							c_word_name(op->op->word),
 							c_word_name(op->op->word));
@@ -1247,43 +1253,56 @@ bool _determine_arguments(func_t* f)
 			case fn_branch:
 				{
 					if (registers) registers--;
-					else if (can_use_args && f->argc < 255 && !f->entry) argc++;
+					else if (can_use_args && argc < 255 && !f->entry) argc++;
 					for (func_list_t* f = op->funcs ; f ; f = f->next)
 						changed |= _determine_arguments(f->func);
-					func_t* v = op->funcs->func; // balanced arguments?!
-					if (v->stack && registers > v->argc)
-						registers = v->argc;
-					for (size_t i = 0 ; i < v->argc ; ++i)
+					int min_argc = INT_MAX;
+					int stack = false;
+					int returns = true;
+				   for (func_list_t* ff = op->funcs ; ff ; ff = ff->next)
+					{
+						if (min_argc > ff->func->argc) min_argc = ff->func->argc;
+						stack |= ff->func->stack;
+						returns &= ff->func->returns;
+					}
+					if (stack && registers > min_argc)
+						registers = min_argc;
+					for (size_t i = 0 ; i < min_argc ; ++i)
 					{
 						if (registers) registers--;
-						else if (can_use_args && f->argc < 255 && !f->entry)
-							argc++;
+						else if (can_use_args && argc < 255 && !f->entry) argc++;
 					}
-					if (v->stack) can_use_args = false;
-					if (v->returns) registers++;
+					if (stack) can_use_args = false;
+					if (returns) registers++;
 					break;
 				}
 			case branch:
-				for (char i = 0; i < 3; ++i)
+				//printf("[ %s\n", f->name);
+				for (int i = 0; i < 3; ++i)
 				{
-					if (registers) registers--;
-					else if (can_use_args && f->argc < 255 && !f->entry)
+					if (registers)
+					{
+						//printf("REGS %li -> %li\n", registers, registers-1);
+						registers--;
+					}
+					else if (can_use_args && (argc < 255) && !f->entry)
+					{
+						//printf("ARGC %li -> %li\n", argc, argc+1);
 						argc++;
+					}
 				}
 				registers++;
 				break;
 			case static_call:
 			case call:
 				{
-					func_t* fn = call_to_func(op);
+					func_t* fn = static_call_to_func(op);
 					if (fn != unknown_func) changed |= _determine_arguments(fn);
-					if (fn->stack && registers > fn->argc)
-						registers = fn->argc;
+					if (fn->stack && registers > fn->argc) registers = fn->argc;
 					for (size_t i = 0 ; i < fn->argc ; ++i)
 					{
 						if (registers) registers--;
-						else if (can_use_args && f->argc < 255 && !f->entry)
-							argc++;
+						else if (can_use_args && argc < 255 && !f->entry) argc++;
 					}
 					if (fn->stack) can_use_args = false;
 					if (fn->returns) registers++;
@@ -1291,16 +1310,20 @@ bool _determine_arguments(func_t* f)
 				}
 			case bind:
 				if (registers) registers--;
-				else if (can_use_args && f->argc < 255 && !f->entry)
-					argc++;
+				else if (can_use_args && argc < 255 && !f->entry) argc++;
 				break;
 			case define: case none: case pick: case unpick: break;
-			case drop: if (registers) registers--;
-							  break;
+			case drop:
+				if (registers) registers--;
+				else if (can_use_args && argc < 255 && !f->entry) argc++;
+				break;
 			default: unreachable();
 		}
 		if (!n->next && registers && !f->entry)
+		{
 			returns = true;
+			if (registers > 1) f->stack = true;
+		}
 	}
 	changed |= argc != f->argc || returns != f->returns;
 	f->argc = argc;
@@ -1402,7 +1425,7 @@ bool _determine_registers(func_t* f)
 			case call:
 			case static_call:
 				{
-					func_t* fn = call_to_func(op);
+					func_t* fn = static_call_to_func(op);
 					if (fn != unknown_func)
 						changed |= _determine_registers(fn);
 					if (fn->stack)
@@ -1544,7 +1567,7 @@ bool _add_registers(func_t* f)
 			case call:
 			case static_call:
 				{
-					func_t* fn = call_to_func(op);
+					func_t* fn = static_call_to_func(op);
 					if (fn != unknown_func) changed |= _add_registers(fn);
 					if (fn->stack)
 					{
@@ -1722,7 +1745,7 @@ bool add_var_types_forwards(module_t* mod)
 				case call:
 				case static_call:
 					{
-						func_t* fn = call_to_func(op->op);
+						func_t* fn = static_call_to_func(op->op);
 						for ( val_list_t* v = fn->args ; v ; v = v->next )
 						{
 							val_type_t t = pop_register_front(registers)->type;
@@ -1856,7 +1879,7 @@ bool add_var_types_backwards(module_t* mod)
 				case call:
 				case static_call:
 					{
-						func_t* fn = call_to_func(op->op);
+						func_t* fn = static_call_to_func(op->op);
 						if (fn->returns)
 						{
 							reg_t* r = pop_register_front(registers);
@@ -2048,7 +2071,7 @@ void add_typechecks(module_t* mod)
 				case call:
 				case static_call:
 					{
-						func_t* fn = call_to_func(op->op);
+						func_t* fn = static_call_to_func(op->op);
 						/*
 						 * TODO perhaps this could work in some ideal world.
 						 * doubtful tho
@@ -2169,7 +2192,7 @@ bool does_call(func_t* target, ast_list_t* start)
 {
 	for (ast_list_t* node = start ; node ; node = node->next)
 	{
-		if (node->op->type == call && word_func(node->op->word) == target)
+		if (node->op->type == call && call_to_func(node->op) == target)
 			return true;
 		else if (node->op->type == closure
 				&& does_call(target, node->op->func->ops))
@@ -2275,7 +2298,7 @@ void _compute_sources(ast_list_t* a)
 				}
 			case call:
 				{
-					func_t* fn = word_func(node->op->word);
+					func_t* fn = call_to_func(node->op);
 					for (size_t i = 0 ; i < fn->argc ; ++i)
 						pop_register_front(regs);
 					// assume all functions are stack
@@ -2304,8 +2327,7 @@ void _compute_sources(ast_list_t* a)
 
 void compute_sources(module_t* m)
 {
-	for (func_list_t* f = m->funcs ; f ; f = f->next)
-		_compute_sources(f->func->ops);
+	_compute_sources(m->entry->ops);
 }
 
 void _inline_functions(func_t* f, func_list_t** funcs)
@@ -2324,10 +2346,11 @@ void _inline_functions(func_t* f, func_list_t** funcs)
 					break;
 				case call:
 					{
-						func_t* fn = word_func(node->op->word);
+						func_t* fn = call_to_func(node->op);
 						if (fn != unknown_func)
 						{
 							if (!fn->ops) break;
+							if (node->op->sqnum <= f->ops->op->sqnum) break;
 							size_t n = 0;
 							for (ast_list_t* inl = fn->ops ; inl ; inl = inl->next) n++;
 							if (n > 30) break;
@@ -2362,7 +2385,7 @@ bool _compute_stack(func_t* f)
 			case call:
 			case static_call:
 				{
-					func_t* called = call_to_func(a->op);
+					func_t* called = static_call_to_func(a->op);
 					if (_compute_stack(called))
 					{
 						f->stack = true;
@@ -2389,10 +2412,25 @@ bool _compute_stack(func_t* f)
 	return false;
 }
 
+void _assign_sequence_numbers(func_t* f, size_t sqnum)
+{
+	for ( ast_list_t* a = f->ops ; a ; a = a->next )
+	{
+		a->op->sqnum = sqnum++;
+		if (a->op->type == closure)
+			_assign_sequence_numbers(a->op->func, sqnum);
+	}
+}
+
+void assign_sequence_numbers(module_t* m)
+{
+	_assign_sequence_numbers(m->entry, 0);
+}
+
 void compute_stack(module_t* m)
 {
 	for (func_list_t* f = m->funcs ; f ; f = f->next)
-		f->func->stack = false, f->func->has_stack = false;
+		/*f->func->stack = false, */f->func->has_stack = false;
 	for (func_list_t* f = m->funcs ; f ; f = f->next)
 		_compute_stack(f->func);
 }
@@ -2674,7 +2712,7 @@ void static_calls(module_t* m)
 		{
 			if (a->op->type == call)
 			{
-				func_t* called = word_func(a->op->word);
+				func_t* called = call_to_func(a->op);
 				if (called == unknown_func) continue;
 				a->op->type = static_call;
 				a->op->func = called;
@@ -2741,6 +2779,7 @@ void static_branches(module_t* m)
 						while (s1 && s1->op->type == var) s1 = s1->op->word->val->source;
 						while (s2 && s2->op->type == var) s2 = s2->op->word->val->source;
 						if (!s1 || !s2 || s1->op->type != closure || s2->op->type != closure) break;
+						if (s1->op->sqnum > a->op->sqnum || s2->op->sqnum > a->op->sqnum) break; // ???
 						func_list_t* fl
 							= push_func(s1->op->func,
 									push_func(s2->op->func,
@@ -2764,7 +2803,7 @@ void static_branches(module_t* m)
 				case call:
 				case static_call:
 					{
-						func_t* f = word_func(a->op->word);
+						func_t* f = call_to_func(a->op);
 						for ( size_t i = 0 ; i < f->argc ; ++i )
 							pop_register_front(regs);
 						if (f->stack) clear_registers(regs);
@@ -3068,21 +3107,21 @@ int main(int argc, char** argv)
 		resolve_scope,
 		flatten_ast,
 		merge_symbols,
-		compute_stack,
+		assign_sequence_numbers,
 		compute_sources,
 		inline_functions,
 		compute_sources,
 		static_branches,
 		compute_sources,
 		static_calls,
-		compute_stack,
 		determine_arguments,
+		compute_stack,
 		add_arguments,
 		add_generics,
 		balance_branches,
 		compute_stack,
 		add_registers,
-		//shorten_references,
+		shorten_references,
 		//inline_values,
 		compute_variables,
 		resolve_early_use,

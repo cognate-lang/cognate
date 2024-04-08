@@ -1,8 +1,3 @@
-Def Drop as (Let X);
-Def Twin as (Let X ; X X);
-Def Triplet as (Twin ; Twin);
-Def Swap as (Let X ; Let Y ; Y X);
-
 Print If == 2 Drop 3 2
   "PASS: Drop"
 else
@@ -59,3 +54,4 @@ Print If Y
   "PASS: Clearing the stack"
 else
   "FAIL: Clearing the stack";
+
