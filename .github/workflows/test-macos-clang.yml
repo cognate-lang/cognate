@@ -1,9 +1,11 @@
 name: MacOS (clang)
 on:
   push:
-    branches: [ rewrite ]
+    branches:
+      - "**"
   pull_request:
-    branches: [ rewrite ]
+    branches:
+      - "**"
   workflow_dispatch:
 jobs:
   tests:

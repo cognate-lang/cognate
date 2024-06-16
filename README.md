@@ -1,8 +1,10 @@
 
 <h1 align="center"> The Cognate programming language </h1>
 <p align="center">
-<img src="https://github.com/cognate-lang/cognate/actions/workflows/test-debian.yml/badge.svg">
-<img src="https://github.com/cognate-lang/cognate/actions/workflows/test-macos.yml/badge.svg">
+<img src="https://github.com/cognate-lang/cognate/actions/workflows/test-debian-gcc.yml/badge.svg">
+<img src="https://github.com/cognate-lang/cognate/actions/workflows/test-debian-clang.yml/badge.svg">
+<img src="https://github.com/cognate-lang/cognate/actions/workflows/test-debian-tcc.yml/badge.svg">
+<img src="https://github.com/cognate-lang/cognate/actions/workflows/test-macos-clang.yml/badge.svg">
 <img src="https://api.codiga.io/project/33284/score/svg">
 <img src="https://api.codiga.io/project/33284/status/svg">
 <img src="https://img.shields.io/github/license/cognate-lang/cognate.svg">
