@@ -112,10 +112,16 @@ Def All (
 	Let L;
 	Do If Empty? L then ( True )
 	else (
-		Do If Not Do P on First L
-			then ( False )
-			else ( All P of Rest of L );
+		Do If Do P on First L
+			then ( All P of Rest of L )
+			else ( False )
 	)
+);
+
+Def None ( ~~ Opposite of All
+	Def P;
+	Let L;
+	All ( Not P ) of L;
 );
 
 Def Append (

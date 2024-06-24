@@ -767,7 +767,7 @@ void to_exe(module_t* mod)
 		STRING(CC), c_source_path, "-o", exe_path,
 		"-Ofast", "-flto", "-s", "-w",
 		//"-Og", "-ggdb3", "-g", "-rdynamic",
-		"-lm", NULL
+		"-lm", "-Wall", NULL
 	};
 	pid_t p = fork();
 	if (!p) execvp(args[0], args);
@@ -3114,6 +3114,7 @@ int main(int argc, char** argv)
 		static_branches,
 		compute_sources,
 		static_calls,
+		// TODO second (careful) inlining pass here.
 		determine_arguments,
 		compute_stack,
 		add_arguments,
