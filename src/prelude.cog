@@ -228,6 +228,11 @@ Def Range (
 	Let Start be Number!;
 	Let End be Number!;
 
+	When > End Start
+	(
+		Error Join Join Join "Invalid range " Show Start "..." Show End;
+	);
+
 	Reverse List (
 		Start;
 		While (Triplet ; < End) ( + 1 );
