@@ -2476,7 +2476,7 @@ void assign_sequence_numbers(module_t* m)
 void compute_stack(module_t* m)
 {
 	for (func_list_t* f = m->funcs ; f ; f = f->next)
-		/*f->func->stack = false, */f->func->has_stack = false;
+		f->func->stack = false, f->func->has_stack = false;
 	for (func_list_t* f = m->funcs ; f ; f = f->next)
 		_compute_stack(f->func);
 }
@@ -2853,7 +2853,7 @@ void static_branches(module_t* m)
 						func_t* f = call_to_func(a->op);
 						for ( size_t i = 0 ; i < f->argc ; ++i )
 							pop_register_front(regs);
-						clear_registers(regs); // Assume all functions are stack at this point.
+						if (f->stack) clear_registers(regs);
 						if (f->returns)
 						push_register_front(make_register(f->rettype, a), regs);
 						break;
@@ -3159,7 +3159,10 @@ int main(int argc, char** argv)
 		assign_sequence_numbers,
 		inline_functions,
 		compute_sources,
+		compute_stack,
 		static_branches,
+		compute_sources,
+		compute_stack,
 		static_calls,
 		determine_arguments,
 		compute_stack,
