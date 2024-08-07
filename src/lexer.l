@@ -29,6 +29,7 @@ int last_openbrace_col;
 ALLOWCHAR [A-Za-z0-9\-\?\!\'\+\/\*\>\=\<\^]
 FORMAL    [A-Z\-\?\!\+\/\*\>\<\=\^]
 END       [;\(\)$^\~[:space:]]
+ESCAPES   [abfnrtv\\\"]
 
 %%
 D[eE][fF]/{END} return DEF;
@@ -38,7 +39,8 @@ L[eE][tT]/{END} return LET;
 {FORMAL}{ALLOWCHAR}*/{END} yylval.text=lc(strdup(yytext)); return IDENTIFIER;
 {ALLOWCHAR}+:{FORMAL}{ALLOWCHAR}*/{END} yylval.text=lc(strdup(yytext)); return MODULE_IDENTIFIER;
 \\{ALLOWCHAR}+/{END} yylval.text=lc(strdup(yytext+1)); return SYMBOL;
-\"(\\.|[^\n"\\])*\"/{END} yylval.text=strdup(yytext); return STRING;
+\"(\\{ESCAPES}|[^\n"\\])*\"/{END} yylval.text=strdup(yytext); return STRING;
+\"(\\.|[^\n"\\])*\"/{END} yyerror("invalid escape sequence");
 \" yyerror("unterminated string"); // TODO error message is printing with wrong column.
 
 ; return ';';
