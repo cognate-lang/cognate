@@ -33,7 +33,6 @@ END       [;\(\)$^\~[:space:]]
 %%
 D[eE][fF]/{END} return DEF;
 L[eE][tT]/{END} return LET;
-U[sS][eE]/{END} return USE;
 
 \-?([1-9][0-9]*|[0-9])(\.[0-9]+)?(e\-?[0-9]+)?/{END} yylval.text=strdup(yytext); return NUMBER;
 {FORMAL}{ALLOWCHAR}*/{END} yylval.text=lc(strdup(yytext)); return IDENTIFIER;

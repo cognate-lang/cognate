@@ -15,7 +15,6 @@
 	<text> MODULE_IDENTIFIER
 	<text> STRING
 	<text> SYMBOL
-	USE
 	DEF
 	LET
 	';'
