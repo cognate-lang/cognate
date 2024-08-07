@@ -28,18 +28,19 @@ int last_openbrace_col;
 
 ALLOWCHAR [A-Za-z0-9\-\?\!\'\+\/\*\>\=\<\^]
 FORMAL    [A-Z\-\?\!\+\/\*\>\<\=\^]
+END       [;\(\)$^\~[:space:]]
 
 %%
-D[eE][fF] return DEF;
-L[eE][tT] return LET;
-U[sS][eE] return USE;
+D[eE][fF]/{END} return DEF;
+L[eE][tT]/{END} return LET;
+U[sS][eE]/{END} return USE;
 
-\-?[0-9]+(\.[0-9]+)? yylval.text=strdup(yytext);       return NUMBER;
-{FORMAL}{ALLOWCHAR}* yylval.text=lc(strdup(yytext));   return IDENTIFIER;
-{ALLOWCHAR}+:{FORMAL}{ALLOWCHAR}* yylval.text=lc(strdup(yytext)); return MODULE_IDENTIFIER;
-\\{ALLOWCHAR}+       yylval.text=lc(strdup(yytext+1)); return SYMBOL;
-\"(\\.|[^\n"\\])*\"  yylval.text=strdup(yytext);       return STRING;
-\"                   yyerror("unterminated string"); // TODO error message is printing with wrong column.
+\-?([1-9][0-9]*|[0-9])(\.[0-9]+)?(e\-?[0-9]+)?/{END} yylval.text=strdup(yytext); return NUMBER;
+{FORMAL}{ALLOWCHAR}*/{END} yylval.text=lc(strdup(yytext)); return IDENTIFIER;
+{ALLOWCHAR}+:{FORMAL}{ALLOWCHAR}*/{END} yylval.text=lc(strdup(yytext)); return MODULE_IDENTIFIER;
+\\{ALLOWCHAR}+/{END} yylval.text=lc(strdup(yytext+1)); return SYMBOL;
+\"(\\.|[^\n"\\])*\"/{END} yylval.text=strdup(yytext); return STRING;
+\" yyerror("unterminated string"); // TODO error message is printing with wrong column.
 
 ; return ';';
 \( brace_depth++; last_openbrace_line = yylloc.first_line; last_openbrace_col = yylloc.first_column; return '(';
