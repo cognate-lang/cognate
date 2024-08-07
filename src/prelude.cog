@@ -8,7 +8,6 @@ Def Any? ( True Drop );
 Def Twin as (Let X ; X X);
 Def Triplet as (Twin ; Twin);
 
-
 Def When as (
 	Let Cond;
 	Let Block;
@@ -83,7 +82,7 @@ Def Prints ( Print Fold ( Join Show ) from "" over Reverse List);
 Def Filter (
 	Def Predicate;
 	Let L;
-	Empty;
+    Empty;
 	For each in L (
 		Let I;
 		Let R be Predicate I;

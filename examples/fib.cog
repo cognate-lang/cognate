@@ -2,8 +2,6 @@ Def Fib
 	Case (< 3) then (1 Drop)
 	else (Let N ; Fib of - 1 N ; + Fib of - 2 N);
 
-~~For each in Range 1 to 40 ( Print Fib );
-
 Put "The 50th fibonacci number is... ";
 Print the Fib of 50;
 

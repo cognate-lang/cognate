@@ -4,6 +4,7 @@
 #include "prelude.h"
 #include <limits.h>
 #include <assert.h>
+#include <time.h>
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
@@ -14,8 +15,9 @@
 #include <sys/wait.h>
 #include <execinfo.h>
 
-#define STRING_(x) #x
-#define STRING(x) STRING_(x)
+#define STR_(x) #x
+#define STR(x) STR_(x)
+#define MAX_ERROR_LINE_LENGTH 256
 
 ast_list_t* full_ast = NULL;
 module_t* pmod = NULL;
@@ -24,12 +26,15 @@ module_t prelude1 = { .prefix = "prelude" }; // written in C
 module_t prelude2 = { .prefix = "prelude" }; // written in Cognate
 module_list_t preludes = { .mod=&prelude2, .next = &(module_list_t){.mod=&prelude1, .next=NULL} };
 
+int usleep (unsigned int);
+char* strdup (const char*);
+
 static bool is_prelude(module_t* mod)
 {
 	return mod == &prelude1 || mod == &prelude2;
 }
 
-static void print_banner()
+static void print_banner(void)
 {
 	char* banner =
 	"\t   ______                        ______\n"
@@ -38,11 +43,11 @@ static void print_banner()
 	"\t/ /___/ /_/ / /_/ / / / / /_/ / /___\n"
 	"\t\\____/\\____/\\__, /_/ /_/\\__,_/\\____/\n"
 	"\t           /____/\n"
-	"\t                  Cognate Compiler";
+	"\t                  Cognate Compiler\n";
 	puts(banner);
 }
 
-_Noreturn static void unreachable()
+_Noreturn static void unreachable(void)
 {
 	char msg[] = "\n\n\033[31;1m"
 	"\t  ___  _\n"
@@ -73,7 +78,7 @@ static void* alloc(size_t n)
 	return (heap += n) - n;
 }
 
-where_t* parse_pos()
+where_t* parse_pos(void)
 {
 	where_t* p = alloc(sizeof *p);
 	p->mod = pmod;
@@ -92,8 +97,6 @@ _Noreturn void type_error(val_type_t expected, val_type_t got, where_t* pos)
 
 _Noreturn void throw_error(char* message, where_t* where)
 {
-	// TODO this segfaults if the error is in prelude
-
 	/*
 	puts(message);
 	puts(where->mod->prefix);
@@ -116,9 +119,10 @@ _Noreturn void throw_error(char* message, where_t* where)
 		char c;
 		do { c = fgetc(where->mod->file); } while (c != '\n'); // read one line. TODO this is bad
 	}
-	size_t n = SIZE_MAX;
-	char* line = NULL;
-	getline(&line, &n, where->mod->file);
+
+	char line_start[MAX_ERROR_LINE_LENGTH];
+	char* line = line_start;
+	fgets(line, MAX_ERROR_LINE_LENGTH, where->mod->file);
 
 	// Now we strip leading whitespace
 	while (isspace(*line)) line++, offset--;
@@ -231,7 +235,7 @@ func_list_t* push_func(func_t* f, func_list_t* next)
 	return n;
 }
 
-char* make_func_name()
+char* make_func_name(void)
 {
 	static size_t fid = 0;
 	char* str = alloc(20);
@@ -371,7 +375,7 @@ reg_t* pop_register_rear(reg_dequeue_t* registers)
 	return reg;
 }
 
-reg_dequeue_t* make_register_dequeue()
+reg_dequeue_t* make_register_dequeue(void)
 {
 	reg_dequeue_t* r = alloc(sizeof *r);
 	r->front = r->rear = NULL;
@@ -768,17 +772,27 @@ void to_exe(module_t* mod)
 
 	char* args[] =
 	{
-		STRING(CC), c_source_path, "-o", exe_path,
+		STR(CC), c_source_path, "-o", exe_path,
 		"-Ofast", "-flto", "-s", "-w",
 		//"-O0", "-ggdb3", "-g", "-rdynamic",
 		"-lm", "-Wall", "-Wpedantic", NULL
 	};
 	pid_t p = fork();
 	if (!p) execvp(args[0], args);
-	printf("\n%s ", mod->path);
 	int status;
-	while (!waitpid(p, &status, WNOHANG)) usleep(10000), fputc('>', stdout), fflush(stdout);
-	printf(" %s\n", exe_path);
+	int i = 0;
+	while (!waitpid(p, &status, WNOHANG))
+	{
+		usleep(50000);
+		fputc('\r', stdout);
+		printf("%s ", mod->path);
+		char* bar[3] = { "> >> >> >> >> >> >> >> >> >> ", ">> >> >> >> >> >> >> >> >> >>", " >> >> >> >> >> >> >> >> >> >" };
+		fputs(bar[i], stdout);
+		if (++i == 3) i = 0;
+		printf(" %s", exe_path);
+		fflush(stdout);
+	}
+	fputc('\n', stdout);
 	if (status != EXIT_SUCCESS) exit(status);
 }
 
@@ -843,7 +857,7 @@ void to_c(module_t* mod)
 	fputc('\n', c_source);
 	for (func_list_t* func = mod->funcs ; func ; func = func->next)
 	{
-		size_t num_words = 0;
+		//size_t num_words = 0;
 		fprintf(c_source, "%s %s(",
 		func->func->returns ? c_val_type(func->func->rettype) : "void",
 		func->func->name);
@@ -1094,7 +1108,7 @@ void to_c(module_t* mod)
 				case closure:
 					{
 						// TODO: variable loading order is a tad funky, could be neater if loaded in reverse
-						for (word_list_t* w = op->op->func->captures ; w ; w = w->next) num_words++;
+						//for (word_list_t* w = op->op->func->captures ; w ; w = w->next) num_words++;
 						reg_t* reg = make_register(block, NULL);
 						push_register_front(reg, registers);
 						fprintf(c_source, "\tBLOCK _%zu = (BLOCK) { .fn = %s",
@@ -2767,7 +2781,7 @@ void static_calls(module_t* m)
 	}
 }
 
-ast_list_t* make_astlist()
+ast_list_t* make_astlist(void)
 {
 	ast_list_t* a = alloc(sizeof *a);
 	ast_list_t* b = alloc(sizeof *b);
@@ -2856,8 +2870,8 @@ void static_branches(module_t* m)
 						if (f->stack) clear_registers(regs);
 						if (f->returns)
 						push_register_front(make_register(f->rettype, a), regs);
-						break;
 					}
+					break;
 				case bind:
 					{
 						reg_t* r = pop_register_front(regs);
@@ -3217,7 +3231,7 @@ lit_t* mk_lit(val_type_t t, const char* str)
 	return l;
 }
 
-word_list_t* builtins()
+word_list_t* builtins(void)
 {
 	static builtin_t b[] =
 	{
