@@ -66,7 +66,6 @@
 {.name="error",               .calltype=call, .argc=1, .args={string}},
 {.name="list",                .calltype=call, .argc=1, .args={block},       .returns=true, .rettype=list},
 {.name="number",              .calltype=call, .argc=1, .args={string},      .returns=true, .rettype=number},
-{.name="map",                 .calltype=call, .argc=2, .args={block, list}, .returns=true, .rettype=list, .stack=true},
 {.name="range",               .calltype=call, .argc=2, .args={number, number},  .returns=true, .rettype=list},
 {.name="index",               .calltype=call, .argc=2, .args={number, list},            .returns=true, .rettype=any},
 {.name="precompute",          .calltype=call, .argc=1, .args={block},   .returns=true, .rettype=block},

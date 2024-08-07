@@ -161,4 +161,15 @@ Def Sort
 		Append
 	);
 
+Def Map (
+	Def Pred;
+	Let L be a List!;
 
+	Do If Empty? L ( L )
+	else (
+		Let X be First of L;
+		Let Res be Pred X;
+
+		return Push Res to Map (Pred) over Rest of L;
+	);
+);

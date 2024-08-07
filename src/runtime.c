@@ -296,7 +296,6 @@ static NUMBER ___round(NUMBER);
 static NUMBER ___ceiling(NUMBER);
 static void ___assert(STRING, BOOLEAN);
 static void ___error(STRING);
-static LIST ___map(BLOCK, LIST);
 static LIST ___filter(BLOCK, LIST);
 static LIST ___range(NUMBER, NUMBER);
 static ANY ___index(NUMBER, LIST);
@@ -1485,71 +1484,6 @@ static void ___assert(STRING name, BOOLEAN result)
 static void ___error(STRING str)
 {
 	throw_error(str);
-}
-
-/*
-static LIST ___map(BLOCK blk, LIST lst)
-{
-	flush_stack_cache();
-	ANYPTR tmp_stack_start = stack.start;
-	stack.start = stack.top;
-	cognate_list start = {0};
-	cognate_list* ptr = &start;
-	for (; lst ; lst = lst->next)
-	{
-		push(lst->object);
-		call_block(blk);
-		flush_stack_cache();
-		while (stack.top != stack.start)
-		{
-			cognate_list* new = gc_malloc(sizeof *new);
-			new->object = pop();
-			new->next = NULL;
-			ptr->next = new;
-			ptr = new;
-		}
-	}
-	stack.top = stack.start;
-	stack.start = tmp_stack_start;
-	return start.next;
-}
-*/
-
-static LIST ___map(BLOCK blk, LIST lst)
-{
-	cognate_list start = {0};
-	cognate_list* ptr = &start;
-	for (; lst ; lst = lst->next)
-	{
-		push(lst->object);
-		call_block(blk);
-		cognate_list* new = gc_malloc(sizeof *new);
-		new->object = pop();
-		new->next = NULL;
-		ptr->next = new;
-		ptr = new;
-	}
-	return start.next;
-}
-
-static LIST ___filter(BLOCK blk, LIST lst)
-{
-	cognate_list start = {0};
-	cognate_list* ptr = &start;
-	for (; lst ; lst = lst->next)
-	{
-		push(lst->object);
-		call_block(blk);
-		if (unbox_BOOLEAN(pop()))
-		{
-			cognate_list* new = gc_malloc(sizeof *new);
-			new->object = lst->object;
-			new->next = NULL;
-			ptr->next = new;
-			ptr = new;
-		}
-	}
-	return start.next;
 }
 
 static LIST ___range(NUMBER start, NUMBER end)

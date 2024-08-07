@@ -2416,7 +2416,6 @@ void _inline_functions(func_t* f, func_list_t** funcs)
 
 void inline_functions(module_t* m)
 {
-	compute_sources(m);
 	_inline_functions(m->entry, &m->funcs);
 }
 
@@ -2820,6 +2819,7 @@ void static_branches(module_t* m)
 						reg_t* i1 = pop_register_front(regs);
 						reg_t* i2 = pop_register_front(regs);
 						push_register_front(make_register(any, a), regs);
+						//printf("%p %p\n", i1, i2);
 						if (!i1 || !i2) break;
 						ast_list_t* s1 = i1->source;
 						ast_list_t* s2 = i2->source;
@@ -3158,6 +3158,7 @@ int main(int argc, char** argv)
 		merge_symbols,
 		assign_sequence_numbers,
 		inline_functions,
+		compute_sources,
 		static_branches,
 		static_calls,
 		determine_arguments,
