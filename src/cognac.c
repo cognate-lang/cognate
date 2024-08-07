@@ -1682,7 +1682,7 @@ bool add_var_types_forwards(module_t* mod)
 						{
 							// you thought the other one was bad???
 							val_type_t t = pop_register_front(registers)->type;
-							if (fn->unique && fn2->unique
+							if (!fn->builtin && fn->unique && fn2->unique
 									&& v1->val->type == any && t != any)
 								// yay we're allowed to mess with it
 							{
@@ -1761,7 +1761,7 @@ bool add_var_types_forwards(module_t* mod)
 						for ( val_list_t* v = fn->args ; v ; v = v->next )
 						{
 							val_type_t t = pop_register_front(registers)->type;
-							if (!func->func->builtin)
+							if (!fn->builtin)
 							{
 								if (fn->unique && v->val->type == any && t != any && v->val->type != t)
 								{
@@ -3170,7 +3170,7 @@ int main(int argc, char** argv)
 		compute_variables,
 		resolve_early_use,
 		determine_unique_calls,
-		//add_var_types,
+		add_var_types,
 		add_typechecks,
 		remove_unused_funcs,
 		// TODO renaming pass to renumber registers and shadow_ids
