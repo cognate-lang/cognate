@@ -1743,6 +1743,7 @@ bool add_var_types_forwards(module_t* mod)
 							registers);
 					break;
 				case call:
+					op->op->word->val->type = block;
 				case static_call:
 					{
 						func_t* fn = static_call_to_func(op->op);
@@ -1769,7 +1770,10 @@ bool add_var_types_forwards(module_t* mod)
 						if (op->op->word->val->type != strong_any && t != any && op->op->word->val->type != t) // Early use needs to be bound to undefined symbol
 						{
 							if (op->op->word->val->type != any)
+							{
+								if (op->op->word->calltype == call) type_error(op->op->word->val->type, t, op->op->where);
 								op->op->word->val->type = strong_any;
+							}
 							else
 								op->op->word->val->type = t;
 							changed = 1;
