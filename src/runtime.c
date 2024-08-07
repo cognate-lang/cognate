@@ -42,11 +42,12 @@ typedef const char* restrict STRING;
 typedef const struct cognate_list* restrict LIST;
 typedef const char* restrict SYMBOL;
 typedef struct cognate_file* IO;
+typedef const struct cognate_dict* restrict DICT;
 
 typedef struct cognate_block
 {
-	void (*fn)(void*);
-	void* env;
+	const void (*fn)(void*);
+	const void* env;
 } cognate_block;
 
 typedef enum cognate_type
@@ -60,6 +61,7 @@ typedef enum cognate_type
 	number,
 	string,
 	io,
+	dict,
 } cognate_type;
 
 typedef struct cognate_object
@@ -74,6 +76,7 @@ typedef struct cognate_object
 		SYMBOL symbol;
 		NUMBER number;
 		IO io;
+		DICT dict;
 	};
 	cognate_type type;
 } cognate_object;
@@ -88,6 +91,14 @@ MKEARLY(NUMBER);
 MKEARLY(STRING);
 MKEARLY(LIST);
 MKEARLY(SYMBOL);
+
+typedef struct cognate_dict
+{
+	STRING key;
+	ANY value;
+	DICT child1;
+	DICT child2;
+} cognate_dict;
 
 typedef struct cognate_list
 {
@@ -205,6 +216,8 @@ static BLOCK unbox_BLOCK(ANY);
 static ANY box_BLOCK(BLOCK);
 static IO unbox_IO(ANY);
 static ANY box_IO(IO);
+static DICT unbox_DICT(ANY);
+static ANY box_DICT(DICT);
 
 static NUMBER radians_to_degrees(NUMBER);
 static NUMBER degrees_to_radians(NUMBER);
@@ -218,6 +231,8 @@ static void flush_stack_cache(void);
 static int stack_length(void);
 
 // Builtin functions needed by compiled source file defined in functions.c
+static DICT ___insert(STRING, ANY, DICT);
+static DICT ___emptyDdict(void);
 static LIST ___empty(void);
 static ANY ___if(BOOLEAN, ANY, ANY);
 static void ___put(ANY);
@@ -928,6 +943,7 @@ static BLOCK unbox_BLOCK(ANY box)
 	if likely (box.type == block) return box.block;
 	type_error("block", box);
 }
+
 /*
 BLOCK block_copy(BLOCK b)
 {
@@ -963,6 +979,19 @@ static IO unbox_IO(ANY box)
 {
 	if likely (box.type == io) return box.io;
 	type_error("io", box);
+}
+
+__attribute__((hot))
+static ANY box_DICT(DICT d)
+{
+	return (ANY) {.type = dict, .dict = d};
+}
+
+__attribute__((hot))
+static DICT unbox_DICT(ANY box)
+{
+	if likely (box.type == dict) return box.dict;
+	type_error("dict", box);
 }
 
 #define PAGE_SIZE 4096
@@ -1946,9 +1975,89 @@ static void ___begin(BLOCK f)
 	}
 }
 
-static LIST ___empty ()
+static LIST ___empty (void)
 {
 	return NULL;
+}
+
+static DICT ___dict (BLOCK expr)
+{
+	flush_stack_cache();
+	ANYPTR tmp_stack_start = stack.start;
+	stack.start = stack.top;
+	// Eval expr
+	call_block(expr);
+	// Move to a list.
+	DICT d = NULL;
+	flush_stack_cache();
+	size_t len = stack_length();
+	if (len % 2 != 0) throw_error("Dict initialiser must be key-value pairs");
+	for (size_t i = 0; i < len; i += 2)
+	{
+		STRING key = unbox_STRING(stack.start[i+1]);
+		ANY value = stack.start[i];
+		DICT ptr = d;
+		cognate_dict** assign = (cognate_dict**)&d;
+		while (ptr != NULL)
+		{
+			long diff = strcmp(ptr->key, key);
+			if (diff > 0) { assign = (cognate_dict**)&ptr->child1 ; ptr = ptr->child1; }
+			else if (diff < 0) { assign = (cognate_dict**)&ptr->child2 ; ptr = ptr->child2; }
+			else throw_error("duplicate keys in Dict initialiser");
+		}
+
+		*assign = gc_malloc(sizeof (**assign));
+		(*assign)->child1 = NULL;
+		(*assign)->child2 = NULL;
+		(*assign)->key = key;
+		(*assign)->value = value;
+	}
+	stack.top = stack.start;
+	stack.start = tmp_stack_start;
+	return d;
+}
+
+static DICT ___insert(STRING key, ANY value, DICT d)
+{
+	// TODO at the moment dicts are UNBALANCED!!
+	// This is obviously bad performance-wise and means real-life performance is not O(log(n)).
+	// Thus at some point we need to balance all these dicts - preserving all immutable references!
+	long diff;
+	cognate_dict* D = gc_malloc(sizeof *D);
+	if (d == NULL || (diff = strcmp(d->key, key)) == 0)
+	{
+		D->child1 = d ? d->child1 : NULL;
+		D->child2 = d ? d->child2 : NULL;
+		D->key = key;
+		D->value = value;
+	}
+	else if (diff > 0)
+	{
+		D->child2 = d->child2;
+		D->child1 = ___insert(key, value, d->child1);
+		D->key = d->key;
+		D->value = d->value;
+	}
+	else if (diff < 0)
+	{
+		D->child1 = d->child1;
+		D->child2 = ___insert(key, value, d->child2);
+		D->key = d->key;
+		D->value = d->value;
+	}
+
+	return D;
+}
+
+static ANY ___get(STRING key, DICT d)
+{
+	if (d == NULL) throw_error_fmt("%s is not in dictionary", key);
+
+	long diff = strcmp(d->key, key);
+
+	if (diff == 0) return d->value;
+	else if (diff > 0) return ___get(key, d->child1);
+	else if (diff < 0) return ___get(key, d->child2);
 }
 
 // ---------- ACTUAL PROGRAM ----------

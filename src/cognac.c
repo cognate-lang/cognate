@@ -677,6 +677,7 @@ const char* print_val_type(val_type_t type)
 	switch (type)
 	{
 		case number: return "number";
+		case dict:   return "dict";
 		case symbol: return "symbol";
 		case string: return "string";
 		case block:  return "block";
@@ -698,6 +699,7 @@ const char* c_val_type(val_type_t type)
 	switch (type)
 	{
 		case number: return "NUMBER";
+		case dict:   return "DICT";
 		case symbol: return "SYMBOL";
 		case string: return "STRING";
 		case block:  return "BLOCK";

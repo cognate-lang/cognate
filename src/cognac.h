@@ -59,6 +59,7 @@ typedef enum _val_type_t
 	NIL=0,
 	number,
 	symbol,
+	dict,
 	string,
 	boolean,
 	block,
