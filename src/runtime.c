@@ -46,8 +46,8 @@ typedef const struct cognate_dict* restrict DICT;
 
 typedef struct cognate_block
 {
-	const void (*fn)(void*);
-	const void* env;
+	void (*fn)(void*);
+	void* env;
 } cognate_block;
 
 typedef enum cognate_type
