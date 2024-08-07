@@ -2853,7 +2853,7 @@ void static_branches(module_t* m)
 							pop_register_front(regs);
 						clear_registers(regs); // Assume all functions are stack at this point.
 						if (f->returns)
-							push_register_front(make_register(f->rettype, a), regs);
+						push_register_front(make_register(f->rettype, a), regs);
 						break;
 					}
 				case bind:
@@ -2861,7 +2861,7 @@ void static_branches(module_t* m)
 						reg_t* r = pop_register_front(regs);
 						if (r && r->source)
 						{
-							a->op->word->val->source = r->source;
+							//a->op->word->val->source = r->source;
 						}
 						break;
 					}
@@ -3155,18 +3155,18 @@ int main(int argc, char** argv)
 		flatten_ast,
 		merge_symbols,
 		assign_sequence_numbers,
-		//inline_functions,
-		//static_branches,
+		inline_functions,
+		static_branches,
 		static_calls,
 		determine_arguments,
 		compute_stack,
 		add_arguments,
 		add_generics,
-		//balance_branches,
+		balance_branches, // IDK if this is needed
 		compute_stack,
 		add_registers,
 		shorten_references,
-		//inline_values,
+		//inline_values, // I can't remember if this is broken or not
 		compute_variables,
 		resolve_early_use,
 		determine_unique_calls,
