@@ -294,18 +294,13 @@ static STRING ___character(NUMBER);
 static NUMBER ___floor(NUMBER);
 static NUMBER ___round(NUMBER);
 static NUMBER ___ceiling(NUMBER);
-static void ___assert(STRING, BOOLEAN);
 static void ___error(STRING);
 static LIST ___filter(BLOCK, LIST);
-static LIST ___range(NUMBER, NUMBER);
 static ANY ___index(NUMBER, LIST);
-static BLOCK ___precompute(BLOCK);
+//static BLOCK ___precompute(BLOCK);
 static void ___wait(NUMBER);
 static LIST ___split(STRING, STRING);
-static NUMBER ___length(LIST);
-static LIST ___take(NUMBER,LIST);
-static LIST ___discard(NUMBER,LIST);
-static BLOCK ___remember(BLOCK);
+//static BLOCK ___remember(BLOCK);
 
 static NUMBER ___sind(NUMBER);
 static NUMBER ___cosd(NUMBER);
@@ -1475,42 +1470,9 @@ static NUMBER ___ceiling(NUMBER a)
 	return ceil(a);
 }
 
-static void ___assert(STRING name, BOOLEAN result)
-{
-	if unlikely(!result)
-		throw_error_fmt("Failed assertion '%s'", name);
-}
-
 static void ___error(STRING str)
 {
 	throw_error(str);
-}
-
-static LIST ___range(NUMBER start, NUMBER end)
-{
-	if (end < start)
-		throw_error_fmt("Invalid range %.14g..%.14g", start, end);
-	end = start + (size_t)(end - start) - 1;
-	LIST lst = NULL;
-	for (; start <= end; end--)
-	{
-		cognate_list* node = gc_malloc(sizeof *node);
-		node->object = box_NUMBER(end);
-		node->next = lst;
-		lst = node;
-	}
-	return lst;
-}
-
-static ANY ___index(NUMBER ind, LIST lst)
-{
-	size_t i = ind;
-	if unlikely(i != ind) throw_error_fmt("Cannot get index %.14g", ind);
-	for (;lst;lst=lst->next)
-	{
-		if (!i--) return lst->object;
-	}
-	throw_error_fmt("Index %zi is outside of array", (size_t)ind);
 }
 
 static void ___wait(NUMBER seconds)
@@ -1583,45 +1545,6 @@ static LIST ___split(STRING sep, STRING str)
 		curr = next;
 	}
 	return prev;
-}
-
-static NUMBER ___length(LIST lst) {
-	size_t len = 0;
-	for (; lst; lst = lst->next)
-		len++;
-	return len;
-}
-
-
-static LIST ___take(NUMBER n, LIST l) {
-	if unlikely(n != (unsigned long)n) throw_error_fmt("Cannot take %.14g elements", n);
-	LIST r = NULL;
-	while (n --> 0)
-	{
-		if unlikely(!l) throw_error("List too small");
-		cognate_list* a = gc_malloc(sizeof *a);
-		a->object = l->object;
-		a->next = r;
-		r = a;
-		l = l->next;
-	}
-	cognate_list* prev = NULL;
-	cognate_list* curr = (cognate_list*)r;
-	while (curr)
-	{
-		cognate_list* next = (cognate_list*)curr->next;
-		curr->next = prev;
-		prev = curr;
-		curr = next;
-	}
-	return prev;
-}
-
-static LIST ___discard(NUMBER n, LIST l) {
-	if unlikely(n != (unsigned long)n) throw_error_fmt("Cannot discard %.14g elements", n);
-	for (;n-->0;l=l->next)
-		if unlikely(!l) throw_error("List too small");
-	return l;
 }
 
 /*

@@ -34,7 +34,16 @@ Def Until (
 Def Times (
 	Let I be Integer!;
 	Def B;
-	( When >= 0 I then ( B ; Do Times - 1 I (B) ) )
+
+	(
+		I;
+		While (Twin ;> 0) (
+			Let I;
+			B;
+			- 1 I;
+		);
+		Drop;
+	)
 );
 
 
@@ -52,6 +61,7 @@ Def Reverse (
 
 
 Def For (
+	~~ Tail recursive;
 	Let L;
 	Let B;
 	When Not Empty? L (
@@ -172,4 +182,62 @@ Def Map (
 
 		return Push Res to Map (Pred) over Rest of L;
 	);
+);
+
+Def Discard (
+	Let N be Integer!;
+	Do Times N (
+		Let L;
+		When Empty? L ( Error "Cannot Discard more elements than in list" );
+		get Rest of L;
+	) starting with List!
+);
+
+Def Take (
+	Let N be Integer!;
+	Let Li be List!;
+
+	Reverse List (
+		Do Times N (
+			Let L;
+			When Empty? L ( Error "Cannot Take more elements than in list" );
+			First L;
+			Rest L;
+		) starting with Li;
+		Drop
+	)
+);
+
+Def Length (
+	Let L be List!;
+	Do If Empty? L then ( 0 ) else ( Length of the Rest of L ; + 1 )
+);
+
+Def Index (
+	Let N be Integer!;
+	Let L be List!;
+
+	Do If Zero? N ( return First element of L )
+	else (
+		When Empty? L ( Error "Index is beyond end of list" );
+		Index - 1 N of Rest of L
+	);
+);
+
+Def Range (
+	Let Start be Number!;
+	Let End be Number!;
+
+	Reverse List (
+		Start;
+		While (Triplet ; < End) ( + 1 );
+		Drop; Drop;
+	)
+);
+
+Def Assert (
+	Let Assertion be String!;
+	Let Result be Boolean!;
+
+	Unless Result ( Error Join Join "Failed assertion: '" Assertion "'" );
 );

@@ -3271,5 +3271,3 @@ void load_preludes(void)
 	module_parse(&prelude2);
 	add_backlinks(&prelude2);
 }
-
-
