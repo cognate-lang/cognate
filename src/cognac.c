@@ -143,6 +143,7 @@ _Noreturn void throw_error(char* message, where_t* where)
 		message = next + 1;
 	}
 	fputs("\033[0m\n\n", stderr);
+	fflush(stderr);
 	exit(EXIT_FAILURE);
 }
 
@@ -249,6 +250,7 @@ func_t* make_func(ast_list_t* tree, char* name)
 	func->unique = false;
 	func->branch = false;
 	func->has_regs = false;
+	func->builtin = false;
 	func->name = name;
 	func->locals = NULL;
 	func->generic_variant = NULL;
@@ -704,7 +706,7 @@ const char* c_val_type(val_type_t type)
 		case any:    return "ANY";
 		case box:    return "BOX";
 		case io:     return "IO";
-		case strong_any:
+		case strong_any: return "STRONG_ANY";
 		case NIL:    unreachable();
 	}
 	return NULL;
@@ -766,7 +768,7 @@ void to_exe(module_t* mod)
 	{
 		STRING(CC), c_source_path, "-o", exe_path,
 		"-Ofast", "-flto", "-s", "-w",
-		//"-Og", "-ggdb3", "-g", "-rdynamic",
+		//"-O0", "-ggdb3", "-g", "-rdynamic",
 		"-lm", "-Wall", NULL
 	};
 	pid_t p = fork();
@@ -1111,22 +1113,31 @@ void to_c(module_t* mod)
 						for (word_list_t* w = op->op->func->captures ; w ; w = w->next, i++)
 						{
 							if (w->word->used_early)
+							{
 								fprintf(c_source, "\t*(early_%s**)_%zu.env = %s;\n",
 									c_val_type(w->word->val->type),
 									reg->id, c_word_name(w->word));
+								if (w->next)
+									fprintf(c_source, "\t_%zu.env += sizeof(early_%s*);\n", reg->id, c_val_type(w->word->val->type));
+							}
 							else
-							fprintf(c_source, "\t*(%s*)_%zu.env = %s;\n",
-								c_val_type(w->word->val->type),
-								reg->id, c_word_name(w->word));
-							if (w->next)
-								fprintf(c_source, "\t_%zu.env += sizeof(%s);\n", reg->id, c_val_type(w->word->val->type));
+							{
+								fprintf(c_source, "\t*(%s*)_%zu.env = %s;\n",
+									c_val_type(w->word->val->type),
+									reg->id, c_word_name(w->word));
+								if (w->next)
+									fprintf(c_source, "\t_%zu.env += sizeof(%s);\n", reg->id, c_val_type(w->word->val->type));
+							}
 						}
 						if (op->op->func->captures && op->op->func->captures->next)
 						{
 							fprintf(c_source, "\t_%zu.env -= ", reg->id);
 							for (word_list_t* w = op->op->func->captures ; w->next ; w = w->next)
 							{
-								fprintf(c_source, "sizeof(%s)", c_val_type(w->word->val->type));
+								if (w->word->used_early)
+									fprintf(c_source, "sizeof(early_%s*)", c_val_type(w->word->val->type));
+								else
+									fprintf(c_source, "sizeof(%s)", c_val_type(w->word->val->type));
 								if (w->next && w->next->next)
 									fprintf(c_source, " + ");
 							}
@@ -1718,7 +1729,7 @@ bool add_var_types_forwards(module_t* mod)
 				case ret:
 					{
 						val_type_t t = pop_register_front(registers)->type;
-						if (func->func->rettype != strong_any && t != any && func->func->rettype != t && !func->func->branch)
+						if (!func->func->builtin && func->func->rettype != strong_any && t != any && func->func->rettype != t && !func->func->branch)
 						{
 							if (func->func->rettype != any)
 								func->func->rettype = strong_any;
@@ -1750,11 +1761,18 @@ bool add_var_types_forwards(module_t* mod)
 						for ( val_list_t* v = fn->args ; v ; v = v->next )
 						{
 							val_type_t t = pop_register_front(registers)->type;
-							if (v->val->type != strong_any && fn->unique && v->val->type == any && t != any)
-								// yay we're allowed to mess with it
+							if (!func->func->builtin)
 							{
-								v->val->type = t; // kinda dodgy
-								changed = 1; // hmmm
+								if (fn->unique && v->val->type == any && t != any && v->val->type != t)
+								{
+									v->val->type = t;
+									changed = 1;
+								}
+								else if (v->val->type != any && t != any && t != v->val->type && v->val->type != strong_any)
+								{
+									v->val->type = strong_any;
+									changed = 1;
+								}
 							}
 						}
 						if (fn->stack) assert(registers->len == 0);
@@ -1767,16 +1785,23 @@ bool add_var_types_forwards(module_t* mod)
 				case bind:
 					{
 						val_type_t t = pop_register_front(registers)->type;
-						if (op->op->word->val->type != strong_any && t != any && op->op->word->val->type != t) // Early use needs to be bound to undefined symbol
+						if (op->op->word->calltype == call)
 						{
-							if (op->op->word->val->type != any)
+							if (t != block && t != any && t != strong_any)
+					 			type_error(op->op->word->val->type, t, op->op->where);
+						}
+						else if (op->op->word->val->type != strong_any && t != any && op->op->word->val->type != t) // Early use needs to be bound to undefined symbol
+						{
+							if (op->op->word->val->type != any && op->op->word->val->type != strong_any)
 							{
-								if (op->op->word->calltype == call) type_error(op->op->word->val->type, t, op->op->where);
 								op->op->word->val->type = strong_any;
+								changed = 1;
 							}
-							else
+							else if (op->op->word->val->type == any)
+							{
 								op->op->word->val->type = t;
-							changed = 1;
+								changed = 1;
+							}
 						}
 						break;
 					}
@@ -1821,13 +1846,16 @@ bool add_var_types_backwards(module_t* mod)
 							if (r->type != any)
 								for (func_list_t* ff = op->op->funcs ; ff ; ff = ff->next)
 								{
-									if (ff->func->tentative_rettype != strong_any && ff->func->tentative_rettype != r->type)
+									if (!ff->func->builtin)
 									{
-										if (ff->func->tentative_rettype != any)
-											ff->func->tentative_rettype = strong_any;
-										else
-											ff->func->tentative_rettype = r->type;
-										changed = 1;
+										if (ff->func->tentative_rettype != strong_any && ff->func->tentative_rettype != r->type)
+										{
+											if (ff->func->tentative_rettype != any)
+												ff->func->tentative_rettype = strong_any;
+											else
+												ff->func->tentative_rettype = r->type;
+											changed = 1;
+										}
 									}
 								}
 						}
@@ -1887,7 +1915,7 @@ bool add_var_types_backwards(module_t* mod)
 						if (fn->returns)
 						{
 							reg_t* r = pop_register_front(registers);
-							if (fn->tentative_rettype != strong_any && fn->tentative_rettype != r->type && r->type != any)
+							if (!fn->builtin && fn->tentative_rettype != strong_any && fn->tentative_rettype != r->type && r->type != any)
 							{
 								if (fn->tentative_rettype != any)
 									fn->tentative_rettype = strong_any;
@@ -1915,7 +1943,7 @@ bool add_var_types_backwards(module_t* mod)
 		for (val_list_t* v = func->func->args; v ; v = v->next)
 		{
 			val_type_t t = args->val->type;
-			if (v->val->type != strong_any && t != any && v->val->type != t && !func->func->branch)
+			if (!func->func->builtin && v->val->type != strong_any && t != any && v->val->type != t && !func->func->branch)
 			{
 				if (v->val->type != any)
 					v->val->type = strong_any;
@@ -1941,14 +1969,26 @@ void add_var_types(module_t* mod)
 		changed |= add_var_types_forwards(mod);
 		changed |= add_var_types_backwards(mod);
 	}
+
 	for (func_list_t* func = mod->funcs ; func ; func = func->next)
 	{
 		for (word_list_t* w = func->func->locals ; w ; w = w->next)
 			if (w->word->val->type == strong_any) w->word->val->type = any;
+
+		for (word_list_t* w = func->func->captures ; w ; w = w->next)
+			if (w->word->val->type == strong_any) w->word->val->type = any;
+
 		for (val_list_t* v = func->func->args ; v ; v = v->next)
 			if (v->val->type == strong_any) v->val->type = any;
+
 		if (func->func->rettype == strong_any)
 			func->func->rettype = any;
+
+		if (func->func->generic_variant) for (word_list_t* w = func->func->generic_variant->locals ; w ; w = w->next)
+			if (w->word->val->type == strong_any) w->word->val->type = any;
+
+		if (func->func->generic_variant) for (word_list_t* w = func->func->generic_variant->captures ; w ; w = w->next)
+			if (w->word->val->type == strong_any) w->word->val->type = any;
 	}
 }
 
@@ -2374,6 +2414,7 @@ void _inline_functions(func_t* f, func_list_t** funcs)
 
 void inline_functions(module_t* m)
 {
+	compute_sources(m);
 	_inline_functions(m->entry, &m->funcs);
 }
 
@@ -2810,7 +2851,7 @@ void static_branches(module_t* m)
 						func_t* f = call_to_func(a->op);
 						for ( size_t i = 0 ; i < f->argc ; ++i )
 							pop_register_front(regs);
-						if (f->stack) clear_registers(regs);
+						clear_registers(regs); // Assume all functions are stack at this point.
 						if (f->returns)
 							push_register_front(make_register(f->rettype, a), regs);
 						break;
@@ -2819,7 +2860,9 @@ void static_branches(module_t* m)
 					{
 						reg_t* r = pop_register_front(regs);
 						if (r && r->source)
+						{
 							a->op->word->val->source = r->source;
+						}
 						break;
 					}
 				case push:
@@ -3112,26 +3155,22 @@ int main(int argc, char** argv)
 		flatten_ast,
 		merge_symbols,
 		assign_sequence_numbers,
-		compute_sources,
-		inline_functions,
-		compute_sources,
-		static_branches,
-		compute_sources,
+		//inline_functions,
+		//static_branches,
 		static_calls,
-		// TODO second (careful) inlining pass here.
 		determine_arguments,
-		compute_stack,
+		//compute_stack,
 		add_arguments,
 		add_generics,
-		balance_branches,
-		compute_stack,
+		//balance_branches,
+		//compute_stack,
 		add_registers,
-		shorten_references,
+		//shorten_references,
 		//inline_values,
 		compute_variables,
 		resolve_early_use,
 		determine_unique_calls,
-		add_var_types,
+		//add_var_types,
 		add_typechecks,
 		remove_unused_funcs,
 		// TODO renaming pass to renumber registers and shadow_ids
@@ -3201,6 +3240,7 @@ word_list_t* builtins()
 		fn->branch = false;
 		fn->unique = false;
 		fn->has_args = true;
+		fn->builtin = true;
 		type_t calltype = b[i].calltype;
 		for (int ii = b[i].argc-1 ; ii >= 0 ; --ii)
 			fn->args = push_val(make_value(b[i].args[ii], NULL), fn->args);

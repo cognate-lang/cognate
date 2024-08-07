@@ -199,6 +199,7 @@ struct _func_t
 	bool generic;
 	bool branch;
 	bool unique;
+	bool builtin;
 };
 
 struct _symbol_list_t

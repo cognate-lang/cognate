@@ -1,12 +1,12 @@
 Def Drop as ( Let X );
 Def Swap as ( Let X ; Let Y ; Y X );
+
 Def Do as ( Def F ; F );
+
 Def Any? ( True Drop );
 Def Twin as (Let X ; X X);
 Def Triplet as (Twin ; Twin);
 
-Def Puts ( Put Fold ( Join Show ) from "" over Reverse List);
-Def Prints ( Print Fold ( Join Show ) from "" over Reverse List);
 
 Def When as (
 	Let Cond;
@@ -65,6 +65,9 @@ Def Fold (
 	Let L;
 	I ; For each in L do B;
 );
+
+Def Puts ( Put Fold ( Join Show ) from "" over Reverse List);
+Def Prints ( Print Fold ( Join Show ) from "" over Reverse List);
 
 Def Filter (
 	Def Predicate;
@@ -156,3 +159,5 @@ Def Sort
 		Push Pivot;
 		Append
 	);
+
+
