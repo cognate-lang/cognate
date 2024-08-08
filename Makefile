@@ -2,7 +2,7 @@ CC=cc
 CFLAGS=-Og -ggdb3 -g -rdynamic -Wall -Wpedantic
 PREFIX=`echo ~`/.local
 BINDIR=$(PREFIX)/bin
-TESTS=block booleans filter for functions if io lists map maths parsing regex stack strings symbols variables trig other-math dispatch
+TESTS=$(basename $(wildcard tests/*.cog))
 
 cognac: src/cognac.h src/cognac.c src/parser.c src/parser.h src/lexer.c src/runtime.h src/prelude.h src/builtins.c
 	$(CC) $(CFLAGS) src/lexer.c src/parser.c src/cognac.c -o cognac -DCC=$(CC)
@@ -30,13 +30,9 @@ clean:
 	rm src/lexer.c src/parser.c src/parser.h cognac src/runtime.h
 
 test: $(TESTS)
-	@grep -E "^(PASS|FAIL)" tests/*.log --color
-	@echo "****************************** TESTS THAT PASSED ******************************"
-	@grep -c "^PASS" tests/*.log --color || true
-	@echo "****************************** TESTS THAT FAILED ******************************"
-	@! grep -c "^FAIL" tests/*.log --color
 
 $(TESTS): cognac
-	@rm -f tests/$@.log tests/$@.c tests/$@
-	./cognac tests/$@.cog > tests/$@.log
-	./tests/$@ >> tests/$@.log
+	@rm -f $@.log $@.c $@
+	./cognac $@.cog > $@.log
+	./$@ >> $@.log
+	@! grep "^FAIL" $@.log --color

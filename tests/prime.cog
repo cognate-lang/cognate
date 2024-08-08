@@ -1,0 +1,19 @@
+Def Factor (Zero? Modulo Swap);
+
+Def Primes (
+	Let U is upper bound;
+	initially Empty;
+	For Range 2 to U (
+		Let I be our potential prime;
+		Let Primes are the found primes;
+		Let To-check be Take-while (<= Sqrt I) Primes;
+		When None (Factor of I) To-check
+			(Append List (I)) to Primes;
+	)
+);
+
+Let L be Primes up to 100;
+
+Print If == 73 Index 20 of L
+	then "PASS: Prime numbers"
+	else "FAIL: Prime numbers"

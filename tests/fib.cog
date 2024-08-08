@@ -1,0 +1,7 @@
+Def Fib
+	Case (< 3) then (1 Drop)
+	else (Let N ; Fib of - 1 N ; + Fib of - 2 N);
+
+Print If == 55 Fib 10
+	then "PASS: Fibonacci numbers"
+	else "FAIL: Fibonacci numbers";

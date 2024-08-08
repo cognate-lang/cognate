@@ -2410,7 +2410,7 @@ void _inline_functions(func_t* f, func_list_t** funcs)
 						if (fn != unknown_func)
 						{
 							if (!fn->ops) break;
-							if (node->op->sqnum <= f->ops->op->sqnum) break;
+							//if (node->op->sqnum <= f->ops->op->sqnum) break;
 							size_t n = 0;
 							for (ast_list_t* inl = fn->ops ; inl ; inl = inl->next) n++;
 							if (n > 30) break;
@@ -2840,7 +2840,7 @@ void static_branches(module_t* m)
 						while (s1 && s1->op->type == var) s1 = s1->op->word->val->source;
 						while (s2 && s2->op->type == var) s2 = s2->op->word->val->source;
 						if (!s1 || !s2 || s1->op->type != closure || s2->op->type != closure) break;
-						if (s1->op->sqnum > a->op->sqnum || s2->op->sqnum > a->op->sqnum) break; // ???
+						//if (s1->op->sqnum > a->op->sqnum || s2->op->sqnum > a->op->sqnum) break; // ???
 						func_list_t* fl
 							= push_func(s1->op->func,
 									push_func(s2->op->func,
@@ -3170,7 +3170,7 @@ int main(int argc, char** argv)
 		resolve_scope,
 		flatten_ast,
 		merge_symbols,
-		assign_sequence_numbers,
+		//assign_sequence_numbers,
 		inline_functions,
 		compute_sources,
 		compute_stack,
