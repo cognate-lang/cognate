@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include <sys/stat.h>
 #include <setjmp.h>
+#include <regex.h>
 
 #define WORDSZ (sizeof(void*))
 
@@ -288,7 +289,7 @@ static LIST ___stack(void);
 static LIST ___parameters(void);
 static void ___stop(void);
 static STRING ___show(ANY);
-//static BLOCK ___regex(STRING);
+static BLOCK ___regex(STRING);
 static NUMBER ___ordinal(STRING);
 static STRING ___character(NUMBER);
 static NUMBER ___floor(NUMBER);
@@ -1412,12 +1413,20 @@ static void ___stop(void)
 	exit(EXIT_SUCCESS);
 }
 
-/*
+void apply_regex(void* env)
+{
+	regex_t reg = *(regex_t*)env;
+	STRING str = unbox_STRING(pop());
+	const int found = regexec(&reg, str, 0, NULL, 0);
+	if unlikely(found != 0 && found != REG_NOMATCH)
+		throw_error_fmt("Regex failed matching string '%.32s'", str);
+	push(box_BOOLEAN(!found));
+
+}
+
 static BLOCK ___regex(STRING reg_str)
 {
 	regex_t reg;
-	if unlikely(!*reg_str) // Empty string always matches.
-		return Block_copy(^{ unbox_STRING(pop()); push(box_BOOLEAN(1)); });
 	const int status = regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE | REG_NOSUB);
 	errno = 0; // Hmmm
 	if unlikely(status)
@@ -1426,15 +1435,10 @@ static BLOCK ___regex(STRING reg_str)
 		regerror(status, &reg, reg_err, 256);
 		throw_error_fmt("Compile error (%s) in regex '%.32s'", reg_err, reg_str);
 	}
-	return Block_copy(^{
-		STRING str = unbox_STRING(pop());
-		const int found = regexec(&reg, str, 0, NULL, 0);
-		if unlikely(found != 0 && found != REG_NOMATCH)
-			throw_error_fmt("Match error with regex '%.32s' on string '%.32s'", str, reg_str);
-		push(box_BOOLEAN(!found));
-	});
+
+	return (cognate_block){ .env = &reg, .fn = apply_regex };
 }
-*/
+
 
 static NUMBER ___ordinal(STRING str)
 {
