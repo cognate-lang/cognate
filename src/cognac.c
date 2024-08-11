@@ -850,7 +850,7 @@ void to_c(module_t* mod)
 		}
 		else
 		{
-			fprintf(c_source, "void* env");
+			fprintf(c_source, "uint8_t* env");
 			if (func->func->argc) fprintf(c_source, ", ");
 		}
 		//reg_dequeue_t* ar = make_register_dequeue();
@@ -885,7 +885,7 @@ void to_c(module_t* mod)
 			}
 		else
 		{
-			fprintf(c_source, "void* env");
+			fprintf(c_source, "uint8_t* env");
 			if (func->func->argc) fprintf(c_source, ", ");
 		}
 		reg_dequeue_t* ar = make_register_dequeue();

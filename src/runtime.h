@@ -47,8 +47,8 @@ typedef const struct cognate_dict* restrict DICT;
 
 typedef struct cognate_block
 {
-	void (*fn)(void*);
-	void* env;
+	void (*fn)(uint8_t*);
+	uint8_t* env;
 } cognate_block;
 
 typedef enum cognate_type
@@ -1407,7 +1407,7 @@ static void ___stop(void)
 	exit(EXIT_SUCCESS);
 }
 
-void apply_regex(void* env)
+void apply_regex(uint8_t* env)
 {
 	regex_t reg = *(regex_t*)env;
 	STRING str = unbox_STRING(pop());
@@ -1430,7 +1430,7 @@ static BLOCK ___regex(STRING reg_str)
 		throw_error_fmt("Compile error (%s) in regex '%.32s'", reg_err, reg_str);
 	}
 
-	return (cognate_block){ .env = &reg, .fn = apply_regex };
+	return (cognate_block){ .env = (void*)&reg, .fn = apply_regex };
 }
 
 
@@ -1805,12 +1805,12 @@ static void ___seek(NUMBER n, IO io)
 	fseek(io->file, p, SEEK_CUR);
 }
 
-static void invalid_jump(void* env)
+static void invalid_jump(uint8_t* env)
 {
 	throw_error("cannot resume expired continuation");
 }
 
-static void oh_no(void* env)
+static void oh_no(uint8_t* env)
 {
 	longjmp(*(jmp_buf*)env, 1);
 }
@@ -1820,9 +1820,7 @@ static void ___begin(BLOCK f)
 	jmp_buf b;
 	if (!setjmp(b))
 	{
-		BLOCK a = (BLOCK) {.fn=oh_no, .env=&b};
-		a.fn = oh_no;
-		a.env = &b;
+		BLOCK a = (BLOCK) {.fn=oh_no, .env=(void*)&b};
 		push(box_BLOCK(a));
 		call_block(f);
 		a.fn = invalid_jump;

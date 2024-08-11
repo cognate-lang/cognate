@@ -54,8 +54,7 @@ Def With (
 
 
 Def Reverse (
-	Let L be List!;
-	Empty ; For each in L ( Push )
+	Fold ( Push ) from Empty over List!;
 );
 
 
