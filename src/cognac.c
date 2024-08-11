@@ -1,6 +1,6 @@
 #include "cognac.h"
 #include "parser.h"
-#include "runtime.h"
+#include "runtime_bytes.h"
 #include "prelude.h"
 #include <limits.h>
 #include <assert.h>
@@ -25,6 +25,8 @@ char* heap = NULL;
 module_t prelude1 = { .prefix = "prelude" }; // written in C
 module_t prelude2 = { .prefix = "prelude" }; // written in Cognate
 module_list_t preludes = { .mod=&prelude2, .next = &(module_list_t){.mod=&prelude1, .next=NULL} };
+
+char runtime_filename[] = "/tmp/cognac-runtime-XXXXXX.h";
 
 int usleep (unsigned int);
 char* strdup (const char*);
@@ -770,12 +772,14 @@ void to_exe(module_t* mod)
 	char* c_source_path = strdup(mod->path);
 	c_source_path[strlen(c_source_path) - 2] = '\0';
 
+	printf("source path %s exe_path %s\n", c_source_path, exe_path);
+
 	char* args[] =
 	{
 		STR(CC), c_source_path, "-o", exe_path,
 		"-Ofast", "-flto", "-s", "-w",
 		//"-O0", "-ggdb3", "-g", "-rdynamic",
-		"-lm", "-Wall", "-Wpedantic", NULL
+		"-lm", "-Wall", "-Wpedantic", "-Wno-unused", NULL
 	};
 	pid_t p = fork();
 	if (!p) execvp(args[0], args);
@@ -793,6 +797,7 @@ void to_exe(module_t* mod)
 		fflush(stdout);
 	}
 	fputc('\n', stdout);
+	remove(runtime_filename);
 	if (status != EXIT_SUCCESS) exit(status);
 }
 
@@ -818,17 +823,21 @@ void c_emit_funcall(func_t* fn, FILE* c_source, reg_dequeue_t* registers)
 
 void to_c(module_t* mod)
 {
+	mkstemps(runtime_filename, 2);
+	FILE* runtime_file = fopen(runtime_filename, "w");
+	fprintf(runtime_file, "%.*s", src_runtime_h_len, (char*)src_runtime_h);
+	fclose(runtime_file);
+
 	char* c_source_path = strdup(mod->path);
 	c_source_path[strlen(c_source_path) - 2] = '\0';
 	FILE* c_source = fopen(c_source_path, "w");
-	fprintf(c_source, "%.*s", src_runtime_c_len, (char*)src_runtime_c);
-	fputc('\n', c_source);
+	fprintf(c_source, "#include \"%s\"\n\n", runtime_filename);
 	for (symbol_list_t* syms = mod->symbols ; syms ; syms = syms->next)
 		fprintf(c_source, "SYMBOL SYM%s = \"%s\";\n", syms->text, syms->text);
 	if (mod->symbols) fputc('\n', c_source);
 	for (func_list_t* func = mod->funcs ; func ; func = func->next)
 	{
-		fprintf(c_source, "%s %s(",
+		fprintf(c_source, "static %s %s(",
 				func->func->returns ? c_val_type(func->func->rettype) : "void",
 				func->func->name);
 		if (!func->func->generic) for (word_list_t* w = func->func->captures ; w ; w = w->next)
@@ -858,7 +867,7 @@ void to_c(module_t* mod)
 	for (func_list_t* func = mod->funcs ; func ; func = func->next)
 	{
 		//size_t num_words = 0;
-		fprintf(c_source, "%s %s(",
+		fprintf(c_source, "static %s %s(",
 		func->func->returns ? c_val_type(func->func->rettype) : "void",
 		func->func->name);
 		if (!func->func->generic)

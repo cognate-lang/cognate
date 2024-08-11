@@ -182,7 +182,6 @@ static const char* restrict function_stack_start;
 
 // Variables and	needed by functions.c defined in runtime.c
 static void init_stack(void);
-static void expand_stack(void);
 static STRING show_object(const ANY object, const _Bool);
 static void _Noreturn __attribute__((format(printf, 1, 2))) throw_error_fmt(const char* restrict const, ...);
 static void _Noreturn throw_error(const char* restrict const);
@@ -223,7 +222,6 @@ static ANY box_DICT(DICT);
 static NUMBER radians_to_degrees(NUMBER);
 static NUMBER degrees_to_radians(NUMBER);
 
-static void init(int, char **);
 static void cleanup(void);
 static void push(ANY);
 static ANY pop(void);
@@ -233,7 +231,6 @@ static int stack_length(void);
 
 // Builtin functions needed by compiled source file defined in functions.c
 static DICT ___insert(STRING, ANY, DICT);
-static DICT ___emptyDdict(void);
 static LIST ___empty(void);
 static ANY ___if(BOOLEAN, ANY, ANY);
 static void ___put(ANY);
@@ -281,7 +278,6 @@ static NUMBER ___stringDlength(STRING);
 static STRING ___substring(NUMBER, NUMBER, STRING);
 static STRING ___input(void);
 static IO ___open(STRING, STRING);
-static void ___with(STRING, STRING, BLOCK);
 static void ___close(IO);
 static NUMBER ___number(STRING);
 static STRING ___path(void);
@@ -296,8 +292,6 @@ static NUMBER ___floor(NUMBER);
 static NUMBER ___round(NUMBER);
 static NUMBER ___ceiling(NUMBER);
 static void ___error(STRING);
-static LIST ___filter(BLOCK, LIST);
-static ANY ___index(NUMBER, LIST);
 //static BLOCK ___precompute(BLOCK);
 static void ___wait(NUMBER);
 static LIST ___split(STRING, STRING);
@@ -343,7 +337,7 @@ static size_t debug_lineno = 0;
 static int _argc;
 static char** _argv;
 
-void fn0();
+static void fn0();
 
 int main(int argc, char** argv)
 {
@@ -622,6 +616,7 @@ static STRING show_object (const ANY object, const _Bool raw_strings)
 	{
 		case NIL: throw_error("This shouldn't happen");
 					 break;
+		case dict: // TODO
 		case number: sprintf(buffer, "%.14g", object.number);
 						 buffer += strlen(buffer);
 						 break;
@@ -1174,7 +1169,6 @@ static NUMBER ___modulo(NUMBER a, NUMBER b) { return b - a * floor(b / a); }
 static NUMBER ___sqrt(NUMBER a) { return sqrt(a); }
 static NUMBER ___random(NUMBER low, NUMBER high)
 {
-	NUMBER step = 1;
 	if unlikely((high - low) < 0) goto invalid_range;
 	else if (high - low < 1) return low;
 	// This is not cryptographically secure btw.
@@ -1818,7 +1812,6 @@ static void invalid_jump(void* env)
 
 static void oh_no(void* env)
 {
-	char a;
 	longjmp(*(jmp_buf*)env, 1);
 }
 
@@ -1918,7 +1911,7 @@ static ANY ___get(STRING key, DICT d)
 
 	if (diff == 0) return d->value;
 	else if (diff > 0) return ___get(key, d->child1);
-	else if (diff < 0) return ___get(key, d->child2);
+	else return ___get(key, d->child2);
 }
 
 // ---------- ACTUAL PROGRAM ----------
