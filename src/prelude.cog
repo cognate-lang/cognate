@@ -215,6 +215,8 @@ Def Index (
 	Let N be Integer!;
 	Let L be List!;
 
+	When < 0 N ( Error Join "Invalid index " Show N );
+
 	Do If Zero? N ( return First element of L )
 	else (
 		When Empty? L ( Error "Index is beyond end of list" );
