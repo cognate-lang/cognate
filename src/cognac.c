@@ -31,6 +31,8 @@ char runtime_filename[] = "/tmp/cognac-runtime-XXXXXX.h";
 int usleep (unsigned int);
 char* strdup (const char*);
 
+bool debug = false;
+
 static bool is_prelude(module_t* mod)
 {
 	return mod == &prelude1 || mod == &prelude2;
@@ -248,6 +250,7 @@ char* make_func_name(void)
 func_t* make_func(ast_list_t* tree, char* name)
 {
 	func_t* func = alloc(sizeof *func);
+	func->unmangled_name = NULL;
 	func->returns = false;
 	func->ops = tree;
 	func->args = NULL;
@@ -772,15 +775,20 @@ void to_exe(module_t* mod)
 	char* c_source_path = strdup(mod->path);
 	c_source_path[strlen(c_source_path) - 2] = '\0';
 
-	printf("source path %s exe_path %s\n", c_source_path, exe_path);
+	char* debug_args[] = {
+		STR(CC), c_source_path, "-o", exe_path,
+		"-O0", "-ggdb3", "-g", "-rdynamic", "-DDEBUG",
+		"-lm", "-Wall", "-Wpedantic", "-Wno-unused", NULL
+	} ;
 
-	char* args[] =
-	{
+	char* normal_args[] = {
 		STR(CC), c_source_path, "-o", exe_path,
 		"-Ofast", "-flto", "-s", "-w",
-		//"-O0", "-ggdb3", "-g", "-rdynamic",
 		"-lm", "-Wall", "-Wpedantic", "-Wno-unused", NULL
 	};
+
+	char** args = debug ? debug_args : normal_args;
+
 	pid_t p = fork();
 	if (!p) execvp(args[0], args);
 	int status;
@@ -938,6 +946,7 @@ void to_c(module_t* mod)
 		}
 		reg_dequeue_t* registers = make_register_dequeue();
 		reg_t* res = NULL;
+		size_t bid = 0;
 		for (ast_list_t* op = func->func->ops ; op ; op = op->next)
 		{
 			switch (op->op->type)
@@ -1055,6 +1064,9 @@ void to_c(module_t* mod)
 					}
 				case var:
 					{
+						if (debug && op->op->word->used_early && op->op->where && op->op->where->mod->path)
+							fprintf(c_source, "\tBACKTRACE_PUSH(\"%s\", %zu, %zu, \"%s\", %zu);\n", op->op->word->name, op->op->where->line, op->op->where->col, op->op->where->mod->path, bid++);
+
 						reg_t* reg = make_register(op->op->word->val->type, NULL);
 						push_register_front(reg, registers);
 						if (op->op->word->used_early)
@@ -1070,21 +1082,48 @@ void to_c(module_t* mod)
 								c_val_type(op->op->word->val->type),
 								reg->id,
 								c_word_name(op->op->word));
+
+						if (debug && op->op->word->used_early && op->op->where && op->op->where->mod->path)
+							fprintf(c_source, "\tBACKTRACE_POP();\n");
 						break;
 					}
 				case bind:
-					if (op->op->word->used_early)
-						fprintf(c_source, "\t%s->defined = 1;\n\t%s->value = _%zu;\n",
-							c_word_name(op->op->word),
-							c_word_name(op->op->word),
-							pop_register_front(registers)->id);
-					else
-						fprintf(c_source, "\t%s = _%zu;\n",
-							c_word_name(op->op->word),
-							pop_register_front(registers)->id);
+					{
+						const char* cname = c_word_name(op->op->word);
+						size_t reg_id = pop_register_front(registers)->id;
+						if (op->op->word->used_early)
+						{
+							fprintf(c_source, "\t%s->defined = 1;\n\t%s->value = _%zu;\n",
+								cname,
+								cname,
+								reg_id);
+							/*
+							if (strlen(op->op->word->name) && op->op->where->mod->path)
+							{
+								if (op->op->word->val->type == any) fprintf(c_source, "\tVARS_PUSH(\"%s\", %s, %s->value);\n", op->op->word->name, cname, cname);
+								else fprintf(c_source, "\tVARS_PUSH(\"%s\", %s, box_%s(%s->value));\n", op->op->word->name, cname, c_val_type(op->op->word->val->type), cname);
+		 					}
+							*/
+						}
+						else
+						{
+							fprintf(c_source, "\t%s = _%zu;\n",
+								cname,
+								reg_id);
+							/*
+							if (strlen(op->op->word->name) && op->op->where->mod->path)
+							{
+								if (op->op->word->val->type == any) fprintf(c_source, "\tVARS_PUSH(\"%s\", %s, %s);\n", op->op->word->name, cname, cname);
+								else fprintf(c_source, "\tVARS_PUSH(\"%s\", %s, box_%s(%s));\n", op->op->word->name, cname, c_val_type(op->op->word->val->type), cname);
+							}
+							*/
+						}
+					}
 					break;
 				case static_call:
 					{
+						if (debug && !func->func->entry && op->op->where && op->op->where->mod->path && op->op->func->unmangled_name)
+							fprintf(c_source, "\tBACKTRACE_PUSH(\"%s\", %zu, %zu, \"%s\", %zu);\n", op->op->func->unmangled_name, op->op->where->line, op->op->where->col, op->op->where->mod->path, bid++);
 						reg_t* ret = NULL;
 						func_t* fn = op->op->func;
 						if (fn->returns)
@@ -1098,10 +1137,14 @@ void to_c(module_t* mod)
 						c_emit_funcall(fn, c_source, registers);
 						fprintf(c_source, ";\n");
 						if (fn->returns) push_register_front(ret, registers);
+						if (debug && !func->func->entry && op->op->where && op->op->where->mod->path && op->op->func->unmangled_name)
+							fprintf(c_source, "\tBACKTRACE_POP();\n");
 						break;
 					}
 				case call:
 					// TODO remove call and use var and a do op
+					if (debug && op->op->where && op->op->where->mod->path)
+						fprintf(c_source, "\tBACKTRACE_PUSH(\"%s\", %zu, %zu, \"%s\", %zu);\n", op->op->word->name, op->op->where->line, op->op->where->col, op->op->where->mod->path, bid++);
 					if (op->op->word->used_early)
 						fprintf(c_source, "\tCHECK_DEFINED(%c%s, %s);\n\t%s->value.fn(%s->value.env);\n",
 							toupper(op->op->word->name[0]),
@@ -1113,6 +1156,8 @@ void to_c(module_t* mod)
 						fprintf(c_source, "\t%s.fn(%s.env);\n",
 							c_word_name(op->op->word),
 							c_word_name(op->op->word));
+					if (debug && op->op->where && op->op->where->mod->path)
+						fprintf(c_source, "\tBACKTRACE_POP();\n");
 					break;
 				case closure:
 					{
@@ -1195,6 +1240,16 @@ void to_c(module_t* mod)
 					}
 				}
 		}
+
+		/*
+		for (word_list_t* w = func->func->locals ; w ; w = w->next)
+		{
+			if (strlen(w->word->name) && func->func->ops && func->func->ops->op->where
+				&& func->func->ops->op->where->mod && func->func->ops->op->where->mod->path)
+				fprintf(c_source, "\tVARS_POP();\n");
+		}
+		*/
+
 		if (res)
 			fprintf(c_source, "\treturn _%zu;\n", res->id);
 		fprintf(c_source, "}\n");
@@ -2362,7 +2417,11 @@ void _compute_sources(ast_list_t* a)
 				{
 					reg_t* r = pop_register_front(regs);
 					if (r && r->source)
+					{
+						if (r->source->op->type == closure)
+							r->source->op->func->unmangled_name = node->op->word->name;
 						node->op->word->val->source = r->source;
+					}
 					break;
 				}
 			case call:
@@ -2439,6 +2498,7 @@ void _inline_functions(func_t* f, func_list_t** funcs)
 
 void inline_functions(module_t* m)
 {
+	if (debug) return;
 	_inline_functions(m->entry, &m->funcs);
 }
 
@@ -2783,6 +2843,7 @@ void static_calls(module_t* m)
 			{
 				func_t* called = call_to_func(a->op);
 				if (called == unknown_func) continue;
+				a->op->func->unmangled_name = a->op->word->name;
 				a->op->type = static_call;
 				a->op->func = called;
 			}
@@ -3147,7 +3208,18 @@ void demodulize(module_t* m)
 
 int main(int argc, char** argv)
 {
-	if (argc != 2 || (strcmp(argv[1] + strlen(argv[1]) - 4, ".cog")))
+	char* filename = NULL;
+
+	for (int i = 1 ; i < argc ; ++i)
+	{
+		if (!strcmp(argv[i], "-debug")) debug = true;
+		else
+		{
+			char* ext = strrchr(argv[i], '.');
+			if (ext && !strcmp(ext, ".cog")) filename = argv[i];
+		}
+	}
+	if (!filename)
 	{
 		fprintf(stderr, "USAGE: cognac filename.cog\n");
 		return EXIT_FAILURE;
@@ -3155,9 +3227,8 @@ int main(int argc, char** argv)
 	print_banner();
 	long system_memory = sysconf(_SC_PHYS_PAGES) * 4096;
 	heap = mmap(0, system_memory, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
-	(void)argc; (void)argv;
 	load_preludes();
-	module_t* m = create_module(argv[1]);
+	module_t* m = create_module(filename);
 	void(*stages[])(module_t*)
 	= {
 		/*
@@ -3270,6 +3341,7 @@ word_list_t* builtins(void)
 		fn->unique = false;
 		fn->has_args = true;
 		fn->builtin = true;
+		fn->unmangled_name = b[i].name;
 		type_t calltype = b[i].calltype;
 		for (int ii = b[i].argc-1 ; ii >= 0 ; --ii)
 			fn->args = push_val(make_value(b[i].args[ii], NULL), fn->args);

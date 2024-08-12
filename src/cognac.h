@@ -188,6 +188,7 @@ struct _func_t
 	val_type_t rettype;
 	val_type_t checks;
 	val_type_t tentative_rettype;
+	char* unmangled_name;
 	size_t argc;
 	char* name;
 	bool returns;

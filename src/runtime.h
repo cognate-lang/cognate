@@ -130,6 +130,7 @@ typedef struct backtrace
 	const char* name;
 	const size_t line;
 	const size_t col;
+	const char* file;
 } backtrace;
 
 typedef struct var_info
@@ -172,9 +173,7 @@ static const backtrace* trace = NULL;
 static const var_info* vars = NULL;
 #endif
 
-extern char *source_file_lines[];
-extern _Bool breakpoints[];
-extern const size_t source_line_num;
+_Bool breakpoints[10];
 
 extern int main(int, char**);
 
@@ -384,22 +383,49 @@ static void cleanup(void)
 }
 
 #ifdef DEBUG
-static char* get_source_line(size_t line)
+
+static char* get_source_line(size_t line, const char* source_file)
 {
-	// Length should be enough?
-	return source_file_lines[line-1];
+	// TODO maybe compile the line into the executable instead of rereading the source.
+	FILE* f = fopen(source_file, "r");
+	if (!f) return NULL;
+
+	for (;;)
+	{
+		if (line == 1) break;
+		if (fgetc(f) == '\n') line--;
+	}
+
+	char* buf = gc_malloc(1024);
+
+	int i = 0;
+
+	for (;; ++i)
+	{
+		char c = fgetc(f);
+		if (i == 1024 || c == '\n') break;
+		buf[i] = c;
+	}
+
+	buf[i] = '\0';
+
+	fclose(f);
+
+	return buf;
 }
 
-#define BACKTRACE_PUSH(NAME, LINE, COL) \
-	const backtrace _trace_##LINE##_##COL = (backtrace) {.name = NAME, .line = (LINE), .col = (COL), .next=trace}; \
-	trace = &_trace_##LINE##_##COL;
+#define BACKTRACE_PUSH(NAME, LINE, COL, FILE, ID) \
+	const backtrace _trace_##LINE##_##COL##_##ID = (backtrace) {.name = NAME, .line = (LINE), .col = (COL), .file = (FILE), .next=trace}; \
+	trace = &_trace_##LINE##_##COL##_##ID;
 
-#define VARS_PUSH(NAME, IDENT) \
-	const var_info _varinfo_##IDENT = (var_info) {.name = (#NAME), .value = ___IDENT, .next=vars}; \
-	vars = &_varinfo_##IDENT;
+#define VARS_PUSH(NAME, CNAME, VALUE) \
+	const var_info _varinfo_##CNAME = (var_info) {.name = NAME, .value = VALUE, .next=vars}; \
+	vars = &_varinfo_##CNAME;
 
 #define BACKTRACE_POP() \
 	trace = trace->next;
+
+/*
 
 #define VARS_POP() \
 	vars = vars->next;
@@ -412,7 +438,7 @@ static void debugger_step()
 		next_count--;
 		return;
 	}
-	print_backtrace(1, trace, 0);
+	print_backtrace(1, trace);
 ask:
 	fputs("\033[0;33m<DEBUG>\033[0m ", stderr);
 	char buf[257] = {0};
@@ -469,8 +495,8 @@ ask:
 		case 't': case 'T':
 			// Trace
 			if (int_arg)
-				print_backtrace(int_arg, trace, 1);
-			else print_backtrace(5, trace, 1);
+				print_backtrace(int_arg, trace);
+			else print_backtrace(5, trace);
 			break;
 		case 'l': case 'L':
 			// List TODO handle argument
@@ -497,9 +523,9 @@ ask:
 			fputs("Exiting...\n", stderr);
 			exit (EXIT_SUCCESS);
 		case 'b': case 'B':
-			if (int_arg > source_line_num)
-				fprintf(stderr, "Line %zi is beyond end of file.\n", int_arg);
-			else if (int_arg) breakpoints[int_arg-1] = 1;
+			//if (int_arg > source_line_num) // TODO
+			//	fprintf(stderr, "Line %zi is beyond end of file.\n", int_arg);
+			if (int_arg) breakpoints[int_arg-1] = 1;
 			else breakpoints[trace->line-1] = 1;
 			break;
 		case 'v': case 'V':;
@@ -538,13 +564,13 @@ static void check_breakpoint(size_t line)
 	debug |= unlikely(breakpoints[line-1]);
 }
 
-static void print_backtrace(int n, const backtrace* b, int arrow)
+*/
+
+static void print_backtrace(int n, const backtrace* b, int last_spaces)
 {
 	if (!b || !n) return;
-	int digits = 0;
 	int len = strlen(b->name);
-	for (size_t tmp = b->line; tmp /= 10; ++digits);
-	char* ln = get_source_line(b->line);
+	char* ln = get_source_line(b->line, b->file);
 	ssize_t col = b->col;
 	while (*ln)
 	{
@@ -552,48 +578,77 @@ static void print_backtrace(int n, const backtrace* b, int arrow)
 		ln++;
 		col--;
 	}
-	fprintf(stderr, "\033[0;2m[%zi]\033[0m %.*s\033[0;1m%.*s\033[0m%s\n",
-			b->line,
+	char pos[128];
+	sprintf(pos, "[%s %zi:%zi]", b->file, b->line, b->col);
+	int spaces = (strlen(pos)) + col - len/2 - 1;
+	if (last_spaces)
+	{
+		fputs("\033[31;1m", stderr);
+		if (last_spaces < spaces)
+		{
+			for (int i = 0 ; i < last_spaces+1 ; ++i) fputs(" ", stderr);
+			fputs("\\", stderr);
+			for (int i = last_spaces+1 ; i < spaces-2 ; ++i) fputs("_", stderr);
+			fputs("\n", stderr);
+			for (int i = 0 ; i < spaces-1 ; ++i) fputs(" ", stderr);
+			fputs("\\\n", stderr);
+		}
+		else if (last_spaces > spaces)
+		{
+			for (int i = 0 ; i < spaces+2 ; ++i) fputs(" ", stderr);
+			for (int i = spaces+2 ; i < last_spaces-1 ; ++i) fputs("_", stderr);
+			fputs("/\n", stderr);
+			for (int i = 0 ; i < spaces+1 ; ++i) fputs(" ", stderr);
+			fputs("/\n", stderr);
+		}
+		else
+		{
+			for (int i = 0 ; i < spaces ; ++i) fputs(" ", stderr);
+			fputs("|\n", stderr);
+		}
+		fputs("\033[0m", stderr);
+	}
+	fprintf(stderr, "\033[0;2m%s\033[0m %.*s\033[0;1m%.*s\033[0m%s\n",
+			pos,
 			(int)(col - len - 1), ln,
 			len, ln + col - len - 1,
 			ln + col - 1);
-	if (!arrow) return;
-	while (col-- + digits - len/2 + 2 > 0) fputs(" ", stderr);
-	fputs("\033[31;1m^\033[0m\n", stderr);
-	print_backtrace(n - 1, b->next, arrow);
+	if (n <= 1)
+	{
+		for (int i = 0 ; i < spaces ; ++i) fputs(" ", stderr);
+		fputs("\033[31;1m^\033[0m\n", stderr);
+	}
+	else print_backtrace(n - 1, b->next, spaces);
 }
 #endif
 
 static _Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(const char* restrict const fmt, ...)
 {
-	fputs("\n\n\033[31;1m\t", stderr);
+	char buf[1024];
+	fputs("\n\n\033[31;1m    ", stderr);
 	va_list args;
 	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	fputs("\n\n\033[0m", stderr);
-#ifdef DEBUG
+	vsprintf(buf, fmt, args);
+	fputs(buf, stderr);
+	fputs("\n", stderr);
+#ifndef DEBUG
+	fputs("\n\033[0m", stderr);
+#else
+	print_backtrace(10, trace, strlen(buf)/2 + 4);
+	/*
 	if (isatty(fileno(stdin)))
 	{
 		debug = 1;
 		debugger_step();
-	} else print_backtrace(5, trace, 1);
+	} else print_backtrace(5, trace);
+	*/
 #endif
 	exit(EXIT_FAILURE);
 }
 
 static _Noreturn void throw_error(const char* restrict const msg)
 {
-	fputs("\n\n\033[31;1m\t", stderr);
-	fputs(msg, stderr);
-	fputs("\n\n\033[0m", stderr);
-#ifdef DEBUG
-	if (isatty(fileno(stdin)))
-	{
-		debug = 1;
-		debugger_step();
-	} else print_backtrace(5, trace, 1);
-#endif
-	exit(EXIT_FAILURE);
+	throw_error_fmt("%s", msg);
 }
 
 static void handle_error_signal(int sig)
@@ -601,7 +656,7 @@ static void handle_error_signal(int sig)
 	throw_error_fmt("Recieved signal %i (%s)", sig, strsignal(sig));
 }
 
-static void assert_impure()
+static void assert_impure(void)
 {
 	if unlikely(pure) throw_error("Invalid operation for pure function");
 }
@@ -686,9 +741,13 @@ static STRING show_object (const ANY object, const _Bool raw_strings, char* buff
 		case symbol:  strcpy(buffer, unbox_SYMBOL(object));
 						  buffer += strlen(buffer);
 						  break;
-		case block:	  sprintf(buffer, "<block %p>", (void*)unbox_BLOCK(object).fn);
-						  buffer += strlen(buffer);
-						  break;
+		case block:
+		{
+			void (*fn)(uint8_t*) = unbox_BLOCK(object).fn;
+			sprintf(buffer, "<block %p>", *(void**)&fn);
+			buffer += strlen(buffer);
+			break;
+		}
 		case box:
 			*buffer++ = '[';
 			buffer = (char*)show_object(*unbox_BOX(object), 0, buffer);
