@@ -182,7 +182,7 @@ static const char* restrict function_stack_start;
 
 // Variables and	needed by functions.c defined in runtime.c
 static void init_stack(void);
-static STRING show_object(const ANY object, const _Bool);
+static STRING show_object(const ANY object, const _Bool, char*);
 static void _Noreturn __attribute__((format(printf, 1, 2))) throw_error_fmt(const char* restrict const, ...);
 static void _Noreturn throw_error(const char* restrict const);
 static _Bool compare_objects(ANY, ANY);
@@ -453,7 +453,7 @@ ask:
 			flush_stack_cache();
 			for (ANY* a = stack.top - 1;  a >= stack.start; --a)
 			{
-				fputs(show_object(*a, 0), stderr);
+				fputs(show_object(*a, 0, NULL), stderr);
 				fputc('\n', stderr);
 			}
 			break;
@@ -515,7 +515,7 @@ ask:
 			{
 				if (!strcmp(v->name, str_arg))
 				{
-					fprintf(stderr, "%c%s = %s\n", toupper(*s), s+1, show_object(v->value, 0));
+					fprintf(stderr, "%c%s = %s\n", toupper(*s), s+1, show_object(v->value, 0, NULL));
 					goto ask;
 				}
 			}
@@ -606,17 +606,38 @@ static void assert_impure()
 	if unlikely(pure) throw_error("Invalid operation for pure function");
 }
 
-
-static STRING show_object (const ANY object, const _Bool raw_strings)
+static char* show_dict(DICT d, char* buffer)
 {
-	static char* buffer;
-	static size_t depth = 0;
-	if (depth++ == 0) buffer = (char*)(space[z] + alloc[z]); // i dont like resizing buffers
+	if (!d) return buffer;
+
+	buffer = show_dict(d->child1, buffer);
+	buffer += strlen(buffer);
+
+	buffer = (char*)show_object(box_STRING(d->key), 0, buffer);
+	*buffer++ = ':';
+	buffer = (char*)show_object(d->value, 0, buffer);
+	*buffer++ = ' ';
+
+	buffer = show_dict(d->child2, buffer);
+	buffer += strlen(buffer);
+
+	return buffer;
+}
+
+
+static STRING show_object (const ANY object, const _Bool raw_strings, char* buffer)
+{
+	static char* buf;
+	_Bool root = !buffer;
+	if (root) buf = buffer = (char*)(space[z] + alloc[z]); // i dont like resizing buffers
 	switch (object.type)
 	{
 		case NIL: throw_error("This shouldn't happen");
 					 break;
-		case dict: // TODO
+		case dict: sprintf(buffer, "[ "); buffer + strlen(buffer);
+					  buffer = show_dict(object.dict, buffer);
+					  sprintf(buffer, "]"); buffer += strlen(buffer);
+					  break;
 		case number: sprintf(buffer, "%.14g", object.number);
 						 buffer += strlen(buffer);
 						 break;
@@ -652,7 +673,7 @@ static STRING show_object (const ANY object, const _Bool raw_strings)
 			*buffer++ = '(';
 			for (LIST l = unbox_LIST(object) ; l ; l = l->next)
 			{
-				show_object(l->object, 0);
+				buffer = (char*)show_object(l->object, 0, buffer);
 				if (!l->next) break;
 				*buffer++ = ',';
 				*buffer++ = ' ';
@@ -670,16 +691,13 @@ static STRING show_object (const ANY object, const _Bool raw_strings)
 						  break;
 		case box:
 			*buffer++ = '[';
-			show_object(*unbox_BOX(object), 0);
+			buffer = (char*)show_object(*unbox_BOX(object), 0, buffer);
 			*buffer++ = ']';
 			break;
 	}
-	depth--;
-	if (depth) return NULL;
+	if (!root) return buffer;
 	*buffer++ = '\0';
-	char* b = strdup((char*)(space[z] + alloc[z]));
-	char* c = gc_strdup(b);
-	free(b);
+	char* c = gc_strdup(buf);
 	return c;
 }
 
@@ -846,7 +864,7 @@ static _Noreturn void type_error(char* expected, ANY got)
 	switch (expected[0])
 		case 'a': case 'e': case 'i': case 'o': case 'u': case 'h':
 			s = "an";
-	throw_error_fmt("Expected %s %s but got %.64s", s, expected, show_object(got, 0));
+	throw_error_fmt("Expected %s %s but got %.64s", s, expected, show_object(got, 0, NULL));
 }
 
 __attribute__((hot))
@@ -1157,8 +1175,8 @@ static ANY ___if(BOOLEAN cond, ANY a, ANY b)
 	return cond ? a : b;
 }
 
-static void ___put(ANY a)   { assert_impure(); fputs(show_object(a, 1), stdout); fflush(stdout); }
-static void ___print(ANY a) { assert_impure(); puts(show_object(a, 1)); }
+static void ___put(ANY a)   { assert_impure(); fputs(show_object(a, 1, NULL), stdout); fflush(stdout); }
+static void ___print(ANY a) { assert_impure(); puts(show_object(a, 1, NULL)); }
 
 static NUMBER ___P(NUMBER a, NUMBER b) { return a + b; } // Add cannot produce NaN.
 static NUMBER ___M(NUMBER a, NUMBER b) { return a * b; }
@@ -1502,7 +1520,7 @@ static BLOCK ___precompute(BLOCK blk)
 
 static STRING ___show(ANY o)
 {
-	return show_object(o, 1);
+	return show_object(o, 1, NULL);
 }
 
 static LIST ___split(STRING sep, STRING str)
