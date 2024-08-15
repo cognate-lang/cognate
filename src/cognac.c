@@ -82,16 +82,35 @@ static void* alloc(size_t n)
 	return (heap += n) - n;
 }
 
+char* escape_cstring(char* str)
+{
+	size_t len = strlen(str);
+	char* str2 = alloc(len*2 + 1);
+	int ii = 0;
+	for (int i = 0 ; i < len ; ++i)
+	{
+		switch (str[i])
+		{
+			case '\\': case '"':
+				str2[ii++] = '\\';
+			default:
+				str2[ii++] = str[i];
+				break;
+		}
+	}
+	return str2;
+}
+
 where_t* parse_pos(char* sym)
 {
 	where_t* p = alloc(sizeof *p);
 	p->mod = pmod;
 	p->line = yylloc.first_line;
 	p->col = yylloc.first_column;
+	p->line_str = pmod->lines[p->line-1];
 	p->symbol = sym;
 	return p;
 }
-
 
 _Noreturn void type_error(val_type_t expected, val_type_t got, where_t* pos)
 {
@@ -410,21 +429,33 @@ module_t* create_module(char* path)
 
 void module_parse(module_t* mod)
 {
-	if (mod->path)
+	fseek(mod->file, 0, SEEK_SET);
+
+	mod->num_lines = 0;
+	while(!feof(mod->file)) if(fgetc(mod->file) == '\n') mod->num_lines++; // count lines.
+
+	mod->lines = alloc(sizeof(char*) * mod->num_lines);
+
+	fseek(mod->file, 0, SEEK_SET);
+
+	for (int i = 0 ; i < mod->num_lines ; ++i) // populate lines[]
 	{
-		FILE* t = fopen(mod->path, "r");
-		if (!t)
+		mod->lines[i] = (char*)alloc(1024);
+
+		for (int ii = 0 ; ii < 1023 ; ++ii)
 		{
-			if (!mod->first_ref)
-				fprintf(stderr, "\nCan't open file '%s'!\n", mod->path);
-			else
+			char c = fgetc(mod->file);
+			if (c == '\n')
 			{
-				throw_error("can't find module", mod->first_ref);
+				mod->lines[i][ii] = '\0';
+				break;
 			}
-			exit(EXIT_FAILURE);
+			else mod->lines[i][ii] = c;
 		}
-		fclose(t);
+		mod->lines[i][1023] = '\0';
 	}
+
+	fseek(mod->file, 0, SEEK_SET);
 	pmod = mod;
 	yyin = mod->file; // imagine having a reentrant parser.
 	yylloc.first_line = 1;
@@ -1067,7 +1098,7 @@ void to_c(module_t* mod)
 					}
 				case backtrace_push:
 					if (op->op->where && op->op->where->mod->path && op->op->where->symbol)
-						fprintf(c_source, "\tBACKTRACE_PUSH(\"%s\", %zu, %zu, \"%s\", %zu);\n", op->op->where->symbol, op->op->where->line, op->op->where->col, op->op->where->mod->path, bid++);
+						fprintf(c_source, "\tBACKTRACE_PUSH(\"%s\", %zu, %zu, \"%s\", \"%s\", %zu);\n", op->op->where->symbol, op->op->where->line, op->op->where->col, escape_cstring(op->op->where->mod->path), escape_cstring(op->op->where->line_str), bid++);
 					break;
 				case backtrace_pop:
 					if (op->op->where && op->op->where->mod->path && op->op->where->symbol)

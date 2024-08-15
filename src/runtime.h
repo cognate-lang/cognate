@@ -131,6 +131,7 @@ typedef struct backtrace
 	const size_t line;
 	const size_t col;
 	const char* file;
+	const char* line_str;
 } backtrace;
 
 typedef struct var_info
@@ -384,38 +385,8 @@ static void cleanup(void)
 
 #ifdef DEBUG
 
-static char* get_source_line(size_t line, const char* source_file)
-{
-	// TODO maybe compile the line into the executable instead of rereading the source.
-	FILE* f = fopen(source_file, "r");
-	if (!f) return NULL;
-
-	for (;;)
-	{
-		if (line == 1) break;
-		if (fgetc(f) == '\n') line--;
-	}
-
-	char* buf = gc_malloc(1024);
-
-	int i = 0;
-
-	for (;; ++i)
-	{
-		char c = fgetc(f);
-		if (i == 1024 || c == '\n') break;
-		buf[i] = c;
-	}
-
-	buf[i] = '\0';
-
-	fclose(f);
-
-	return buf;
-}
-
-#define BACKTRACE_PUSH(NAME, LINE, COL, FILE, ID) \
-	const backtrace _trace_##LINE##_##COL##_##ID = (backtrace) {.name = NAME, .line = (LINE), .col = (COL), .file = (FILE), .next=trace}; \
+#define BACKTRACE_PUSH(NAME, LINE, COL, FILE, LINE_STR, ID) \
+	const backtrace _trace_##LINE##_##COL##_##ID = (backtrace) {.name = NAME, .line = (LINE), .col = (COL), .file = (FILE), .line_str=(LINE_STR), .next=trace}; \
 	trace = &_trace_##LINE##_##COL##_##ID;
 
 #define BACKTRACE_POP() \
@@ -569,8 +540,7 @@ static void print_backtrace(int n, const backtrace* b, int last_spaces)
 {
 	if (!b || !n) return;
 	int len = strlen(b->name);
-	char* ln = get_source_line(b->line, b->file);
-	if (!ln) fprintf("(can't open source file '%s' to create backtrace)\n", b->file);
+	const char* ln = b->line_str;
 	ssize_t col = b->col;
 	while (*ln)
 	{
@@ -578,6 +548,8 @@ static void print_backtrace(int n, const backtrace* b, int last_spaces)
 		ln++;
 		col--;
 	}
+	char* tabs;
+	for  (char* tabs ; *tabs ; tabs++) if (*tabs == '\t') *tabs = ' ';
 	char pos[128];
 	sprintf(pos, "[%s %zi:%zi]", b->file, b->line, b->col);
 	int spaces = (strlen(pos)) + col - len/2 - 1;

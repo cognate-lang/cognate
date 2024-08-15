@@ -224,6 +224,8 @@ struct _module_t
 	symbol_list_t* symbols;
 	module_list_t* uses;
 	where_t* first_ref;
+	size_t num_lines;
+	char** lines;
 };
 
 struct _module_list_t
@@ -238,6 +240,7 @@ struct _where_t
 	size_t line;
 	size_t col;
 	char* symbol;
+	char* line_str;
 };
 
 struct _where_list_t
