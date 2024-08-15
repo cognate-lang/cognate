@@ -35,4 +35,6 @@ $(TESTS): cognac
 	@rm -f $@.log $@.c $@
 	./cognac $@.cog > $@.log
 	./$@ >> $@.log
+	./cognac $@.cog -debug >> $@.log
+	./$@ >> $@.log
 	@! grep "^FAIL" $@.log --color

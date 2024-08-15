@@ -1497,17 +1497,17 @@ void apply_regex(uint8_t* env)
 
 static BLOCK ___regex(STRING reg_str)
 {
-	regex_t reg;
-	const int status = regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE | REG_NOSUB);
+	regex_t* reg = gc_malloc(sizeof *reg);
+	const int status = regcomp(reg, reg_str, REG_EXTENDED | REG_NEWLINE | REG_NOSUB);
 	errno = 0; // Hmmm
 	if unlikely(status)
 	{
 		char reg_err[256];
-		regerror(status, &reg, reg_err, 256);
+		regerror(status, reg, reg_err, 256);
 		throw_error_fmt("Compile error (%s) in regex '%.32s'", reg_err, reg_str);
 	}
 
-	return (cognate_block){ .env = (void*)&reg, .fn = apply_regex };
+	return (cognate_block){ .env = (void*)reg, .fn = apply_regex };
 }
 
 
