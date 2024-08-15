@@ -608,7 +608,7 @@ static void print_backtrace(int n, const backtrace* b, int last_spaces)
 		}
 		fputs("\033[0m", stderr);
 	}
-	fprintf(stderr, "\033[0;2m%s\033[0m %.*s\033[0;1m%.*s\033[0m%s\n",
+	fprintf(stderr, "\033[0;2m%s\033[0m %.*s\033[31;1m%.*s\033[0m%s\n",
 			pos,
 			(int)(col - len - 1), ln,
 			len, ln + col - len - 1,
