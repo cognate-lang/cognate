@@ -584,7 +584,7 @@ static void print_backtrace(int n, const backtrace* b, int last_spaces)
 	if (last_spaces)
 	{
 		fputs("\033[31;1m", stderr);
-		if (last_spaces < spaces)
+		if (last_spaces + 2 < spaces)
 		{
 			for (int i = 0 ; i < last_spaces+1 ; ++i) fputs(" ", stderr);
 			fputs("\\", stderr);
@@ -593,7 +593,7 @@ static void print_backtrace(int n, const backtrace* b, int last_spaces)
 			for (int i = 0 ; i < spaces-1 ; ++i) fputs(" ", stderr);
 			fputs("\\\n", stderr);
 		}
-		else if (last_spaces > spaces)
+		else if (last_spaces > spaces + 2)
 		{
 			for (int i = 0 ; i < spaces+2 ; ++i) fputs(" ", stderr);
 			for (int i = spaces+2 ; i < last_spaces-1 ; ++i) fputs("_", stderr);
@@ -603,8 +603,10 @@ static void print_backtrace(int n, const backtrace* b, int last_spaces)
 		}
 		else
 		{
-			for (int i = 0 ; i < spaces ; ++i) fputs(" ", stderr);
-			fputs("|\n", stderr);
+			for (int i = 0 ; i < spaces-1 ; ++i) fputs(" ", stderr);
+			if (last_spaces < spaces) fputs("\\\n", stderr);
+			else if (last_spaces > spaces) fputs("  /\n", stderr);
+			else fputs(" |\n", stderr);
 		}
 		fputs("\033[0m", stderr);
 	}
