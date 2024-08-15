@@ -44,14 +44,14 @@ STATEMENT:
 	;
 
 TOKEN:
-	  IDENTIFIER         { $$ = ast_single(identifier, (void*)lowercase($1), parse_pos()); }
-	| MODULE_IDENTIFIER  { $$ = ast_single(module_identifier, (void*)lowercase($1), parse_pos()); }
-	| '(' EXPRESSION ')' { $$ = ast_single(braces, (void*)$2, parse_pos()); }
-	| NUMBER             { $$ = ast_single(literal, mk_lit(number, $1), parse_pos()); }
-	| STRING             { $$ = ast_single(literal, mk_lit(string, $1), parse_pos()); }
-	| SYMBOL             { $$ = ast_single(literal, mk_lit(symbol, $1), parse_pos()); }
-	| DEF IDENTIFIER     { $$ = ast_single(def, (void*)lowercase($2), parse_pos()); }
-	| LET IDENTIFIER     { $$ = ast_single(let, (void*)lowercase($2), parse_pos()); }
+	  IDENTIFIER         { $$ = ast_single(identifier, (void*)lowercase($1), parse_pos($1)); }
+	| MODULE_IDENTIFIER  { $$ = ast_single(module_identifier, (void*)lowercase($1), parse_pos($1)); }
+	| '(' EXPRESSION ')' { $$ = ast_single(braces, (void*)$2, parse_pos($1)); }
+	| NUMBER             { $$ = ast_single(literal, mk_lit(number, $1), parse_pos($1)); }
+	| STRING             { $$ = ast_single(literal, mk_lit(string, $1), parse_pos($1)); }
+	| SYMBOL             { $$ = ast_single(literal, mk_lit(symbol, $1), parse_pos($1)); }
+	| DEF IDENTIFIER     { $$ = ast_single(def, (void*)lowercase($2), parse_pos($2)); }
+	| LET IDENTIFIER     { $$ = ast_single(let, (void*)lowercase($2), parse_pos($2)); }
 	;
 
 %%

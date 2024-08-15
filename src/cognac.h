@@ -52,6 +52,8 @@ typedef enum _type_t
 	ret, // none
 	static_call, // FUNC
 	drop, // none
+	backtrace_push, // WORD
+	backtrace_pop,
 } type_t;
 
 typedef enum _val_type_t
@@ -235,6 +237,7 @@ struct _where_t
 	module_t* mod;
 	size_t line;
 	size_t col;
+	char* symbol;
 };
 
 struct _where_list_t
@@ -265,7 +268,7 @@ void load_preludes(void);
 
 extern FILE* yyin;
 extern ast_list_t* full_ast;
-extern where_t* parse_pos(void);
+extern where_t* parse_pos(char*);
 int yylex(void);
 int yyparse (void);
 void yyerror(char*);

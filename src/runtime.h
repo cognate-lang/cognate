@@ -631,6 +631,7 @@ static _Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(cons
 	va_list args;
 	va_start(args, fmt);
 	vsprintf(buf, fmt, args);
+	va_end(args);
 	fputs(buf, stderr);
 	fputs("\n", stderr);
 #ifndef DEBUG

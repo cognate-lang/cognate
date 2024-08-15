@@ -82,12 +82,13 @@ static void* alloc(size_t n)
 	return (heap += n) - n;
 }
 
-where_t* parse_pos(void)
+where_t* parse_pos(char* sym)
 {
 	where_t* p = alloc(sizeof *p);
 	p->mod = pmod;
 	p->line = yylloc.first_line;
 	p->col = yylloc.first_column;
+	p->symbol = sym;
 	return p;
 }
 
@@ -285,7 +286,7 @@ void insert_op_before(ast_t* op, ast_list_t* current)
 	ast_list_t* n = alloc(sizeof *n);
 	n->prev = current->prev;
 	n->next = current;
-	current->prev->next = n;
+	if (current->prev) current->prev->next = n;
 	current->prev = n;
 	n->op = op;
 }
@@ -295,7 +296,7 @@ void insert_op_after(ast_t* op, ast_list_t* current)
 	ast_list_t* n = alloc(sizeof *n);
 	n->prev = current;
 	n->next = current->next;
-	current->next->prev = n;
+	if (current->next) current->next->prev = n;
 	current->next = n;
 	n->op = op;
 }
@@ -470,6 +471,8 @@ void shorten_references(module_t* mod)
 			switch (a->op->type)
 			{
 				default: unreachable();
+				case backtrace_push:
+				case backtrace_pop:
 				case none:
 				case define:
 					break;
@@ -1062,10 +1065,16 @@ void to_c(module_t* mod)
 							c_literal(op->op->literal));
 						break;
 					}
+				case backtrace_push:
+					if (op->op->where && op->op->where->mod->path && op->op->where->symbol)
+						fprintf(c_source, "\tBACKTRACE_PUSH(\"%s\", %zu, %zu, \"%s\", %zu);\n", op->op->where->symbol, op->op->where->line, op->op->where->col, op->op->where->mod->path, bid++);
+					break;
+				case backtrace_pop:
+					if (op->op->where && op->op->where->mod->path && op->op->where->symbol)
+						fprintf(c_source, "\tBACKTRACE_POP();\n");
+					break;
 				case var:
 					{
-						if (debug && op->op->word->used_early && op->op->where && op->op->where->mod->path)
-							fprintf(c_source, "\tBACKTRACE_PUSH(\"%s\", %zu, %zu, \"%s\", %zu);\n", op->op->word->name, op->op->where->line, op->op->where->col, op->op->where->mod->path, bid++);
 
 						reg_t* reg = make_register(op->op->word->val->type, NULL);
 						push_register_front(reg, registers);
@@ -1082,9 +1091,6 @@ void to_c(module_t* mod)
 								c_val_type(op->op->word->val->type),
 								reg->id,
 								c_word_name(op->op->word));
-
-						if (debug && op->op->word->used_early && op->op->where && op->op->where->mod->path)
-							fprintf(c_source, "\tBACKTRACE_POP();\n");
 						break;
 					}
 				case bind:
@@ -1122,8 +1128,6 @@ void to_c(module_t* mod)
 					break;
 				case static_call:
 					{
-						if (debug && !func->func->entry && op->op->where && op->op->where->mod->path && op->op->func->unmangled_name)
-							fprintf(c_source, "\tBACKTRACE_PUSH(\"%s\", %zu, %zu, \"%s\", %zu);\n", op->op->func->unmangled_name, op->op->where->line, op->op->where->col, op->op->where->mod->path, bid++);
 						reg_t* ret = NULL;
 						func_t* fn = op->op->func;
 						if (fn->returns)
@@ -1137,14 +1141,10 @@ void to_c(module_t* mod)
 						c_emit_funcall(fn, c_source, registers);
 						fprintf(c_source, ";\n");
 						if (fn->returns) push_register_front(ret, registers);
-						if (debug && !func->func->entry && op->op->where && op->op->where->mod->path && op->op->func->unmangled_name)
-							fprintf(c_source, "\tBACKTRACE_POP();\n");
 						break;
 					}
 				case call:
 					// TODO remove call and use var and a do op
-					if (debug && op->op->where && op->op->where->mod->path)
-						fprintf(c_source, "\tBACKTRACE_PUSH(\"%s\", %zu, %zu, \"%s\", %zu);\n", op->op->word->name, op->op->where->line, op->op->where->col, op->op->where->mod->path, bid++);
 					if (op->op->word->used_early)
 						fprintf(c_source, "\tCHECK_DEFINED(%c%s, %s);\n\t%s->value.fn(%s->value.env);\n",
 							toupper(op->op->word->name[0]),
@@ -1156,8 +1156,6 @@ void to_c(module_t* mod)
 						fprintf(c_source, "\t%s.fn(%s.env);\n",
 							c_word_name(op->op->word),
 							c_word_name(op->op->word));
-					if (debug && op->op->where && op->op->where->mod->path)
-						fprintf(c_source, "\tBACKTRACE_POP();\n");
 					break;
 				case closure:
 					{
@@ -1403,7 +1401,7 @@ bool _determine_arguments(func_t* f)
 				if (registers) registers--;
 				else if (can_use_args && argc < 255 && !f->entry) argc++;
 				break;
-			case define: case none: case pick: case unpick: break;
+			case backtrace_push: case backtrace_pop: case define: case none: case pick: case unpick: break;
 			case drop:
 				if (registers) registers--;
 				else if (can_use_args && argc < 255 && !f->entry) argc++;
@@ -1574,6 +1572,8 @@ bool _add_registers(func_t* f)
 		ast_t* op = n->op;
 		switch(op->type)
 		{
+			case backtrace_push:
+			case backtrace_pop:
 			case none:
 			case define:
 			case pick:
@@ -2015,6 +2015,8 @@ bool add_var_types_backwards(module_t* mod)
 					break;
 				case none:
 				case define:
+				case backtrace_push:
+				case backtrace_pop:
 					break;
 				default: unreachable();
 			}
@@ -2264,6 +2266,9 @@ void add_typechecks(module_t* mod)
 					}
 				case none: break;
 				case define: break;
+				case backtrace_push:
+				case backtrace_pop:
+					break;
 				default: unreachable();
 			}
 		}
@@ -2444,6 +2449,8 @@ void _compute_sources(ast_list_t* a)
 				break;
 			case none:
 			case define:
+			case backtrace_push:
+			case backtrace_pop:
 				break;
 			case drop:
 				pop_register_front(regs);
@@ -2498,7 +2505,6 @@ void _inline_functions(func_t* f, func_list_t** funcs)
 
 void inline_functions(module_t* m)
 {
-	if (debug) return;
 	_inline_functions(m->entry, &m->funcs);
 }
 
@@ -2880,6 +2886,8 @@ void static_branches(module_t* m)
 				default: unreachable();
 				case none:
 				case define:
+				case backtrace_push:
+				case backtrace_pop:
 					break;
 				case pick:
 					push_register_front(pop_register_rear(regs), regs);
@@ -3206,6 +3214,28 @@ void demodulize(module_t* m)
 	}
 }
 
+void add_backtraces(module_t* mod)
+{
+	if (!debug) return;
+	for (func_list_t* funcs = mod->funcs ; funcs ; funcs = funcs->next)
+	{
+		for (ast_list_t* ops = funcs->func->ops ; ops ; ops = ops->next)
+		{
+			switch (ops->op->type)
+			{
+		 		case var:
+				case call:
+					insert_op_before(make_op(backtrace_push, NULL, ops->op->where), ops);
+					insert_op_after(make_op(backtrace_pop, NULL, ops->op->where), ops);
+
+				default: break;
+			}
+		}
+
+	}
+}
+
+
 int main(int argc, char** argv)
 {
 	char* filename = NULL;
@@ -3251,6 +3281,7 @@ int main(int argc, char** argv)
 		flatten_ast,
 		merge_symbols,
 		//assign_sequence_numbers,
+		add_backtraces,
 		inline_functions,
 		compute_sources,
 		compute_stack,

@@ -16,7 +16,7 @@ char* lc(char* s)
 
 void yyerror(char* str)
 {
-	throw_error(str, parse_pos());
+	throw_error(str, parse_pos(NULL));
 }
 
 int brace_depth = 0;
