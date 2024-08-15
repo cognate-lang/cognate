@@ -418,14 +418,13 @@ static char* get_source_line(size_t line, const char* source_file)
 	const backtrace _trace_##LINE##_##COL##_##ID = (backtrace) {.name = NAME, .line = (LINE), .col = (COL), .file = (FILE), .next=trace}; \
 	trace = &_trace_##LINE##_##COL##_##ID;
 
-#define VARS_PUSH(NAME, CNAME, VALUE) \
-	const var_info _varinfo_##CNAME = (var_info) {.name = NAME, .value = VALUE, .next=vars}; \
-	vars = &_varinfo_##CNAME;
-
 #define BACKTRACE_POP() \
 	trace = trace->next;
 
 /*
+#define VARS_PUSH(NAME, CNAME, VALUE) \
+	const var_info _varinfo_##CNAME = (var_info) {.name = NAME, .value = VALUE, .next=vars}; \
+	vars = &_varinfo_##CNAME;
 
 #define VARS_POP() \
 	vars = vars->next;
@@ -571,6 +570,7 @@ static void print_backtrace(int n, const backtrace* b, int last_spaces)
 	if (!b || !n) return;
 	int len = strlen(b->name);
 	char* ln = get_source_line(b->line, b->file);
+	if (!ln) fprintf("(can't open source file '%s' to create backtrace)\n", b->file);
 	ssize_t col = b->col;
 	while (*ln)
 	{
@@ -711,7 +711,7 @@ static STRING show_object (const ANY object, const _Bool raw_strings, char* buff
 				buffer += strlen(strcpy(buffer, unbox_STRING(object)));
 			else
 			{
-				*buffer++ = '\'';
+				*buffer++ = '"';
 				for (const char* str = unbox_STRING(object) ; *str ; ++str)
 				{
 					char c = *str;
@@ -721,10 +721,10 @@ static STRING show_object (const ANY object, const _Bool raw_strings, char* buff
 						*buffer++ = "abtnvfr"[c-'\a'];
 					}
 					else if (c == '\\') { *buffer++ = '\\'; *buffer++ = '\\'; }
-					else if (c == '\'') { *buffer++ = '\\'; *buffer++ = '\''; }
+					else if (c == '"')  { *buffer++ = '\\'; *buffer++ = '"';  }
 					else *buffer++ = c;
 				}
-				*buffer++ = '\'';
+				*buffer++ = '"';
 			}
 			break;
 		case list:
