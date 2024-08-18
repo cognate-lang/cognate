@@ -664,9 +664,9 @@ static STRING show_object (const ANY object, const _Bool raw_strings, char* buff
 	{
 		case NIL: throw_error("This shouldn't happen");
 					 break;
-		case dict: sprintf(buffer, "[ "); buffer + strlen(buffer);
+		case dict: sprintf(buffer, "{ "); buffer + strlen(buffer);
 					  buffer = show_dict(object.dict, buffer);
-					  sprintf(buffer, "]"); buffer += strlen(buffer);
+					  sprintf(buffer, "}"); buffer += strlen(buffer);
 					  break;
 		case number: sprintf(buffer, "%.14g", object.number);
 						 buffer += strlen(buffer);
