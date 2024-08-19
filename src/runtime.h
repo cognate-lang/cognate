@@ -286,6 +286,7 @@ static LIST ___parameters(void);
 static void ___stop(void);
 static STRING ___show(ANY);
 static BLOCK ___regex(STRING);
+static BLOCK ___regexDmatch(STRING);
 static NUMBER ___ordinal(STRING);
 static STRING ___character(NUMBER);
 static NUMBER ___floor(NUMBER);
@@ -1483,6 +1484,61 @@ static BLOCK ___regex(STRING reg_str)
 	}
 
 	return (cognate_block){ .env = (void*)reg, .fn = apply_regex };
+}
+
+void match_regex(uint8_t* env)
+{
+	regex_t reg = *(regex_t*)env;
+	STRING str = unbox_STRING(pop());
+	size_t groups = reg.re_nsub + 1;
+	regmatch_t matches[groups];
+	const int found = regexec(&reg, str, groups, matches, 0);
+	if unlikely(found != 0 && found != REG_NOMATCH)
+	throw_error_fmt("Regex failed matching string '%.32s'", str);
+
+	LIST lst = NULL;
+	if (found == 0) {
+		for (unsigned int g = 0; g < groups; g++)
+		{
+			size_t from = matches[g].rm_so;
+			size_t to = matches[g].rm_eo;
+
+			if (from == (size_t)-1)
+				break;
+
+			cognate_list *node = gc_malloc(sizeof *node);
+			char* item = gc_strndup(str, to);
+			node->object = box_STRING(item + from);
+			node->next = lst;
+			lst = node;
+		}
+		cognate_list* prev = NULL;
+		cognate_list* curr = (cognate_list*)lst;
+		while (curr)
+		{
+			cognate_list* next = (cognate_list*)curr->next;
+			curr->next = prev;
+			prev = curr;
+			curr = next;
+		}
+		lst = prev;
+	}
+	push(box_LIST(lst));
+}
+
+static BLOCK ___regexDmatch(STRING reg_str)
+{
+	regex_t reg;
+	const int status = regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE);
+	errno = 0;
+	if unlikely(status)
+	{
+		char reg_err[256];
+		regerror(status, &reg, reg_err, 256);
+		throw_error_fmt("Compile error (%s) in regex '%.32s'", reg_err, reg_str);
+	}
+
+	return (cognate_block){ .env = (void*)&reg, .fn = match_regex };
 }
 
 

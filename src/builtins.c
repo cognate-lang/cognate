@@ -56,6 +56,7 @@
 {.name="string-length",       .calltype=call, .argc=1, .args={string},    .returns=true, .rettype=number},
 {.name="substring",           .calltype=call, .argc=3, .args={number, number, string}, .returns=true, .rettype=string},
 {.name="regex",               .calltype=call, .argc=1, .args={string},    .returns=true, .rettype=block},
+{.name="regex-match",         .calltype=call, .argc=1, .args={string},    .returns=true, .rettype=block},
 {.name="ordinal",             .calltype=call, .argc=1, .args={string}, .returns=true, .rettype=number},
 {.name="character",           .calltype=call, .argc=1, .args={number}, .returns=true, .rettype=string},
 {.name="split",               .calltype=call, .argc=2, .args={string, string}, .returns=true, .rettype=list},
