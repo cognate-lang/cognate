@@ -3,6 +3,7 @@
 #define _FORTIFY_SOURCE 2
 
 #include <stddef.h>
+#include <wchar.h>
 #include <stdio.h>
 #include <assert.h>
 #include <limits.h>
@@ -1655,18 +1656,32 @@ static LIST ___split(STRING sep, STRING str)
 
 static STRING ___uppercase(STRING str)
 {
-    char* converted = gc_strdup(str);
-	for (char* c = converted; *c; c += mblen(str, MB_CUR_MAX))
-	    *c = toupper(*c);
-    return converted;
+	char* converted = gc_strdup(str);
+	int len = 0;
+	for (char* c = converted; *c; c += len)
+	{
+		wchar_t chr = 0;
+		len = mblen(c, MB_CUR_MAX);
+		mbtowc(&chr, c, len);
+		chr = towupper(chr);
+		wctomb(c, chr);
+	}
+	return converted;
 }
 
 static STRING ___lowercase(STRING str)
 {
-    char* converted = gc_strdup(str);
-	for (char* c = converted; *c; c += mblen(str, MB_CUR_MAX))
-	    *c = tolower(*c);
-    return converted;
+	char* converted = gc_strdup(str);
+	int len = 0;
+	for (char* c = converted; *c; c += len)
+	{
+		wchar_t chr = 0;
+		len = mblen(c, MB_CUR_MAX);
+		mbtowc(&chr, c, len);
+		chr = towlower(chr);
+		wctomb(c, chr);
+	}
+	return converted;
 }
 
 /*

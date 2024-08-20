@@ -44,8 +44,8 @@ else
 	"FAIL: Splitting a string";
 
 ~~ TODO: Only ASCII conversions are supported right now.
-~~ Print If == "123 áæćde" Lowercase "123 ÁÆĆdE"
-Print If == "123 ♥ æabcde" Lowercase "123 ♥ æAbCdE"
+Print If == "123 áæćde" Lowercase "123 ÁÆĆdE"
+~~Print If == "123 ♥ æabcde" Lowercase "123 ♥ æAbCdE"
 	"PASS: Converting a string to lowercase"
 else
 	"FAIL: Converting a string to lowercase";

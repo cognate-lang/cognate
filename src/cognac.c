@@ -414,6 +414,7 @@ module_t* create_module(char* path)
 	module_t* mod = alloc(sizeof *mod);
 	mod->path = path;
 	mod->file = fopen(path, "r");
+	if (!mod->file) { fprintf(stderr, "Can't open file '%s'\n", path); exit(EXIT_FAILURE); }
 	char* path2 = strdup(path);
 	char* path3 = path2;
 	for (char* s = path2 ; *s ; ++s) if (*s == '/') path2 = s+1;
