@@ -35,6 +35,13 @@ Cognate is a stack-oriented programming language. This means that all intermedia
 * Point-free functions
 * Operation chaining
 
+### Web playground
+Check out the interactive web playground - it runs Cognate programs client-side in the browser. It also has intelligent syntax highlightung, code folding, and error reporting in the editor.
+
+Playground: [https://cognate-playground.hedy.dev](https://cognate-playground.hedy.dev)
+
+Source: [https://github.com/hedyhli/cognate-playground](https://github.com/hedyhli/cognate-playground)
+
 ### Building Cognate
 Currently, Cognate will run on Linux and MacOS systems. If you use Windows, then you can install Cognate on the Windows Subsystem for Linux. To build Cognate, you will need `make`, `flex`, `bison`, and a C compiler (currently supported are GCC, Clang, and TCC). After installing these, simply run:
 ```
