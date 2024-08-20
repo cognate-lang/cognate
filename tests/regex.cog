@@ -22,13 +22,14 @@ else
   "FAIL: Extended regex to identify decimal numbers";
 
 Let R4 be "-?([0-9]+)(.[0-9]+)?";
-Print If == Do Regex-match R4 "13.37" List ("13.37" "13" ".37")
+Print If == List (Do Regex-match R4 "13.37") List (True "13" ".37")
   "PASS: Capture sub-expressions for integer and fractional parts"
 else
   "FAIL: Capture sub-expressions for integer and fractional parts";
 
 Let R5 be "([[:alnum:]]+)";
-Print If Empty? Do Regex-match R5 "[->+<]"
-  "PASS: Empty sub-expressions match list to identify alphanumeric characters"
+Let B Do Regex-match R5 "[->+<]";
+Print If B
+  "FAIL: Empty sub-expressions match list to identify alphanumeric characters"
 else
-  "FAIL: Empty sub-expressions match list to identify alphanumeric characters";
+  "PASS: Empty sub-expressions match list to identify alphanumeric characters"

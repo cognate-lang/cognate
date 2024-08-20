@@ -4,6 +4,7 @@
 
 #include <stddef.h>
 #include <wchar.h>
+#include <wctype.h>
 #include <stdio.h>
 #include <assert.h>
 #include <limits.h>
@@ -1474,7 +1475,7 @@ void apply_regex(uint8_t* env)
 
 static BLOCK ___regex(STRING reg_str)
 {
-	regex_t* reg = gc_malloc(sizeof *reg);
+	regex_t* reg = gc_flatmalloc(sizeof *reg);
 	const int status = regcomp(reg, reg_str, REG_EXTENDED | REG_NEWLINE | REG_NOSUB);
 	errno = 0; // Hmmm
 	if unlikely(status)
@@ -1499,47 +1500,41 @@ void match_regex(uint8_t* env)
 
 	LIST lst = NULL;
 	if (found == 0) {
-		for (unsigned int g = 0; g < groups; g++)
+		for (unsigned int g = 1; g < groups ; g++)
+		{
+			size_t from = matches[g].rm_so;
+			if (from == (size_t)-1)
+			{
+				groups = g;
+				break;
+			}
+		}
+
+		for (unsigned int g = groups-1; g > 0; g--)
 		{
 			size_t from = matches[g].rm_so;
 			size_t to = matches[g].rm_eo;
 
-			if (from == (size_t)-1)
-				break;
-
-			cognate_list *node = gc_malloc(sizeof *node);
-			char* item = gc_strndup(str, to);
-			node->object = box_STRING(item + from);
-			node->next = lst;
-			lst = node;
+			char* item = gc_strndup((char*)str, to);
+			push(box_STRING(item + from));
 		}
-		cognate_list* prev = NULL;
-		cognate_list* curr = (cognate_list*)lst;
-		while (curr)
-		{
-			cognate_list* next = (cognate_list*)curr->next;
-			curr->next = prev;
-			prev = curr;
-			curr = next;
-		}
-		lst = prev;
 	}
-	push(box_LIST(lst));
+	push(box_BOOLEAN(found == 0));
 }
 
 static BLOCK ___regexDmatch(STRING reg_str)
 {
-	regex_t reg;
-	const int status = regcomp(&reg, reg_str, REG_EXTENDED | REG_NEWLINE);
+	regex_t* reg = gc_flatmalloc(sizeof(reg));
+	const int status = regcomp(reg, reg_str, REG_EXTENDED | REG_NEWLINE);
 	errno = 0;
 	if unlikely(status)
 	{
 		char reg_err[256];
-		regerror(status, &reg, reg_err, 256);
+		regerror(status, reg, reg_err, 256);
 		throw_error_fmt("Compile error (%s) in regex '%.32s'", reg_err, reg_str);
 	}
 
-	return (cognate_block){ .env = (void*)&reg, .fn = match_regex };
+	return (cognate_block){ .env = (void*)reg, .fn = match_regex };
 }
 
 
@@ -1656,7 +1651,7 @@ static LIST ___split(STRING sep, STRING str)
 
 static STRING ___uppercase(STRING str)
 {
-	char* converted = gc_strdup(str);
+	char* converted = gc_strdup((char*)str);
 	int len = 0;
 	for (char* c = converted; *c; c += len)
 	{
@@ -1671,7 +1666,7 @@ static STRING ___uppercase(STRING str)
 
 static STRING ___lowercase(STRING str)
 {
-	char* converted = gc_strdup(str);
+	char* converted = gc_strdup((char*)str);
 	int len = 0;
 	for (char* c = converted; *c; c += len)
 	{
