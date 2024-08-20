@@ -60,6 +60,8 @@
 {.name="ordinal",             .calltype=call, .argc=1, .args={string}, .returns=true, .rettype=number},
 {.name="character",           .calltype=call, .argc=1, .args={number}, .returns=true, .rettype=string},
 {.name="split",               .calltype=call, .argc=2, .args={string, string}, .returns=true, .rettype=list},
+{.name="uppercase",           .calltype=call, .argc=1, .args={string}, .returns=true, .rettype=string},
+{.name="lowercase",           .calltype=call, .argc=1, .args={string}, .returns=true, .rettype=string},
 {.name="floor",               .calltype=call, .argc=1, .args={number}, .returns=true, .rettype=number},
 {.name="round",               .calltype=call, .argc=1, .args={number}, .returns=true, .rettype=number},
 {.name="ceiling",             .calltype=call, .argc=1, .args={number}, .returns=true, .rettype=number},
