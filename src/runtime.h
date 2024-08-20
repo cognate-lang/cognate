@@ -1653,6 +1653,22 @@ static LIST ___split(STRING sep, STRING str)
 	return prev;
 }
 
+static STRING ___uppercase(STRING str)
+{
+    char* converted = gc_strdup(str);
+	for (char* c = converted; *c; c += mblen(str, MB_CUR_MAX))
+	    *c = toupper(*c);
+    return converted;
+}
+
+static STRING ___lowercase(STRING str)
+{
+    char* converted = gc_strdup(str);
+	for (char* c = converted; *c; c += mblen(str, MB_CUR_MAX))
+	    *c = tolower(*c);
+    return converted;
+}
+
 /*
 static BLOCK ___remember(BLOCK b)
 {
