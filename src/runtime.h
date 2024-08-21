@@ -1490,15 +1490,13 @@ static BLOCK ___regex(STRING reg_str)
 
 void match_regex(uint8_t* env)
 {
-	regex_t reg = *(regex_t*)env;
+	regex_t* reg = (regex_t*)env;
 	STRING str = unbox_STRING(pop());
-	size_t groups = reg.re_nsub + 1;
+	size_t groups = reg->re_nsub + 1;
 	regmatch_t matches[groups];
-	const int found = regexec(&reg, str, groups, matches, 0);
-	if unlikely(found != 0 && found != REG_NOMATCH)
-	throw_error_fmt("Regex failed matching string '%.32s'", str);
+	const int found = regexec(reg, str, groups, matches, 0);
+	if unlikely(found != 0 && found != REG_NOMATCH) throw_error_fmt("Regex failed matching string '%.32s'", str);
 
-	LIST lst = NULL;
 	if (found == 0) {
 		for (unsigned int g = 1; g < groups ; g++)
 		{
@@ -1524,7 +1522,7 @@ void match_regex(uint8_t* env)
 
 static BLOCK ___regexDmatch(STRING reg_str)
 {
-	regex_t* reg = gc_flatmalloc(sizeof(reg));
+	regex_t* reg = gc_flatmalloc(sizeof *reg);
 	const int status = regcomp(reg, reg_str, REG_EXTENDED | REG_NEWLINE);
 	errno = 0;
 	if unlikely(status)
