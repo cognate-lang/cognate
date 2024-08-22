@@ -58,32 +58,32 @@ Print If == 10 Tan Atan 10
 else
       "FAIL: Radian arctan";
 
-Print If == 0 Sinhd 0
+Print If == 0.17542037193601015 Sinhd 10
       "PASS: Degree hyperbolic sin"
 else
       "FAIL: Degree hyperbolic sin";
 
-Print If == 88.412007823281300034068408422172 Coshd 1
+Print If == 1.0001523125762564 Coshd 1
       "PASS: Degree hyperbolic cos"
 else
       "FAIL: Degree hyperbolic cos";
 
-Print If == 0 Tanhd 0
+Print If == 0.17278206351636377 Tanhd 10
       "PASS: Degree hyperbolic tan"
 else
       "FAIL: Degree hyperbolic tan";
 
-Print If == 0 Sinh 0
+Print If == 74.20321057778875 Sinh 5
       "PASS: Radian hyperbolic sin"
 else
       "FAIL: Radian hyperbolic sin";
 
-Print If == 1 Cosh 0
+Print If == 74.20994852478785 Cosh 5
       "PASS: Radian hyperbolic cos"
 else
       "FAIL: Radian hyperbolic cos";
 
-Print If == 0 Tanh 0
+Print If == Tanh 8 / Cosh 8 Sinh 8
       "PASS: Radian hyperbolic tan"
 else
       "FAIL: Radian hyperbolic tan";
