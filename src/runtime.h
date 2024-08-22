@@ -1845,17 +1845,17 @@ static NUMBER ___atan(NUMBER a)
 
 static NUMBER ___sinhd(NUMBER a)
 {
-	return radians_to_degrees(sinh(a));
+	return sinh(degrees_to_radians(a));
 }
 
 static NUMBER ___coshd(NUMBER a)
 {
-	return radians_to_degrees(cosh(a));
+	return cosh(degrees_to_radians(a));
 }
 
 static NUMBER ___tanhd(NUMBER a)
 {
-	return radians_to_degrees(tanh(a));
+	return tanh(degrees_to_radians(a));
 }
 
 static NUMBER ___sinh(NUMBER a)
