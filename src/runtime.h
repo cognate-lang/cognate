@@ -1309,12 +1309,6 @@ static BOOLEAN ___booleanX(BOOLEAN a){ return a; }
 static SYMBOL  ___symbolX(SYMBOL a)  { return a; }
 static IO      ___ioX(IO a)          { return a; }
 
-static BOOLEAN ___zeroX(NUMBER a)
-{
-	if unlikely(a != 0.0) type_error("zero", box_NUMBER(a));
-	return a;
-}
-
 static BOOLEAN ___match(ANY patt, ANY obj) { return match_objects(patt,obj); }
 
 static ANY ___first(LIST lst)
