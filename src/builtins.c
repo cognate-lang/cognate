@@ -65,6 +65,7 @@
 {.name="floor",               .calltype=call, .argc=1, .args={number}, .returns=true, .rettype=number},
 {.name="round",               .calltype=call, .argc=1, .args={number}, .returns=true, .rettype=number},
 {.name="ceiling",             .calltype=call, .argc=1, .args={number}, .returns=true, .rettype=number},
+{.name="abs",                 .calltype=call, .argc=1, .args={number}, .returns=true, .rettype=number},
 {.name="error",               .calltype=call, .argc=1, .args={string}},
 {.name="list",                .calltype=call, .argc=1, .args={block},       .returns=true, .rettype=list},
 {.name="number",              .calltype=call, .argc=1, .args={string},      .returns=true, .rettype=number},
