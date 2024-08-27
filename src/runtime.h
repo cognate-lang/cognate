@@ -294,6 +294,7 @@ static STRING ___character(NUMBER);
 static NUMBER ___floor(NUMBER);
 static NUMBER ___round(NUMBER);
 static NUMBER ___ceiling(NUMBER);
+static NUMBER ___abs(NUMBER);
 static void ___error(STRING);
 //static BLOCK ___precompute(BLOCK);
 static void ___wait(NUMBER);
@@ -1568,6 +1569,11 @@ static NUMBER ___round(NUMBER a)
 static NUMBER ___ceiling(NUMBER a)
 {
 	return ceil(a);
+}
+
+static NUMBER ___abs(NUMBER a)
+{
+	return fabs(a);
 }
 
 static void ___error(STRING str)
