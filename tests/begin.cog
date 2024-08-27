@@ -1,0 +1,14 @@
+Let reached UnreachableCode Box False;
+Let reached ReachableCode Box False;
+
+Begin (
+    Def Exit;
+    Set reached ReachableCode to True;
+    Exit;
+    Set reached UnreachableCode to True;
+);
+
+Print If And reached Unbox ReachableCode and Not reached Unbox UnreachableCode
+    "PASS: Begin"
+else
+    "FAIL: Begin";
