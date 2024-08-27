@@ -31,7 +31,7 @@ Def Until (
 );
 
 Def Times (
-	Let I be Integer!;
+	Let I be Of (Integer?);
 	Def B;
 
 	(
@@ -183,7 +183,7 @@ Def Map (
 );
 
 Def Discard (
-	Let N be Integer!;
+	Let N be Of (Integer?);
 	Do Times N (
 		Let L;
 		When Empty? L ( Error "Cannot Discard more elements than in list" );
@@ -192,7 +192,7 @@ Def Discard (
 );
 
 Def Take (
-	Let N be Integer!;
+	Let N be Of (Integer?);
 	Let Li be List!;
 
 	Reverse List (
@@ -212,7 +212,7 @@ Def Length (
 );
 
 Def Index (
-	Let N be Integer!;
+	Let N be Of (Integer?);
 	Let L be List!;
 
 	When < 0 N ( Error Join "Invalid index " Show N );
@@ -245,4 +245,12 @@ Def Assert (
 	Let Result be Boolean!;
 
 	Unless Result ( Error Join Join "Failed assertion: '" Assertion "'" );
+);
+
+Def Of as (
+	Def Predicate;
+	Let X;
+	Let Result be Predicate X;
+	Unless Result ( Error "Predicate failed" );
+	X;
 );

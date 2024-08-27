@@ -1273,12 +1273,6 @@ static BOOLEAN ___booleanX(BOOLEAN a){ return a; }
 static SYMBOL  ___symbolX(SYMBOL a)  { return a; }
 static IO      ___ioX(IO a)          { return a; }
 
-static NUMBER ___integerX(NUMBER a)
-{
-	if unlikely(a != (long)a) type_error("integer", box_NUMBER(a));
-	return a;
-}
-
 static BOOLEAN ___zeroX(NUMBER a)
 {
 	if unlikely(a != 0.0) type_error("zero", box_NUMBER(a));

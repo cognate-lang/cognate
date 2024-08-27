@@ -38,7 +38,6 @@
 {.name="number!",             .calltype=call, .argc=1, .args={number}, .returns=true, .rettype=number},
 {.name="symbol!",             .calltype=call, .argc=1, .args={symbol}, .returns=true, .rettype=symbol},
 {.name="io!",                 .calltype=call, .argc=1, .args={io}, .returns=true, .rettype=io},
-{.name="integer!",            .calltype=call, .argc=1, .args={number}, .returns=true, .rettype=number},
 {.name="zero!",               .calltype=call, .argc=1, .args={number}, .returns=true, .rettype=number},
 {.name="any!",                .calltype=call, .argc=1, .args={any},    .returns=true, .rettype=any},
 {.name="list!",               .calltype=call, .argc=1, .args={list},   .returns=true, .rettype=list},
