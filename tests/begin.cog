@@ -12,3 +12,59 @@ Print If And reached Unbox ReachableCode and Not reached Unbox UnreachableCode
     "PASS: Begin"
 else
     "FAIL: Begin";
+
+
+Let UnreachableList be Map (Box) over List (False False False);
+Let ReachableList be Map (Box) over List (False False False);
+
+Begin (
+    Def Level1;
+    Set Index 0 ReachableList to True;
+    Begin (
+        Def Level2;
+        Set Index 1 ReachableList to True;
+        Begin (
+            Def Level3;
+            Set Index 2 ReachableList to True;
+            exit from Level1;
+            Set First UnreachableList to True;
+        )
+        Set Index 1 UnreachableList to True;
+    )
+    Set Index 2 UnreachableList to True;
+);
+
+Print If And All are (Not reached from Unbox) in UnreachableList and
+             All are reached from (Unbox) in ReachableList then
+    "PASS: Exit from nested Begin 1"
+else
+    "PASS: Exit from nested Begin 1";
+
+
+For item in UnreachableList (Let I; Set I Not Unbox I);
+For item in ReachableList (Let I; Set I Not Unbox I);
+
+Begin (
+    Def Level1;
+    Set Index 0 ReachableList to True;
+    Begin (
+        Def Level2;
+        Set Index 1 ReachableList to True;
+        Begin (
+            Def Level3;
+            Set Index 2 ReachableList to True;
+            Do (
+                exit Level1;
+            );
+            Set First UnreachableList to True;
+        )
+        Set Index 1 UnreachableList to True;
+    )
+    Set Index 2 UnreachableList to True;
+);
+
+Print If And All are (Not reached from Unbox) in UnreachableList and
+             All are reached from (Unbox) in ReachableList then
+    "PASS: Exit from nested Begin 2"
+else
+    "PASS: Exit from nested Begin 2";
