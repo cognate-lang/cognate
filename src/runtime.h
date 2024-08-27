@@ -23,6 +23,11 @@
 #include <stdint.h>
 #include <sys/stat.h>
 #include <setjmp.h>
+
+#ifdef __TINYC__
+#define __nmatch
+#endif
+
 #include <regex.h>
 
 #define WORDSZ (sizeof(void*))
@@ -910,6 +915,9 @@ static NUMBER unbox_NUMBER(ANY box)
 {
 	if likely (box.type == number) return box.number;
 	type_error("number", box);
+	#ifdef __TINYC__
+	return 0.0;
+	#endif
 }
 
 __attribute__((hot))
@@ -923,6 +931,9 @@ static BOX unbox_BOX(ANY b)
 {
 	if likely (b.type == box) return b.box;
 	type_error("box", b);
+	#ifdef __TINYC__
+	return NULL;
+	#endif
 }
 
 __attribute__((hot))
@@ -936,6 +947,9 @@ static BOOLEAN unbox_BOOLEAN(ANY box)
 {
 	if likely (box.type == boolean) return box.boolean;
 	type_error("boolean", box);
+	#ifdef __TINYC__
+	return 0;
+	#endif
 }
 
 __attribute__((hot))
@@ -949,6 +963,9 @@ static STRING unbox_STRING(ANY box)
 {
 	if likely (box.type == string) return box.string;
 	type_error("string", box);
+	#ifdef __TINYC__
+	return NULL;
+	#endif
 }
 
 __attribute__((hot))
@@ -962,6 +979,9 @@ static LIST unbox_LIST(ANY box)
 {
 	if likely (box.type == list) return box.list;
 	type_error("list", box);
+	#ifdef __TINYC__
+	return NULL;
+	#endif
 }
 
 __attribute__((hot))
@@ -975,6 +995,9 @@ static SYMBOL unbox_SYMBOL(ANY box)
 {
 	if likely (box.type == symbol) return box.symbol;
 	type_error("list", box);
+	#ifdef __TINYC__
+	return NULL;
+	#endif
 }
 
 __attribute__((hot))
@@ -988,6 +1011,9 @@ static BLOCK unbox_BLOCK(ANY box)
 {
 	if likely (box.type == block) return box.block;
 	type_error("block", box);
+	#ifdef __TINYC__
+	return (struct cognate_block) {};
+	#endif
 }
 
 /*
@@ -1025,6 +1051,9 @@ static IO unbox_IO(ANY box)
 {
 	if likely (box.type == io) return box.io;
 	type_error("io", box);
+	#ifdef __TINYC__
+	return NULL;
+	#endif
 }
 
 __attribute__((hot))
@@ -1038,6 +1067,9 @@ static DICT unbox_DICT(ANY box)
 {
 	if likely (box.type == dict) return box.dict;
 	type_error("dict", box);
+	#ifdef __TINYC__
+	return NULL;
+	#endif
 }
 
 #define PAGE_SIZE 4096
@@ -1239,6 +1271,9 @@ static NUMBER ___random(NUMBER low, NUMBER high)
 	return r;
 invalid_range:
 	throw_error_fmt("Invalid range %.14g..%.14g", low, high);
+	#ifdef __TINYC__
+	return 0;
+	#endif
 }
 
 static void ___clear(void) { stack.cache.type = NIL; stack.top=stack.start; }
@@ -1395,6 +1430,9 @@ static STRING ___substring(NUMBER startf, NUMBER endf, STRING str)
 	return gc_strndup((char*)str, str_size + 1);
 invalid_range:
 	throw_error_fmt("Invalid range %.14g..%.14g", startf, endf);
+	#ifdef __TINYC__
+	return NULL;
+	#endif
 }
 
 
@@ -1419,6 +1457,9 @@ static NUMBER ___number(STRING str)
 	return num;
 cannot_parse:
 	throw_error_fmt("Cannot parse '%.32s' to a number", str);
+	#ifdef __TINYC__
+	return 0;
+	#endif
 }
 
 static STRING ___path(void)
