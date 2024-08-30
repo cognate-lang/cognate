@@ -824,7 +824,7 @@ void to_exe(module_t* mod)
 
 	char* normal_args[] = {
 		STR(CC), c_source_path, "-o", exe_path,
-		"-Ofast", "-flto", "-s", "-w",
+		"-O3", "-flto", "-s", "-w",
 		"-lm", "-Wall", "-Wpedantic", "-Wno-unused", NULL
 	};
 
@@ -2618,6 +2618,7 @@ void compute_locals(func_t* f)
 
 void compute_captures(func_t* f, word_list_t** ret, word_list_t* kinda_locals, func_list_t** tried)
 {
+	*tried = push_func(f, *tried);
 	for (ast_list_t* a = f->ops ; a ; a = a->next)
 		if (a->op->type == define)
 			kinda_locals = push_word(a->op->word, kinda_locals);
@@ -2631,8 +2632,7 @@ void compute_captures(func_t* f, word_list_t** ret, word_list_t* kinda_locals, f
 					func_t* called = a->op->func;
 					for (func_list_t* r = *tried ; r ; r=r->next)
 						if (called == r->func) goto end4;
-					*tried = push_func(called, *tried);
-					if (called != f) compute_captures(called, ret, kinda_locals, tried);
+					compute_captures(called, ret, kinda_locals, tried);
 end4:;
 					break;
 				}
@@ -2642,9 +2642,7 @@ end4:;
 					{
 						for (func_list_t* r = *tried ; r ; r=r->next)
 							if (called->func == r->func) goto end3;
-						*tried = push_func(called->func, *tried);
-						if (called->func != f)
-							compute_captures(called->func, ret, kinda_locals, tried);
+						compute_captures(called->func, ret, kinda_locals, tried);
 end3:;
 					}
 					break;
@@ -2661,8 +2659,7 @@ end3:;
 			case closure:
 				for (func_list_t* r = *tried ; r ; r=r->next)
 					if (a->op->func == r->func) goto end4;
-				*tried = push_func(a->op->func, *tried);
-				if (a->op->func != f) compute_captures(a->op->func, ret, kinda_locals, tried);
+				compute_captures(a->op->func, ret, kinda_locals, tried);
 				break;
 		}
 	}
