@@ -125,7 +125,6 @@ typedef struct cognate_stack
 {
 	ANYPTR start; // Pointer to start.
 	ANYPTR top;   // Pointer to top.
-	ANY cache;
 	ANYPTR absolute_start; // For the garbage collector
 } cognate_stack;
 
@@ -233,7 +232,6 @@ static void cleanup(void);
 static void push(ANY);
 static ANY pop(void);
 static ANY peek(void);
-static void flush_stack_cache(void);
 static int stack_length(void);
 
 // Builtin functions needed by compiled source file defined in functions.c
@@ -388,8 +386,8 @@ int main(int argc, char** argv)
 }
 static void cleanup(void)
 {
-	if unlikely(stack.top != stack.start || stack.cache.type)
-		throw_error_fmt("Exiting with %ti object(s) on the stack", stack.top - stack.start + (stack.cache.type != 0));
+	if unlikely(stack.top != stack.start)
+		throw_error_fmt("Exiting with %ti object(s) on the stack", stack.top - stack.start);
 }
 
 #ifdef DEBUG
@@ -455,7 +453,6 @@ ask:
 			exit(EXIT_SUCCESS);
 		case 's': case 'S':
 			// Stack
-			flush_stack_cache();
 			for (ANY* a = stack.top - 1;  a >= stack.start; --a)
 			{
 				fputs(show_object(*a, 0, NULL), stderr);
@@ -748,21 +745,17 @@ static void init_stack(void)
 {
 	stack.absolute_start = stack.top = stack.start
 		= mmap(0, system_memory/10, MEM_PROT, MEM_FLAGS, -1, 0);
-	stack.cache.type = 0;
 }
 
 __attribute__((hot))
 static void push(ANY object)
 {
-	if likely(stack.cache.type == NIL) { stack.cache = object; return; }
-	*stack.top++ = stack.cache;
-	stack.cache = object;
+	*stack.top++ = object;
 }
 
 __attribute__((hot))
 static ANY pop(void)
 {
-	if likely(stack.cache.type != NIL) { const ANY a = stack.cache; stack.cache.type = NIL; return a; }
 	if unlikely(stack.top == stack.start) throw_error("Stack underflow");
 	return *--stack.top;
 }
@@ -770,21 +763,13 @@ static ANY pop(void)
 __attribute__((hot))
 static ANY peek(void)
 {
-	if likely(stack.cache.type != NIL) return stack.cache;
 	if unlikely(stack.top == stack.start) throw_error("Stack underflow");
 	return *(stack.top - 1);
 }
 
-static void flush_stack_cache(void)
-{
-	if (stack.cache.type == NIL) return;
-	push(stack.cache);
-	pop();
-}
-
 static int stack_length(void)
 {
-	return stack.top - stack.start + (stack.cache.type != NIL);
+	return stack.top - stack.start;
 }
 
 static const char* lookup_type(cognate_type type)
@@ -1207,7 +1192,6 @@ static __attribute__((noinline,hot)) void gc_collect(void)
 	alloc[z] = 0;
 	bitmap[z][0] = ALLOC;
 
-	flush_stack_cache();
 	for (uintptr_t* root = (uintptr_t*)stack.absolute_start; root != (uintptr_t*)stack.top; ++root)
 		gc_collect_root(root);
 
@@ -1276,7 +1260,7 @@ invalid_range:
 	#endif
 }
 
-static void ___clear(void) { stack.cache.type = NIL; stack.top=stack.start; }
+static void ___clear(void) { stack.top=stack.start; }
 
 static BOOLEAN ___true(void)  { return 1; }
 static BOOLEAN ___false(void) { return 0; }
@@ -1355,14 +1339,12 @@ static BOOLEAN ___emptyQ(LIST lst)
 
 static LIST ___list(BLOCK expr)
 {
-	flush_stack_cache();
 	ANYPTR tmp_stack_start = stack.start;
 	stack.start = stack.top;
 	// Eval expr
 	call_block(expr);
 	// Move to a list.
 	cognate_list* lst = NULL;
-	flush_stack_cache();
 	size_t len = stack_length();
 	for (size_t i = 0; i < len; ++i)
 	{
@@ -1469,7 +1451,6 @@ static STRING ___path(void)
 static LIST ___stack(void)
 {
 	LIST lst = NULL;
-	flush_stack_cache();
 	for (size_t i = 0; i + stack.start < stack.top; ++i)
 	{
 		cognate_list* tmp = gc_malloc (sizeof *tmp);
@@ -1619,7 +1600,6 @@ static void ___wait(NUMBER seconds)
 /*
 static BLOCK ___precompute(BLOCK blk)
 {
-	flush_stack_cache();
 	ANYPTR tmp_stack_start = stack.start;
 	stack.start = stack.top;
 	blk();
@@ -2001,14 +1981,12 @@ static LIST ___empty (void)
 
 static DICT ___dict (BLOCK expr)
 {
-	flush_stack_cache();
 	ANYPTR tmp_stack_start = stack.start;
 	stack.start = stack.top;
 	// Eval expr
 	call_block(expr);
 	// Move to a list.
 	DICT d = NULL;
-	flush_stack_cache();
 	size_t len = stack_length();
 	if (len % 2 != 0) throw_error("Dict initialiser must be key-value pairs");
 	for (size_t i = 0; i < len; i += 2)
