@@ -127,6 +127,12 @@ _Noreturn void throw_error(char* message, where_t* where)
 	exit(-1);
 	*/
 
+	if (!where)
+	{
+		fputs(message, stderr);
+		exit(EXIT_FAILURE);
+	}
+
 	// Calculate width of the "[LINE_NUMBER]" bit
 	message = strdup(message);
 	char number_box[64];
@@ -1340,7 +1346,7 @@ void add_generics(module_t* mod)
 		tree->next->prev = tree;
 		tree->next->next = NULL;
 		insert_op_after(
-				make_op(static_call, f->func, NULL), tree);
+				make_op(static_call, f->func, f->func->ops->op->where), tree);
 		char* name = make_func_name();
 		func_t* f_ = make_func(tree, name);
 		f_->generic = true;
@@ -1456,15 +1462,15 @@ void _add_arguments(func_t* f)
 {
 	for (size_t i = 0 ; i < f->argc ; ++i)
 	{
-		insert_op_after(make_op(unpick, NULL, NULL), f->ops);
-		insert_op_after(make_op(load, NULL, NULL), f->ops);
+		insert_op_after(make_op(unpick, NULL, f->ops->op->where), f->ops);
+		insert_op_after(make_op(load, NULL, f->ops->op->where), f->ops);
 		f->args = push_val(make_value(any, f->ops), f->args);
 	}
 	if (f->returns)
 	{
 		ast_list_t* end = f->ops;
 		while (end->next) end = end->next;
-		insert_op_before(make_op(ret, NULL, NULL), end);
+		insert_op_before(make_op(ret, NULL, end->prev->op->where), end);
 		f->rettype = any;
 	}
 	f->args = reverse(f->args);
