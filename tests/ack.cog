@@ -1,0 +1,15 @@
+Def Ack (
+	Let X;
+	Let Y;
+
+	Do
+		If Zero? X ( + 1 Y )
+	 	If Zero? Y ( Ack of - 1 X and 1 )
+		else ( Ack of - 1 X and Ack X and - 1 Y )
+);
+
+Print If == 253 Ack 3 5
+	"PASS: Ackermann function"
+else
+	"FAIL: Ackermann function";
+
