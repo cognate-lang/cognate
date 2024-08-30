@@ -1383,18 +1383,21 @@ bool _determine_arguments(func_t* f)
 					else if (can_use_args && argc < 255 && !f->entry) argc++;
 					for (func_list_t* f = op->funcs ; f ; f = f->next)
 						changed |= _determine_arguments(f->func);
-					int min_argc = INT_MAX;
+					int max_argc = 0;
 					int stack = false;
-					int returns = true;
+					int returns = false;
 				   for (func_list_t* ff = op->funcs ; ff ; ff = ff->next)
 					{
-						if (min_argc > ff->func->argc) min_argc = ff->func->argc;
+						if (max_argc < ff->func->argc) max_argc = ff->func->argc;
 						stack |= ff->func->stack;
-						returns &= ff->func->returns;
+						returns |= ff->func->returns;
+						// If there are weird stack underflows and returns where there shouldn't be this bit is why
+						// This was originally int returns = true and returns &= ff->func->func->returns.
+						// But I changed it for the sake of optimisation - I *think* the adaptor functions should sort this out.
 					}
-					if (stack && registers > min_argc)
-						registers = min_argc;
-					for (size_t i = 0 ; i < min_argc ; ++i)
+					if (stack && registers > max_argc)
+						registers = max_argc;
+					for (size_t i = 0 ; i < max_argc ; ++i)
 					{
 						if (registers) registers--;
 						else if (can_use_args && argc < 255 && !f->entry) argc++;
@@ -3093,6 +3096,7 @@ void balance_branches(module_t* m)
 						val_list_t* adapt_args = NULL;
 						for (int i = 0 ; i < min_argc ; ++i)
 							adapt_args = push_val(make_value(any, NULL), adapt_args);
+
 						// generate adaptor functions.
 						for (func_list_t* fns = op->funcs ; fns ; fns = fns->next)
 						{
@@ -3328,7 +3332,7 @@ int main(int argc, char** argv)
 		compute_stack,
 		add_arguments,
 		add_generics,
-		balance_branches, // IDK if this is needed
+		balance_branches,
 		compute_stack,
 		add_registers,
 		shorten_references,
