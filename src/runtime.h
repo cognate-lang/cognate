@@ -1124,7 +1124,7 @@ static void* gc_flatmalloc(size_t sz)
 __attribute__((hot))
 static _Bool is_gc_ptr(uintptr_t object)
 {
-	return (uint64_t*)object - space[!z] < alloc[!z];
+	return (uintptr_t*)object - space[!z] < alloc[!z];
 }
 
 __attribute__((hot))
