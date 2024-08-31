@@ -136,7 +136,7 @@ _Noreturn void throw_error(char* message, where_t* where)
 	// Calculate width of the "[LINE_NUMBER]" bit
 	message = strdup(message);
 	char number_box[64];
-	sprintf(number_box, "[%zu] ", where->line);
+	sprintf(number_box, "[%s %zu:%zu] ", where->mod->path, where->line, where->col);
 	size_t offset = strlen(number_box) + where->col - 1;
 
 	// Ok now we need to actually get the line
