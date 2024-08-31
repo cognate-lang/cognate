@@ -1,5 +1,5 @@
 Def Fizzbuzz (
-	Let N;
+	Let N be Of ( Integer? );
 	Def Multiple as ( Zero? Modulo Swap N );
 	Print
 		If Multiple of 15 then "fizzbuzz"

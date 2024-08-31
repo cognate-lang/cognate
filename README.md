@@ -36,7 +36,7 @@ Cognate is a stack-oriented programming language. This means that all intermedia
 * Operation chaining
 
 ### Web playground
-Check out the interactive web playground - it runs Cognate programs client-side in the browser. It also has intelligent syntax highlightung, code folding, and error reporting in the editor.
+Check out the interactive web playground - it runs Cognate programs client-side in the browser. It also has intelligent syntax highlighting, code folding, and error reporting in the editor.
 
 Playground: [https://cognate-playground.hedy.dev](https://cognate-playground.hedy.dev)
 
