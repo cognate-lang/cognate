@@ -1,0 +1,7 @@
+Def F (
+	Print "PASS: Stop";
+	Stop;
+	Print "FAIL: Stop";
+);
+
+F;

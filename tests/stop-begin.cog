@@ -1,0 +1,8 @@
+Begin (
+	Def Exit;
+	Do (
+		Print "PASS: Stop in begin";
+		Stop;
+	);
+	Print "FAIL: Stop in begin";
+);
