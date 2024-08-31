@@ -1124,11 +1124,7 @@ static void* gc_flatmalloc(size_t sz)
 __attribute__((hot))
 static _Bool is_gc_ptr(uintptr_t object)
 {
-	const uintptr_t upper_bits = object & ~PTR_MASK;
-	if (upper_bits) return 0;
-	const uintptr_t index = (uintptr_t*)(object & PTR_MASK & ~7) - space[!z];
-	if (index >= alloc[!z]) return 0;
-	return 1;
+	return (uint64_t*)object - space[!z] < alloc[!z];
 }
 
 __attribute__((hot))
@@ -1146,13 +1142,12 @@ static void gc_collect_root(uintptr_t* restrict addr)
 	{
 		uintptr_t from = act_stk_top->from;
 		uintptr_t* to = act_stk_top->to;
-		const uintptr_t upper_bits = from & ~PTR_MASK;
 		const uintptr_t lower_bits = from & 7;
-		uintptr_t index = (uintptr_t*)(from & PTR_MASK & ~7) - space[!z];
+		uintptr_t index = (uintptr_t*)(from & ~7) - space[!z];
 		ptrdiff_t offset = 0;
 		while (bitmap[!z][index] == EMPTY) index--, offset++; // Ptr to middle of object
 		if (bitmap[!z][index] == FORWARD)
-			*to = lower_bits | upper_bits | (uintptr_t)((uintptr_t*)space[!z][index] + offset);
+			*to = lower_bits | (uintptr_t)((uintptr_t*)space[!z][index] + offset);
 		else
 		{
 			_Bool flat = bitmap[!z][index] == FLATALLOC;
@@ -1173,7 +1168,7 @@ static void gc_collect_root(uintptr_t* restrict addr)
 			}
 			space[!z][index] = (uintptr_t)buf; // Set forwarding address
 			bitmap[!z][index] = FORWARD;
-			*to = lower_bits | upper_bits | (uintptr_t)(buf + offset);
+			*to = lower_bits | (uintptr_t)(buf + offset);
 		}
 	}
 }
