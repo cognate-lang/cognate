@@ -50,7 +50,7 @@ typedef const char* restrict STRING;
 typedef const struct cognate_list* restrict LIST;
 typedef const char* restrict SYMBOL;
 typedef struct cognate_file* IO;
-typedef const struct cognate_dict* restrict DICT;
+typedef const struct cognate_table* restrict TABLE;
 
 typedef struct cognate_block
 {
@@ -69,7 +69,7 @@ typedef enum cognate_type
 	number,
 	string,
 	io,
-	dict,
+	table,
 } cognate_type;
 
 typedef struct cognate_object
@@ -84,7 +84,7 @@ typedef struct cognate_object
 		SYMBOL symbol;
 		NUMBER number;
 		IO io;
-		DICT dict;
+		TABLE table;
 	};
 	cognate_type type;
 } cognate_object;
@@ -100,13 +100,13 @@ MKEARLY(STRING);
 MKEARLY(LIST);
 MKEARLY(SYMBOL);
 
-typedef struct cognate_dict
+typedef struct cognate_table
 {
-	STRING key;
+	ANY key;
 	ANY value;
-	DICT child1;
-	DICT child2;
-} cognate_dict;
+	TABLE child1;
+	TABLE child2;
+} cognate_table;
 
 typedef struct cognate_list
 {
@@ -191,7 +191,7 @@ static void init_stack(void);
 static STRING show_object(const ANY object, const _Bool, char*);
 static void _Noreturn __attribute__((format(printf, 1, 2))) throw_error_fmt(const char* restrict const, ...);
 static void _Noreturn throw_error(const char* restrict const);
-static _Bool compare_objects(ANY, ANY);
+static ptrdiff_t compare_objects(ANY, ANY);
 static _Bool match_objects(ANY, ANY);
 static void destructure_lists(LIST, LIST);
 static void destructure_objects(ANY, ANY);
@@ -222,8 +222,8 @@ static BLOCK unbox_BLOCK(ANY);
 static ANY box_BLOCK(BLOCK);
 static IO unbox_IO(ANY);
 static ANY box_IO(IO);
-static DICT unbox_DICT(ANY);
-static ANY box_DICT(DICT);
+static TABLE unbox_TABLE(ANY);
+static ANY box_TABLE(TABLE);
 
 static NUMBER radians_to_degrees(NUMBER);
 static NUMBER degrees_to_radians(NUMBER);
@@ -235,14 +235,14 @@ static ANY peek(void);
 static int stack_length(void);
 
 // Builtin functions needed by compiled source file defined in functions.c
-static DICT ___insert(STRING, ANY, DICT);
+static TABLE ___insert(ANY, ANY, TABLE);
 static LIST ___empty(void);
 static ANY ___if(BOOLEAN, ANY, ANY);
 static void ___put(ANY);
 static void ___print(ANY);
 static NUMBER ___P(NUMBER, NUMBER);
 static NUMBER ___M(NUMBER, NUMBER);
-static NUMBER ___D(NUMBER, NUMBER);
+static NUMBER ___H(NUMBER, NUMBER);
 static NUMBER ___S(NUMBER, NUMBER);
 static NUMBER ___C(NUMBER, NUMBER);
 static NUMBER ___modulo(NUMBER, NUMBER);
@@ -279,7 +279,7 @@ static LIST ___push(ANY, LIST);
 static BOOLEAN ___emptyQ(LIST);
 static LIST ___list(BLOCK);
 static STRING ___join(STRING, STRING);
-static NUMBER ___stringDlength(STRING);
+static NUMBER ___stringHlength(STRING);
 static STRING ___substring(NUMBER, NUMBER, STRING);
 static STRING ___input(void);
 static IO ___open(STRING, STRING);
@@ -291,7 +291,7 @@ static LIST ___parameters(void);
 static void ___stop(void);
 static STRING ___show(ANY);
 static BLOCK ___regex(STRING);
-static BLOCK ___regexDmatch(STRING);
+static BLOCK ___regexHmatch(STRING);
 static NUMBER ___ordinal(STRING);
 static STRING ___character(NUMBER);
 static NUMBER ___floor(NUMBER);
@@ -330,7 +330,7 @@ static NUMBER ___cosh(NUMBER);
 static NUMBER ___tanh(NUMBER);
 
 static const char *lookup_type(cognate_type);
-static _Bool compare_lists(LIST, LIST);
+static ptrdiff_t compare_lists(LIST, LIST);
 static _Bool match_lists(LIST, LIST);
 static void handle_error_signal(int);
 static void assert_impure();
@@ -642,19 +642,19 @@ static void assert_impure(void)
 	if unlikely(pure) throw_error("Invalid operation for pure function");
 }
 
-static char* show_dict(DICT d, char* buffer)
+static char* show_table(TABLE d, char* buffer)
 {
 	if (!d) return buffer;
 
-	buffer = show_dict(d->child1, buffer);
+	buffer = show_table(d->child1, buffer);
 	buffer += strlen(buffer);
 
-	buffer = (char*)show_object(box_STRING(d->key), 0, buffer);
+	buffer = (char*)show_object(d->key, 0, buffer);
 	*buffer++ = ':';
 	buffer = (char*)show_object(d->value, 0, buffer);
 	*buffer++ = ' ';
 
-	buffer = show_dict(d->child2, buffer);
+	buffer = show_table(d->child2, buffer);
 	buffer += strlen(buffer);
 
 	return buffer;
@@ -670,8 +670,8 @@ static STRING show_object (const ANY object, const _Bool raw_strings, char* buff
 	{
 		case NIL: throw_error("This shouldn't happen");
 					 break;
-		case dict: sprintf(buffer, "{ "); buffer + strlen(buffer);
-					  buffer = show_dict(object.dict, buffer);
+		case table: sprintf(buffer, "{ "); buffer + strlen(buffer);
+					  buffer = show_table(object.table, buffer);
 					  sprintf(buffer, "}"); buffer += strlen(buffer);
 					  break;
 		case number: sprintf(buffer, "%.14g", object.number);
@@ -787,35 +787,46 @@ static const char* lookup_type(cognate_type type)
 	}
 }
 
-static _Bool compare_lists(LIST lst1, LIST lst2)
+static ptrdiff_t compare_lists(LIST lst1, LIST lst2)
 {
-	if (!lst1) return !lst2;
-	if (!lst2) return 0;
-	while (compare_objects(lst1->object, lst2->object))
+	if (!lst1) return -!!lst2;
+	if (!lst2) return 1;
+	ptrdiff_t diff;
+	while (!(diff = compare_objects(lst1->object, lst2->object)))
 	{
-		if (!lst1->next) return !lst2->next;
-		if (!lst2->next) return 0;
+		if (!lst1->next) return -!!lst2->next;
+		if (!lst2->next) return 1;
 		lst1 = lst1 -> next;
 		lst2 = lst2 -> next;
 	}
-	return 0;
+	return diff;
 }
 
-
-static _Bool compare_objects(ANY ob1, ANY ob2)
+static ptrdiff_t compare_blocks(BLOCK b1, BLOCK b2)
 {
-	if (ob1.type != ob2.type) return 0;
+	if (b1.fn != b2.fn) return *(char**)&b1.fn - *(char**)&b2.fn;
+	else return (char*)b1.env - (char*)b2.env;
+}
+
+static ptrdiff_t compare_numbers(NUMBER n1, NUMBER n2)
+{
+	double diff = n1 - n2;
+	if (fabs(diff) <= 0.5e-14 * fabs(n1)) return 0;
+	else return diff > 0 ? 1 : -1;
+}
+
+static ptrdiff_t compare_objects(ANY ob1, ANY ob2)
+{
+	if (ob1.type != ob2.type) return ob1.type - ob2.type;
 	switch (ob1.type)
 	{
-		case number:
-			return fabs(unbox_NUMBER(ob1) - unbox_NUMBER(ob2))
-				<= 0.5e-14 * fabs(unbox_NUMBER(ob1));
-		case boolean: return unbox_BOOLEAN(ob1) == unbox_BOOLEAN(ob2);
-		case string:  return !strcmp(unbox_STRING(ob1), unbox_STRING(ob2));
-		case symbol:  return unbox_SYMBOL(ob1) == unbox_SYMBOL(ob2);
+		case number:  return compare_numbers(unbox_NUMBER(ob1), unbox_NUMBER(ob2));
+		case boolean: return unbox_BOOLEAN(ob1) - unbox_BOOLEAN(ob2);
+		case string:  return strcmp(unbox_STRING(ob1), unbox_STRING(ob2));
+		case symbol:  return unbox_SYMBOL(ob1) - unbox_SYMBOL(ob2);
 		case list:    return compare_lists(unbox_LIST(ob1), unbox_LIST(ob2));
-		case block:   throw_error("Cannot compare blocks");
-		case box:     return compare_objects(*unbox_BOX(ob1), *unbox_BOX(ob2));
+		case block:   return compare_blocks(unbox_BLOCK(ob1), unbox_BLOCK(ob2));
+		case box:     return (char*)unbox_BOX(ob1) - (char*)unbox_BOX(ob2);
 		default:      return 0; // really shouldn't happen
 	}
 }
@@ -1042,16 +1053,16 @@ static IO unbox_IO(ANY box)
 }
 
 __attribute__((hot))
-static ANY box_DICT(DICT d)
+static ANY box_TABLE(TABLE d)
 {
-	return (ANY) {.type = dict, .dict = d};
+	return (ANY) {.type = table, .table = d};
 }
 
 __attribute__((hot))
-static DICT unbox_DICT(ANY box)
+static TABLE unbox_TABLE(ANY box)
 {
-	if likely (box.type == dict) return box.dict;
-	type_error("dict", box);
+	if likely (box.type == table) return box.table;
+	type_error("table", box);
 	#ifdef __TINYC__
 	return NULL;
 	#endif
@@ -1234,7 +1245,7 @@ static void ___print(ANY a) { assert_impure(); puts(show_object(a, 1, NULL)); }
 
 static NUMBER ___P(NUMBER a, NUMBER b) { return a + b; } // Add cannot produce NaN.
 static NUMBER ___M(NUMBER a, NUMBER b) { return a * b; }
-static NUMBER ___D(NUMBER a, NUMBER b) { return b - a; }
+static NUMBER ___H(NUMBER a, NUMBER b) { return b - a; }
 static NUMBER ___S(NUMBER a, NUMBER b) { return b / a; }
 static NUMBER ___C(NUMBER a, NUMBER b) { return pow(b, a); }
 static NUMBER ___modulo(NUMBER a, NUMBER b) { return b - a * floor(b / a); }
@@ -1268,8 +1279,8 @@ static BOOLEAN ___or(BOOLEAN a, BOOLEAN b) { return a || b; }
 static BOOLEAN ___and(BOOLEAN a, BOOLEAN b)   { return a && b; }
 static BOOLEAN ___xor(BOOLEAN a, BOOLEAN b) { return a ^ b;  }
 static BOOLEAN ___not(BOOLEAN a)               { return !a;     }
-static BOOLEAN ___EE(ANY a, ANY b)  { return compare_objects(a,b); }
-static BOOLEAN ___XE(ANY a, ANY b) { return !compare_objects(a,b); }
+static BOOLEAN ___EE(ANY a, ANY b)  { return !compare_objects(a,b); }
+static BOOLEAN ___XE(ANY a, ANY b) { return compare_objects(a,b); }
 static BOOLEAN ___G(NUMBER a, NUMBER b)  { return a < b; }
 static BOOLEAN ___L(NUMBER a, NUMBER b)  { return a > b; }
 static BOOLEAN ___GE(NUMBER a, NUMBER b) { return a <= b; }
@@ -1368,7 +1379,7 @@ static STRING ___join(STRING s1, STRING s2)
  	return result;
 }
 
-static NUMBER ___stringDlength(STRING str)
+static NUMBER ___stringHlength(STRING str)
 {
 	size_t len = 0;
 	for (; *str ; str += mblen(str, MB_CUR_MAX), ++len);
@@ -1531,7 +1542,7 @@ void match_regex(uint8_t* env)
 	push(box_BOOLEAN(found == 0));
 }
 
-static BLOCK ___regexDmatch(STRING reg_str)
+static BLOCK ___regexHmatch(STRING reg_str)
 {
 	regex_t* reg = gc_flatmalloc(sizeof *reg);
 	const int status = regcomp(reg, reg_str, REG_EXTENDED | REG_NEWLINE);
@@ -1901,7 +1912,7 @@ static IO ___open(STRING path, STRING mode)
 	return io;
 }
 
-static STRING ___readDfile(IO io)
+static STRING ___readHfile(IO io)
 {
 	assert_impure();
 	// Read a file to a string.
@@ -1930,12 +1941,12 @@ static BOOLEAN ___openQ(IO io)
 	return (BOOLEAN)io->file;
 }
 
-static STRING ___fileDname(IO io)
+static STRING ___fileHname(IO io)
 {
 	return io->path;
 }
 
-static STRING ___fileDmode(IO io)
+static STRING ___fileHmode(IO io)
 {
 	return io->mode; // TODO symbol
 }
@@ -1979,28 +1990,28 @@ static LIST ___empty (void)
 	return NULL;
 }
 
-static DICT ___dict (BLOCK expr)
+static TABLE ___table (BLOCK expr)
 {
 	ANYPTR tmp_stack_start = stack.start;
 	stack.start = stack.top;
 	// Eval expr
 	call_block(expr);
 	// Move to a list.
-	DICT d = NULL;
+	TABLE d = NULL;
 	size_t len = stack_length();
-	if (len % 2 != 0) throw_error("Dict initialiser must be key-value pairs");
+	if (len % 2 != 0) throw_error("table initialiser must be key-value pairs");
 	for (size_t i = 0; i < len; i += 2)
 	{
-		STRING key = unbox_STRING(stack.start[i+1]);
+		ANY key = stack.start[i+1];
 		ANY value = stack.start[i];
-		DICT ptr = d;
-		cognate_dict** assign = (cognate_dict**)&d;
+		TABLE ptr = d;
+		cognate_table** assign = (cognate_table**)&d;
 		while (ptr != NULL)
 		{
-			long diff = strcmp(ptr->key, key);
-			if (diff > 0) { assign = (cognate_dict**)&ptr->child1 ; ptr = ptr->child1; }
-			else if (diff < 0) { assign = (cognate_dict**)&ptr->child2 ; ptr = ptr->child2; }
-			else throw_error("duplicate keys in Dict initialiser");
+			ptrdiff_t diff = compare_objects(ptr->key, key);
+			if (diff > 0) { assign = (cognate_table**)&ptr->child1 ; ptr = ptr->child1; }
+			else if (diff < 0) { assign = (cognate_table**)&ptr->child2 ; ptr = ptr->child2; }
+			else throw_error("duplicate keys in table initialiser");
 		}
 
 		*assign = gc_malloc(sizeof (**assign));
@@ -2014,14 +2025,14 @@ static DICT ___dict (BLOCK expr)
 	return d;
 }
 
-static DICT ___insert(STRING key, ANY value, DICT d)
+static TABLE ___insert(ANY key, ANY value, TABLE d)
 {
-	// TODO at the moment dicts are UNBALANCED!!
+	// TODO at the moment tables are UNBALANCED!!
 	// This is obviously bad performance-wise and means real-life performance is not O(log(n)).
-	// Thus at some point we need to balance all these dicts - preserving all immutable references!
-	long diff;
-	cognate_dict* D = gc_malloc(sizeof *D);
-	if (d == NULL || (diff = strcmp(d->key, key)) == 0)
+	// Thus at some point we need to balance all these tables - preserving all immutable references!
+	ptrdiff_t diff;
+	cognate_table* D = gc_malloc(sizeof *D);
+	if (d == NULL || (diff = compare_objects(d->key, key)) == 0)
 	{
 		D->child1 = d ? d->child1 : NULL;
 		D->child2 = d ? d->child2 : NULL;
@@ -2046,15 +2057,15 @@ static DICT ___insert(STRING key, ANY value, DICT d)
 	return D;
 }
 
-static ANY ___get(STRING key, DICT d)
+static ANY ___D(ANY key, TABLE d)
 {
-	if (d == NULL) throw_error_fmt("%s is not in dictionary", key);
+	if (d == NULL) throw_error_fmt("%s is not in table", show_object(key, 0, NULL));
 
-	long diff = strcmp(d->key, key);
+	ptrdiff_t diff = compare_objects(d->key, key);
 
 	if (diff == 0) return d->value;
-	else if (diff > 0) return ___get(key, d->child1);
-	else return ___get(key, d->child2);
+	else if (diff > 0) return ___D(key, d->child1);
+	else return ___D(key, d->child2);
 }
 
 // ---------- ACTUAL PROGRAM ----------

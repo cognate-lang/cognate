@@ -61,3 +61,17 @@ Do (
 		then ( Print X ; Print Y )
 		else ( )
 );
+
+Let H be 5;
+Let B1 be ( Print H );
+Let B2 be ( Print H );
+
+Print If != B1 B2
+	"PASS: Comparing different blocks"
+else
+	"FAIL: Comparing different blocks";
+
+Print If == B1 B1
+	"PASS: Comparing the same block"
+else
+	"FAIL: Comparing the same block";
