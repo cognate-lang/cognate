@@ -1,6 +1,9 @@
 // ---------- RUNTIME HEADER ----------
 #define _GNU_SOURCE
+
+#ifndef __TINYC__
 #define _FORTIFY_SOURCE 2
+#endif
 
 #include <stddef.h>
 #include <wchar.h>
@@ -49,7 +52,7 @@ typedef double NUMBER;
 typedef const char* restrict STRING;
 typedef const struct cognate_list* restrict LIST;
 typedef const char* restrict SYMBOL;
-typedef struct cognate_file* IO;
+typedef struct cognate_file* restrict IO;
 typedef const struct cognate_table* restrict TABLE;
 
 typedef struct cognate_block
@@ -384,6 +387,7 @@ int main(int argc, char** argv)
 	fn0();
 	cleanup();
 }
+
 static void cleanup(void)
 {
 	if unlikely(stack.top != stack.start)
@@ -1086,15 +1090,7 @@ static void gc_init(void)
 	bitmap[1][0] = ALLOC;
 }
 
-__attribute__((hot))
-static _Bool is_heap_ptr(void* ptr)
-{
-	const uint64_t index = (uintptr_t*)ptr - space[!z];
-	if (index >= alloc[!z]) return 0;
-	return 1;
-}
-
-__attribute__((malloc, hot, assume_aligned(sizeof(uint64_t)), alloc_size(1), returns_nonnull))
+__attribute__((noinline, hot, assume_aligned(sizeof(uint64_t)), returns_nonnull))
 static void* gc_malloc(size_t sz)
 {
 	static ptrdiff_t interval = 1024l*1024l*10;
@@ -1115,7 +1111,7 @@ static void* gc_malloc(size_t sz)
 	return buf;
 }
 
-__attribute__((malloc, hot, assume_aligned(sizeof(uint64_t)), alloc_size(1), returns_nonnull))
+__attribute__((noinline, hot, assume_aligned(sizeof(uint64_t)), alloc_size(1), returns_nonnull))
 static void* gc_flatmalloc(size_t sz)
 {
 	static ptrdiff_t interval = 1024l*1024l*10;
@@ -1190,6 +1186,24 @@ static void gc_collect_root(uintptr_t* restrict addr)
 
 static __attribute__((noinline,hot)) void gc_collect(void)
 {
+
+	/*
+	printf("BEFORE:\n");
+	for (int Z = 0 ; Z < 2 ; ++Z)
+	{
+		for (int i = 0 ; i <= alloc[Z] ; ++i) switch(bitmap[Z][i])
+		{
+			case EMPTY: fputc('-', stdout); break;
+			case ALLOC: fputc('A', stdout); break;
+			case FLATALLOC: fputc('a', stdout); break;
+			case FORWARD: printf("%zu", (uintptr_t*)space[Z][i] - space[!Z]); break;
+		}
+		if (Z == z) printf(" (active)");
+		fputc('\n', stdout);
+	}
+	*/
+
+
 	/*
 	clock_t start, end;
 	double cpu_time_used;
@@ -1216,6 +1230,21 @@ static __attribute__((noinline,hot)) void gc_collect(void)
 	printf("%lf seconds for %ziMB -> %ziMB\n", (double)(end - start) / CLOCKS_PER_SEC, heapsz * 8 /1024/1024, alloc[z] * 8 / 1024/1024);
 	*/
 
+	/*
+	printf("AFTER:\n");
+	for (int Z = 0 ; Z < 2 ; ++Z)
+	{
+		for (int i = 0 ; i <= alloc[Z] ; ++i) switch(bitmap[Z][i])
+		{
+			case EMPTY: fputc('-', stdout); break;
+			case ALLOC: fputc('A', stdout); break;
+			case FLATALLOC: fputc('a', stdout); break;
+			case FORWARD: printf("%zu", (uintptr_t*)space[Z][i] - space[!Z]); break;
+		}
+		if (Z == z) printf(" (active)");
+		fputc('\n', stdout);
+	}
+	*/
 	longjmp(a, 1);
 }
 
