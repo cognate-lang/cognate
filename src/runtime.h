@@ -333,7 +333,7 @@ static const char *lookup_type(cognate_type);
 static ptrdiff_t compare_lists(LIST, LIST);
 static _Bool match_lists(LIST, LIST);
 static void handle_error_signal(int);
-static void assert_impure();
+static void assert_impure(void);
 
 #ifdef DEBUG
 static _Bool debug = 0;
@@ -344,7 +344,7 @@ static size_t debug_lineno = 0;
 static int _argc;
 static char** _argv;
 
-static void fn0();
+static void fn0(void);
 
 int main(int argc, char** argv)
 {
@@ -546,7 +546,8 @@ static void print_backtrace(int n, const backtrace* b, int last_spaces)
 {
 	if (!b || !n) return;
 	int len = strlen(b->name);
-	const char* ln = b->line_str;
+	char* ln = strdup(b->line_str);
+	char* tabs = ln;
 	ssize_t col = b->col;
 	while (*ln)
 	{
@@ -554,8 +555,7 @@ static void print_backtrace(int n, const backtrace* b, int last_spaces)
 		ln++;
 		col--;
 	}
-	char* tabs;
-	for  (char* tabs ; *tabs ; tabs++) if (*tabs == '\t') *tabs = ' ';
+	for  ( ; *tabs ; tabs++) if (*tabs == '\t') *tabs = ' ';
 	char pos[128];
 	sprintf(pos, "[%s %zi:%zi]", b->file, b->line, b->col);
 	int spaces = (strlen(pos)) + col - len/2 - 1;
