@@ -743,7 +743,7 @@ static STRING show_object (const ANY object, const _Bool raw_strings, char* buff
 			{
 				buffer = (char*)show_object(l->object, 0, buffer);
 				if (!l->next) break;
-				*buffer++ = ',';
+				//*buffer++ = ',';
 				*buffer++ = ' ';
 			}
 			*buffer++ = ')';
@@ -767,11 +767,9 @@ static STRING show_object (const ANY object, const _Bool raw_strings, char* buff
 			*buffer++ = '[';
 			if (detect_cycle(b, *b))
 			{
-				*buffer++ = ' ';
 				*buffer++ = '.';
 				*buffer++ = '.';
 				*buffer++ = '.';
-				*buffer++ = ' ';
 			}
 			else
 				buffer = (char*)show_object(*b, 0, buffer);

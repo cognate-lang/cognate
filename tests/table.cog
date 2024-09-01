@@ -40,3 +40,8 @@ Print If == "baz" . \foo T2
 	"PASS: Table insertion"
 else
 	"FAIL: Table insertion";
+
+Print If == "{ foo:\"bar\" \"foo\":bar }" Show Table ( \foo "bar" and "foo" \bar )
+	"PASS: Printing a table"
+else
+	"FAIL: Printing a table";

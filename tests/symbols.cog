@@ -5,3 +5,7 @@ Print If != \foo \bar
 Print If == \foo \foo
 	"PASS: Comparing the same symbol"
 	"FAIL: Comparing the same symbol";
+
+Print If == "foo" Show \foo
+	"PASS: Printing a symbol"
+	"FAIL: Printing a symbol";

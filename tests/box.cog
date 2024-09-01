@@ -1,0 +1,36 @@
+Let X be Box 10;
+
+Print If == 10 Unbox X
+	"PASS: Boxing and unboxing"
+else
+	"FAIL: Boxing and unboxing";
+
+Set X to 11;
+
+Print If == 11 Unbox X
+	"PASS: Setting box to different value"
+else
+	"FAIL: Setting box to different value";
+
+Let L be Map (Box) over Range 1 to 100;
+
+For each in L ( Let X ; Set X to + 1 Unbox X );
+
+Print If == 49 Unbox Index 47 L
+	"PASS: Setting each element in list of boxes"
+else
+	"FAIL: Setting each element in list of boxes";
+
+Print If == "[11]" Show X
+	"PASS: Printing simple box to string"
+else
+	"FAIL: Printing simple box to string";
+
+
+Let C be Box \waow;
+Set C to C;
+
+Print If == "[[...]]" Show Box C
+	"PASS: Printing cyclic box"
+else
+	"FAIL: Printing cyclic box";
