@@ -110,9 +110,9 @@
 {.name="cosh",                  .calltype=call, .argc=1, .args={number},      .returns=true, .rettype=number},
 {.name="tanh",                  .calltype=call, .argc=1, .args={number},      .returns=true, .rettype=number},
 
-{.name="dict",                  .calltype=call, .argc=1, .args={block}, .returns=true, .rettype=dict},
-{.name="insert",                .calltype=call, .argc=3, .args={string, any, dict}, .returns=true, .rettype=dict},
-{.name="get",                   .calltype=call, .argc=2, .args={string, dict}, .returns=true, .rettype=any},
+{.name="table",                 .calltype=call, .argc=1, .args={block}, .returns=true, .rettype=table},
+{.name="insert",                .calltype=call, .argc=3, .args={any, any, table}, .returns=true, .rettype=table},
+{.name=".",                     .calltype=call, .argc=2, .args={any, table}, .returns=true, .rettype=any},
 
 /* Builtin stack operations */
 //{.name="drop",                .calltype=stack_op, .stack_shuffle=&drop_register},
