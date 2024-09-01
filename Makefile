@@ -35,6 +35,10 @@ $(TESTS): cognac
 	@rm -f $@.log $@.c $@
 	./cognac $@.cog > $@.log
 	./$@ >> $@.log
-	./cognac $@.cog -debug >> $@.log
-	./$@ >> $@.log
+	./cognac $@.cog -debug > $@-debug.log
+	./$@ >> $@-debug.log
+	./cognac $@.cog -GCTEST > $@-GCTEST.log
+	./$@ >> $@-GCTEST.log
 	@! grep "^FAIL" $@.log --color
+	@! grep "^FAIL" $@-debug.log --color
+	@! grep "^FAIL" $@-GCTEST.log --color

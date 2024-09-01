@@ -32,6 +32,7 @@ int usleep (unsigned int);
 char* strdup (const char*);
 
 bool debug = false;
+bool gc_test = false;
 
 static bool is_prelude(module_t* mod)
 {
@@ -820,13 +821,15 @@ void to_exe(module_t* mod)
 	char* debug_args[] = {
 		STR(CC), c_source_path, "-o", exe_path,
 		"-O0", "-ggdb3", "-g", "-rdynamic", "-DDEBUG",
-		"-lm", "-Wall", "-Wpedantic", "-Wno-unused", NULL
+		"-lm", "-Wall", "-Wpedantic", "-Wno-unused",
+		gc_test ? "-DGCTEST" : NULL, NULL
 	} ;
 
 	char* normal_args[] = {
 		STR(CC), c_source_path, "-o", exe_path,
 		"-O3", "-flto", "-s", "-w",
-		"-lm", "-Wall", "-Wpedantic", "-Wno-unused", NULL
+		"-lm", "-Wall", "-Wpedantic", "-Wno-unused",
+		gc_test ? "-DGCTEST" : NULL, NULL
 	};
 
 	char** args = debug ? debug_args : normal_args;
@@ -3283,6 +3286,7 @@ int main(int argc, char** argv)
 	for (int i = 1 ; i < argc ; ++i)
 	{
 		if (!strcmp(argv[i], "-debug")) debug = true;
+		else if (!strcmp(argv[i], "-GCTEST")) gc_test = true;
 		else
 		{
 			char* ext = strrchr(argv[i], '.');

@@ -1099,7 +1099,9 @@ static void* gc_malloc(size_t sz)
 {
 	static ptrdiff_t interval = 1024l*1024l*10;
 	interval -= sz;
+	#ifndef GCTEST
 	if unlikely(interval < 0)
+	#endif
 	{
 		gc_collect();
 		interval = 1024l*1024l*10l + alloc[z] * 6;
@@ -1118,7 +1120,9 @@ static void* gc_flatmalloc(size_t sz)
 {
 	static ptrdiff_t interval = 1024l*1024l*10;
 	interval -= sz;
+	#ifndef GCTEST
 	if unlikely(interval < 0)
+	#endif
 	{
 		gc_collect();
 		interval = 1024l*1024l*10l + alloc[z] * 6;
