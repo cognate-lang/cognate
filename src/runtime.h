@@ -1158,7 +1158,7 @@ static void gc_collect_root(uintptr_t* restrict addr)
 			for (;bitmap[!z][index+sz] == EMPTY;sz++);
 			alloc[z] += sz;
 			//assert(bitmap[z][alloc[z]] == EMPTY);
-			bitmap[z][alloc[z]] = ALLOC;
+			bitmap[z][alloc[z]] = bitmap[!z][index];
 			for (size_t i = 0;i < sz;i++)
 			{
 				uintptr_t from = space[!z][index+i];
