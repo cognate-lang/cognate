@@ -1957,6 +1957,7 @@ static void oh_no(uint8_t* env)
 	longjmp(*(jmp_buf*)env, 1);
 }
 
+__attribute__((returns_twice))
 static void ___begin(BLOCK f)
 {
 	jmp_buf b;
