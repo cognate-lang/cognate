@@ -34,6 +34,7 @@
 
 #include <regex.h>
 
+#define PAGE_SIZE 4096
 #define WORDSZ (sizeof(void*))
 
 #define INITIAL_READ_SIZE 64
@@ -336,7 +337,7 @@ static NUMBER ___tanh(NUMBER);
 static const char *lookup_type(cognate_type);
 static ptrdiff_t compare_lists(LIST, LIST);
 static _Bool match_lists(LIST, LIST);
-static void handle_error_signal(int);
+static void handle_error_signal(int, siginfo_t*, void *);
 static void assert_impure(void);
 
 #ifdef DEBUG
@@ -378,8 +379,13 @@ int main(int argc, char** argv)
 		cmdline_parameters = tmp;
 	}
 	// Bind error signals.
-	char signals[] = { SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGABRT, SIGBUS, SIGFPE, SIGPIPE, SIGTERM, SIGCHLD };
-	for (size_t i = 0; i < sizeof(signals); ++i) signal(signals[i], handle_error_signal);
+	struct sigaction error_signal_action;
+   error_signal_action.sa_sigaction = handle_error_signal;
+   sigemptyset(&error_signal_action.sa_mask);
+   error_signal_action.sa_flags = SA_SIGINFO;
+	char signals[] = { SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGABRT, SIGBUS, SIGFPE, SIGPIPE, SIGTERM, SIGCHLD, SIGSEGV };
+	for (size_t i = 0; i < sizeof(signals); ++i)
+		if (sigaction(signals[i], &error_signal_action, NULL) == -1) throw_error("couldn't install signal handler");
 	// Initialize the stack.
 	init_stack();
 #ifdef DEBUG
@@ -637,9 +643,17 @@ static _Noreturn void throw_error(const char* restrict const msg)
 	throw_error_fmt("%s", msg);
 }
 
-static void handle_error_signal(int sig)
+static void handle_error_signal(int sig, siginfo_t *info, void *ucontext)
 {
-	throw_error_fmt("Recieved signal %i (%s)", sig, strsignal(sig));
+	if (sig == SIGSEGV)
+	{
+		char* addr = info->si_addr;
+		if (addr >= (char*)stack.absolute_start && addr <= (char*)stack.absolute_start + system_memory/10 + PAGE_SIZE)
+			throw_error_fmt("Stack overflow (%zu items on the stack)", stack.top - stack.absolute_start);
+		else
+			throw_error("Memory error");
+	}
+	else throw_error_fmt("Recieved signal %i (%s)", sig, strsignal(sig));
 }
 
 static void assert_impure(void)
@@ -769,7 +783,7 @@ static STRING show_object (const ANY object, const _Bool raw_strings, char* buff
 static void init_stack(void)
 {
 	stack.absolute_start = stack.top = stack.start
-		= mmap(0, system_memory/10, MEM_PROT, MEM_FLAGS, -1, 0);
+		= mmap(0, system_memory/10 - PAGE_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
 }
 
 __attribute__((hot))
@@ -1093,7 +1107,6 @@ static TABLE unbox_TABLE(ANY box)
 	#endif
 }
 
-#define PAGE_SIZE 4096
 
 #define EMPTY     0x0
 #define ALLOC     0x1
@@ -1105,8 +1118,8 @@ static void gc_init(void)
 	system_memory = sysconf(_SC_PHYS_PAGES) * 4096;
 	bitmap[0] = mmap(0, system_memory/18, MEM_PROT, MEM_FLAGS, -1, 0);
 	bitmap[1] = mmap(0, system_memory/18, MEM_PROT, MEM_FLAGS, -1, 0);
-	space[0]  = mmap(0, (system_memory/18)*8, MEM_PROT, MEM_FLAGS, -1, 0);
-	space[1]  = mmap(0, (system_memory/18)*8, MEM_PROT, MEM_FLAGS, -1, 0);
+	space[0]  = mmap(0, (system_memory/18)*8 - PAGE_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
+	space[1]  = mmap(0, (system_memory/18)*8 - PAGE_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
 	bitmap[0][0] = ALLOC;
 	bitmap[1][0] = ALLOC;
 }
