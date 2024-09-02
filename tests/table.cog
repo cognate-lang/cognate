@@ -50,3 +50,8 @@ Print If And Has \foo T Not Has \bar T
 	"PASS: Has"
 else
 	"FAIL: Has";
+
+Let X be Box Table ();
+
+For each in Range 1 to 1000 ( Let I ; Set X to Insert I is I into Unbox X );
+For each in Range 1 to 1000 ( Let I ; Drop Has I Unbox X );

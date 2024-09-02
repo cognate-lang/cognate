@@ -109,8 +109,9 @@ typedef struct cognate_table
 {
 	ANY key;
 	ANY value;
-	TABLE child1;
-	TABLE child2;
+	TABLE left;
+	TABLE right;
+	size_t level;
 } cognate_table;
 
 typedef struct cognate_list
@@ -671,11 +672,47 @@ static void assert_impure(void)
 	if unlikely(pure) throw_error("Invalid operation for pure function");
 }
 
+cognate_table* table_skew(cognate_table* T)
+{
+	// input: T, a node representing an AA tree that needs to be rebalanced.
+ 	// output: Another node representing the rebalanced AA tree.
+	if (!T) return NULL;
+	else if (!T->left) return T;
+	else if (T->left->level == T->level)
+	{
+      // Swap the pointers of horizontal left links.
+		cognate_table* L = (cognate_table*)T->left;
+		T->left = L->right;
+		L->right = table_skew(T);
+		return L;
+	}
+	return T;
+}
+
+cognate_table* table_split(cognate_table* T)
+{
+	// input: T, a node representing an AA tree that needs to be rebalanced.
+   // output: Another node representing the rebalanced AA tree.
+	if (!T) return NULL;
+	else if (!T->right || !T->right->right) return T;
+	else if (T->level == T->right->right->level)
+	{
+		// We have two horizontal right links.  Take the middle node, elevate it, and return it.
+		cognate_table* R = (cognate_table*)T->right;
+		T->right = R->left;
+		//R->right = table_split((cognate_table*)R->right);
+		R->left = T;
+		R->level++;
+		return R;
+	}
+	else return T;
+}
+
 static char* show_table(TABLE d, char* buffer)
 {
 	if (!d) return buffer;
 
-	buffer = show_table(d->child1, buffer);
+	buffer = show_table(d->left, buffer);
 	buffer += strlen(buffer);
 
 	buffer = (char*)show_object(d->key, 0, buffer);
@@ -683,7 +720,7 @@ static char* show_table(TABLE d, char* buffer)
 	buffer = (char*)show_object(d->value, 0, buffer);
 	*buffer++ = ' ';
 
-	buffer = show_table(d->child2, buffer);
+	buffer = show_table(d->right, buffer);
 	buffer += strlen(buffer);
 
 	return buffer;
@@ -2102,14 +2139,14 @@ static TABLE ___table (BLOCK expr)
 		while (ptr != NULL)
 		{
 			ptrdiff_t diff = compare_objects(ptr->key, key);
-			if (diff > 0) { assign = (cognate_table**)&ptr->child1 ; ptr = ptr->child1; }
-			else if (diff < 0) { assign = (cognate_table**)&ptr->child2 ; ptr = ptr->child2; }
+			if (diff > 0) { assign = (cognate_table**)&ptr->left ; ptr = ptr->left; }
+			else if (diff < 0) { assign = (cognate_table**)&ptr->right ; ptr = ptr->right; }
 			else throw_error("Duplicate keys in table initialiser");
 		}
 
 		*assign = gc_malloc(sizeof (**assign));
-		(*assign)->child1 = NULL;
-		(*assign)->child2 = NULL;
+		(*assign)->left = NULL;
+		(*assign)->right = NULL;
 		(*assign)->key = key;
 		(*assign)->value = value;
 	}
@@ -2120,32 +2157,38 @@ static TABLE ___table (BLOCK expr)
 
 static TABLE ___insert(ANY key, ANY value, TABLE d)
 {
-	// TODO at the moment tables are UNBALANCED!!
-	// This is obviously bad performance-wise and means real-life performance is not O(log(n)).
-	// Thus at some point we need to balance all these tables - preserving all immutable references!
 	ptrdiff_t diff;
 	cognate_table* D = gc_malloc(sizeof *D);
 	if (d == NULL || (diff = compare_objects(d->key, key)) == 0)
 	{
-		D->child1 = d ? d->child1 : NULL;
-		D->child2 = d ? d->child2 : NULL;
+		D->left = d ? d->left : NULL;
+		D->right = d ? d->right : NULL;
 		D->key = key;
 		D->value = value;
+		D->level = d ? d->level : 1;
 	}
 	else if (diff > 0)
 	{
-		D->child2 = d->child2;
-		D->child1 = ___insert(key, value, d->child1);
+		D->right = d->right;
+		D->left = ___insert(key, value, d->left);
 		D->key = d->key;
 		D->value = d->value;
+		D->level = d->level;
 	}
 	else if (diff < 0)
 	{
-		D->child1 = d->child1;
-		D->child2 = ___insert(key, value, d->child2);
+		D->left = d->left;
+		D->right = ___insert(key, value, d->right);
 		D->key = d->key;
 		D->value = d->value;
+		D->level = d->level;
 	}
+
+	// Perform skew and then split. The conditionals that determine whether or
+   // not a rotation will occur or not are inside of the procedures, as given
+   // above.
+	D = table_skew(D);
+	D = table_split(D);
 
 	return D;
 }
@@ -2156,8 +2199,8 @@ static ANY ___D(ANY key, TABLE d)
 	{
 		ptrdiff_t diff = compare_objects(d->key, key);
 		if (diff == 0) return d->value;
-		else if (diff > 0) d = d->child1;
-		else d = d->child2;
+		else if (diff > 0) d = d->left;
+		else d = d->right;
 	}
 
 	throw_error_fmt("%s is not in table", show_object(key, 0, NULL));
@@ -2169,8 +2212,8 @@ static BOOLEAN ___has(ANY key, TABLE d)
 	{
 		ptrdiff_t diff = compare_objects(d->key, key);
 		if (diff == 0) return true;
-		else if (diff > 0) d = d->child1;
-		else d = d->child2;
+		else if (diff > 0) d = d->left;
+		else d = d->right;
 	}
 
 	return false;
