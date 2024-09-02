@@ -56,5 +56,3 @@ Print If Not Has \foo T3
 	"PASS: Removing keys"
 else
 	"FAIL: Removing keys";
-
-Print T3;

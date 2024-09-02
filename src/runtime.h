@@ -713,7 +713,6 @@ static char* show_table(TABLE d, char* buffer)
 	if (!d) return buffer;
 
 	buffer = show_table(d->left, buffer);
-	buffer += strlen(buffer);
 
 	buffer = (char*)show_object(d->key, 0, buffer);
 	*buffer++ = ':';
@@ -721,7 +720,6 @@ static char* show_table(TABLE d, char* buffer)
 	*buffer++ = ' ';
 
 	buffer = show_table(d->right, buffer);
-	buffer += strlen(buffer);
 
 	return buffer;
 }
@@ -740,9 +738,11 @@ static STRING show_object (const ANY object, const _Bool raw_strings, char* buff
 	{
 		case NIL: throw_error("This shouldn't happen");
 					 break;
-		case table: sprintf(buffer, "{ "); buffer + strlen(buffer);
+		case table:
+					  *buffer++ = '{';
+					  *buffer++ = ' ';
 					  buffer = show_table(object.table, buffer);
-					  sprintf(buffer, "}"); buffer += strlen(buffer);
+					  *buffer++ = '}';
 					  break;
 		case number: sprintf(buffer, "%.14g", object.number);
 						 buffer += strlen(buffer);
