@@ -2163,4 +2163,17 @@ static ANY ___D(ANY key, TABLE d)
 	throw_error_fmt("%s is not in table", show_object(key, 0, NULL));
 }
 
+static BOOLEAN ___has(ANY key, TABLE d)
+{
+	while (d)
+	{
+		ptrdiff_t diff = compare_objects(d->key, key);
+		if (diff == 0) return true;
+		else if (diff > 0) d = d->child1;
+		else d = d->child2;
+	}
+
+	return false;
+}
+
 // ---------- ACTUAL PROGRAM ----------

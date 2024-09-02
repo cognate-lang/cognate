@@ -45,3 +45,8 @@ Print If == "{ foo:\"bar\" \"foo\":bar }" Show Table ( \foo "bar" and "foo" \bar
 	"PASS: Printing a table"
 else
 	"FAIL: Printing a table";
+
+Print If And Has \foo T Not Has \bar T
+	"PASS: Has"
+else
+	"FAIL: Has";
