@@ -2219,4 +2219,13 @@ static BOOLEAN ___has(ANY key, TABLE d)
 	return false;
 }
 
+static TABLE ___remove(ANY X, TABLE T)
+{
+	// input: X, the value to delete, and T, the root of the tree from which it should be deleted.
+   // output: T, balanced, without the value X.
+
+	// TODO
+	return NULL;
+}
+
 // ---------- ACTUAL PROGRAM ----------

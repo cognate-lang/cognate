@@ -112,6 +112,7 @@
 
 {.name="table",                 .calltype=call, .argc=1, .args={block}, .returns=true, .rettype=table},
 {.name="insert",                .calltype=call, .argc=3, .args={any, any, table}, .returns=true, .rettype=table},
+{.name="remove",                .calltype=call, .argc=2, .args={any, table}, .returns=true, .rettype=table},
 {.name=".",                     .calltype=call, .argc=2, .args={any, table}, .returns=true, .rettype=any},
 {.name="has",                   .calltype=call, .argc=2, .args={any, table}, .returns=true, .rettype=boolean},
 
