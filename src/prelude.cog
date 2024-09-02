@@ -47,8 +47,11 @@ Def Times (
 
 
 Def With (
-	Let Fp be Open;
-	Do Swap Fp;
+	Let Mode be Symbol!;
+	Let Filename be String!;
+	Def Body;
+	Let Fp be Open as Mode Filename;
+	Body Fp;
 	Close Fp
 );
 

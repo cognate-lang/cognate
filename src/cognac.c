@@ -15,6 +15,7 @@
 #include <sys/wait.h>
 #include <execinfo.h>
 
+
 #define STR_(x) #x
 #define STR(x) STR_(x)
 #define MAX_ERROR_LINE_LENGTH 256
@@ -25,6 +26,8 @@ char* heap = NULL;
 module_t prelude1 = { .prefix = "prelude" }; // written in C
 module_t prelude2 = { .prefix = "prelude" }; // written in Cognate
 module_list_t preludes = { .mod=&prelude2, .next = &(module_list_t){.mod=&prelude1, .next=NULL} };
+
+const char* builtin_symbols[] = { "start", "end", "current", "read", "write", "append", "read-write", "read-append", "read-write-existing" };
 
 char runtime_filename[] = "/tmp/cognac-runtime-XXXXXX.h";
 
@@ -886,7 +889,12 @@ void to_c(module_t* mod)
 	FILE* c_source = fopen(c_source_path, "w");
 	fprintf(c_source, "#include \"%s\"\n\n", runtime_filename);
 	for (symbol_list_t* syms = mod->symbols ; syms ; syms = syms->next)
-		fprintf(c_source, "SYMBOL SYM%s = \"%s\";\n", syms->text, syms->text);
+	{
+		for (int i = 0 ; i < sizeof(builtin_symbols) / sizeof(builtin_symbols[0]) ; ++i)
+			if (!strcmp(builtin_symbols[i], syms->text)) goto next;
+		fprintf(c_source, "const SYMBOL SYM%s = \"%s\";\n", syms->text, syms->text);
+	next:;
+	}
 	if (mod->symbols) fputc('\n', c_source);
 	for (func_list_t* func = mod->funcs ; func ; func = func->next)
 	{

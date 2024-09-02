@@ -191,6 +191,16 @@ extern int main(int, char**);
 
 static const char* restrict function_stack_start;
 
+const SYMBOL SYMstart = "start";
+const SYMBOL SYMend = "end";
+const SYMBOL SYMcurrent = "current";
+const SYMBOL SYMread = "read";
+const SYMBOL SYMwrite = "write";
+const SYMBOL SYMappend = "append";
+const SYMBOL SYMreadHwrite = "read-write";
+const SYMBOL SYMreadHappend = "read-append";
+const SYMBOL SYMreadHwriteHexisting = "read-write-existing";
+
 // Variables and	needed by functions.c defined in runtime.c
 static void init_stack(void);
 static STRING show_object(const ANY object, const _Bool, char*);
@@ -287,7 +297,7 @@ static STRING ___join(STRING, STRING);
 static NUMBER ___stringHlength(STRING);
 static STRING ___substring(NUMBER, NUMBER, STRING);
 static STRING ___input(void);
-static IO ___open(STRING, STRING);
+static IO ___open(SYMBOL, STRING);
 static void ___close(IO);
 static NUMBER ___number(STRING);
 static STRING ___path(void);
@@ -1697,7 +1707,7 @@ static STRING ___show(ANY o)
 
 static LIST ___split(STRING sep, STRING str)
 {
-	if (!*sep) throw_error("Empty separator");
+	if (!*sep) throw_error("Seperator cannot be empty");
 	LIST lst = NULL;
 	size_t len = strlen(sep);
 	char* found;
@@ -1961,12 +1971,19 @@ static NUMBER ___tanh(NUMBER a)
 	return tanh(a);
 }
 
-static IO ___open(STRING path, STRING mode)
+static IO ___open(SYMBOL m, STRING path)
 {
 	assert_impure();
-	// TODO mode should definitely be a symbol.
+	char* mode;
+	if (m == SYMread) mode = "r";
+	else if (m == SYMwrite) mode = "w";
+	else if (m == SYMappend) mode = "a";
+	else if (m == SYMreadHappend) mode = "a+";
+	else if (m == SYMreadHwrite) mode = "w+";
+	else if (m == SYMreadHwriteHexisting) mode = "r+";
+	else throw_error("Expected one of \\read, \\write, \\append, \\read-write, \\read-append, \\read-write-existing");
 	FILE* fp = fopen(path, mode);
-	if unlikely(!fp) throw_error_fmt("cannot open file '%s'", path);
+	if unlikely(!fp) throw_error_fmt("Cannot open file '%s'", path);
 	IO io = gc_malloc(sizeof *io);
 	io->path = path;
 	io->mode = mode;
@@ -1979,6 +1996,7 @@ static STRING ___readHfile(IO io)
 	assert_impure();
 	// Read a file to a string.
 	FILE *fp = io->file;
+	fseek(fp, 0, SEEK_SET); // seek to beginning
 	if unlikely(!io->mode) throw_error_fmt("File '%s' is not open", io->path);
 	if unlikely(fp == NULL) throw_error_fmt("Cannot open file '%s'", io->path);
 	struct stat st;
@@ -1988,7 +2006,14 @@ static STRING ___readHfile(IO io)
 		throw_error_fmt("Error reading file '%s'", io->path);
 	text[st.st_size] = '\0'; // Remove trailing eof.
 	return text;
-	// TODO: single line (or delimited) file read function for better IO performance
+}
+
+static STRING ___readHline(IO io)
+{
+	assert_impure();
+	char* buf = (char*)(space[z] + alloc[z]); // use the top of memory as a buffer like Show does
+	fgets(buf, INT_MAX, io->file);
+	return gc_strdup(buf); // this can only GC once so won't overwrite the buffer.
 }
 
 static void ___close(IO io)
@@ -2018,16 +2043,21 @@ static void ___write(STRING s, IO io)
 	fputs(s, io->file);
 }
 
-static void ___seek(NUMBER n, IO io)
+static void ___seek(SYMBOL ref, NUMBER n, IO io)
 {
-	size_t p = n;
-	if unlikely(p != n) throw_error_fmt("cannot seek to position %.14g", n);
-	fseek(io->file, p, SEEK_CUR);
+	int pos;
+	if (ref == SYMstart) pos = SEEK_SET;
+	else if (ref == SYMend) pos = SEEK_END;
+	else if (ref == SYMcurrent) pos = SEEK_CUR;
+	else throw_error_fmt("Expected one of \\start, \\end, \\current");
+	long offset = n;
+	if unlikely(offset != n || fseek(io->file, offset, pos))
+		throw_error_fmt("Can't seek to position %.14g relative to %s", n, ref);
 }
 
 static void invalid_jump(uint8_t* env)
 {
-	throw_error("cannot resume expired continuation");
+	throw_error("Cannot resume expired continuation");
 }
 
 static void oh_no(uint8_t* env)
@@ -2062,7 +2092,7 @@ static TABLE ___table (BLOCK expr)
 	// Move to a list.
 	TABLE d = NULL;
 	size_t len = stack_length();
-	if (len % 2 != 0) throw_error("table initialiser must be key-value pairs");
+	if (len % 2 != 0) throw_error("Table initialiser must be key-value pairs");
 	for (size_t i = 0; i < len; i += 2)
 	{
 		ANY key = stack.start[i+1];
@@ -2074,7 +2104,7 @@ static TABLE ___table (BLOCK expr)
 			ptrdiff_t diff = compare_objects(ptr->key, key);
 			if (diff > 0) { assign = (cognate_table**)&ptr->child1 ; ptr = ptr->child1; }
 			else if (diff < 0) { assign = (cognate_table**)&ptr->child2 ; ptr = ptr->child2; }
-			else throw_error("duplicate keys in table initialiser");
+			else throw_error("Duplicate keys in table initialiser");
 		}
 
 		*assign = gc_malloc(sizeof (**assign));
