@@ -1,0 +1,18 @@
+Def Factor (Zero? Modulo Swap);
+
+Def Primes (
+	Let U is upper bound;
+	initially Table ();
+	For Range 2 to U (
+		Let I be our potential prime;
+		Let To-check be Range 2 to Floor + 1 Sqrt I;
+		Insert I None (Factor of I) To-check;
+	)
+);
+
+Let P be Primes up to 1000;
+
+Print If And Not . 50 P . 37 P
+	"PASS: Prime numbers using a table"
+else
+	"FAIL: Prime numbers using a table";
