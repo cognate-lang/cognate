@@ -665,39 +665,16 @@ static char* show_table(TABLE d, char* buffer)
 	return buffer;
 }
 
-static bool detect_cycle(BOX root, ANY node)
-{
-	// This doesn't have great algorithmic complexity
-	// Ideally we'd implement this https://en.wikipedia.org/wiki/Cycle_detection#Tortoise_and_hare
-	// However, this isn't a huge issue because by the time the complexity becomes a problem you've hit the recursion depth limit anyway.
-	switch (node.type)
-	{
-		case table:
-		{
-			TABLE t = unbox_TABLE(node);
-			if (detect_cycle(root, t->key)) return true;
-			if (detect_cycle(root, t->value)) return true;
-			if (t->child1 && detect_cycle(root, box_TABLE(t->child1))) return true;
-			if (t->child2 && detect_cycle(root, box_TABLE(t->child2))) return true;
-			return false;
-		}
-		case list:
-		{
-			LIST l = unbox_LIST(node);
-			if (detect_cycle(root, l->object)) return true;
-			if (detect_cycle(root, box_LIST(l->next))) return true;
-			return false;
-		}
-		case box: return unbox_BOX(node) == root;
-		default: return false;
-	}
-}
-
 static STRING show_object (const ANY object, const _Bool raw_strings, char* buffer)
 {
 	static char* buf;
+	static BOX *checked, *checkedbuf;
 	_Bool root = !buffer;
-	if (root) buf = buffer = (char*)(space[z] + alloc[z]); // i dont like resizing buffers
+	if (root)
+	{
+		buf = buffer = (char*)(space[z] + alloc[z]); // i dont like resizing buffers
+		checked = checkedbuf = (BOX*)space[!z]; // hmmm
+	}
 	switch (object.type)
 	{
 		case NIL: throw_error("This shouldn't happen");
@@ -764,16 +741,22 @@ static STRING show_object (const ANY object, const _Bool raw_strings, char* buff
 		case box:
 		{
 			BOX b = unbox_BOX(object);
-			*buffer++ = '[';
-			if (detect_cycle(b, *b))
+			bool found = false;
+			for (BOX* p = checkedbuf ; p < checked ; ++p) found |= (*p == b);
+			if (found)
 			{
 				*buffer++ = '.';
 				*buffer++ = '.';
 				*buffer++ = '.';
 			}
 			else
+			{
+				*checked++ = b;
+				*buffer++ = '[';
 				buffer = (char*)show_object(*b, 0, buffer);
-			*buffer++ = ']';
+				*buffer++ = ']';
+				checked--;
+			}
 			break;
 		}
 	}

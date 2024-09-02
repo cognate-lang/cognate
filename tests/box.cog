@@ -34,3 +34,16 @@ Print If == "[[...]]" Show Box C
 	"PASS: Printing cyclic box"
 else
 	"FAIL: Printing cyclic box";
+
+Let B1 be Box 0;
+Let B2 be Box 1;
+Let B3 be Box 2;
+
+Set B1 to B2;
+Set B2 to B3;
+Set B3 to B1;
+
+Print If == "[[[...]]]" Show B1
+	"PASS: Printing doubly cyclic box"
+else
+	"FAIL: Printing doubly cyclic box";
