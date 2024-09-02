@@ -2152,13 +2152,15 @@ static TABLE ___insert(ANY key, ANY value, TABLE d)
 
 static ANY ___D(ANY key, TABLE d)
 {
-	if (d == NULL) throw_error_fmt("%s is not in table", show_object(key, 0, NULL));
+	while (d)
+	{
+		ptrdiff_t diff = compare_objects(d->key, key);
+		if (diff == 0) return d->value;
+		else if (diff > 0) d = d->child1;
+		else d = d->child2;
+	}
 
-	ptrdiff_t diff = compare_objects(d->key, key);
-
-	if (diff == 0) return d->value;
-	else if (diff > 0) return ___D(key, d->child1);
-	else return ___D(key, d->child2);
+	throw_error_fmt("%s is not in table", show_object(key, 0, NULL));
 }
 
 // ---------- ACTUAL PROGRAM ----------
