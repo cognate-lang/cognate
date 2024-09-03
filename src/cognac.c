@@ -289,6 +289,8 @@ func_t* make_func(ast_list_t* tree, char* name)
 	func->unique = false;
 	func->branch = false;
 	func->has_regs = false;
+	func->overload = false;
+	func->overloaded_to = any;
 	func->builtin = false;
 	func->name = name;
 	func->locals = NULL;
@@ -859,7 +861,10 @@ void to_exe(module_t* mod)
 
 void c_emit_funcall(func_t* fn, FILE* c_source, reg_dequeue_t* registers)
 {
-	fprintf(c_source, "%s(", sanitize(fn->name));
+	if (!fn->overload || fn->overloaded_to == any)
+		fprintf(c_source, "%s(", sanitize(fn->name));
+	else
+		fprintf(c_source, "%s_%s(", sanitize(fn->name), c_val_type(fn->overloaded_to));
 	if (!fn->generic)
 		for (word_list_t* w = fn->captures ; w ; w = w->next)
 		{
@@ -1786,6 +1791,12 @@ void add_registers(module_t* mod)
 	}
 }
 
+val_list_t* clone_vals(val_list_t* original)
+{
+	if (!original) return NULL;
+	else return push_val(original->val, clone_vals(original->next));
+}
+
 bool add_var_types_forwards(module_t* mod)
 {
 	bool changed = 0;
@@ -1907,6 +1918,32 @@ bool add_var_types_forwards(module_t* mod)
 									changed = 1;
 								}
 							}
+							else if (fn->overload && v->val->type == any && t != any && v->val->type != t && t != strong_any)
+							{
+								for (int i = 0 ; fn->overloads[i] != NIL ; ++i)
+									if (fn->overloads[i] == t)
+									{
+										changed = 1;
+										func_t* new_fn = alloc(sizeof *new_fn);
+										memcpy(new_fn, fn, sizeof *fn);
+										new_fn->args = clone_vals(fn->args);
+										for ( val_list_t* vv = new_fn->args ; vv ; vv = vv->next )
+											if (vv->val == v->val) vv->val = make_value(t, v->val->source);
+										new_fn->overloaded_to = t;
+										op->op->func = new_fn;
+										goto end;
+									}
+								char buf[100] = "expected ";
+								for (int i = 0 ; fn->overloads[i] != NIL ; ++i)
+								{
+									strcat(buf, print_val_type(fn->overloads[i]));
+									if (fn->overloads[i+1] != NIL) strcat(buf, " or ");
+								}
+								strcat(buf, "\ngot ");
+								strcat(buf, print_val_type(t));
+								throw_error(buf, op->op->where);
+							}
+						end:;
 						}
 						if (fn->stack) assert(registers->len == 0);
 						if (fn->returns)
@@ -3424,7 +3461,10 @@ word_list_t* builtins(void)
 		fn->unique = false;
 		fn->has_args = true;
 		fn->builtin = true;
+		fn->overloaded_to = any;
 		fn->unmangled_name = b[i].name;
+		fn->overload = b[i].overload;
+		if (b[i].overload) memcpy(&fn->overloads, &b[i].overloads, sizeof(b[i].overloads));
 		type_t calltype = b[i].calltype;
 		for (int ii = b[i].argc-1 ; ii >= 0 ; --ii)
 			fn->args = push_val(make_value(b[i].args[ii], NULL), fn->args);
