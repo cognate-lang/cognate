@@ -1200,9 +1200,10 @@ static void* gc_flatmalloc(size_t sz)
 	}
 	void* buf = space[z] + alloc[z];
 	//assert(bitmap[z][alloc[z]] == ALLOC);
+	bitmap[z][alloc[z]] = FLATALLOC;
 	alloc[z] += (sz + 7) / 8;
 	//assert(!sz || bitmap[z][alloc[z]] == EMPTY);
-	bitmap[z][alloc[z]] = FLATALLOC;
+	bitmap[z][alloc[z]] = ALLOC;
 	//assert(!((ANY)buf & 7));
 	return buf;
 }
@@ -1242,9 +1243,10 @@ static void gc_collect_root(uintptr_t* restrict addr)
 			//assert(bitmap[z][alloc[z]] == ALLOC);
 			size_t sz = 1;
 			for (;bitmap[!z][index+sz] == EMPTY;sz++);
+			if (flat) bitmap[z][alloc[z]] = FLATALLOC;
 			alloc[z] += sz;
 			//assert(bitmap[z][alloc[z]] == EMPTY);
-			bitmap[z][alloc[z]] = bitmap[!z][index];
+			bitmap[z][alloc[z]] = ALLOC;
 			for (size_t i = 0;i < sz;i++)
 			{
 				uintptr_t from = space[!z][index+i];
@@ -1261,7 +1263,6 @@ static void gc_collect_root(uintptr_t* restrict addr)
 
 static __attribute__((noinline,hot)) void gc_collect(void)
 {
-
 	/*
 	printf("BEFORE:\n");
 	for (int Z = 0 ; Z < 2 ; ++Z)
@@ -1271,13 +1272,12 @@ static __attribute__((noinline,hot)) void gc_collect(void)
 			case EMPTY: fputc('-', stdout); break;
 			case ALLOC: fputc('A', stdout); break;
 			case FLATALLOC: fputc('a', stdout); break;
-			case FORWARD: printf("%zu", (uintptr_t*)space[Z][i] - space[!Z]); break;
+			case FORWARD: fputc('F', stdout); break; //printf("%zu", (uintptr_t*)space[Z][i] - space[!Z]); break;
 		}
 		if (Z == z) printf(" (active)");
 		fputc('\n', stdout);
 	}
 	*/
-
 
 	/*
 	clock_t start, end;
@@ -1314,7 +1314,7 @@ static __attribute__((noinline,hot)) void gc_collect(void)
 			case EMPTY: fputc('-', stdout); break;
 			case ALLOC: fputc('A', stdout); break;
 			case FLATALLOC: fputc('a', stdout); break;
-			case FORWARD: printf("%zu", (uintptr_t*)space[Z][i] - space[!Z]); break;
+			case FORWARD: fputc('F', stdout); break; //printf("%zu", (uintptr_t*)space[Z][i] - space[!Z]); break;
 		}
 		if (Z == z) printf(" (active)");
 		fputc('\n', stdout);
@@ -2198,6 +2198,9 @@ static ANY ___D(ANY key, TABLE d)
 	}
 
 	throw_error_fmt("%s is not in table", show_object(key, 0, NULL, NULL));
+	#ifdef __TINYC__
+	return (cognate_object){0};
+	#endif
 }
 
 static BOOLEAN ___has(ANY key, TABLE d)
