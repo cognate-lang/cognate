@@ -204,7 +204,7 @@ const SYMBOL SYMreadHwriteHexisting = "read-write-existing";
 
 // Variables and	needed by functions.c defined in runtime.c
 static void init_stack(void);
-static STRING show_object(const ANY object, const _Bool, char*);
+static STRING show_object(const ANY object, const _Bool, char*, TABLE);
 static void _Noreturn __attribute__((format(printf, 1, 2))) throw_error_fmt(const char* restrict const, ...);
 static void _Noreturn throw_error(const char* restrict const);
 static ptrdiff_t compare_objects(ANY, ANY);
@@ -318,6 +318,7 @@ static void ___error(STRING);
 //static BLOCK ___precompute(BLOCK);
 static void ___wait(NUMBER);
 static LIST ___split(STRING, STRING);
+static BOOLEAN ___has(ANY, TABLE);
 //static BLOCK ___remember(BLOCK);
 
 static NUMBER ___sind(NUMBER);
@@ -708,32 +709,27 @@ cognate_table* table_split(cognate_table* T)
 	else return T;
 }
 
-static char* show_table(TABLE d, char* buffer)
+static char* show_table(TABLE d, char* buffer, TABLE checked)
 {
 	if (!d) return buffer;
 
-	buffer = show_table(d->left, buffer);
+	buffer = show_table(d->left, buffer, checked);
 
-	buffer = (char*)show_object(d->key, 0, buffer);
+	buffer = (char*)show_object(d->key, 0, buffer, checked);
 	*buffer++ = ':';
-	buffer = (char*)show_object(d->value, 0, buffer);
+	buffer = (char*)show_object(d->value, 0, buffer, checked);
 	*buffer++ = ' ';
 
-	buffer = show_table(d->right, buffer);
+	buffer = show_table(d->right, buffer, checked);
 
 	return buffer;
 }
 
-static STRING show_object (const ANY object, const _Bool raw_strings, char* buffer)
+static STRING show_object (const ANY object, const _Bool raw_strings, char* buffer, TABLE checked)
 {
 	static char* buf;
-	static BOX *checked, *checkedbuf;
 	_Bool root = !buffer;
-	if (root)
-	{
-		buf = buffer = (char*)(space[z] + alloc[z]); // i dont like resizing buffers
-		checked = checkedbuf = (BOX*)space[!z]; // hmmm
-	}
+	if (root) buf = buffer = (char*)stack.top;
 	switch (object.type)
 	{
 		case NIL: throw_error("This shouldn't happen");
@@ -741,7 +737,7 @@ static STRING show_object (const ANY object, const _Bool raw_strings, char* buff
 		case table:
 					  *buffer++ = '{';
 					  *buffer++ = ' ';
-					  buffer = show_table(object.table, buffer);
+					  buffer = show_table(object.table, buffer, checked);
 					  *buffer++ = '}';
 					  break;
 		case number: sprintf(buffer, "%.14g", object.number);
@@ -779,7 +775,7 @@ static STRING show_object (const ANY object, const _Bool raw_strings, char* buff
 			*buffer++ = '(';
 			for (LIST l = unbox_LIST(object) ; l ; l = l->next)
 			{
-				buffer = (char*)show_object(l->object, 0, buffer);
+				buffer = (char*)show_object(l->object, 0, buffer, checked);
 				if (!l->next) break;
 				//*buffer++ = ',';
 				*buffer++ = ' ';
@@ -803,8 +799,7 @@ static STRING show_object (const ANY object, const _Bool raw_strings, char* buff
 		{
 			BOX b = unbox_BOX(object);
 			bool found = false;
-			for (BOX* p = checkedbuf ; p < checked ; ++p) found |= (*p == b);
-			if (found)
+			if (___has(object, checked))
 			{
 				*buffer++ = '.';
 				*buffer++ = '.';
@@ -812,11 +807,10 @@ static STRING show_object (const ANY object, const _Bool raw_strings, char* buff
 			}
 			else
 			{
-				*checked++ = b;
 				*buffer++ = '[';
-				buffer = (char*)show_object(*b, 0, buffer);
+				buffer = (char*)show_object(*b, 0, buffer,
+					___insert(object, (cognate_object){0}, checked));
 				*buffer++ = ']';
-				checked--;
 			}
 			break;
 		}
@@ -989,7 +983,7 @@ static _Noreturn void type_error(char* expected, ANY got)
 	switch (expected[0])
 		case 'a': case 'e': case 'i': case 'o': case 'u': case 'h':
 			s = "an";
-	throw_error_fmt("Expected %s %s but got %.64s", s, expected, show_object(got, 0, NULL));
+	throw_error_fmt("Expected %s %s but got %.64s", s, expected, show_object(got, 0, NULL, NULL));
 }
 
 __attribute__((hot))
@@ -1349,8 +1343,8 @@ static ANY ___if(BOOLEAN cond, ANY a, ANY b)
 	return cond ? a : b;
 }
 
-static void ___put(ANY a)   { assert_impure(); fputs(show_object(a, 1, NULL), stdout); fflush(stdout); }
-static void ___print(ANY a) { assert_impure(); puts(show_object(a, 1, NULL)); }
+static void ___put(ANY a)   { assert_impure(); fputs(show_object(a, 1, NULL, NULL), stdout); fflush(stdout); }
+static void ___print(ANY a) { assert_impure(); puts(show_object(a, 1, NULL, NULL)); }
 
 static NUMBER ___P(NUMBER a, NUMBER b) { return a + b; } // Add cannot produce NaN.
 static NUMBER ___M(NUMBER a, NUMBER b) { return a * b; }
@@ -1739,7 +1733,7 @@ static BLOCK ___precompute(BLOCK blk)
 
 static STRING ___show(ANY o)
 {
-	return show_object(o, 1, NULL);
+	return show_object(o, 1, NULL, NULL);
 }
 
 static LIST ___split(STRING sep, STRING str)
@@ -2203,7 +2197,7 @@ static ANY ___D(ANY key, TABLE d)
 		else d = d->right;
 	}
 
-	throw_error_fmt("%s is not in table", show_object(key, 0, NULL));
+	throw_error_fmt("%s is not in table", show_object(key, 0, NULL, NULL));
 }
 
 static BOOLEAN ___has(ANY key, TABLE d)
