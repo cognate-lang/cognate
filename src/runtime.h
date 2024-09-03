@@ -2136,7 +2136,7 @@ static TABLE ___table (BLOCK expr)
 	// Move to a list.
 	TABLE d = NULL;
 	size_t len = stack_length();
-	if (len % 2 != 0) throw_error("Table initialiser must be key-value pairs");
+	if unlikely(len & 1) throw_error("Table initialiser must be key-value pairs");
 	for (size_t i = 0; i < len; i += 2)
 	{
 		ANY key = stack.start[i+1];
@@ -2150,6 +2150,7 @@ static TABLE ___table (BLOCK expr)
 
 static TABLE ___insert(ANY key, ANY value, TABLE d)
 {
+	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", show_object(key, 0, NULL));
 	cognate_table* D = gc_malloc(sizeof *D);
 	if (!d)
 	{
@@ -2198,6 +2199,7 @@ static TABLE ___insert(ANY key, ANY value, TABLE d)
 
 static ANY ___D(ANY key, TABLE d)
 {
+	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", show_object(key, 0, NULL));
 	while (d)
 	{
 		ptrdiff_t diff = compare_objects(d->key, key);
@@ -2206,7 +2208,7 @@ static ANY ___D(ANY key, TABLE d)
 		else d = d->right;
 	}
 
-	throw_error_fmt("%s is not in table", show_object(key, 0, NULL, NULL));
+	throw_error_fmt("%s is not in table", show_object(key, 0, NULL));
 	#ifdef __TINYC__
 	return (cognate_object){0};
 	#endif
@@ -2214,11 +2216,12 @@ static ANY ___D(ANY key, TABLE d)
 
 static BOOLEAN ___has(ANY key, TABLE d)
 {
+	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", show_object(key, 0, NULL));
 	while (d)
 	{
 		ptrdiff_t diff = compare_objects(d->key, key);
 		if (diff == 0) return true;
-		else if (diff > 0) d = d->left;
+		else if (diff < 0) d = d->left;
 		else d = d->right;
 	}
 

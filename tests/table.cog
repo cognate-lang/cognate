@@ -1,18 +1,15 @@
-Let B be ( Print "hello" );
-Let B2 be ( Print "hello" );
-
 Let T be Table (
 	\foo is "bar"
 	"bar" is \foo;
 	12 is 13;
-	B is \hello;
-	B2 is \goodbye;
 );
 
 Print If == "bar" . \foo T
 	"PASS: Table lookup 1"
 else
 	"FAIL: Table lookup 1";
+
+Print  T;
 
 Print If == \foo . "bar" T
 	"PASS: Table lookup 2"
@@ -23,16 +20,6 @@ Print If == 13 . 12 T
 	"PASS: Table lookup 3"
 else
 	"FAIL: Table lookup 3";
-
-Print If == \hello . B T
-	"PASS: Table lookup 4"
-else
-	"FAIL: Table lookup 4";
-
-Print If == \goodbye . B2 T
-	"PASS: Table lookup 5"
-else
-	"FAIL: Table lookup 5";
 
 Let T2 be Insert \foo is "baz" into T;
 
