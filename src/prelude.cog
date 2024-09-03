@@ -209,10 +209,6 @@ Def Take (
 	)
 );
 
-Def Length (
-	Let L be List!;
-	Do If Empty? L then ( 0 ) else ( Length of the Rest of L ; + 1 )
-);
 
 Def Index (
 	Let N be Of (Integer?);

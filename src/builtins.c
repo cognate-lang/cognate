@@ -15,8 +15,8 @@
 {.name="^",                   .calltype=call, .argc=2, .args={number, number},      .returns=true, .rettype=number},
 {.name="match",               .calltype=call, .argc=2, .args={any, any},            .returns=true, .rettype=boolean},
 {.name="if",                  .calltype=branch, .argc=3, .args={boolean, any, any},   .returns=true, .rettype=any},
-{.name="print",               .calltype=call, .argc=1, .args={any}},
-{.name="put",                 .calltype=call, .argc=1, .args={any}},
+{.name="print",               .calltype=call, .argc=1, .args={any},     .returns=false, .overload=true, .overloads={number, symbol, table, string, boolean, block, list, box, io, NIL} },
+{.name="put",                 .calltype=call, .argc=1, .args={any},     .returns=false, .overload=true, .overloads={number, symbol, table, string, boolean, block, list, box, io, NIL} },
 {.name="do",                  .calltype=call, .argc=1, .args={block}, .stack=true},
 {.name="random",              .calltype=call, .argc=2, .args={number, number},   .returns=true, .rettype=number},
 {.name="modulo",              .calltype=call, .argc=2, .args={number, number},   .returns=true, .rettype=number},
@@ -70,7 +70,7 @@
 //{.name="precompute",          .calltype=call, .argc=1, .args={block},   .returns=true, .rettype=block},
 {.name="wait",                .calltype=call, .argc=1, .args={number},  .returns=false},
 {.name="stop",                .calltype=call, .argc=0, .returns=false},
-{.name="show",                .calltype=call, .argc=1, .args={any},     .returns=true, .rettype=string},
+{.name="show",                .calltype=call, .argc=1, .args={any},     .returns=true, .rettype=string, .overload=true, .overloads={number, symbol, table, string, boolean, block, list, box, io, NIL} },
 {.name="stack",               .calltype=call, .returns=true, .rettype=list, .stack=true},
 {.name="clear",               .calltype=call, .argc=0, .stack=true},
 //{.name="remember",            .calltype=call, .argc=1, .args={block},        .returns=true, .rettype=block},
@@ -117,6 +117,8 @@
 {.name="has",                   .calltype=call, .argc=2, .args={any, table}, .returns=true, .rettype=boolean},
 {.name="values",                .calltype=call, .argc=1, .args={table},      .returns=true, .rettype=list},
 {.name="keys",                  .calltype=call, .argc=1, .args={table},      .returns=true, .rettype=list},
+
+{.name="length",                .calltype=call, .argc=1, .args={any}, .overload=true, .overloads={list, table, string, NIL}, .returns=true, .rettype=number},
 
 /* Builtin stack operations */
 //{.name="drop",                .calltype=stack_op, .stack_shuffle=&drop_register},

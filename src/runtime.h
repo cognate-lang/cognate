@@ -295,7 +295,6 @@ static LIST ___push(ANY, LIST);
 static BOOLEAN ___emptyQ(LIST);
 static LIST ___list(BLOCK);
 static STRING ___join(STRING, STRING);
-static NUMBER ___stringHlength(STRING);
 static STRING ___substring(NUMBER, NUMBER, STRING);
 static STRING ___input(void);
 static IO ___open(SYMBOL, STRING);
@@ -306,6 +305,16 @@ static LIST ___stack(void);
 static LIST ___parameters(void);
 static void ___stop(void);
 static STRING ___show(ANY);
+static STRING ___show_NUMBER(NUMBER);
+static STRING ___show_LIST(LIST);
+static STRING ___show_BLOCK(BLOCK);
+static STRING ___show_TABLE(TABLE);
+static STRING ___show_IO(IO);
+static STRING ___show_STRING(STRING);
+static STRING ___show_SYMBOL(SYMBOL);
+static STRING ___show_BOOLEAN(BOOLEAN);
+static STRING ___show_BOX(BOX);
+
 static BLOCK ___regex(STRING);
 static BLOCK ___regexHmatch(STRING);
 static NUMBER ___ordinal(STRING);
@@ -1363,7 +1372,26 @@ static ANY ___if(BOOLEAN cond, ANY a, ANY b)
 }
 
 static void ___put(ANY a)   { assert_impure(); fputs(show_object(a, 1, NULL), stdout); fflush(stdout); }
+static void ___put_NUMBER(NUMBER a) { assert_impure(); fputs(___show_NUMBER(a), stdout); fflush(stdout); }
+static void ___put_LIST(LIST a) { assert_impure(); fputs(___show_LIST(a), stdout); fflush(stdout); }
+static void ___put_TABLE(TABLE a) { assert_impure(); fputs(___show_TABLE(a), stdout); fflush(stdout); }
+static void ___put_IO(IO a) { assert_impure(); fputs(___show_IO(a), stdout); fflush(stdout); }
+static void ___put_BLOCK(BLOCK a) { assert_impure(); fputs(___show_BLOCK(a), stdout); fflush(stdout); }
+static void ___put_STRING(STRING a) { assert_impure(); fputs(___show_STRING(a), stdout); fflush(stdout); }
+static void ___put_SYMBOL(SYMBOL a) { assert_impure(); fputs(___show_SYMBOL(a), stdout); fflush(stdout); }
+static void ___put_BOOLEAN(BOOLEAN a) { assert_impure(); fputs(___show_BOOLEAN(a), stdout); fflush(stdout); }
+static void ___put_BOX(BOX a) { assert_impure(); fputs(___show_BOX(a), stdout); }
+
 static void ___print(ANY a) { assert_impure(); puts(show_object(a, 1, NULL)); }
+static void ___print_NUMBER(NUMBER a) { assert_impure(); puts(___show_NUMBER(a)); }
+static void ___print_LIST(LIST a) { assert_impure(); puts(___show_LIST(a)); }
+static void ___print_TABLE(TABLE a) { assert_impure(); puts(___show_TABLE(a)); }
+static void ___print_IO(IO a) { assert_impure(); puts(___show_IO(a)); }
+static void ___print_BLOCK(BLOCK a) { assert_impure(); puts(___show_BLOCK(a)); }
+static void ___print_STRING(STRING a) { assert_impure(); puts(___show_STRING(a)); }
+static void ___print_SYMBOL(SYMBOL a) { assert_impure(); puts(___show_SYMBOL(a)); }
+static void ___print_BOOLEAN(BOOLEAN a) { assert_impure(); puts(___show_BOOLEAN(a)); }
+static void ___print_BOX(BOX a) { assert_impure(); puts(___show_BOX(a)); }
 
 static NUMBER ___P(NUMBER a, NUMBER b) { return a + b; } // Add cannot produce NaN.
 static NUMBER ___M(NUMBER a, NUMBER b) { return a * b; }
@@ -1499,13 +1527,6 @@ static STRING ___join(STRING s1, STRING s2)
 	strcpy(result, s1);
 	strcpy(result+l1, s2);
  	return result;
-}
-
-static NUMBER ___stringHlength(STRING str)
-{
-	size_t len = 0;
-	for (; *str ; str += mblen(str, MB_CUR_MAX), ++len);
-	return len;
 }
 
 static STRING ___substring(NUMBER startf, NUMBER endf, STRING str)
@@ -2263,6 +2284,101 @@ static LIST keys_helper(TABLE T, LIST L)
 static LIST ___keys(TABLE T)
 {
 	return keys_helper(T, NULL);
+}
+
+static NUMBER ___length_TABLE(TABLE T)
+{
+	if (!T) return 0;
+	return 1 + ___length_TABLE(T->left) + ___length_TABLE(T->right);
+}
+
+static NUMBER ___length_LIST(LIST l)
+{
+	size_t len = 0;
+	while (l)
+	{
+		len++;
+		l = l->next;
+	}
+	return (NUMBER)len;
+}
+
+static NUMBER ___length_STRING(STRING str)
+{
+	size_t len = 0;
+	for (; *str ; str += mblen(str, MB_CUR_MAX), ++len);
+	return len;
+}
+
+static NUMBER ___length(ANY a)
+{
+	switch(a.type)
+	{
+		case list: return ___length_LIST(unbox_LIST(a));
+		case string: return ___length_STRING(unbox_STRING(a));
+		case table: return ___length_TABLE(unbox_TABLE(a));
+		default: type_error("list or string or table", a);
+	}
+}
+
+static STRING ___show_NUMBER(NUMBER a)
+{
+	char* buf = (char*)stack.top;
+	sprintf(buf, "%.14g", a);
+	return gc_strdup(buf);
+}
+
+static STRING ___show_TABLE(TABLE a)
+{
+	char* buf = (char*)stack.top;
+	char* ptr = buf;
+	*ptr++ = '{';
+   *ptr++ = ' ';
+	ptr = show_table(a, ptr);
+	*ptr++ = '}';
+	return gc_strdup(buf);
+}
+
+static STRING ___show_IO(IO a)
+{
+	char* buf = (char*)stack.top;
+	if (a->file != NULL)
+		sprintf(buf, "{ %s OPEN mode '%s' }", a->path, a->mode);
+	else
+		sprintf(buf, "{ %s CLOSED }", a->path);
+	return gc_strdup(buf);
+}
+
+static STRING ___show_STRING(STRING s)
+{
+	return s;
+}
+
+static STRING ___show_BOOLEAN(BOOLEAN b)
+{
+	return b ? "True" : "False";
+}
+
+static STRING ___show_SYMBOL(SYMBOL s)
+{
+	return s;
+}
+
+static STRING ___show_BLOCK(BLOCK b)
+{
+	char* buf = (char*)stack.top;
+	sprintf(buf, "<block %p>", *(void**)&b.fn);
+	return gc_strdup(buf);
+}
+
+static STRING ___show_BOX(BOX b)
+{
+	return show_object(box_BOX(b), 0, NULL);
+}
+
+static STRING ___show_LIST(LIST l)
+{
+	return show_object(box_LIST(l), 0, NULL);
 }
 
 // ---------- ACTUAL PROGRAM ----------
