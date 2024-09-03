@@ -684,9 +684,16 @@ cognate_table* table_skew(cognate_table* T)
       // Swap the pointers of horizontal left links.
 		cognate_table* L = (cognate_table*)T->left;
 		T->left = L->right;
-		L->right = table_skew(T);
+		L->right = T; //L->right = table_skew(T);
 		return L;
 	}
+	/*
+	else if (T->right && T->right->left && T->right && T->right->left->level == T->right->level)
+	{
+		cognate_table* c = (cognate_table*)T->right;
+		T->right = table_skew(c);
+	}
+	*/
 	return T;
 }
 
@@ -2128,21 +2135,7 @@ static TABLE ___table (BLOCK expr)
 	{
 		ANY key = stack.start[i+1];
 		ANY value = stack.start[i];
-		TABLE ptr = d;
-		cognate_table** assign = (cognate_table**)&d;
-		while (ptr != NULL)
-		{
-			ptrdiff_t diff = compare_objects(ptr->key, key);
-			if (diff > 0) { assign = (cognate_table**)&ptr->left ; ptr = ptr->left; }
-			else if (diff < 0) { assign = (cognate_table**)&ptr->right ; ptr = ptr->right; }
-			else throw_error("Duplicate keys in table initialiser");
-		}
-
-		*assign = gc_malloc(sizeof (**assign));
-		(*assign)->left = NULL;
-		(*assign)->right = NULL;
-		(*assign)->key = key;
-		(*assign)->value = value;
+		d = ___insert(key, value, d);
 	}
 	stack.top = stack.start;
 	stack.start = tmp_stack_start;
@@ -2151,31 +2144,41 @@ static TABLE ___table (BLOCK expr)
 
 static TABLE ___insert(ANY key, ANY value, TABLE d)
 {
-	ptrdiff_t diff;
 	cognate_table* D = gc_malloc(sizeof *D);
-	if (d == NULL || (diff = compare_objects(d->key, key)) == 0)
+	if (!d)
 	{
-		D->left = d ? d->left : NULL;
-		D->right = d ? d->right : NULL;
+		D->left = NULL;
+		D->right = NULL;
 		D->key = key;
 		D->value = value;
-		D->level = d ? d->level : 1;
+		D->level = 1;
+		return D;
 	}
-	else if (diff > 0)
+	ptrdiff_t diff = compare_objects(d->key, key);
+	if (diff == 0)
 	{
+		D->left = d->left;
 		D->right = d->right;
-		D->left = ___insert(key, value, d->left);
-		D->key = d->key;
-		D->value = d->value;
+		D->key = key;
+		D->value = value;
 		D->level = d->level;
+		return D;
 	}
 	else if (diff < 0)
 	{
-		D->left = d->left;
-		D->right = ___insert(key, value, d->right);
 		D->key = d->key;
 		D->value = d->value;
 		D->level = d->level;
+		D->right = d->right;
+		D->left = ___insert(key, value, d->left);
+	}
+	else if (diff > 0)
+	{
+		D->key = d->key;
+		D->value = d->value;
+		D->level = d->level;
+		D->left = d->left;
+		D->right = ___insert(key, value, d->right);
 	}
 
 	// Perform skew and then split. The conditionals that determine whether or
@@ -2193,7 +2196,7 @@ static ANY ___D(ANY key, TABLE d)
 	{
 		ptrdiff_t diff = compare_objects(d->key, key);
 		if (diff == 0) return d->value;
-		else if (diff > 0) d = d->left;
+		else if (diff < 0) d = d->left;
 		else d = d->right;
 	}
 
