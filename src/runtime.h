@@ -810,7 +810,7 @@ static STRING show_object (const ANY object, const _Bool raw_strings, char* buff
 		{
 			BOX b = unbox_BOX(object);
 			bool found = false;
-			for (BOX* p = checkedbuf ; p < checked ; ++p) found |= (*p == b);
+			for (BOX* p = checkedbuf ; p < checked ; ++p) if (*p == b) { found = true ; break; }
 			if (found)
 			{
 				*buffer++ = '.';
