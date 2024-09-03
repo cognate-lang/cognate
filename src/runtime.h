@@ -66,15 +66,15 @@ typedef struct cognate_block
 typedef enum cognate_type
 {
 	NIL = 0,
-	box,
-	boolean,
-	list,
-	block,
-	symbol,
 	number,
+	symbol,
+	boolean,
 	string,
-	io,
+	box,
+	list,
 	table,
+	io,
+	block,
 } cognate_type;
 
 typedef struct cognate_object
@@ -2177,7 +2177,7 @@ static TABLE ___insert(ANY key, ANY value, TABLE d)
 		D->level = d->level;
 		return D;
 	}
-	else if (diff < 0)
+	else if (diff > 0)
 	{
 		D->key = d->key;
 		D->value = d->value;
@@ -2185,7 +2185,7 @@ static TABLE ___insert(ANY key, ANY value, TABLE d)
 		D->right = d->right;
 		D->left = ___insert(key, value, d->left);
 	}
-	else //if (diff > 0)
+	else //if (diff < 0)
 	{
 		D->key = d->key;
 		D->value = d->value;
@@ -2210,7 +2210,7 @@ static ANY ___D(ANY key, TABLE d)
 	{
 		ptrdiff_t diff = compare_objects(d->key, key);
 		if (diff == 0) return d->value;
-		else if (diff < 0) d = d->left;
+		else if (diff > 0) d = d->left;
 		else d = d->right;
 	}
 
@@ -2227,7 +2227,7 @@ static BOOLEAN ___has(ANY key, TABLE d)
 	{
 		ptrdiff_t diff = compare_objects(d->key, key);
 		if (diff == 0) return true;
-		else if (diff < 0) d = d->left;
+		else if (diff > 0) d = d->left;
 		else d = d->right;
 	}
 
@@ -2241,6 +2241,28 @@ static TABLE ___remove(ANY X, TABLE T)
 
 	// TODO
 	return NULL;
+}
+
+static LIST values_helper(TABLE T, LIST L)
+{
+	if (!T) return L;
+	return values_helper(T->left, ___push(T->value, values_helper(T->right, L)));
+}
+
+static LIST ___values(TABLE T)
+{
+	return values_helper(T, NULL);
+}
+
+static LIST keys_helper(TABLE T, LIST L)
+{
+	if (!T) return L;
+	return keys_helper(T->left, ___push(T->key, keys_helper(T->right, L)));
+}
+
+static LIST ___keys(TABLE T)
+{
+	return keys_helper(T, NULL);
 }
 
 // ---------- ACTUAL PROGRAM ----------

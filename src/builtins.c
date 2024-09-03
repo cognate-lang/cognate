@@ -115,6 +115,8 @@
 {.name="remove",                .calltype=call, .argc=2, .args={any, table}, .returns=true, .rettype=table},
 {.name=".",                     .calltype=call, .argc=2, .args={any, table}, .returns=true, .rettype=any},
 {.name="has",                   .calltype=call, .argc=2, .args={any, table}, .returns=true, .rettype=boolean},
+{.name="values",                .calltype=call, .argc=1, .args={table},      .returns=true, .rettype=list},
+{.name="keys",                  .calltype=call, .argc=1, .args={table},      .returns=true, .rettype=list},
 
 /* Builtin stack operations */
 //{.name="drop",                .calltype=stack_op, .stack_shuffle=&drop_register},

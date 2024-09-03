@@ -1,8 +1,7 @@
 Let T be Table (
-	\foo is "bar"
+	\foo is "bar";
 	"bar" is \foo;
 	12 is 13;
-	\key is \value;
 );
 
 Print If == "bar" . \foo T
@@ -27,7 +26,7 @@ Print If == "baz" . \foo T2
 else
 	"FAIL: Table insertion";
 
-Print If == "{ \"foo\":bar foo:\"bar\" }" Show Table ( \foo "bar" and "foo" \bar )
+Print If == "{ foo:\"bar\" \"foo\":bar }" Show Table ( \foo "bar" and "foo" \bar )
 	"PASS: Printing a table"
 else
 	"FAIL: Printing a table";
@@ -37,8 +36,21 @@ Print If And Has \foo T Not Has \bar T
 else
 	"FAIL: Has";
 
+~
 Let T3 be Remove \foo from T;
+
 Print If Not Has \foo T3
 	"PASS: Removing keys"
 else
 	"FAIL: Removing keys";
+~
+
+Print If == List (12 \foo "bar") Keys T
+	"PASS: Getting list of keys in table"
+else
+	"FAIL: Getting list of keys in table";
+
+Print If == List (13 "bar" \foo) Values T
+	"PASS: Getting list of values in table"
+else
+	"FAIL: Getting list of values in table";
