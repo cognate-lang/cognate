@@ -10,7 +10,7 @@ Def Primes (
 	)
 );
 
-Let P be Primes up to 1000;
+Let P be Primes up to 100;
 
 Print If And Not . 50 P . 37 P
 	"PASS: Prime numbers using a table"

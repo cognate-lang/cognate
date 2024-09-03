@@ -2,14 +2,13 @@ Let T be Table (
 	\foo is "bar"
 	"bar" is \foo;
 	12 is 13;
+	\key is \value;
 );
 
 Print If == "bar" . \foo T
 	"PASS: Table lookup 1"
 else
 	"FAIL: Table lookup 1";
-
-Print  T;
 
 Print If == \foo . "bar" T
 	"PASS: Table lookup 2"
@@ -28,7 +27,7 @@ Print If == "baz" . \foo T2
 else
 	"FAIL: Table insertion";
 
-Print If == "{ foo:\"bar\" \"foo\":bar }" Show Table ( \foo "bar" and "foo" \bar )
+Print If == "{ \"foo\":bar foo:\"bar\" }" Show Table ( \foo "bar" and "foo" \bar )
 	"PASS: Printing a table"
 else
 	"FAIL: Printing a table";

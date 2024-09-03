@@ -910,17 +910,23 @@ static ptrdiff_t compare_numbers(NUMBER n1, NUMBER n2)
 
 static ptrdiff_t compare_objects(ANY ob1, ANY ob2)
 {
-	if (ob1.type != ob2.type) return ob1.type - ob2.type;
-	switch (ob1.type)
+	if (ob1.type != ob2.type) return (ptrdiff_t)ob1.type - (ptrdiff_t)ob2.type;
+	else switch (ob1.type)
 	{
 		case number:  return compare_numbers(unbox_NUMBER(ob1), unbox_NUMBER(ob2));
-		case boolean: return unbox_BOOLEAN(ob1) - unbox_BOOLEAN(ob2);
-		case string:  return strcmp(unbox_STRING(ob1), unbox_STRING(ob2));
+		case boolean: return (ptrdiff_t)unbox_BOOLEAN(ob1) - (ptrdiff_t)unbox_BOOLEAN(ob2);
+		case string:  return (ptrdiff_t)strcmp(unbox_STRING(ob1), unbox_STRING(ob2));
 		case symbol:  return unbox_SYMBOL(ob1) - unbox_SYMBOL(ob2);
 		case list:    return compare_lists(unbox_LIST(ob1), unbox_LIST(ob2));
 		case block:   return compare_blocks(unbox_BLOCK(ob1), unbox_BLOCK(ob2));
 		case box:     return (char*)unbox_BOX(ob1) - (char*)unbox_BOX(ob2);
 		default:      return 0; // really shouldn't happen
+		/* NOTE
+		 * The garbage collector *will* reorder objects in memory,
+		 * which means that the relative addresses of blocks and boxes
+		 * *will* change - which is why these can't be used to index tables
+		 * for example.
+		 */
 	}
 }
 
@@ -2133,7 +2139,7 @@ static TABLE ___table (BLOCK expr)
 	stack.start = stack.top;
 	// Eval expr
 	call_block(expr);
-	// Move to a list.
+	// Move to a table.
 	TABLE d = NULL;
 	size_t len = stack_length();
 	if unlikely(len & 1) throw_error("Table initialiser must be key-value pairs");
@@ -2179,7 +2185,7 @@ static TABLE ___insert(ANY key, ANY value, TABLE d)
 		D->right = d->right;
 		D->left = ___insert(key, value, d->left);
 	}
-	else if (diff > 0)
+	else //if (diff > 0)
 	{
 		D->key = d->key;
 		D->value = d->value;
