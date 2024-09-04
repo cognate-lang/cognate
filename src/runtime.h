@@ -34,7 +34,9 @@
 
 #include <regex.h>
 
-#define ALLOC_SIZE (1024 * 1024 * 1024)
+#define TERABYTE (1024l*1024l*1024l)
+#define ALLOC_SIZE TERABYTE
+#define ALLOC_START (void*)(42l * TERABYTE)
 
 #define PAGE_SIZE 4096
 #define WORDSZ (sizeof(void*))
@@ -864,13 +866,13 @@ static STRING show_object (const ANY object, char* buffer, LIST checked)
 
 static void init_show_buffer(void)
 {
-	show_buffer = mmap(0, ALLOC_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
+	show_buffer = mmap(ALLOC_START, ALLOC_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
 }
 
 static void init_stack(void)
 {
 	stack.absolute_start = stack.top = stack.start
-		= mmap(0, ALLOC_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
+		= mmap(ALLOC_START, ALLOC_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
 }
 
 __attribute__((hot))
@@ -1208,10 +1210,10 @@ static TABLE unbox_TABLE(ANY box)
 
 static void gc_init(void)
 {
-	bitmap[0] = mmap(0, ALLOC_SIZE/8, MEM_PROT, MEM_FLAGS, -1, 0);
-	bitmap[1] = mmap(0, ALLOC_SIZE/8, MEM_PROT, MEM_FLAGS, -1, 0);
-	space[0]  = mmap(0, ALLOC_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
-	space[1]  = mmap(0, ALLOC_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
+	bitmap[0] = mmap(ALLOC_START, ALLOC_SIZE/8, MEM_PROT, MEM_FLAGS, -1, 0);
+	bitmap[1] = mmap(ALLOC_START, ALLOC_SIZE/8, MEM_PROT, MEM_FLAGS, -1, 0);
+	space[0]  = mmap(ALLOC_START, ALLOC_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
+	space[1]  = mmap(ALLOC_START, ALLOC_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
 	bitmap[0][0] = ALLOC;
 	bitmap[1][0] = ALLOC;
 }
