@@ -47,3 +47,23 @@ Print If == "[[[...]]]" Show B1
 	"PASS: Printing doubly cyclic box"
 else
 	"FAIL: Printing doubly cyclic box";
+
+
+Let D be a List (0 Box 1 2 Box 3);
+Set Index 1 D to be D;
+
+Print If == "(0 [(0 ... 2 [3])] 2 [3])" Show D
+	"PASS: Printing cyclic box within list"
+else
+	"FAIL: Printing cyclic box within list";
+
+Let E be a List (Box 1 Box 2 Box 3 Box 4);
+Set Index 0 E be Index 1 E;
+Set Index 1 E be Index 2 E;
+Set Index 2 E be Index 3 E;
+
+Set Index 3 E be Index 0 E;
+Print If == "([[[[...]]]] [[[[...]]]] [[[[...]]]] [[[[...]]]])" Show E
+	"PASS: Printing cyclic box within list 2"
+else
+	"FAIL: Printing cyclic box within list 2";
