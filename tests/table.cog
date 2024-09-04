@@ -21,7 +21,7 @@ else
 
 Let T2 be Insert \foo is "baz" into T;
 
-Print If == "baz" . \foo T2
+Print If And == "baz" . \foo T2 and == "bar" . \foo T
 	"PASS: Table insertion"
 else
 	"FAIL: Table insertion";
