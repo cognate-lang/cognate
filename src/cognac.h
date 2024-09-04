@@ -120,6 +120,9 @@ struct _builtin_t
 	type_t calltype;
 	val_type_t storagetype;
 	val_type_t rettype;
+	val_type_t overloads[10];
+	val_type_t overload_returns[10];
+	bool overload;
 	//val_type_t checks;
 };
 
@@ -193,6 +196,10 @@ struct _func_t
 	char* unmangled_name;
 	size_t argc;
 	char* name;
+	val_type_t overloads[10];
+	val_type_t overload_returns[10];
+	val_type_t overloaded_to;
+	bool overload;
 	bool returns;
 	bool stack;
 	bool used;

@@ -18,25 +18,25 @@ Print If == 123.4 Number "123.4"
 else
 	"PASS: Casting strings to numbers";
 
-Print If == "H" Head of "Hello"
-	"PASS: Getting Head of string"
+Print If == "H" First of "Hello"
+	"PASS: Getting First of string"
 else
-	"FAIL: Getting Head of string";
+	"FAIL: Getting First of string";
 
-Print If == "e" Head of "e"
-	"PASS: Getting Head of single-character string"
+Print If == "e" First of "e"
+	"PASS: Getting First of single-character string"
 else
-	"FAIL: Getting Head of single-character string";
+	"FAIL: Getting First of single-character string";
 
-Print If == "ello" Tail of "Hello"
-	"PASS: Getting Tail of string"
+Print If == "ello" Rest of "Hello"
+	"PASS: Getting Rest of string"
 else
-	"FAIL: Getting Tail of string";
+	"FAIL: Getting Rest of string";
 
-Print If == "" Tail of "e"
-	"PASS: Getting Tail of single-character string"
+Print If == "" Rest of "e"
+	"PASS: Getting Rest of single-character string"
 else
-	"FAIL: Getting Tail of single-character string";
+	"FAIL: Getting Rest of single-character string";
 
 Print If == List ("Hello" "world!") Split on " " with "Hello world!"
 	"PASS: Splitting a string"

@@ -10,11 +10,15 @@ Def Triplet as (Twin ; Twin);
 
 Def When as (
 	Let Cond;
-	Let Block;
-	Do If Cond then Block else ();
+	Def Block;
+	Do If Cond then ( Block ) else ();
 );
 
-Def Unless as ( When Not );
+Def Unless as (
+	Let Cond;
+	Def Block;
+	Do If Cond then ( ) else ( Block );
+);
 
 Def While (
 	Let Condition;
@@ -209,10 +213,6 @@ Def Take (
 	)
 );
 
-Def Length (
-	Let L be List!;
-	Do If Empty? L then ( 0 ) else ( Length of the Rest of L ; + 1 )
-);
 
 Def Index (
 	Let N be Of (Integer?);

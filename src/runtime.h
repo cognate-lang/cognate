@@ -34,6 +34,10 @@
 
 #include <regex.h>
 
+#define TERABYTE (1024l*1024l*1024l)
+#define ALLOC_SIZE TERABYTE
+#define ALLOC_START (void*)(42l * TERABYTE)
+
 #define PAGE_SIZE 4096
 #define WORDSZ (sizeof(void*))
 
@@ -176,11 +180,11 @@ static _Bool z = 0;
 
 static _Bool pure = 0;
 
-static size_t system_memory;
 
 // Global variables
 static cognate_stack stack;
 static LIST cmdline_parameters = NULL;
+static char* show_buffer = NULL;
 #ifdef DEBUG
 static const backtrace* trace = NULL;
 static const var_info* vars = NULL;
@@ -204,7 +208,8 @@ const SYMBOL SYMreadHwriteHexisting = "read-write-existing";
 
 // Variables and	needed by functions.c defined in runtime.c
 static void init_stack(void);
-static STRING show_object(const ANY object, const _Bool, char*);
+static void init_show_buffer(void);
+static STRING show_object(const ANY object, char*, LIST);
 static void _Noreturn __attribute__((format(printf, 1, 2))) throw_error_fmt(const char* restrict const, ...);
 static void _Noreturn throw_error(const char* restrict const);
 static ptrdiff_t compare_objects(ANY, ANY);
@@ -287,15 +292,18 @@ static BOOLEAN ___booleanQ(ANY);
 static BOOLEAN ___integerQ(ANY);
 static BOOLEAN ___ioQ(ANY);
 static BOOLEAN ___zeroQ(ANY);
-static ANY ___first(LIST);
-static LIST ___rest(LIST);
+static ANY ___first(ANY);
+static ANY ___rest(ANY);
+static STRING ___first_STRING(STRING);
+static STRING ___rest_STRING(STRING);
+static ANY ___first_LIST(LIST);
+static LIST ___rest_LIST(LIST);
 static STRING ___head(STRING);
 static STRING ___tail(STRING);
 static LIST ___push(ANY, LIST);
 static BOOLEAN ___emptyQ(LIST);
 static LIST ___list(BLOCK);
 static STRING ___join(STRING, STRING);
-static NUMBER ___stringHlength(STRING);
 static STRING ___substring(NUMBER, NUMBER, STRING);
 static STRING ___input(void);
 static IO ___open(SYMBOL, STRING);
@@ -306,6 +314,16 @@ static LIST ___stack(void);
 static LIST ___parameters(void);
 static void ___stop(void);
 static STRING ___show(ANY);
+static STRING ___show_NUMBER(NUMBER);
+static STRING ___show_LIST(LIST);
+static STRING ___show_BLOCK(BLOCK);
+static STRING ___show_TABLE(TABLE);
+static STRING ___show_IO(IO);
+static STRING ___show_STRING(STRING);
+static STRING ___show_SYMBOL(SYMBOL);
+static STRING ___show_BOOLEAN(BOOLEAN);
+static STRING ___show_BOX(BOX);
+
 static BLOCK ___regex(STRING);
 static BLOCK ___regexHmatch(STRING);
 static NUMBER ___ordinal(STRING);
@@ -397,6 +415,8 @@ int main(int argc, char** argv)
 	char signals[] = { SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGABRT, SIGBUS, SIGFPE, SIGPIPE, SIGTERM, SIGCHLD, SIGSEGV };
 	for (size_t i = 0; i < sizeof(signals); ++i)
 		if (sigaction(signals[i], &error_signal_action, NULL) == -1) throw_error("couldn't install signal handler");
+	// Allocate buffer for object printing
+	init_show_buffer();
 	// Initialize the stack.
 	init_stack();
 #ifdef DEBUG
@@ -659,7 +679,7 @@ static void handle_error_signal(int sig, siginfo_t *info, void *ucontext)
 	if (sig == SIGSEGV)
 	{
 		char* addr = info->si_addr;
-		if (addr >= (char*)stack.absolute_start && addr <= (char*)stack.absolute_start + system_memory/10 + PAGE_SIZE)
+		if (addr >= (char*)stack.absolute_start && addr <= (char*)stack.absolute_start + ALLOC_SIZE)
 			throw_error_fmt("Stack overflow (%zu items on the stack)", stack.top - stack.absolute_start);
 		else
 			throw_error("Memory error");
@@ -715,129 +735,144 @@ cognate_table* table_split(cognate_table* T)
 	else return T;
 }
 
-static char* show_table(TABLE d, char* buffer)
+static char* show_table_helper(TABLE d, char* buffer, LIST checked)
 {
 	if (!d) return buffer;
 
-	buffer = show_table(d->left, buffer);
+	buffer = show_table_helper(d->left, buffer, checked);
 
-	buffer = (char*)show_object(d->key, 0, buffer);
+	buffer = (char*)show_object(d->key, buffer, checked);
 	*buffer++ = ':';
-	buffer = (char*)show_object(d->value, 0, buffer);
+	buffer = (char*)show_object(d->value, buffer, checked);
 	*buffer++ = ' ';
 
-	buffer = show_table(d->right, buffer);
+	buffer = show_table_helper(d->right, buffer, checked);
 
 	return buffer;
 }
 
-static STRING show_object (const ANY object, const _Bool raw_strings, char* buffer)
+static char* show_table(TABLE d, char* buffer, LIST checked)
 {
-	static char* buf;
-	static BOX *checked, *checkedbuf;
-	_Bool root = !buffer;
-	if (root)
+	*buffer++ = '{';
+	*buffer++ = ' ';
+	buffer = show_table_helper(d, buffer, checked);
+	*buffer++ = '}';
+	*buffer = '\0';
+	return buffer;
+}
+
+static char* show_io(IO i, char* buffer)
+{
+	if (i->file != NULL)
+		return buffer + sprintf(buffer, "{ %s OPEN mode '%s' }", i->path, i->mode);
+	else
+		return buffer + sprintf(buffer, "{ %s CLOSED }", i->path);
+}
+
+static char* show_string(STRING s, char* buffer)
+{
+	*buffer++ = '"';
+	for (const char* str = s ; *str ; ++str)
 	{
-		buf = buffer = (char*)(space[z] + alloc[z]); // i dont like resizing buffers
-		checked = checkedbuf = (BOX*)space[!z]; // hmmm
+		char c = *str;
+		if unlikely(c >= '\a' && c <= '\r')
+		{
+			*buffer++ = '\\';
+			*buffer++ = "abtnvfr"[c-'\a'];
+		}
+		else if (c == '\\') { *buffer++ = '\\'; *buffer++ = '\\'; }
+		else if (c == '"')  { *buffer++ = '\\'; *buffer++ = '"';  }
+		else *buffer++ = c;
 	}
+	*buffer++ = '"';
+	*buffer = '\0';
+	return buffer;
+}
+
+static char* show_number(NUMBER n, char* buffer)
+{
+	return buffer + sprintf(buffer, "%.14g", n);
+}
+
+static char* show_list(LIST l, char* buffer, LIST checked)
+{
+	*buffer++ = '(';
+	for ( ; l ; l = l->next)
+	{
+		buffer = (char*)show_object(l->object, buffer, checked);
+		if (!l->next) break;
+		//*buffer++ = ',';
+		*buffer++ = ' ';
+	}
+	*buffer++ = ')';
+	*buffer = '\0';
+	return buffer;
+}
+
+static char* show_boolean(BOOLEAN b, char* buffer)
+{
+	return buffer + sprintf(buffer, "%s", b ? "True" : "False");
+}
+
+static char* show_symbol(SYMBOL s, char* buffer)
+{
+	return buffer + sprintf(buffer, "%s", s);
+}
+
+static char* show_block(BLOCK b, char* buffer)
+{
+	void (*fn)(uint8_t*) = b.fn;
+	return buffer + sprintf(buffer, "<block %p>", *(void**)&fn);
+}
+
+static char* show_box(BOX b, char* buffer, LIST checked)
+{
+	bool found = false;
+	for (LIST l = checked ; l ; l = l->next)
+		if (l->object.box == b)
+		{
+			*buffer++ = '.';
+			*buffer++ = '.';
+			*buffer++ = '.';
+			goto end;
+		}
+	checked = (cognate_list*)___push(box_BOX(b), checked);
+	*buffer++ = '[';
+	buffer = (char*)show_object(*b, buffer, checked);
+	*buffer++ = ']';
+	checked = (cognate_list*)___rest_LIST(checked);
+	end:
+	*buffer = '\0';
+	return buffer;
+}
+
+static STRING show_object (const ANY object, char* buffer, LIST checked)
+{
 	switch (object.type)
 	{
-		case NIL: throw_error("This shouldn't happen");
-					 break;
-		case table:
-					  *buffer++ = '{';
-					  *buffer++ = ' ';
-					  buffer = show_table(object.table, buffer);
-					  *buffer++ = '}';
-					  break;
-		case number: sprintf(buffer, "%.14g", object.number);
-						 buffer += strlen(buffer);
-						 break;
-		case io:
-						 if (object.io->file != NULL)
-						 	sprintf(buffer, "{ %s OPEN mode '%s' }", object.io->path, object.io->mode);
-						 else
-						 	sprintf(buffer, "{ %s CLOSED }", object.io->path);
-						 buffer += strlen(buffer);
-						 break;
-		case string:
-			if (raw_strings)
-				buffer += strlen(strcpy(buffer, unbox_STRING(object)));
-			else
-			{
-				*buffer++ = '"';
-				for (const char* str = unbox_STRING(object) ; *str ; ++str)
-				{
-					char c = *str;
-					if unlikely(c >= '\a' && c <= '\r')
-					{
-						*buffer++ = '\\';
-						*buffer++ = "abtnvfr"[c-'\a'];
-					}
-					else if (c == '\\') { *buffer++ = '\\'; *buffer++ = '\\'; }
-					else if (c == '"')  { *buffer++ = '\\'; *buffer++ = '"';  }
-					else *buffer++ = c;
-				}
-				*buffer++ = '"';
-			}
-			break;
-		case list:
-			*buffer++ = '(';
-			for (LIST l = unbox_LIST(object) ; l ; l = l->next)
-			{
-				buffer = (char*)show_object(l->object, 0, buffer);
-				if (!l->next) break;
-				//*buffer++ = ',';
-				*buffer++ = ' ';
-			}
-			*buffer++ = ')';
-			break;
-		case boolean: strcpy(buffer, unbox_BOOLEAN(object) ? "True" : "False");
-						  buffer += strlen(buffer);
-						  break;
-		case symbol:  strcpy(buffer, unbox_SYMBOL(object));
-						  buffer += strlen(buffer);
-						  break;
-		case block:
-		{
-			void (*fn)(uint8_t*) = unbox_BLOCK(object).fn;
-			sprintf(buffer, "<block %p>", *(void**)&fn);
-			buffer += strlen(buffer);
-			break;
-		}
-		case box:
-		{
-			BOX b = unbox_BOX(object);
-			bool found = false;
-			for (BOX* p = checkedbuf ; p < checked ; ++p) if (*p == b) { found = true ; break; }
-			if (found)
-			{
-				*buffer++ = '.';
-				*buffer++ = '.';
-				*buffer++ = '.';
-			}
-			else
-			{
-				*checked++ = b;
-				*buffer++ = '[';
-				buffer = (char*)show_object(*b, 0, buffer);
-				*buffer++ = ']';
-				checked--;
-			}
-			break;
-		}
+		case NIL: throw_error("This shouldn't happen"); break;
+		case number:  buffer = show_number (object.number,  buffer);          break;
+		case io:      buffer = show_io     (object.io,      buffer);          break;
+		case string:  buffer = show_string (object.string,  buffer);          break;
+		case boolean: buffer = show_boolean(object.boolean, buffer);          break;
+		case symbol:  buffer = show_symbol (object.symbol,  buffer);          break;
+		case block:   buffer = show_block  (object.block,   buffer);          break;
+		case table:   buffer = show_table  (object.table,   buffer, checked); break;
+		case list:    buffer = show_list   (object.list,    buffer, checked); break;
+		case box:     buffer = show_box    (object.box,     buffer, checked); break;
 	}
-	if (!root) return buffer;
-	*buffer++ = '\0';
-	char* c = gc_strdup(buf);
-	return c;
+	return buffer;
+}
+
+static void init_show_buffer(void)
+{
+	show_buffer = mmap(ALLOC_START, ALLOC_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
 }
 
 static void init_stack(void)
 {
 	stack.absolute_start = stack.top = stack.start
-		= mmap(0, system_memory/10 - PAGE_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
+		= mmap(ALLOC_START, ALLOC_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
 }
 
 __attribute__((hot))
@@ -1002,7 +1037,7 @@ static _Noreturn void type_error(char* expected, ANY got)
 	switch (expected[0])
 		case 'a': case 'e': case 'i': case 'o': case 'u': case 'h':
 			s = "an";
-	throw_error_fmt("Expected %s %s but got %.64s", s, expected, show_object(got, 0, NULL));
+	throw_error_fmt("Expected %s %s but got %.64s", s, expected, ___show(got));
 }
 
 __attribute__((hot))
@@ -1175,11 +1210,10 @@ static TABLE unbox_TABLE(ANY box)
 
 static void gc_init(void)
 {
-	system_memory = sysconf(_SC_PHYS_PAGES) * 4096;
-	bitmap[0] = mmap(0, system_memory/18, MEM_PROT, MEM_FLAGS, -1, 0);
-	bitmap[1] = mmap(0, system_memory/18, MEM_PROT, MEM_FLAGS, -1, 0);
-	space[0]  = mmap(0, (system_memory/18)*8 - PAGE_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
-	space[1]  = mmap(0, (system_memory/18)*8 - PAGE_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
+	bitmap[0] = mmap(ALLOC_START, ALLOC_SIZE/8, MEM_PROT, MEM_FLAGS, -1, 0);
+	bitmap[1] = mmap(ALLOC_START, ALLOC_SIZE/8, MEM_PROT, MEM_FLAGS, -1, 0);
+	space[0]  = mmap(ALLOC_START, ALLOC_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
+	space[1]  = mmap(ALLOC_START, ALLOC_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
 	bitmap[0][0] = ALLOC;
 	bitmap[1][0] = ALLOC;
 }
@@ -1362,8 +1396,27 @@ static ANY ___if(BOOLEAN cond, ANY a, ANY b)
 	return cond ? a : b;
 }
 
-static void ___put(ANY a)   { assert_impure(); fputs(show_object(a, 1, NULL), stdout); fflush(stdout); }
-static void ___print(ANY a) { assert_impure(); puts(show_object(a, 1, NULL)); }
+static void ___put(ANY a)   { assert_impure(); fputs(___show(a), stdout); fflush(stdout); }
+static void ___put_NUMBER(NUMBER a) { assert_impure(); fputs(___show_NUMBER(a), stdout); fflush(stdout); }
+static void ___put_LIST(LIST a) { assert_impure(); fputs(___show_LIST(a), stdout); fflush(stdout); }
+static void ___put_TABLE(TABLE a) { assert_impure(); fputs(___show_TABLE(a), stdout); fflush(stdout); }
+static void ___put_IO(IO a) { assert_impure(); fputs(___show_IO(a), stdout); fflush(stdout); }
+static void ___put_BLOCK(BLOCK a) { assert_impure(); fputs(___show_BLOCK(a), stdout); fflush(stdout); }
+static void ___put_STRING(STRING a) { assert_impure(); fputs(___show_STRING(a), stdout); fflush(stdout); }
+static void ___put_SYMBOL(SYMBOL a) { assert_impure(); fputs(___show_SYMBOL(a), stdout); fflush(stdout); }
+static void ___put_BOOLEAN(BOOLEAN a) { assert_impure(); fputs(___show_BOOLEAN(a), stdout); fflush(stdout); }
+static void ___put_BOX(BOX a) { assert_impure(); fputs(___show_BOX(a), stdout); }
+
+static void ___print(ANY a) { assert_impure(); puts(___show(a)); }
+static void ___print_NUMBER(NUMBER a) { assert_impure(); puts(___show_NUMBER(a)); }
+static void ___print_LIST(LIST a) { assert_impure(); puts(___show_LIST(a)); }
+static void ___print_TABLE(TABLE a) { assert_impure(); puts(___show_TABLE(a)); }
+static void ___print_IO(IO a) { assert_impure(); puts(___show_IO(a)); }
+static void ___print_BLOCK(BLOCK a) { assert_impure(); puts(___show_BLOCK(a)); }
+static void ___print_STRING(STRING a) { assert_impure(); puts(___show_STRING(a)); }
+static void ___print_SYMBOL(SYMBOL a) { assert_impure(); puts(___show_SYMBOL(a)); }
+static void ___print_BOOLEAN(BOOLEAN a) { assert_impure(); puts(___show_BOOLEAN(a)); }
+static void ___print_BOX(BOX a) { assert_impure(); puts(___show_BOX(a)); }
 
 static NUMBER ___P(NUMBER a, NUMBER b) { return a + b; } // Add cannot produce NaN.
 static NUMBER ___M(NUMBER a, NUMBER b) { return a * b; }
@@ -1428,30 +1481,56 @@ static IO      ___ioX(IO a)          { return a; }
 
 static BOOLEAN ___match(ANY patt, ANY obj) { return match_objects(patt,obj); }
 
-static ANY ___first(LIST lst)
+static ANY ___first_LIST(LIST lst)
 {
 	// Returns the first element of a list. O(1).
 	if unlikely(!lst) throw_error("empty list is invalid");
 	return lst->object;
 }
 
-static LIST ___rest(LIST lst)
+static LIST ___rest_LIST(LIST lst)
 {
 	// Returns the tail portion of a list. O(1).
 	if unlikely(!lst) throw_error("empty list is invalid");
 	return lst->next;
 }
 
-static STRING ___head(STRING str)
+static STRING ___first_STRING(STRING str)
 {
 	if unlikely(!*str) throw_error("empty string is invalid");
 	return gc_strndup((char*)str, mblen(str, MB_CUR_MAX));
 }
 
-static STRING ___tail(STRING str)
+static STRING ___rest_STRING(STRING str)
 {
 	if unlikely(!*str) throw_error("empty string is invalid");
 	return str + mblen(str, MB_CUR_MAX);
+}
+
+static ANY ___first(ANY a)
+{
+	switch(a.type)
+	{
+		case list:   return ___first_LIST(a.list);
+		case string: return box_STRING(___first_STRING(a.string));
+		default: type_error("string or list", a);
+	}
+#ifdef __TINYC__
+	return (cognate_object){0};
+#endif
+}
+
+static ANY ___rest(ANY a)
+{
+	switch(a.type)
+	{
+		case list:   return box_LIST(___rest_LIST(a.list));
+		case string: return box_STRING(___rest_STRING(a.string));
+		default: type_error("string or list", a);
+	}
+#ifdef __TINYC__
+	return (cognate_object){0};
+#endif
 }
 
 static LIST ___push(ANY a, LIST b)
@@ -1499,13 +1578,6 @@ static STRING ___join(STRING s1, STRING s2)
 	strcpy(result, s1);
 	strcpy(result+l1, s2);
  	return result;
-}
-
-static NUMBER ___stringHlength(STRING str)
-{
-	size_t len = 0;
-	for (; *str ; str += mblen(str, MB_CUR_MAX), ++len);
-	return len;
 }
 
 static STRING ___substring(NUMBER startf, NUMBER endf, STRING str)
@@ -1752,7 +1824,10 @@ static BLOCK ___precompute(BLOCK blk)
 
 static STRING ___show(ANY o)
 {
-	return show_object(o, 1, NULL);
+	if (o.type == string) return o.string;
+	if (o.type == symbol) return o.symbol;
+	show_object(o, show_buffer, NULL);
+	return show_buffer;
 }
 
 static LIST ___split(STRING sep, STRING str)
@@ -2156,7 +2231,7 @@ static TABLE ___table (BLOCK expr)
 
 static TABLE ___insert(ANY key, ANY value, TABLE d)
 {
-	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", show_object(key, 0, NULL));
+	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
 	cognate_table* D = gc_malloc(sizeof *D);
 	if (!d)
 	{
@@ -2205,7 +2280,7 @@ static TABLE ___insert(ANY key, ANY value, TABLE d)
 
 static ANY ___D(ANY key, TABLE d)
 {
-	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", show_object(key, 0, NULL));
+	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
 	while (d)
 	{
 		ptrdiff_t diff = compare_objects(d->key, key);
@@ -2214,7 +2289,7 @@ static ANY ___D(ANY key, TABLE d)
 		else d = d->right;
 	}
 
-	throw_error_fmt("%s is not in table", show_object(key, 0, NULL));
+	throw_error_fmt("%s is not in table", ___show(key));
 	#ifdef __TINYC__
 	return (cognate_object){0};
 	#endif
@@ -2222,7 +2297,7 @@ static ANY ___D(ANY key, TABLE d)
 
 static BOOLEAN ___has(ANY key, TABLE d)
 {
-	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", show_object(key, 0, NULL));
+	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
 	while (d)
 	{
 		ptrdiff_t diff = compare_objects(d->key, key);
@@ -2264,5 +2339,184 @@ static LIST ___keys(TABLE T)
 {
 	return keys_helper(T, NULL);
 }
+
+static NUMBER ___length_TABLE(TABLE T)
+{
+	if (!T) return 0;
+	return 1 + ___length_TABLE(T->left) + ___length_TABLE(T->right);
+}
+
+static NUMBER ___length_LIST(LIST l)
+{
+	size_t len = 0;
+	while (l)
+	{
+		len++;
+		l = l->next;
+	}
+	return (NUMBER)len;
+}
+
+static NUMBER ___length_STRING(STRING str)
+{
+	size_t len = 0;
+	for (; *str ; str += mblen(str, MB_CUR_MAX), ++len);
+	return len;
+}
+
+static NUMBER ___length(ANY a)
+{
+	switch(a.type)
+	{
+		case list: return ___length_LIST(unbox_LIST(a));
+		case string: return ___length_STRING(unbox_STRING(a));
+		case table: return ___length_TABLE(unbox_TABLE(a));
+		default: type_error("list or string or table", a);
+	}
+#ifdef __TINYC__
+	return 0;
+#endif
+}
+
+static STRING ___show_NUMBER(NUMBER a)
+{
+	show_number(a, show_buffer);
+	return gc_strdup(show_buffer);
+}
+
+static STRING ___show_TABLE(TABLE a)
+{
+	show_table(a, show_buffer, NULL);
+	return gc_strdup(show_buffer);
+}
+
+static STRING ___show_IO(IO a)
+{
+	show_io(a, show_buffer);
+	return gc_strdup(show_buffer);
+}
+
+static STRING ___show_STRING(STRING s)
+{
+	return s;
+}
+
+static STRING ___show_BOOLEAN(BOOLEAN b)
+{
+	return b ? "True" : "False";
+}
+
+static STRING ___show_SYMBOL(SYMBOL s)
+{
+	return s;
+}
+
+static STRING ___show_BLOCK(BLOCK b)
+{
+	show_block(b, show_buffer);
+	return gc_strdup(show_buffer);
+}
+
+static STRING ___show_BOX(BOX b)
+{
+	show_box(b, show_buffer, NULL);
+	return gc_strdup(show_buffer);
+}
+
+static STRING ___show_LIST(LIST l)
+{
+	show_list(l, show_buffer, NULL);
+	return gc_strdup(show_buffer);
+}
+
+static BOOLEAN ___numberQ_NUMBER(NUMBER _) { return true; }
+static BOOLEAN ___numberQ_LIST(LIST _) { return false; }
+static BOOLEAN ___numberQ_BOX(BOX _) { return false; }
+static BOOLEAN ___numberQ_TABLE(TABLE _) { return false; }
+static BOOLEAN ___numberQ_IO(IO _) { return false; }
+static BOOLEAN ___numberQ_BOOLEAN(BOOLEAN _) { return false; }
+static BOOLEAN ___numberQ_STRING(STRING _) { return false; }
+static BOOLEAN ___numberQ_SYMBOL(SYMBOL _) { return false; }
+static BOOLEAN ___numberQ_BLOCK(BLOCK _) { return false; }
+
+static BOOLEAN ___listQ_NUMBER(NUMBER _) { return false; }
+static BOOLEAN ___listQ_LIST(LIST _) { return true; }
+static BOOLEAN ___listQ_BOX(BOX _) { return false; }
+static BOOLEAN ___listQ_TABLE(TABLE _) { return false; }
+static BOOLEAN ___listQ_IO(IO _) { return false; }
+static BOOLEAN ___listQ_BOOLEAN(BOOLEAN _) { return false; }
+static BOOLEAN ___listQ_STRING(STRING _) { return false; }
+static BOOLEAN ___listQ_SYMBOL(SYMBOL _) { return false; }
+static BOOLEAN ___listQ_BLOCK(BLOCK _) { return false; }
+
+static BOOLEAN ___boxQ_NUMBER(NUMBER _) { return false; }
+static BOOLEAN ___boxQ_LIST(LIST _) { return false; }
+static BOOLEAN ___boxQ_BOX(BOX _) { return true; }
+static BOOLEAN ___boxQ_TABLE(TABLE _) { return false; }
+static BOOLEAN ___boxQ_IO(IO _) { return false; }
+static BOOLEAN ___boxQ_BOOLEAN(BOOLEAN _) { return false; }
+static BOOLEAN ___boxQ_STRING(STRING _) { return false; }
+static BOOLEAN ___boxQ_SYMBOL(SYMBOL _) { return false; }
+static BOOLEAN ___boxQ_BLOCK(BLOCK _) { return false; }
+
+static BOOLEAN ___tableQ_NUMBER(NUMBER _) { return false; }
+static BOOLEAN ___tableQ_LIST(LIST _) { return false; }
+static BOOLEAN ___tableQ_BOX(BOX _) { return false; }
+static BOOLEAN ___tableQ_TABLE(TABLE _) { return true; }
+static BOOLEAN ___tableQ_IO(IO _) { return false; }
+static BOOLEAN ___tableQ_BOOLEAN(BOOLEAN _) { return false; }
+static BOOLEAN ___tableQ_STRING(STRING _) { return false; }
+static BOOLEAN ___tableQ_SYMBOL(SYMBOL _) { return false; }
+static BOOLEAN ___tableQ_BLOCK(BLOCK _) { return false; }
+
+static BOOLEAN ___ioQ_NUMBER(NUMBER _) { return false; }
+static BOOLEAN ___ioQ_LIST(LIST _) { return false; }
+static BOOLEAN ___ioQ_BOX(BOX _) { return false; }
+static BOOLEAN ___ioQ_TABLE(TABLE _) { return false; }
+static BOOLEAN ___ioQ_IO(IO _) { return true; }
+static BOOLEAN ___ioQ_BOOLEAN(BOOLEAN _) { return false; }
+static BOOLEAN ___ioQ_STRING(STRING _) { return false; }
+static BOOLEAN ___ioQ_SYMBOL(SYMBOL _) { return false; }
+static BOOLEAN ___ioQ_BLOCK(BLOCK _) { return false; }
+
+static BOOLEAN ___booleanQ_NUMBER(NUMBER _) { return false; }
+static BOOLEAN ___booleanQ_LIST(LIST _) { return false; }
+static BOOLEAN ___booleanQ_BOX(BOX _) { return false; }
+static BOOLEAN ___booleanQ_TABLE(TABLE _) { return false; }
+static BOOLEAN ___booleanQ_IO(IO _) { return false; }
+static BOOLEAN ___booleanQ_BOOLEAN(BOOLEAN _) { return true; }
+static BOOLEAN ___booleanQ_STRING(STRING _) { return false; }
+static BOOLEAN ___booleanQ_SYMBOL(SYMBOL _) { return false; }
+static BOOLEAN ___booleanQ_BLOCK(BLOCK _) { return false; }
+
+static BOOLEAN ___stringQ_NUMBER(NUMBER _) { return false; }
+static BOOLEAN ___stringQ_LIST(LIST _) { return false; }
+static BOOLEAN ___stringQ_BOX(BOX _) { return false; }
+static BOOLEAN ___stringQ_TABLE(TABLE _) { return false; }
+static BOOLEAN ___stringQ_IO(IO _) { return false; }
+static BOOLEAN ___stringQ_BOOLEAN(BOOLEAN _) { return false; }
+static BOOLEAN ___stringQ_STRING(STRING _) { return true; }
+static BOOLEAN ___stringQ_SYMBOL(SYMBOL _) { return false; }
+static BOOLEAN ___stringQ_BLOCK(BLOCK _) { return false; }
+
+static BOOLEAN ___symbolQ_NUMBER(NUMBER _) { return false; }
+static BOOLEAN ___symbolQ_LIST(LIST _) { return false; }
+static BOOLEAN ___symbolQ_BOX(BOX _) { return false; }
+static BOOLEAN ___symbolQ_TABLE(TABLE _) { return false; }
+static BOOLEAN ___symbolQ_IO(IO _) { return false; }
+static BOOLEAN ___symbolQ_BOOLEAN(BOOLEAN _) { return false; }
+static BOOLEAN ___symbolQ_STRING(STRING _) { return false; }
+static BOOLEAN ___symbolQ_SYMBOL(SYMBOL _) { return true; }
+static BOOLEAN ___symbolQ_BLOCK(BLOCK _) { return false; }
+
+static BOOLEAN ___blockQ_NUMBER(NUMBER _) { return false; }
+static BOOLEAN ___blockQ_LIST(LIST _) { return false; }
+static BOOLEAN ___blockQ_BOX(BOX _) { return false; }
+static BOOLEAN ___blockQ_TABLE(TABLE _) { return false; }
+static BOOLEAN ___blockQ_IO(IO _) { return false; }
+static BOOLEAN ___blockQ_BOOLEAN(BOOLEAN _) { return false; }
+static BOOLEAN ___blockQ_STRING(STRING _) { return false; }
+static BOOLEAN ___blockQ_SYMBOL(SYMBOL _) { return false; }
+static BOOLEAN ___blockQ_BLOCK(BLOCK _) { return true; }
 
 // ---------- ACTUAL PROGRAM ----------
