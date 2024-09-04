@@ -290,8 +290,12 @@ static BOOLEAN ___booleanQ(ANY);
 static BOOLEAN ___integerQ(ANY);
 static BOOLEAN ___ioQ(ANY);
 static BOOLEAN ___zeroQ(ANY);
-static ANY ___first(LIST);
-static LIST ___rest(LIST);
+static ANY ___first(ANY);
+static ANY ___rest(ANY);
+static ANY ___first_STRING(STRING);
+static STRING ___rest_STRING(STRING);
+static ANY ___first_LIST(LIST);
+static LIST ___rest_LIST(LIST);
 static STRING ___head(STRING);
 static STRING ___tail(STRING);
 static LIST ___push(ANY, LIST);
@@ -834,7 +838,7 @@ static char* show_box(BOX b, char* buffer, LIST checked)
 	*buffer++ = '[';
 	buffer = (char*)show_object(*b, buffer, checked);
 	*buffer++ = ']';
-	checked = (cognate_list*)___rest(checked);
+	checked = (cognate_list*)___rest_LIST(checked);
 	end:
 	*buffer = '\0';
 	return buffer;
@@ -1475,30 +1479,50 @@ static IO      ___ioX(IO a)          { return a; }
 
 static BOOLEAN ___match(ANY patt, ANY obj) { return match_objects(patt,obj); }
 
-static ANY ___first(LIST lst)
+static ANY ___first_LIST(LIST lst)
 {
 	// Returns the first element of a list. O(1).
 	if unlikely(!lst) throw_error("empty list is invalid");
 	return lst->object;
 }
 
-static LIST ___rest(LIST lst)
+static LIST ___rest_LIST(LIST lst)
 {
 	// Returns the tail portion of a list. O(1).
 	if unlikely(!lst) throw_error("empty list is invalid");
 	return lst->next;
 }
 
-static STRING ___head(STRING str)
+static ANY ___first_STRING(STRING str)
 {
 	if unlikely(!*str) throw_error("empty string is invalid");
-	return gc_strndup((char*)str, mblen(str, MB_CUR_MAX));
+	return box_STRING(gc_strndup((char*)str, mblen(str, MB_CUR_MAX)));
 }
 
-static STRING ___tail(STRING str)
+static STRING ___rest_STRING(STRING str)
 {
 	if unlikely(!*str) throw_error("empty string is invalid");
 	return str + mblen(str, MB_CUR_MAX);
+}
+
+static ANY ___first(ANY a)
+{
+	switch(a.type)
+	{
+		case list:   return ___first_LIST(a.list);
+		case string: return ___first_STRING(a.string);
+		default: type_error("string or list", a);
+	}
+}
+
+static ANY ___rest(ANY a)
+{
+	switch(a.type)
+	{
+		case list:   return box_LIST(___rest_LIST(a.list));
+		case string: return box_STRING(___rest_STRING(a.string));
+		default: type_error("string or list", a);
+	}
 }
 
 static LIST ___push(ANY a, LIST b)

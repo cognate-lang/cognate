@@ -291,6 +291,7 @@ func_t* make_func(ast_list_t* tree, char* name)
 	func->has_regs = false;
 	func->overload = false;
 	func->overloaded_to = any;
+	func->overload_to_return = false;
 	func->builtin = false;
 	func->name = name;
 	func->locals = NULL;
@@ -1930,6 +1931,8 @@ bool add_var_types_forwards(module_t* mod)
 										for ( val_list_t* vv = new_fn->args ; vv ; vv = vv->next )
 											if (vv->val == v->val) vv->val = make_value(t, v->val->source);
 										new_fn->overloaded_to = t;
+										if (fn->overload_to_return && new_fn->returns)
+											new_fn->rettype = t;
 										op->op->func = new_fn;
 										goto end;
 									}
@@ -3464,6 +3467,7 @@ word_list_t* builtins(void)
 		fn->overloaded_to = any;
 		fn->unmangled_name = b[i].name;
 		fn->overload = b[i].overload;
+		fn->overload_to_return = b[i].overload_to_return;
 		if (b[i].overload) memcpy(&fn->overloads, &b[i].overloads, sizeof(b[i].overloads));
 		type_t calltype = b[i].calltype;
 		for (int ii = b[i].argc-1 ; ii >= 0 ; --ii)
