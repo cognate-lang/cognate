@@ -10,11 +10,15 @@ Def Triplet as (Twin ; Twin);
 
 Def When as (
 	Let Cond;
-	Let Block;
-	Do If Cond then Block else ();
+	Def Block;
+	Do If Cond then ( Block ) else ();
 );
 
-Def Unless as ( When Not );
+Def Unless as (
+	Let Cond;
+	Def Block;
+	Do If Cond then ( ) else ( Block );
+);
 
 Def While (
 	Let Condition;
@@ -250,6 +254,6 @@ Def Of as (
 	Def Predicate;
 	Let X;
 	Let Result be Predicate X;
-	Unless Result ( Error "Predicate failed" );
+	Unless Result ( Error "Predicate failed " );
 	X;
 );
