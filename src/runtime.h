@@ -1513,6 +1513,9 @@ static ANY ___first(ANY a)
 		case string: return box_STRING(___first_STRING(a.string));
 		default: type_error("string or list", a);
 	}
+#ifdef __TINYC__
+	return (cognate_object){0};
+#endif
 }
 
 static ANY ___rest(ANY a)
@@ -1523,6 +1526,9 @@ static ANY ___rest(ANY a)
 		case string: return box_STRING(___rest_STRING(a.string));
 		default: type_error("string or list", a);
 	}
+#ifdef __TINYC__
+	return (cognate_object){0};
+#endif
 }
 
 static LIST ___push(ANY a, LIST b)
@@ -2365,6 +2371,9 @@ static NUMBER ___length(ANY a)
 		case table: return ___length_TABLE(unbox_TABLE(a));
 		default: type_error("list or string or table", a);
 	}
+#ifdef __TINYC__
+	return 0;
+#endif
 }
 
 static STRING ___show_NUMBER(NUMBER a)
