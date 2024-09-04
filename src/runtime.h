@@ -204,7 +204,7 @@ const SYMBOL SYMreadHwriteHexisting = "read-write-existing";
 
 // Variables and	needed by functions.c defined in runtime.c
 static void init_stack(void);
-static STRING show_object(const ANY object, const _Bool, char*);
+static STRING show_object(const ANY object, char*, LIST);
 static void _Noreturn __attribute__((format(printf, 1, 2))) throw_error_fmt(const char* restrict const, ...);
 static void _Noreturn throw_error(const char* restrict const);
 static ptrdiff_t compare_objects(ANY, ANY);
@@ -724,123 +724,138 @@ cognate_table* table_split(cognate_table* T)
 	else return T;
 }
 
-static char* show_table(TABLE d, char* buffer)
+static char* show_buffer(void)
+{
+	return (char*)stack.top;
+}
+
+static char* show_table_helper(TABLE d, char* buffer, LIST checked)
 {
 	if (!d) return buffer;
 
-	buffer = show_table(d->left, buffer);
+	buffer = show_table_helper(d->left, buffer, checked);
 
-	buffer = (char*)show_object(d->key, 0, buffer);
+	buffer = (char*)show_object(d->key, buffer, checked);
 	*buffer++ = ':';
-	buffer = (char*)show_object(d->value, 0, buffer);
+	buffer = (char*)show_object(d->value, buffer, checked);
 	*buffer++ = ' ';
 
-	buffer = show_table(d->right, buffer);
+	buffer = show_table_helper(d->right, buffer, checked);
 
 	return buffer;
 }
 
-static STRING show_object (const ANY object, const _Bool raw_strings, char* buffer)
+static char* show_table(TABLE d, char* buffer, LIST checked)
 {
-	static char* buf;
-	static BOX *checked, *checkedbuf;
-	_Bool root = !buffer;
-	if (root)
+	*buffer++ = '{';
+	*buffer++ = ' ';
+	buffer = show_table_helper(d, buffer, checked);
+	*buffer++ = '}';
+	*buffer = '\0';
+	return buffer;
+}
+
+static char* show_io(IO i, char* buffer)
+{
+	if (i->file != NULL)
+		return buffer + sprintf(buffer, "{ %s OPEN mode '%s' }", i->path, i->mode);
+	else
+		return buffer + sprintf(buffer, "{ %s CLOSED }", i->path);
+}
+
+static char* show_string(STRING s, char* buffer)
+{
+	*buffer++ = '"';
+	for (const char* str = s ; *str ; ++str)
 	{
-		buf = buffer = (char*)(space[z] + alloc[z]); // i dont like resizing buffers
-		checked = checkedbuf = (BOX*)space[!z]; // hmmm
+		char c = *str;
+		if unlikely(c >= '\a' && c <= '\r')
+		{
+			*buffer++ = '\\';
+			*buffer++ = "abtnvfr"[c-'\a'];
+		}
+		else if (c == '\\') { *buffer++ = '\\'; *buffer++ = '\\'; }
+		else if (c == '"')  { *buffer++ = '\\'; *buffer++ = '"';  }
+		else *buffer++ = c;
 	}
+	*buffer++ = '"';
+	*buffer = '\0';
+	return buffer;
+}
+
+static char* show_number(NUMBER n, char* buffer)
+{
+	return buffer + sprintf(buffer, "%.14g", n);
+}
+
+static char* show_list(LIST l, char* buffer, LIST checked)
+{
+	*buffer++ = '(';
+	for ( ; l ; l = l->next)
+	{
+		buffer = (char*)show_object(l->object, buffer, checked);
+		if (!l->next) break;
+		//*buffer++ = ',';
+		*buffer++ = ' ';
+	}
+	*buffer++ = ')';
+	*buffer = '\0';
+	return buffer;
+}
+
+static char* show_boolean(BOOLEAN b, char* buffer)
+{
+	return buffer + sprintf(buffer, "%s", b ? "True" : "False");
+}
+
+static char* show_symbol(SYMBOL s, char* buffer)
+{
+	return buffer + sprintf(buffer, "%s", s);
+}
+
+static char* show_block(BLOCK b, char* buffer)
+{
+	void (*fn)(uint8_t*) = b.fn;
+	return buffer + sprintf(buffer, "<block %p>", *(void**)&fn);
+}
+
+static char* show_box(BOX b, char* buffer, LIST checked)
+{
+	bool found = false;
+	for (LIST l = checked ; l ; l = l->next)
+		if (l->object.box == b)
+		{
+			*buffer++ = '.';
+			*buffer++ = '.';
+			*buffer++ = '.';
+			goto end;
+		}
+	checked = (cognate_list*)___push(box_BOX(b), checked);
+	*buffer++ = '[';
+	buffer = (char*)show_object(*b, buffer, checked);
+	*buffer++ = ']';
+	checked = (cognate_list*)___rest(checked);
+	end:
+	*buffer = '\0';
+	return buffer;
+}
+
+static STRING show_object (const ANY object, char* buffer, LIST checked)
+{
 	switch (object.type)
 	{
-		case NIL: throw_error("This shouldn't happen");
-					 break;
-		case table:
-					  *buffer++ = '{';
-					  *buffer++ = ' ';
-					  buffer = show_table(object.table, buffer);
-					  *buffer++ = '}';
-					  break;
-		case number: sprintf(buffer, "%.14g", object.number);
-						 buffer += strlen(buffer);
-						 break;
-		case io:
-						 if (object.io->file != NULL)
-						 	sprintf(buffer, "{ %s OPEN mode '%s' }", object.io->path, object.io->mode);
-						 else
-						 	sprintf(buffer, "{ %s CLOSED }", object.io->path);
-						 buffer += strlen(buffer);
-						 break;
-		case string:
-			if (raw_strings)
-				buffer += strlen(strcpy(buffer, unbox_STRING(object)));
-			else
-			{
-				*buffer++ = '"';
-				for (const char* str = unbox_STRING(object) ; *str ; ++str)
-				{
-					char c = *str;
-					if unlikely(c >= '\a' && c <= '\r')
-					{
-						*buffer++ = '\\';
-						*buffer++ = "abtnvfr"[c-'\a'];
-					}
-					else if (c == '\\') { *buffer++ = '\\'; *buffer++ = '\\'; }
-					else if (c == '"')  { *buffer++ = '\\'; *buffer++ = '"';  }
-					else *buffer++ = c;
-				}
-				*buffer++ = '"';
-			}
-			break;
-		case list:
-			*buffer++ = '(';
-			for (LIST l = unbox_LIST(object) ; l ; l = l->next)
-			{
-				buffer = (char*)show_object(l->object, 0, buffer);
-				if (!l->next) break;
-				//*buffer++ = ',';
-				*buffer++ = ' ';
-			}
-			*buffer++ = ')';
-			break;
-		case boolean: strcpy(buffer, unbox_BOOLEAN(object) ? "True" : "False");
-						  buffer += strlen(buffer);
-						  break;
-		case symbol:  strcpy(buffer, unbox_SYMBOL(object));
-						  buffer += strlen(buffer);
-						  break;
-		case block:
-		{
-			void (*fn)(uint8_t*) = unbox_BLOCK(object).fn;
-			sprintf(buffer, "<block %p>", *(void**)&fn);
-			buffer += strlen(buffer);
-			break;
-		}
-		case box:
-		{
-			BOX b = unbox_BOX(object);
-			bool found = false;
-			for (BOX* p = checkedbuf ; p < checked ; ++p) if (*p == b) { found = true ; break; }
-			if (found)
-			{
-				*buffer++ = '.';
-				*buffer++ = '.';
-				*buffer++ = '.';
-			}
-			else
-			{
-				*checked++ = b;
-				*buffer++ = '[';
-				buffer = (char*)show_object(*b, 0, buffer);
-				*buffer++ = ']';
-				checked--;
-			}
-			break;
-		}
+		case NIL: throw_error("This shouldn't happen"); break;
+		case number:  buffer = show_number (object.number,  buffer);          break;
+		case io:      buffer = show_io     (object.io,      buffer);          break;
+		case string:  buffer = show_string (object.string,  buffer);          break;
+		case boolean: buffer = show_boolean(object.boolean, buffer);          break;
+		case symbol:  buffer = show_symbol (object.symbol,  buffer);          break;
+		case block:   buffer = show_block  (object.block,   buffer);          break;
+		case table:   buffer = show_table  (object.table,   buffer, checked); break;
+		case list:    buffer = show_list   (object.list,    buffer, checked); break;
+		case box:     buffer = show_box    (object.box,     buffer, checked); break;
 	}
-	if (!root) return buffer;
-	*buffer++ = '\0';
-	char* c = gc_strdup(buf);
-	return c;
+	return buffer;
 }
 
 static void init_stack(void)
@@ -1011,7 +1026,7 @@ static _Noreturn void type_error(char* expected, ANY got)
 	switch (expected[0])
 		case 'a': case 'e': case 'i': case 'o': case 'u': case 'h':
 			s = "an";
-	throw_error_fmt("Expected %s %s but got %.64s", s, expected, show_object(got, 0, NULL));
+	throw_error_fmt("Expected %s %s but got %.64s", s, expected, ___show(got));
 }
 
 __attribute__((hot))
@@ -1371,7 +1386,7 @@ static ANY ___if(BOOLEAN cond, ANY a, ANY b)
 	return cond ? a : b;
 }
 
-static void ___put(ANY a)   { assert_impure(); fputs(show_object(a, 1, NULL), stdout); fflush(stdout); }
+static void ___put(ANY a)   { assert_impure(); fputs(___show(a), stdout); fflush(stdout); }
 static void ___put_NUMBER(NUMBER a) { assert_impure(); fputs(___show_NUMBER(a), stdout); fflush(stdout); }
 static void ___put_LIST(LIST a) { assert_impure(); fputs(___show_LIST(a), stdout); fflush(stdout); }
 static void ___put_TABLE(TABLE a) { assert_impure(); fputs(___show_TABLE(a), stdout); fflush(stdout); }
@@ -1382,7 +1397,7 @@ static void ___put_SYMBOL(SYMBOL a) { assert_impure(); fputs(___show_SYMBOL(a), 
 static void ___put_BOOLEAN(BOOLEAN a) { assert_impure(); fputs(___show_BOOLEAN(a), stdout); fflush(stdout); }
 static void ___put_BOX(BOX a) { assert_impure(); fputs(___show_BOX(a), stdout); }
 
-static void ___print(ANY a) { assert_impure(); puts(show_object(a, 1, NULL)); }
+static void ___print(ANY a) { assert_impure(); puts(___show(a)); }
 static void ___print_NUMBER(NUMBER a) { assert_impure(); puts(___show_NUMBER(a)); }
 static void ___print_LIST(LIST a) { assert_impure(); puts(___show_LIST(a)); }
 static void ___print_TABLE(TABLE a) { assert_impure(); puts(___show_TABLE(a)); }
@@ -1773,7 +1788,11 @@ static BLOCK ___precompute(BLOCK blk)
 
 static STRING ___show(ANY o)
 {
-	return show_object(o, 1, NULL);
+	if (o.type == string) return o.string;
+	if (o.type == symbol) return o.symbol;
+	char* buf = show_buffer();
+	show_object(o, buf, NULL);
+	return buf;
 }
 
 static LIST ___split(STRING sep, STRING str)
@@ -2177,7 +2196,7 @@ static TABLE ___table (BLOCK expr)
 
 static TABLE ___insert(ANY key, ANY value, TABLE d)
 {
-	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", show_object(key, 0, NULL));
+	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
 	cognate_table* D = gc_malloc(sizeof *D);
 	if (!d)
 	{
@@ -2226,7 +2245,7 @@ static TABLE ___insert(ANY key, ANY value, TABLE d)
 
 static ANY ___D(ANY key, TABLE d)
 {
-	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", show_object(key, 0, NULL));
+	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
 	while (d)
 	{
 		ptrdiff_t diff = compare_objects(d->key, key);
@@ -2235,7 +2254,7 @@ static ANY ___D(ANY key, TABLE d)
 		else d = d->right;
 	}
 
-	throw_error_fmt("%s is not in table", show_object(key, 0, NULL));
+	throw_error_fmt("%s is not in table", ___show(key));
 	#ifdef __TINYC__
 	return (cognate_object){0};
 	#endif
@@ -2243,7 +2262,7 @@ static ANY ___D(ANY key, TABLE d)
 
 static BOOLEAN ___has(ANY key, TABLE d)
 {
-	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", show_object(key, 0, NULL));
+	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
 	while (d)
 	{
 		ptrdiff_t diff = compare_objects(d->key, key);
@@ -2323,29 +2342,22 @@ static NUMBER ___length(ANY a)
 
 static STRING ___show_NUMBER(NUMBER a)
 {
-	char* buf = (char*)stack.top;
-	sprintf(buf, "%.14g", a);
+	char* buf = show_buffer();
+	show_number(a, buf);
 	return gc_strdup(buf);
 }
 
 static STRING ___show_TABLE(TABLE a)
 {
-	char* buf = (char*)stack.top;
-	char* ptr = buf;
-	*ptr++ = '{';
-   *ptr++ = ' ';
-	ptr = show_table(a, ptr);
-	*ptr++ = '}';
+	char* buf = show_buffer();
+	show_table(a, buf, NULL);
 	return gc_strdup(buf);
 }
 
 static STRING ___show_IO(IO a)
 {
-	char* buf = (char*)stack.top;
-	if (a->file != NULL)
-		sprintf(buf, "{ %s OPEN mode '%s' }", a->path, a->mode);
-	else
-		sprintf(buf, "{ %s CLOSED }", a->path);
+	char* buf = show_buffer();
+	show_io(a, buf);
 	return gc_strdup(buf);
 }
 
@@ -2366,19 +2378,23 @@ static STRING ___show_SYMBOL(SYMBOL s)
 
 static STRING ___show_BLOCK(BLOCK b)
 {
-	char* buf = (char*)stack.top;
-	sprintf(buf, "<block %p>", *(void**)&b.fn);
+	char* buf = show_buffer();
+	show_block(b, buf);
 	return gc_strdup(buf);
 }
 
 static STRING ___show_BOX(BOX b)
 {
-	return show_object(box_BOX(b), 0, NULL);
+	char* buf = show_buffer();
+	show_box(b, buf, NULL);
+	return gc_strdup(buf);
 }
 
 static STRING ___show_LIST(LIST l)
 {
-	return show_object(box_LIST(l), 0, NULL);
+	char* buf = show_buffer();
+	show_list(l, buf, NULL);
+	return gc_strdup(buf);
 }
 
 // ---------- ACTUAL PROGRAM ----------
