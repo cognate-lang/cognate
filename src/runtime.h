@@ -34,8 +34,6 @@
 
 #include <regex.h>
 
-#define ALLOC_SIZE (1024 * 1024 * 1024)
-
 #define PAGE_SIZE 4096
 #define WORDSZ (sizeof(void*))
 
@@ -178,11 +176,11 @@ static _Bool z = 0;
 
 static _Bool pure = 0;
 
+static size_t system_memory;
 
 // Global variables
 static cognate_stack stack;
 static LIST cmdline_parameters = NULL;
-static char* show_buffer = NULL;
 #ifdef DEBUG
 static const backtrace* trace = NULL;
 static const var_info* vars = NULL;
@@ -206,7 +204,6 @@ const SYMBOL SYMreadHwriteHexisting = "read-write-existing";
 
 // Variables and	needed by functions.c defined in runtime.c
 static void init_stack(void);
-static void init_show_buffer(void);
 static STRING show_object(const ANY object, char*, LIST);
 static void _Noreturn __attribute__((format(printf, 1, 2))) throw_error_fmt(const char* restrict const, ...);
 static void _Noreturn throw_error(const char* restrict const);
@@ -413,8 +410,6 @@ int main(int argc, char** argv)
 	char signals[] = { SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGABRT, SIGBUS, SIGFPE, SIGPIPE, SIGTERM, SIGCHLD, SIGSEGV };
 	for (size_t i = 0; i < sizeof(signals); ++i)
 		if (sigaction(signals[i], &error_signal_action, NULL) == -1) throw_error("couldn't install signal handler");
-	// Allocate buffer for object printing
-	init_show_buffer();
 	// Initialize the stack.
 	init_stack();
 #ifdef DEBUG
@@ -677,7 +672,7 @@ static void handle_error_signal(int sig, siginfo_t *info, void *ucontext)
 	if (sig == SIGSEGV)
 	{
 		char* addr = info->si_addr;
-		if (addr >= (char*)stack.absolute_start && addr <= (char*)stack.absolute_start + ALLOC_SIZE)
+		if (addr >= (char*)stack.absolute_start && addr <= (char*)stack.absolute_start + system_memory/10 + PAGE_SIZE)
 			throw_error_fmt("Stack overflow (%zu items on the stack)", stack.top - stack.absolute_start);
 		else
 			throw_error("Memory error");
@@ -731,6 +726,11 @@ cognate_table* table_split(cognate_table* T)
 		return R;
 	}
 	else return T;
+}
+
+static char* show_buffer(void)
+{
+	return (char*)stack.top;
 }
 
 static char* show_table_helper(TABLE d, char* buffer, LIST checked)
@@ -862,15 +862,10 @@ static STRING show_object (const ANY object, char* buffer, LIST checked)
 	return buffer;
 }
 
-static void init_show_buffer(void)
-{
-	show_buffer = mmap(0, ALLOC_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
-}
-
 static void init_stack(void)
 {
 	stack.absolute_start = stack.top = stack.start
-		= mmap(0, ALLOC_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
+		= mmap(0, system_memory/10 - PAGE_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
 }
 
 __attribute__((hot))
@@ -1208,10 +1203,11 @@ static TABLE unbox_TABLE(ANY box)
 
 static void gc_init(void)
 {
-	bitmap[0] = mmap(0, ALLOC_SIZE/8, MEM_PROT, MEM_FLAGS, -1, 0);
-	bitmap[1] = mmap(0, ALLOC_SIZE/8, MEM_PROT, MEM_FLAGS, -1, 0);
-	space[0]  = mmap(0, ALLOC_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
-	space[1]  = mmap(0, ALLOC_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
+	system_memory = sysconf(_SC_PHYS_PAGES) * 4096;
+	bitmap[0] = mmap(0, system_memory/18, MEM_PROT, MEM_FLAGS, -1, 0);
+	bitmap[1] = mmap(0, system_memory/18, MEM_PROT, MEM_FLAGS, -1, 0);
+	space[0]  = mmap(0, (system_memory/18)*8 - PAGE_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
+	space[1]  = mmap(0, (system_memory/18)*8 - PAGE_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
 	bitmap[0][0] = ALLOC;
 	bitmap[1][0] = ALLOC;
 }
@@ -1824,8 +1820,9 @@ static STRING ___show(ANY o)
 {
 	if (o.type == string) return o.string;
 	if (o.type == symbol) return o.symbol;
-	show_object(o, show_buffer, NULL);
-	return show_buffer;
+	char* buf = show_buffer();
+	show_object(o, buf, NULL);
+	return buf;
 }
 
 static LIST ___split(STRING sep, STRING str)
@@ -2378,20 +2375,23 @@ static NUMBER ___length(ANY a)
 
 static STRING ___show_NUMBER(NUMBER a)
 {
-	show_number(a, show_buffer);
-	return gc_strdup(show_buffer);
+	char* buf = show_buffer();
+	show_number(a, buf);
+	return gc_strdup(buf);
 }
 
 static STRING ___show_TABLE(TABLE a)
 {
-	show_table(a, show_buffer, NULL);
-	return gc_strdup(show_buffer);
+	char* buf = show_buffer();
+	show_table(a, buf, NULL);
+	return gc_strdup(buf);
 }
 
 static STRING ___show_IO(IO a)
 {
-	show_io(a, show_buffer);
-	return gc_strdup(show_buffer);
+	char* buf = show_buffer();
+	show_io(a, buf);
+	return gc_strdup(buf);
 }
 
 static STRING ___show_STRING(STRING s)
@@ -2411,20 +2411,23 @@ static STRING ___show_SYMBOL(SYMBOL s)
 
 static STRING ___show_BLOCK(BLOCK b)
 {
-	show_block(b, show_buffer);
-	return gc_strdup(show_buffer);
+	char* buf = show_buffer();
+	show_block(b, buf);
+	return gc_strdup(buf);
 }
 
 static STRING ___show_BOX(BOX b)
 {
-	show_box(b, show_buffer, NULL);
-	return gc_strdup(show_buffer);
+	char* buf = show_buffer();
+	show_box(b, buf, NULL);
+	return gc_strdup(buf);
 }
 
 static STRING ___show_LIST(LIST l)
 {
-	show_list(l, show_buffer, NULL);
-	return gc_strdup(show_buffer);
+	char* buf = show_buffer();
+	show_list(l, buf, NULL);
+	return gc_strdup(buf);
 }
 
 static BOOLEAN ___numberQ_NUMBER(NUMBER _) { return true; }
