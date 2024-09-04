@@ -53,6 +53,6 @@ Print If == 3 Length of List (1 2 3)
 	"PASS: Getting length of list"
 	"FAIL: Getting length of list";
 
-Print If == "(1 2 3)" Print Twin Show List (1 2 3)
+Print If == "(1 2 3)" Show List (1 2 3)
 	"PASS: Printing list to string"
 	"FAIL: Printing list to string";
