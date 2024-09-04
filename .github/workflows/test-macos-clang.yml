@@ -27,6 +27,10 @@ jobs:
         shell: bash
         run: |
           cd $GITHUB_WORKSPACE
+          export PATH="/opt/homebrew/opt/llvm@16/bin:$PATH"
+          export LDFLAGS="-L/opt/homebrew/opt/llvm@16/lib"
+          export CPPFLAGS="-I/opt/homebrew/opt/llvm@16/include"
+          clang --version
           make test -j8
       - name: Upload test output
         if: failure()
