@@ -833,7 +833,7 @@ void to_exe(module_t* mod)
 
 	char* normal_args[] = {
 		STR(CC), c_source_path, "-o", exe_path,
-		"-O3", "-flto", "-s", "-w",
+		"-O3", "-s", "-w",
 		"-lm", "-Wall", "-Wpedantic", "-Wno-unused",
 		gc_test ? "-DGCTEST" : NULL, NULL
 	};
