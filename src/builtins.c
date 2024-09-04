@@ -44,8 +44,8 @@
 {.name="block!",              .calltype=call, .argc=1, .args={block},  .returns=true, .rettype=block},
 {.name="boolean!",            .calltype=call, .argc=1, .args={boolean},.returns=true, .rettype=boolean},
 
-{.name="first",               .calltype=call, .argc=1, .args={any},      .returns=true, .rettype=any, .overload=true, .overloads={list,string,NIL}},
-{.name="rest",                .calltype=call, .argc=1, .args={any},      .returns=true, .rettype=any, .overload=true, .overloads={list,string,NIL}, .overload_to_return=true},
+{.name="first",               .calltype=call, .argc=1, .args={any},      .returns=true, .rettype=any, .overload=true, .overloads={list,string,NIL}, .overload_returns={any, string, NIL}},
+{.name="rest",                .calltype=call, .argc=1, .args={any},      .returns=true, .rettype=any, .overload=true, .overloads={list,string,NIL}, .overload_returns={list, string, NIL}},
 {.name="push",                .calltype=call, .argc=2, .args={any, list}, .returns=true, .rettype=list},
 {.name="empty?",              .calltype=call, .argc=1, .args={list},      .returns=true, .rettype=boolean},
 {.name="join",                .calltype=call, .argc=2, .args={string, string}, .returns=true, .rettype=string},
