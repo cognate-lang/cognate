@@ -2418,4 +2418,94 @@ static STRING ___show_LIST(LIST l)
 	return gc_strdup(show_buffer);
 }
 
+static BOOLEAN ___numberQ_NUMBER(NUMBER _) { return true; }
+static BOOLEAN ___numberQ_LIST(LIST _) { return false; }
+static BOOLEAN ___numberQ_BOX(BOX _) { return false; }
+static BOOLEAN ___numberQ_TABLE(TABLE _) { return false; }
+static BOOLEAN ___numberQ_IO(IO _) { return false; }
+static BOOLEAN ___numberQ_BOOLEAN(BOOLEAN _) { return false; }
+static BOOLEAN ___numberQ_STRING(STRING _) { return false; }
+static BOOLEAN ___numberQ_SYMBOL(SYMBOL _) { return false; }
+static BOOLEAN ___numberQ_BLOCK(BLOCK _) { return false; }
+
+static BOOLEAN ___listQ_NUMBER(NUMBER _) { return false; }
+static BOOLEAN ___listQ_LIST(LIST _) { return true; }
+static BOOLEAN ___listQ_BOX(BOX _) { return false; }
+static BOOLEAN ___listQ_TABLE(TABLE _) { return false; }
+static BOOLEAN ___listQ_IO(IO _) { return false; }
+static BOOLEAN ___listQ_BOOLEAN(BOOLEAN _) { return false; }
+static BOOLEAN ___listQ_STRING(STRING _) { return false; }
+static BOOLEAN ___listQ_SYMBOL(SYMBOL _) { return false; }
+static BOOLEAN ___listQ_BLOCK(BLOCK _) { return false; }
+
+static BOOLEAN ___boxQ_NUMBER(NUMBER _) { return false; }
+static BOOLEAN ___boxQ_LIST(LIST _) { return false; }
+static BOOLEAN ___boxQ_BOX(BOX _) { return true; }
+static BOOLEAN ___boxQ_TABLE(TABLE _) { return false; }
+static BOOLEAN ___boxQ_IO(IO _) { return false; }
+static BOOLEAN ___boxQ_BOOLEAN(BOOLEAN _) { return false; }
+static BOOLEAN ___boxQ_STRING(STRING _) { return false; }
+static BOOLEAN ___boxQ_SYMBOL(SYMBOL _) { return false; }
+static BOOLEAN ___boxQ_BLOCK(BLOCK _) { return false; }
+
+static BOOLEAN ___tableQ_NUMBER(NUMBER _) { return false; }
+static BOOLEAN ___tableQ_LIST(LIST _) { return false; }
+static BOOLEAN ___tableQ_BOX(BOX _) { return false; }
+static BOOLEAN ___tableQ_TABLE(TABLE _) { return true; }
+static BOOLEAN ___tableQ_IO(IO _) { return false; }
+static BOOLEAN ___tableQ_BOOLEAN(BOOLEAN _) { return false; }
+static BOOLEAN ___tableQ_STRING(STRING _) { return false; }
+static BOOLEAN ___tableQ_SYMBOL(SYMBOL _) { return false; }
+static BOOLEAN ___tableQ_BLOCK(BLOCK _) { return false; }
+
+static BOOLEAN ___ioQ_NUMBER(NUMBER _) { return false; }
+static BOOLEAN ___ioQ_LIST(LIST _) { return false; }
+static BOOLEAN ___ioQ_BOX(BOX _) { return false; }
+static BOOLEAN ___ioQ_TABLE(TABLE _) { return false; }
+static BOOLEAN ___ioQ_IO(IO _) { return true; }
+static BOOLEAN ___ioQ_BOOLEAN(BOOLEAN _) { return false; }
+static BOOLEAN ___ioQ_STRING(STRING _) { return false; }
+static BOOLEAN ___ioQ_SYMBOL(SYMBOL _) { return false; }
+static BOOLEAN ___ioQ_BLOCK(BLOCK _) { return false; }
+
+static BOOLEAN ___booleanQ_NUMBER(NUMBER _) { return false; }
+static BOOLEAN ___booleanQ_LIST(LIST _) { return false; }
+static BOOLEAN ___booleanQ_BOX(BOX _) { return false; }
+static BOOLEAN ___booleanQ_TABLE(TABLE _) { return false; }
+static BOOLEAN ___booleanQ_IO(IO _) { return false; }
+static BOOLEAN ___booleanQ_BOOLEAN(BOOLEAN _) { return true; }
+static BOOLEAN ___booleanQ_STRING(STRING _) { return false; }
+static BOOLEAN ___booleanQ_SYMBOL(SYMBOL _) { return false; }
+static BOOLEAN ___booleanQ_BLOCK(BLOCK _) { return false; }
+
+static BOOLEAN ___stringQ_NUMBER(NUMBER _) { return false; }
+static BOOLEAN ___stringQ_LIST(LIST _) { return false; }
+static BOOLEAN ___stringQ_BOX(BOX _) { return false; }
+static BOOLEAN ___stringQ_TABLE(TABLE _) { return false; }
+static BOOLEAN ___stringQ_IO(IO _) { return false; }
+static BOOLEAN ___stringQ_BOOLEAN(BOOLEAN _) { return false; }
+static BOOLEAN ___stringQ_STRING(STRING _) { return true; }
+static BOOLEAN ___stringQ_SYMBOL(SYMBOL _) { return false; }
+static BOOLEAN ___stringQ_BLOCK(BLOCK _) { return false; }
+
+static BOOLEAN ___symbolQ_NUMBER(NUMBER _) { return false; }
+static BOOLEAN ___symbolQ_LIST(LIST _) { return false; }
+static BOOLEAN ___symbolQ_BOX(BOX _) { return false; }
+static BOOLEAN ___symbolQ_TABLE(TABLE _) { return false; }
+static BOOLEAN ___symbolQ_IO(IO _) { return false; }
+static BOOLEAN ___symbolQ_BOOLEAN(BOOLEAN _) { return false; }
+static BOOLEAN ___symbolQ_STRING(STRING _) { return false; }
+static BOOLEAN ___symbolQ_SYMBOL(SYMBOL _) { return true; }
+static BOOLEAN ___symbolQ_BLOCK(BLOCK _) { return false; }
+
+static BOOLEAN ___blockQ_NUMBER(NUMBER _) { return false; }
+static BOOLEAN ___blockQ_LIST(LIST _) { return false; }
+static BOOLEAN ___blockQ_BOX(BOX _) { return false; }
+static BOOLEAN ___blockQ_TABLE(TABLE _) { return false; }
+static BOOLEAN ___blockQ_IO(IO _) { return false; }
+static BOOLEAN ___blockQ_BOOLEAN(BOOLEAN _) { return false; }
+static BOOLEAN ___blockQ_STRING(STRING _) { return false; }
+static BOOLEAN ___blockQ_SYMBOL(SYMBOL _) { return false; }
+static BOOLEAN ___blockQ_BLOCK(BLOCK _) { return true; }
+
 // ---------- ACTUAL PROGRAM ----------

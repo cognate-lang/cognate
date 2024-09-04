@@ -1946,6 +1946,15 @@ bool add_var_types_forwards(module_t* mod)
 								strcat(buf, print_val_type(t));
 								throw_error(buf, op->op->where);
 							}
+							/* Might need this?
+							else if (fn->overload && v->val->type != any && v->val->type != t && fn->overloaded_to == v->val->type)
+							{
+								// un-overloads your function
+								fn->overloaded_to = NIL;
+								v->val->type = strong_any;
+								if (fn->overload_returns[0] != NIL) fn->rettype = any;
+							}
+							*/
 						end:;
 						}
 						if (fn->stack) assert(registers->len == 0);
