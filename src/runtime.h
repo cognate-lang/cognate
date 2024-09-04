@@ -292,7 +292,7 @@ static BOOLEAN ___ioQ(ANY);
 static BOOLEAN ___zeroQ(ANY);
 static ANY ___first(ANY);
 static ANY ___rest(ANY);
-static ANY ___first_STRING(STRING);
+static STRING ___first_STRING(STRING);
 static STRING ___rest_STRING(STRING);
 static ANY ___first_LIST(LIST);
 static LIST ___rest_LIST(LIST);
@@ -1493,10 +1493,10 @@ static LIST ___rest_LIST(LIST lst)
 	return lst->next;
 }
 
-static ANY ___first_STRING(STRING str)
+static STRING ___first_STRING(STRING str)
 {
 	if unlikely(!*str) throw_error("empty string is invalid");
-	return box_STRING(gc_strndup((char*)str, mblen(str, MB_CUR_MAX)));
+	return gc_strndup((char*)str, mblen(str, MB_CUR_MAX));
 }
 
 static STRING ___rest_STRING(STRING str)
@@ -1510,7 +1510,7 @@ static ANY ___first(ANY a)
 	switch(a.type)
 	{
 		case list:   return ___first_LIST(a.list);
-		case string: return ___first_STRING(a.string);
+		case string: return box_STRING(___first_STRING(a.string));
 		default: type_error("string or list", a);
 	}
 }
