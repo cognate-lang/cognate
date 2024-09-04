@@ -254,6 +254,6 @@ Def Of as (
 	Def Predicate;
 	Let X;
 	Let Result be Predicate X;
-	Unless Result ( Error "Predicate failed " );
+	Unless Result ( Error "Predicate failed" );
 	X;
 );
