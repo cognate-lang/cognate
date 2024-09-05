@@ -35,18 +35,9 @@ Def Until (
 );
 
 Def Times (
-	Let I be Of (Integer?);
-	Def B;
-
-	(
-		I;
-		While (Twin ;> 0) (
-			Let I;
-			B;
-			- 1 I;
-		);
-		Drop;
-	)
+	Let N be Of (Integer?);
+	Def F;
+	Unless Zero? N ( F ; Times - 1 N (F) );
 );
 
 
@@ -191,7 +182,7 @@ Def Map (
 
 Def Discard (
 	Let N be Of (Integer?);
-	Do Times N (
+	Times N (
 		Let L;
 		When Empty? L ( Error "Cannot Discard more elements than in list" );
 		get Rest of L;
@@ -203,7 +194,7 @@ Def Take (
 	Let Li be List!;
 
 	Reverse List (
-		Do Times N (
+		Times N (
 			Let L;
 			When Empty? L ( Error "Cannot Take more elements than in list" );
 			First L;
