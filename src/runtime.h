@@ -59,7 +59,7 @@ typedef const char* restrict STRING;
 typedef const struct cognate_list* restrict LIST;
 typedef const char* restrict SYMBOL;
 typedef struct cognate_file* restrict IO;
-typedef const struct cognate_table* restrict TABLE;
+typedef struct cognate_table* restrict TABLE;
 
 typedef struct cognate_block
 {
@@ -692,7 +692,7 @@ static void assert_impure(void)
 	if unlikely(pure) throw_error("Invalid operation for pure function");
 }
 
-cognate_table* table_skew(cognate_table* T)
+TABLE table_skew(TABLE T)
 {
 	// input: T, a node representing an AA tree that needs to be rebalanced.
  	// output: Another node representing the rebalanced AA tree.
@@ -701,7 +701,7 @@ cognate_table* table_skew(cognate_table* T)
 	else if (T->left->level == T->level)
 	{
       // Swap the pointers of horizontal left links.
-		cognate_table* L = (cognate_table*)T->left;
+		TABLE L = T->left;
 		T->left = L->right;
 		L->right = T; //L->right = table_skew(T);
 		return L;
@@ -709,14 +709,14 @@ cognate_table* table_skew(cognate_table* T)
 	/*
 	else if (T->right && T->right->left && T->right && T->right->left->level == T->right->level)
 	{
-		cognate_table* c = (cognate_table*)T->right;
+		TABLE c = (TABLE)T->right;
 		T->right = table_skew(c);
 	}
 	*/
 	return T;
 }
 
-cognate_table* table_split(cognate_table* T)
+TABLE table_split(TABLE T)
 {
 	// input: T, a node representing an AA tree that needs to be rebalanced.
    // output: Another node representing the rebalanced AA tree.
@@ -725,9 +725,9 @@ cognate_table* table_split(cognate_table* T)
 	else if (T->level == T->right->right->level)
 	{
 		// We have two horizontal right links.  Take the middle node, elevate it, and return it.
-		cognate_table* R = (cognate_table*)T->right;
+		TABLE R = T->right;
 		T->right = R->left;
-		//R->right = table_split((cognate_table*)R->right);
+		//R->right = table_split((TABLE)R->right);
 		R->left = T;
 		R->level++;
 		return R;
@@ -2232,7 +2232,7 @@ static TABLE ___table (BLOCK expr)
 static TABLE ___insert(ANY key, ANY value, TABLE d)
 {
 	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
-	cognate_table* D = gc_malloc(sizeof *D);
+	TABLE D = gc_malloc(sizeof *D);
 	if (!d)
 	{
 		D->left = NULL;
@@ -2309,13 +2309,86 @@ static BOOLEAN ___has(ANY key, TABLE d)
 	return false;
 }
 
-static TABLE ___remove(ANY X, TABLE T)
+static TABLE ___remove(ANY key, TABLE T)
 {
-	// input: X, the value to delete, and T, the root of the tree from which it should be deleted.
+	// input: X, the key to delete, and T, the root of the tree from which it should be deleted.
    // output: T, balanced, without the value X.
+	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
+	if (!T) throw_error_fmt("Key %s not in table", ___show(key));
+	ptrdiff_t diff = compare_objects(T->key, key);
+	TABLE T2 = NULL;
+	// This part is fairly intuitive - if this breaks it's probably not here:
+	if (diff < 0)
+	{
+		T2 = gc_malloc(sizeof *T2);
+		T2->left = T->left;
+		T2->right = ___remove(key, T->right);
+		T2->value = T->value;
+		T2->key = T->key;
+	}
+	else if (diff > 0)
+	{
+		T2 = gc_malloc(sizeof *T2);
+		T2->left = ___remove(key, T->left);
+		T2->right = T->right;
+		T2->value = T->value;
+		T2->key = T->key;
+	}
+	else // if (diff == 0
+	{
+		if (!T->left && !T->right) return NULL;
+		else if (!T->left) // T->right not null
+		{
+			T2 = gc_malloc(sizeof *T2);
+			TABLE L = T->right;
+			while (L->left) L = L->left; // successor
+			T2->right = ___remove(L->key, T->right);
+			T2->left = T->left;
+			T2->key = L->key;
+			T2->value = L->value;
+		}
+		else // left and right not null
+		{
+			T2 = gc_malloc(sizeof *T2);
+			TABLE L = T->left;
+			while (L->right) L = L->right; // predecessor
+			T2->left = ___remove(L->key, T->left);
+			T2->right = T->right;
+			T2->key = L->key;
+			T2->value = L->value;
+		}
+	}
 
-	// TODO
-	return NULL;
+	T2->level = T->level;
+
+	// below here idk really what's going on, but it seems to work:
+
+	if (T2->left && T2->right)
+	{
+		long llevel = T2->left->level;
+		long rlevel = T2->right->level;
+		long should_be = 1 + llevel < rlevel ? llevel : rlevel;
+
+		if (should_be < T2->level)
+		{
+			T2->level = should_be;
+			if (should_be < T2->right->level)
+				T2->right->level = should_be;
+		}
+	}
+
+	// This part makes at least vague sense:
+
+	T2 = table_skew(T2);
+	if (T2->right)
+	{
+		T2->right = table_skew(T2->right);
+		T2->right->right = table_skew(T2->right->right);
+	}
+	T2 = table_split(T2);
+	if (T2->right) T2->right = table_split(T2->right);
+
+	return T2;
 }
 
 static LIST values_helper(TABLE T, LIST L)
