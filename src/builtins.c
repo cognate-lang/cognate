@@ -75,7 +75,7 @@
 {.name="box",                 .calltype=call, .argc=1, .args={any}, .returns=true, .rettype=box},
 {.name="unbox",               .calltype=call, .argc=1, .args={box}, .returns=true, .rettype=any},
 {.name="set",                 .calltype=call, .argc=2, .args={box, any}, .returns=false},
-{.name="debug",               .calltype=call, .argc=0, .returns=false},
+//{.name="debug",               .calltype=call, .argc=0, .returns=false},
 {.name="begin",               .calltype=call, .argc=1, .args={block}, .stack=true},
 
 /* math */
