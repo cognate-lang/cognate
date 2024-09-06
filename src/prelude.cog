@@ -1,25 +1,43 @@
+~
+Discard the top stack item.
+~
 Def Drop as ( Let X );
 
 Def Swap as ( Let X ; Let Y ; Y X );
 
+~
+Execute a block.
+~
 Def Do as ( Def F ; F );
 
 Def Any? ( True Drop );
+~
+Duplicate the top stack item.
+~
 Def Twin as (Let X ; X X);
 Def Triplet as (Twin ; Twin);
 
+~
+Execute `Block`, given `Cond` is True.
+~
 Def When as (
 	Let Cond;
 	Def Block;
 	Do If Cond then ( Block ) else ();
 );
 
+~
+Opposite of `When`.
+~
 Def Unless as (
 	Let Cond;
 	Def Block;
 	Do If Cond then ( ) else ( Block );
 );
 
+~
+Execute `Block` while `Condition` evaluates to True.
+~
 Def While (
 	Let Condition;
 	Let Block;
