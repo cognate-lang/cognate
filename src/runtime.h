@@ -1208,14 +1208,25 @@ static TABLE unbox_TABLE(ANY box)
 #define FLATALLOC 0x2
 #define FORWARD   0x3
 
+static void gc_bitmap_set(bool z, size_t index, char value)
+{
+	bitmap[z][index / 0x4] &= (~(0x3 << 0x2 * ((index & 0x3)))); // set to 00
+	bitmap[z][index / 0x4] |= (value << 0x2 * ((index & 0x3)));  // set to value
+}
+
+static char gc_bitmap_get(bool z, size_t index)
+{
+	return (bitmap[z][index / 0x4] & (0x3 << (0x2 * (index & 0x3)))) >> (0x2 * (index & 0x3));
+}
+
 static void gc_init(void)
 {
-	bitmap[0] = mmap(ALLOC_START, ALLOC_SIZE/8, MEM_PROT, MEM_FLAGS, -1, 0);
-	bitmap[1] = mmap(ALLOC_START, ALLOC_SIZE/8, MEM_PROT, MEM_FLAGS, -1, 0);
+	bitmap[0] = mmap(ALLOC_START, ALLOC_SIZE/32, MEM_PROT, MEM_FLAGS, -1, 0);
+	bitmap[1] = mmap(ALLOC_START, ALLOC_SIZE/32, MEM_PROT, MEM_FLAGS, -1, 0);
 	space[0]  = mmap(ALLOC_START, ALLOC_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
 	space[1]  = mmap(ALLOC_START, ALLOC_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
-	bitmap[0][0] = ALLOC;
-	bitmap[1][0] = ALLOC;
+	gc_bitmap_set(0, 0, ALLOC);
+	gc_bitmap_set(1, 0, ALLOC);
 }
 
 __attribute__((noinline, hot, assume_aligned(sizeof(uint64_t)), returns_nonnull))
@@ -1234,7 +1245,7 @@ static void* gc_malloc(size_t sz)
 	//assert(bitmap[z][alloc[z]] == ALLOC);
 	alloc[z] += (sz + 7) / 8;
 	//assert(!sz || bitmap[z][alloc[z]] == EMPTY);
-	bitmap[z][alloc[z]] = ALLOC;
+	gc_bitmap_set(z, alloc[z], ALLOC);
 	//assert(!((ANY)buf & 7));
 	return buf;
 }
@@ -1253,10 +1264,10 @@ static void* gc_flatmalloc(size_t sz)
 	}
 	void* buf = space[z] + alloc[z];
 	//assert(bitmap[z][alloc[z]] == ALLOC);
-	bitmap[z][alloc[z]] = FLATALLOC;
+	gc_bitmap_set(z, alloc[z], FLATALLOC);
 	alloc[z] += (sz + 7) / 8;
 	//assert(!sz || bitmap[z][alloc[z]] == EMPTY);
-	bitmap[z][alloc[z]] = ALLOC;
+	gc_bitmap_set(z, alloc[z], ALLOC);
 	//assert(!((ANY)buf & 7));
 	return buf;
 }
@@ -1285,30 +1296,29 @@ static void gc_collect_root(uintptr_t* restrict addr)
 		const uintptr_t lower_bits = from & 7;
 		uintptr_t index = (uintptr_t*)(from & ~7) - space[!z];
 		ptrdiff_t offset = 0;
-		while (bitmap[!z][index] == EMPTY) index--, offset++; // Ptr to middle of object
-		if (bitmap[!z][index] == FORWARD)
-			*to = lower_bits | (uintptr_t)((uintptr_t*)space[!z][index] + offset);
+		while (gc_bitmap_get(!z, index) == EMPTY) index--, offset++; // Ptr to middle of object
+		char mode = gc_bitmap_get(!z, index);
+		if (mode == FORWARD) *to = lower_bits | (uintptr_t)((uintptr_t*)space[!z][index] + offset);
 		else
 		{
-			_Bool flat = bitmap[!z][index] == FLATALLOC;
 			//assert(bitmap[!z][index] == ALLOC);
 			uintptr_t* buf = space[z] + alloc[z]; // Buffer in newspace
 			//assert(bitmap[z][alloc[z]] == ALLOC);
 			size_t sz = 1;
-			for (;bitmap[!z][index+sz] == EMPTY;sz++);
-			if (flat) bitmap[z][alloc[z]] = FLATALLOC;
+			for ( ; gc_bitmap_get(!z, index+sz) == EMPTY ; sz++ );
+			if (mode == FLATALLOC) gc_bitmap_set(z, alloc[z], FLATALLOC);
 			alloc[z] += sz;
 			//assert(bitmap[z][alloc[z]] == EMPTY);
-			bitmap[z][alloc[z]] = ALLOC;
+			gc_bitmap_set(z, alloc[z], ALLOC);
 			for (size_t i = 0;i < sz;i++)
 			{
 				uintptr_t from = space[!z][index+i];
-				if (!flat && is_gc_ptr(from))
+				if (mode != FLATALLOC && is_gc_ptr(from))
 					*act_stk_top++ = (struct action) { .from=from, .to=buf+i };
 				else buf[i] = from;
 			}
 			space[!z][index] = (uintptr_t)buf; // Set forwarding address
-			bitmap[!z][index] = FORWARD;
+			gc_bitmap_set(!z, index, FORWARD);
 			*to = lower_bits | (uintptr_t)(buf + offset);
 		}
 	}
@@ -1340,9 +1350,9 @@ static __attribute__((noinline,hot)) void gc_collect(void)
 	*/
 
 	z = !z;
-	memset(bitmap[z], EMPTY, alloc[z]+1);
+	memset(bitmap[z], 0, alloc[z] / 4 + 1);
 	alloc[z] = 0;
-	bitmap[z][0] = ALLOC;
+	gc_bitmap_set(z, 0, ALLOC);
 
 	for (uintptr_t* root = (uintptr_t*)stack.absolute_start; root != (uintptr_t*)stack.top; ++root)
 		gc_collect_root(root);
