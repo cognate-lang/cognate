@@ -1398,7 +1398,7 @@ bool _determine_arguments(func_t* f)
 			case fn_branch:
 				{
 					if (registers) registers--;
-					else if (can_use_args && argc < 255 && !f->entry) argc++;
+					else if (can_use_args && !f->entry) argc++;
 					for (func_list_t* f = op->funcs ; f ; f = f->next)
 						changed |= _determine_arguments(f->func);
 					int min_argc = INT_MAX;
@@ -1415,7 +1415,7 @@ bool _determine_arguments(func_t* f)
 					for (size_t i = 0 ; i < min_argc ; ++i)
 					{
 						if (registers) registers--;
-						else if (can_use_args && argc < 255 && !f->entry) argc++;
+						else if (can_use_args && !f->entry) argc++;
 					}
 					if (stack) can_use_args = false;
 					if (returns) registers++;
@@ -1430,7 +1430,7 @@ bool _determine_arguments(func_t* f)
 						//printf("REGS %li -> %li\n", registers, registers-1);
 						registers--;
 					}
-					else if (can_use_args && (argc < 255) && !f->entry)
+					else if (can_use_args && !f->entry)
 					{
 						//printf("ARGC %li -> %li\n", argc, argc+1);
 						argc++;
@@ -1447,7 +1447,7 @@ bool _determine_arguments(func_t* f)
 					for (size_t i = 0 ; i < fn->argc ; ++i)
 					{
 						if (registers) registers--;
-						else if (can_use_args && argc < 255 && !f->entry) argc++;
+						else if (can_use_args && !f->entry) argc++;
 					}
 					if (fn->stack) can_use_args = false;
 					if (fn->returns) registers++;
@@ -1455,12 +1455,12 @@ bool _determine_arguments(func_t* f)
 				}
 			case bind:
 				if (registers) registers--;
-				else if (can_use_args && argc < 255 && !f->entry) argc++;
+				else if (can_use_args && !f->entry) argc++;
 				break;
 			case backtrace_push: case backtrace_pop: case define: case none: case pick: case unpick: break;
 			case drop:
 				if (registers) registers--;
-				else if (can_use_args && argc < 255 && !f->entry) argc++;
+				else if (can_use_args && !f->entry) argc++;
 				break;
 			default: unreachable();
 		}
@@ -1502,8 +1502,7 @@ void determine_arguments(module_t* mod)
 		changed = false;
 		for (func_list_t* f = mod->funcs ; f ; f = f->next)
 			f->func->has_args = false;
-		for (func_list_t* f = mod->funcs ; f ; f = f->next)
-			changed |= _determine_arguments(f->func);
+		changed |= _determine_arguments(mod->entry);
 	}
 }
 
