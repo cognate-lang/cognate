@@ -1401,7 +1401,7 @@ bool _determine_arguments(func_t* f)
 					else if (can_use_args && argc < 255 && !f->entry) argc++;
 					for (func_list_t* f = op->funcs ; f ; f = f->next)
 						changed |= _determine_arguments(f->func);
-					int min_argc = 0;
+					int min_argc = INT_MAX;
 					int stack = false;
 					int returns = true;
 				   for (func_list_t* ff = op->funcs ; ff ; ff = ff->next)
