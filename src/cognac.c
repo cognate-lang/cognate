@@ -1377,7 +1377,7 @@ void add_generics(module_t* mod)
 
 bool _determine_arguments(func_t* f)
 {
-	if (f->has_args) return 0;
+	if (f->has_args || f->builtin) return 0;
 	size_t argc = 0;
 	bool returns = false;
 	f->has_args = true;
@@ -1397,6 +1397,8 @@ bool _determine_arguments(func_t* f)
 				break;
 			case fn_branch:
 				{
+					// If this causes weird stack underflows on branches
+					// revert it to 25a175e05dc72537569f49eeb5bedee3fc21ec74
 					if (registers) registers--;
 					else if (can_use_args && !f->entry) argc++;
 					for (func_list_t* f = op->funcs ; f ; f = f->next)
@@ -1457,11 +1459,11 @@ bool _determine_arguments(func_t* f)
 				if (registers) registers--;
 				else if (can_use_args && !f->entry) argc++;
 				break;
-			case backtrace_push: case backtrace_pop: case define: case none: case pick: case unpick: break;
 			case drop:
 				if (registers) registers--;
 				else if (can_use_args && !f->entry) argc++;
 				break;
+			case backtrace_push: case backtrace_pop: case define: case none: case pick: case unpick: break;
 			default: unreachable();
 		}
 		if (!n->next && registers && !f->entry)
@@ -1470,7 +1472,8 @@ bool _determine_arguments(func_t* f)
 			if (registers > 1) f->stack = true;
 		}
 	}
-	changed |= argc != f->argc || returns != f->returns;
+
+	changed |= (f->argc != argc || f->returns != returns);
 	f->argc = argc;
 	f->returns = returns;
 	return changed;
@@ -1496,13 +1499,15 @@ void _add_arguments(func_t* f)
 
 void determine_arguments(module_t* mod)
 {
-	bool changed = 1;
-	while (changed)
-	{
+	for (func_list_t* f = mod->funcs ; f ; f = f->next)
+		f->func->returns = true;
+	bool changed = true;
+	while (changed) {
 		changed = false;
 		for (func_list_t* f = mod->funcs ; f ; f = f->next)
 			f->func->has_args = false;
-		changed |= _determine_arguments(mod->entry);
+		for (func_list_t* f = mod->funcs ; f ; f = f->next)
+			changed |= _determine_arguments(f->func);
 	}
 }
 
