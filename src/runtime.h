@@ -684,7 +684,7 @@ static void handle_error_signal(int sig, siginfo_t *info, void *ucontext)
 		else
 			throw_error("Memory error");
 	}
-	else throw_error_fmt("Recieved signal %i (%s)", sig, strsignal(sig));
+	else throw_error_fmt("Received signal %i (%s)", sig, strsignal(sig));
 }
 
 static void assert_impure(void)
