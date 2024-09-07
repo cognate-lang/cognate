@@ -94,6 +94,7 @@ typedef struct cognate_object
 		NUMBER number;
 		IO io;
 		TABLE table;
+		void* ptr;
 	};
 	cognate_type type;
 } cognate_object;
@@ -324,8 +325,8 @@ static STRING ___show_SYMBOL(SYMBOL);
 static STRING ___show_BOOLEAN(BOOLEAN);
 static STRING ___show_BOX(BOX);
 
-static BLOCK ___regex(STRING);
-static BLOCK ___regexHmatch(STRING);
+static BOOLEAN ___regex(STRING, STRING);
+static BOOLEAN ___regexHmatch(STRING, STRING);
 static NUMBER ___ordinal(STRING);
 static STRING ___character(NUMBER);
 static NUMBER ___floor(NUMBER);
@@ -1678,79 +1679,6 @@ static void ___stop(void)
 	exit(EXIT_SUCCESS);
 }
 
-void apply_regex(uint8_t* env)
-{
-	regex_t reg = *(regex_t*)env;
-	STRING str = unbox_STRING(pop());
-	const int found = regexec(&reg, str, 0, NULL, 0);
-	if unlikely(found != 0 && found != REG_NOMATCH)
-		throw_error_fmt("Regex failed matching string '%.32s'", str);
-	push(box_BOOLEAN(!found));
-
-}
-
-static BLOCK ___regex(STRING reg_str)
-{
-	regex_t* reg = gc_flatmalloc(sizeof *reg);
-	const int status = regcomp(reg, reg_str, REG_EXTENDED | REG_NEWLINE | REG_NOSUB);
-	errno = 0; // Hmmm
-	if unlikely(status)
-	{
-		char reg_err[256];
-		regerror(status, reg, reg_err, 256);
-		throw_error_fmt("Compile error (%s) in regex '%.32s'", reg_err, reg_str);
-	}
-
-	return (cognate_block){ .env = (void*)reg, .fn = apply_regex };
-}
-
-void match_regex(uint8_t* env)
-{
-	regex_t* reg = (regex_t*)env;
-	STRING str = unbox_STRING(pop());
-	size_t groups = reg->re_nsub + 1;
-	regmatch_t matches[groups];
-	const int found = regexec(reg, str, groups, matches, 0);
-	if unlikely(found != 0 && found != REG_NOMATCH) throw_error_fmt("Regex failed matching string '%.32s'", str);
-
-	if (found == 0) {
-		for (unsigned int g = 1; g < groups ; g++)
-		{
-			size_t from = matches[g].rm_so;
-			if (from == (size_t)-1)
-			{
-				groups = g;
-				break;
-			}
-		}
-
-		for (unsigned int g = groups-1; g > 0; g--)
-		{
-			size_t from = matches[g].rm_so;
-			size_t to = matches[g].rm_eo;
-
-			char* item = gc_strndup((char*)str, to);
-			push(box_STRING(item + from));
-		}
-	}
-	push(box_BOOLEAN(found == 0));
-}
-
-static BLOCK ___regexHmatch(STRING reg_str)
-{
-	regex_t* reg = gc_flatmalloc(sizeof *reg);
-	const int status = regcomp(reg, reg_str, REG_EXTENDED | REG_NEWLINE);
-	errno = 0;
-	if unlikely(status)
-	{
-		char reg_err[256];
-		regerror(status, reg, reg_err, 256);
-		throw_error_fmt("Compile error (%s) in regex '%.32s'", reg_err, reg_str);
-	}
-
-	return (cognate_block){ .env = (void*)reg, .fn = match_regex };
-}
-
 
 static NUMBER ___ordinal(STRING str)
 {
@@ -2500,6 +2428,72 @@ static STRING ___show_LIST(LIST l)
 {
 	show_list(l, show_buffer, NULL);
 	return gc_strdup(show_buffer);
+}
+
+
+static TABLE memoized_regexes = NULL;
+
+static regex_t* memoized_regcomp(STRING reg_str)
+{
+	regex_t* reg;
+	if (___has(box_STRING(reg_str), memoized_regexes)) reg = ___D(box_STRING(reg_str), memoized_regexes).ptr;
+	else
+	{
+		reg = gc_flatmalloc(sizeof *reg);
+		const int status = regcomp(reg, reg_str, REG_EXTENDED | REG_NEWLINE);
+		errno = 0; // Hmmm
+		if unlikely(status)
+		{
+			char reg_err[256];
+			regerror(status, reg, reg_err, 256);
+			throw_error_fmt("Compile error (%s) in regex '%.32s'", reg_err, reg_str);
+		}
+		memoized_regexes = ___insert(box_STRING(reg_str), (cognate_object){.ptr=reg}, memoized_regexes);
+	}
+
+	return reg;
+}
+
+static BOOLEAN ___regex(STRING reg_str, STRING str)
+{
+	regex_t* reg = memoized_regcomp(reg_str);
+	const int found = regexec(reg, str, 0, NULL, 0);
+	if unlikely(found != 0 && found != REG_NOMATCH)
+		throw_error_fmt("Regex failed matching string '%.32s'", str);
+
+	return found != REG_NOMATCH;
+}
+
+static BOOLEAN ___regexHmatch(STRING reg_str, STRING str)
+{
+	regex_t* reg = memoized_regcomp(reg_str);
+
+	size_t groups = reg->re_nsub + 1;
+	regmatch_t matches[groups];
+	const int found = regexec(reg, str, groups, matches, 0);
+	if unlikely(found != 0 && found != REG_NOMATCH) throw_error_fmt("Regex failed matching string '%.32s'", str);
+
+	if (found == 0) {
+		for (unsigned int g = 1; g < groups ; g++)
+		{
+			size_t from = matches[g].rm_so;
+			if (from == (size_t)-1)
+			{
+				groups = g;
+				break;
+			}
+		}
+
+		for (unsigned int g = groups-1; g > 0; g--)
+		{
+			size_t from = matches[g].rm_so;
+			size_t to = matches[g].rm_eo;
+
+			char* item = gc_strndup((char*)str, to);
+			push(box_STRING(item + from));
+		}
+	}
+	return found != REG_NOMATCH;
 }
 
 static BOOLEAN ___numberQ_NUMBER(NUMBER _)    { return true;  }
