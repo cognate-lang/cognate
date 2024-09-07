@@ -2,33 +2,33 @@
 ~~ ^ and $ are needed else it will only match part of the string.
 
 Let R1 be "^[0-9A-Fa-f]*$";
-Print If And Do Regex R1 "12EFab" and Not Do Regex R1 "foo123"
+Print If And Regex R1 "12EFab" and Not Regex R1 "foo123"
   "PASS: Simple regex to identify hex integers"
 else
   "FAIL: Simple regex to identify hex integers";
 
 ~~ Same regex as before; but with POSIX character classes
 Let R2 be "^[[:xdigit:]]*$";
-Print If And Do Regex R2 "12EFab" and Not Do Regex R2 "foo123"
+Print If And Regex R2 "12EFab" and Not Regex R2 "foo123"
   "PASS: Regex to identify hex integers (character class)"
 else
   "FAIL: Regex to identify hex integers (character class)";
 
 ~~ This regex matches decimal numbers (d.p can be dot or comma)
 Let R3 be "^(-)?([0-9]+)((;|.)([0-9]+))?$";
-Print If And Do Regex R3 "1.234" and Not Do Regex R3 "Hello world"
+Print If And Regex R3 "1.234" and Not Regex R3 "Hello world"
   "PASS: Extended regex to identify decimal numbers"
 else
   "FAIL: Extended regex to identify decimal numbers";
 
 Let R4 be "-?([0-9]+)(.[0-9]+)?";
-Print If == List (Do Regex-match R4 "13.37") List (True "13" ".37")
+Print If == List (Regex-match R4 "13.37") List (True "13" ".37")
   "PASS: Capture sub-expressions for integer and fractional parts"
 else
   "FAIL: Capture sub-expressions for integer and fractional parts";
 
 Let R5 be "([[:alnum:]]+)";
-Let B Do Regex-match R5 "[->+<]";
+Let B Regex-match R5 "[->+<]";
 Print If B
   "FAIL: Empty sub-expressions match list to identify alphanumeric characters"
 else
