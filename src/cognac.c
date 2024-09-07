@@ -1401,21 +1401,18 @@ bool _determine_arguments(func_t* f)
 					else if (can_use_args && argc < 255 && !f->entry) argc++;
 					for (func_list_t* f = op->funcs ; f ; f = f->next)
 						changed |= _determine_arguments(f->func);
-					int max_argc = 0;
+					int min_argc = 0;
 					int stack = false;
-					int returns = false;
+					int returns = true;
 				   for (func_list_t* ff = op->funcs ; ff ; ff = ff->next)
 					{
-						if (max_argc < ff->func->argc) max_argc = ff->func->argc;
+						if (min_argc > ff->func->argc) min_argc = ff->func->argc;
 						stack |= ff->func->stack;
-						returns |= ff->func->returns;
-						// If there are weird stack underflows and returns where there shouldn't be this bit is why
-						// This was originally int returns = true and returns &= ff->func->func->returns.
-						// But I changed it for the sake of optimisation - I *think* the adaptor functions should sort this out.
+						returns &= ff->func->returns;
 					}
-					if (stack && registers > max_argc)
-						registers = max_argc;
-					for (size_t i = 0 ; i < max_argc ; ++i)
+					if (stack && registers > min_argc)
+						registers = min_argc;
+					for (size_t i = 0 ; i < min_argc ; ++i)
 					{
 						if (registers) registers--;
 						else if (can_use_args && argc < 255 && !f->entry) argc++;
