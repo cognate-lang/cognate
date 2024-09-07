@@ -34,7 +34,7 @@
 
 #include <regex.h>
 
-#define TERABYTE (1024l*1024l*1024l)
+#define TERABYTE (1024l*1024l*1024l*1024l)
 #define ALLOC_SIZE TERABYTE
 #define ALLOC_START (void*)(42l * TERABYTE)
 
@@ -157,13 +157,18 @@ typedef struct var_info
 #define unlikely(expr) (__builtin_expect((_Bool)(expr), 0))
 #define likely(expr)	 (__builtin_expect((_Bool)(expr), 1))
 
-static uintptr_t* space[2] = {NULL,NULL};
-static char* bitmap[2] = {NULL,NULL};
-static size_t alloc[2] = {0, 0};
+typedef struct gc_heap {
+	uintptr_t* start;
+	uint8_t* bitmap;
+	size_t alloc;
+} gc_heap;
+
+//static gc_heap eden;
+static gc_heap space[2];
+
 static _Bool z = 0;
 
 static _Bool pure = 0;
-
 
 // Global variables
 static cognate_stack stack;
@@ -205,7 +210,12 @@ static void print_backtrace(int, const backtrace*, int);
 #endif
 
 static void* gc_malloc(size_t);
-static void gc_collect(void);
+static void* gc_flatmalloc(size_t);
+static void* gc_malloc_mutable(size_t);
+static void* gc_malloc_on(gc_heap*, size_t);
+static void gc_collect(gc_heap*, gc_heap*);
+static void gc_collect_major(void);
+static void gc_collect_minor(void);
 static void gc_init(void);
 static char* gc_strdup(char*);
 static char* gc_strndup(char*, size_t);
@@ -903,6 +913,7 @@ static const char* lookup_type(cognate_type type)
 
 static ptrdiff_t compare_lists(LIST lst1, LIST lst2)
 {
+	if (lst1 == lst2) return 0;
 	if (!lst1) return -!!lst2;
 	if (!lst2) return 1;
 	ptrdiff_t diff;
@@ -946,6 +957,7 @@ static ptrdiff_t compare_numbers(NUMBER n1, NUMBER n2)
 static ptrdiff_t compare_objects(ANY ob1, ANY ob2)
 {
 	if (ob1.type != ob2.type) return (ptrdiff_t)ob1.type - (ptrdiff_t)ob2.type;
+	if (memcmp(&ob1, &ob2, sizeof ob1) == 0) return 0;
 	else switch (ob1.type)
 	{
 		case number:  return compare_numbers(ob1.number, ob2.number);
@@ -1210,28 +1222,48 @@ static TABLE unbox_TABLE(ANY box)
 #define FLATALLOC 0x2
 #define FORWARD   0x3
 
-static void gc_bitmap_set(bool z, size_t index, char value)
+static void gc_bitmap_set(gc_heap* heap, size_t index, uint8_t value)
 {
-	bitmap[z][index / 0x4] &= (~(0x3 << 0x2 * ((index & 0x3)))); // set to 00
-	bitmap[z][index / 0x4] |= (value << 0x2 * ((index & 0x3)));  // set to value
+	//printf("bitmap at %p\n", heap->bitmap);
+	heap->bitmap[index / 4] &= (uint8_t)(~(0x3 << (2 * (index & 0x3)))); // set to 00
+	heap->bitmap[index / 4] |= (uint8_t)(value << (2 * (index & 0x3)));  // set to value
 }
 
-static char gc_bitmap_get(bool z, size_t index)
+static uint8_t gc_bitmap_get(gc_heap* heap, size_t index)
 {
-	return (bitmap[z][index / 0x4] & (0x3 << (0x2 * (index & 0x3)))) >> (0x2 * (index & 0x3));
+	return (heap->bitmap[index / 4] & (0x3 << (2 * (index & 0x3)))) >> (2 * (index & 0x3));
+}
+
+static void gc_init_heap(gc_heap* heap)
+{
+	heap->bitmap = mmap(ALLOC_START, ALLOC_SIZE/32, MEM_PROT, MEM_FLAGS, -1, 0);
+	heap->start  = mmap(ALLOC_START, ALLOC_SIZE,    MEM_PROT, MEM_FLAGS, -1, 0);
+	heap->alloc  = 0;
+	gc_bitmap_set(heap, 0, ALLOC);
 }
 
 static void gc_init(void)
 {
-	bitmap[0] = mmap(ALLOC_START, ALLOC_SIZE/32, MEM_PROT, MEM_FLAGS, -1, 0);
-	bitmap[1] = mmap(ALLOC_START, ALLOC_SIZE/32, MEM_PROT, MEM_FLAGS, -1, 0);
-	space[0]  = mmap(ALLOC_START, ALLOC_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
-	space[1]  = mmap(ALLOC_START, ALLOC_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
-	gc_bitmap_set(0, 0, ALLOC);
-	gc_bitmap_set(1, 0, ALLOC);
+	gc_init_heap(&space[0]);
+	gc_init_heap(&space[1]);
+	//gc_init_heap(&eden);
 }
 
+
 __attribute__((noinline, hot, assume_aligned(sizeof(uint64_t)), returns_nonnull))
+static void* gc_malloc_on(gc_heap* heap, size_t sz)
+{
+	void* buf = heap->start + heap->alloc;
+	heap->alloc += (sz + 7) / 8;
+	gc_bitmap_set(heap, heap->alloc, ALLOC);
+	return buf;
+}
+
+static void* gc_malloc_mutable(size_t sz)
+{
+	return gc_malloc_on(&space[z], sz);
+}
+
 static void* gc_malloc(size_t sz)
 {
 	static ptrdiff_t interval = 1024l*1024l*10;
@@ -1240,55 +1272,34 @@ static void* gc_malloc(size_t sz)
 	if unlikely(interval < 0)
 	#endif
 	{
-		gc_collect();
-		interval = 1024l*1024l*10l + alloc[z] * 6;
+		gc_collect_major();
+		interval = 1024l*1024l*10l;
 	}
-	void* buf = space[z] + alloc[z];
-	//assert(bitmap[z][alloc[z]] == ALLOC);
-	alloc[z] += (sz + 7) / 8;
-	//assert(!sz || bitmap[z][alloc[z]] == EMPTY);
-	gc_bitmap_set(z, alloc[z], ALLOC);
-	//assert(!((ANY)buf & 7));
-	return buf;
+	return gc_malloc_on(&space[z], sz);
 }
 
-__attribute__((noinline, hot, assume_aligned(sizeof(uint64_t)), alloc_size(1), returns_nonnull))
 static void* gc_flatmalloc(size_t sz)
 {
-	static ptrdiff_t interval = 1024l*1024l*10;
-	interval -= sz;
-	#ifndef GCTEST
-	if unlikely(interval < 0)
-	#endif
-	{
-		gc_collect();
-		interval = 1024l*1024l*10l + alloc[z] * 6;
-	}
-	void* buf = space[z] + alloc[z];
-	//assert(bitmap[z][alloc[z]] == ALLOC);
-	gc_bitmap_set(z, alloc[z], FLATALLOC);
-	alloc[z] += (sz + 7) / 8;
-	//assert(!sz || bitmap[z][alloc[z]] == EMPTY);
-	gc_bitmap_set(z, alloc[z], ALLOC);
-	//assert(!((ANY)buf & 7));
-	return buf;
+	gc_bitmap_set(&space[z], space[z].alloc, FLATALLOC);
+	return gc_malloc_on(&space[z], sz);
 }
 
 __attribute__((hot))
-static _Bool is_gc_ptr(uintptr_t object)
+static _Bool is_gc_ptr(gc_heap* heap, uintptr_t object)
 {
-	return (uintptr_t*)object - space[!z] < alloc[!z];
+	uintptr_t diff = (uintptr_t*)object - heap->start;
+	return diff < heap->alloc;
 }
 
 __attribute__((hot))
-static void gc_collect_root(uintptr_t* restrict addr)
+static void gc_collect_root(uintptr_t* restrict addr, gc_heap* source, gc_heap* dest)
 {
-	if (!is_gc_ptr(*addr)) return;
+	if (!is_gc_ptr(source, *addr)) return;
 	struct action {
 		uintptr_t from;
 		uintptr_t* restrict to;
 	};
-	struct action* restrict act_stk_start = (struct action*)space[!z] + alloc[!z];
+	struct action* restrict act_stk_start = (struct action*)source->start + source->alloc;
 	struct action* restrict act_stk_top = act_stk_start;
 	*act_stk_top++ = (struct action) { .from=*addr, .to=addr };
 	while (act_stk_top-- != act_stk_start)
@@ -1296,98 +1307,63 @@ static void gc_collect_root(uintptr_t* restrict addr)
 		uintptr_t from = act_stk_top->from;
 		uintptr_t* to = act_stk_top->to;
 		const uintptr_t lower_bits = from & 7;
-		uintptr_t index = (uintptr_t*)(from & ~7) - space[!z];
+		uintptr_t index = (uintptr_t*)(from & ~7) - source->start;
 		ptrdiff_t offset = 0;
-		while (gc_bitmap_get(!z, index) == EMPTY) index--, offset++; // Ptr to middle of object
-		char mode = gc_bitmap_get(!z, index);
-		if (mode == FORWARD) *to = lower_bits | (uintptr_t)((uintptr_t*)space[!z][index] + offset);
+		while (gc_bitmap_get(source, index) == EMPTY) index--, offset++; // Ptr to middle of object
+		uint8_t alloc_mode = gc_bitmap_get(source, index);
+		if (alloc_mode == FORWARD) *to = lower_bits | (uintptr_t)((uintptr_t*)source->start[index] + offset);
 		else
 		{
-			//assert(bitmap[!z][index] == ALLOC);
-			uintptr_t* buf = space[z] + alloc[z]; // Buffer in newspace
-			//assert(bitmap[z][alloc[z]] == ALLOC);
+			uintptr_t* buf = dest->start + dest->alloc; // Buffer in newspace
+			if (alloc_mode == FLATALLOC) gc_bitmap_set(dest, dest->alloc, FLATALLOC);
 			size_t sz = 1;
-			for ( ; gc_bitmap_get(!z, index+sz) == EMPTY ; sz++ );
-			if (mode == FLATALLOC) gc_bitmap_set(z, alloc[z], FLATALLOC);
-			alloc[z] += sz;
-			//assert(bitmap[z][alloc[z]] == EMPTY);
-			gc_bitmap_set(z, alloc[z], ALLOC);
-			for (size_t i = 0;i < sz;i++)
+			for ( ; gc_bitmap_get(source, index+sz) == EMPTY ; sz++ );
+			dest->alloc += sz;
+			gc_bitmap_set(dest, dest->alloc, ALLOC);
+			for (size_t i = 0 ; i < sz ; i++)
 			{
-				uintptr_t from = space[!z][index+i];
-				if (mode != FLATALLOC && is_gc_ptr(from))
+				uintptr_t from = source->start[index+i];
+				if (alloc_mode != FLATALLOC && is_gc_ptr(source, from))
 					*act_stk_top++ = (struct action) { .from=from, .to=buf+i };
 				else buf[i] = from;
 			}
-			space[!z][index] = (uintptr_t)buf; // Set forwarding address
-			gc_bitmap_set(!z, index, FORWARD);
+			source->start[index] = (uintptr_t)buf; // Set forwarding address
+			gc_bitmap_set(source, index, FORWARD);
 			*to = lower_bits | (uintptr_t)(buf + offset);
 		}
 	}
 }
 
-static __attribute__((noinline,hot)) void gc_collect(void)
+static __attribute__((noinline,hot)) void gc_collect(gc_heap* source, gc_heap* dest)
 {
-	/*
-	printf("BEFORE:\n");
-	for (int Z = 0 ; Z < 2 ; ++Z)
-	{
-		for (int i = 0 ; i <= alloc[Z] ; ++i) switch(bitmap[Z][i])
-		{
-			case EMPTY: fputc('-', stdout); break;
-			case ALLOC: fputc('A', stdout); break;
-			case FLATALLOC: fputc('a', stdout); break;
-			case FORWARD: fputc('F', stdout); break; //printf("%zu", (uintptr_t*)space[Z][i] - space[!Z]); break;
-		}
-		if (Z == z) printf(" (active)");
-		fputc('\n', stdout);
-	}
-	*/
-
-	/*
-	clock_t start, end;
-	double cpu_time_used;
-	size_t heapsz = alloc[z];
-	start = clock();
-	*/
-
-	z = !z;
-	memset(bitmap[z], 0, alloc[z] / 4 + 1);
-	alloc[z] = 0;
-	gc_bitmap_set(z, 0, ALLOC);
+	memset(dest->bitmap, 0x0, dest->alloc / 4 + 1);
+	dest->alloc = 0;
+	gc_bitmap_set(dest, 0, ALLOC);
 
 	for (uintptr_t* root = (uintptr_t*)stack.absolute_start; root != (uintptr_t*)stack.top; ++root)
-		gc_collect_root(root);
+		gc_collect_root(root, source, dest);
 
 	jmp_buf a;
 	if (setjmp(a)) return;
 
 	for (uintptr_t* root = (uintptr_t*)&a; root < (uintptr_t*)function_stack_start; ++root)
-		gc_collect_root(root); // Watch me destructively modify the call stack
+		gc_collect_root(root, source, dest); // Watch me destructively modify the call stack
 
-	gc_collect_root((uintptr_t*)&memoized_regexes);
+	gc_collect_root((uintptr_t*)&memoized_regexes, source, dest);
 
-	/*
-	end = clock();
-	printf("%lf seconds for %ziMB -> %ziMB\n", (double)(end - start) / CLOCKS_PER_SEC, heapsz * 8 /1024/1024, alloc[z] * 8 / 1024/1024);
-	*/
-
-	/*
-	printf("AFTER:\n");
-	for (int Z = 0 ; Z < 2 ; ++Z)
-	{
-		for (int i = 0 ; i <= alloc[Z] ; ++i) switch(bitmap[Z][i])
-		{
-			case EMPTY: fputc('-', stdout); break;
-			case ALLOC: fputc('A', stdout); break;
-			case FLATALLOC: fputc('a', stdout); break;
-			case FORWARD: fputc('F', stdout); break; //printf("%zu", (uintptr_t*)space[Z][i] - space[!Z]); break;
-		}
-		if (Z == z) printf(" (active)");
-		fputc('\n', stdout);
-	}
-	*/
 	longjmp(a, 1);
+}
+
+static void gc_collect_minor(void)
+{
+	//gc_collect(&eden, &space[z]);
+}
+
+static void gc_collect_major(void)
+{
+	//gc_collect_minor();
+	gc_collect(&space[z], &space[!z]);
+	z = !z;
 }
 
 static char* gc_strdup(char* src)
@@ -1410,27 +1386,27 @@ static ANY ___if(BOOLEAN cond, ANY a, ANY b)
 	return cond ? a : b;
 }
 
-static void ___put(ANY a)   { assert_impure(); fputs(___show(a), stdout); fflush(stdout); }
-static void ___put_NUMBER(NUMBER a) { assert_impure(); fputs(___show_NUMBER(a), stdout); fflush(stdout); }
-static void ___put_LIST(LIST a) { assert_impure(); fputs(___show_LIST(a), stdout); fflush(stdout); }
-static void ___put_TABLE(TABLE a) { assert_impure(); fputs(___show_TABLE(a), stdout); fflush(stdout); }
-static void ___put_IO(IO a) { assert_impure(); fputs(___show_IO(a), stdout); fflush(stdout); }
-static void ___put_BLOCK(BLOCK a) { assert_impure(); fputs(___show_BLOCK(a), stdout); fflush(stdout); }
-static void ___put_STRING(STRING a) { assert_impure(); fputs(___show_STRING(a), stdout); fflush(stdout); }
-static void ___put_SYMBOL(SYMBOL a) { assert_impure(); fputs(___show_SYMBOL(a), stdout); fflush(stdout); }
+static void ___put(ANY a)             { assert_impure(); fputs(___show(a), stdout); fflush(stdout);         }
+static void ___put_NUMBER(NUMBER a)   { assert_impure(); fputs(___show_NUMBER(a), stdout); fflush(stdout);  }
+static void ___put_LIST(LIST a)       { assert_impure(); fputs(___show_LIST(a), stdout); fflush(stdout);    }
+static void ___put_TABLE(TABLE a)     { assert_impure(); fputs(___show_TABLE(a), stdout); fflush(stdout);   }
+static void ___put_IO(IO a)           { assert_impure(); fputs(___show_IO(a), stdout); fflush(stdout);      }
+static void ___put_BLOCK(BLOCK a)     { assert_impure(); fputs(___show_BLOCK(a), stdout); fflush(stdout);   }
+static void ___put_STRING(STRING a)   { assert_impure(); fputs(___show_STRING(a), stdout); fflush(stdout);  }
+static void ___put_SYMBOL(SYMBOL a)   { assert_impure(); fputs(___show_SYMBOL(a), stdout); fflush(stdout);  }
 static void ___put_BOOLEAN(BOOLEAN a) { assert_impure(); fputs(___show_BOOLEAN(a), stdout); fflush(stdout); }
-static void ___put_BOX(BOX a) { assert_impure(); fputs(___show_BOX(a), stdout); }
+static void ___put_BOX(BOX a)         { assert_impure(); fputs(___show_BOX(a), stdout);                     }
 
-static void ___print(ANY a) { assert_impure(); puts(___show(a)); }
-static void ___print_NUMBER(NUMBER a) { assert_impure(); puts(___show_NUMBER(a)); }
-static void ___print_LIST(LIST a) { assert_impure(); puts(___show_LIST(a)); }
-static void ___print_TABLE(TABLE a) { assert_impure(); puts(___show_TABLE(a)); }
-static void ___print_IO(IO a) { assert_impure(); puts(___show_IO(a)); }
-static void ___print_BLOCK(BLOCK a) { assert_impure(); puts(___show_BLOCK(a)); }
-static void ___print_STRING(STRING a) { assert_impure(); puts(___show_STRING(a)); }
-static void ___print_SYMBOL(SYMBOL a) { assert_impure(); puts(___show_SYMBOL(a)); }
+static void ___print(ANY a)             { assert_impure(); puts(___show(a));         }
+static void ___print_NUMBER(NUMBER a)   { assert_impure(); puts(___show_NUMBER(a));  }
+static void ___print_LIST(LIST a)       { assert_impure(); puts(___show_LIST(a));    }
+static void ___print_TABLE(TABLE a)     { assert_impure(); puts(___show_TABLE(a));   }
+static void ___print_IO(IO a)           { assert_impure(); puts(___show_IO(a));      }
+static void ___print_BLOCK(BLOCK a)     { assert_impure(); puts(___show_BLOCK(a));   }
+static void ___print_STRING(STRING a)   { assert_impure(); puts(___show_STRING(a));  }
+static void ___print_SYMBOL(SYMBOL a)   { assert_impure(); puts(___show_SYMBOL(a));  }
 static void ___print_BOOLEAN(BOOLEAN a) { assert_impure(); puts(___show_BOOLEAN(a)); }
-static void ___print_BOX(BOX a) { assert_impure(); puts(___show_BOX(a)); }
+static void ___print_BOX(BOX a)         { assert_impure(); puts(___show_BOX(a));     }
 
 static NUMBER ___P(NUMBER a, NUMBER b) { return a + b; } // Add cannot produce NaN.
 static NUMBER ___M(NUMBER a, NUMBER b) { return a * b; }
@@ -2079,7 +2055,7 @@ static STRING ___readHfile(IO io)
 static STRING ___readHline(IO io)
 {
 	assert_impure();
-	char* buf = (char*)(space[z] + alloc[z]); // use the top of memory as a buffer like Show does
+	char* buf = show_buffer;
 	fgets(buf, INT_MAX, io->file);
 	return gc_strdup(buf); // this can only GC once so won't overwrite the buffer.
 }
