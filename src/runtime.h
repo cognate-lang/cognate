@@ -197,6 +197,8 @@ extern int main(int, char**);
 
 static const char* restrict function_stack_start;
 
+static TABLE memoized_regexes = NULL;
+
 const SYMBOL SYMstart = "start";
 const SYMBOL SYMend = "end";
 const SYMBOL SYMcurrent = "current";
@@ -1381,6 +1383,8 @@ static __attribute__((noinline,hot)) void gc_collect(void)
 	for (uintptr_t* root = (uintptr_t*)&a; root < (uintptr_t*)function_stack_start; ++root)
 		gc_collect_root(root); // Watch me destructively modify the call stack
 
+	gc_collect_root((uintptr_t*)&memoized_regexes);
+
 	/*
 	end = clock();
 	printf("%lf seconds for %ziMB -> %ziMB\n", (double)(end - start) / CLOCKS_PER_SEC, heapsz * 8 /1024/1024, alloc[z] * 8 / 1024/1024);
@@ -2460,7 +2464,6 @@ static STRING ___show_LIST(LIST l)
 }
 
 
-static TABLE memoized_regexes = NULL;
 
 static regex_t* memoized_regcomp(STRING reg_str)
 {
