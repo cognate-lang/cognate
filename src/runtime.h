@@ -38,12 +38,6 @@
 #define ALLOC_SIZE TERABYTE
 #define ALLOC_START (void*)(42l * TERABYTE)
 
-#define PAGE_SIZE 4096
-#define WORDSZ (sizeof(void*))
-
-#define INITIAL_READ_SIZE 64
-#define STACK_MARGIN_KB		50
-
 #define CHECK_DEFINED(str, thing) if (!thing->defined) throw_error(#str" called before definition")
 
 #define MEM_PROT PROT_READ|PROT_WRITE
@@ -160,17 +154,6 @@ typedef struct var_info
 
 #endif
 
-#define PTR_MASK 0x0000ffffffffffff
-
-
-#define ___name ___##name
-#define SYM(name) ____##name
-#define CALL(name, args) ___name args
-
-#define SET(name, val) \
-	if unlikely(pure) throw_error("Cannot mutate variable in pure function"); \
-	___name = val;
-
 #define unlikely(expr) (__builtin_expect((_Bool)(expr), 0))
 #define likely(expr)	 (__builtin_expect((_Bool)(expr), 1))
 
@@ -190,8 +173,6 @@ static char* show_buffer = NULL;
 static const backtrace* trace = NULL;
 static const var_info* vars = NULL;
 #endif
-
-_Bool breakpoints[10];
 
 extern int main(int, char**);
 
