@@ -2,22 +2,34 @@ Let T be Table (
 	\foo is "bar";
 	"bar" is \foo;
 	12 is 13;
+	List (0 1) is 1;
+	Table (\A "b") is "Ab";
 );
 
 Print If == "bar" . \foo T
-	"PASS: Table lookup 1"
+	"PASS: Table lookup with string"
 else
-	"FAIL: Table lookup 1";
+	"FAIL: Table lookup with string";
 
 Print If == \foo . "bar" T
-	"PASS: Table lookup 2"
+	"PASS: Table lookup with symbol"
 else
-	"FAIL: Table lookup 2";
+	"FAIL: Table lookup with symbol";
 
 Print If == 13 . 12 T
-	"PASS: Table lookup 3"
+	"PASS: Table lookup with number"
 else
-	"FAIL: Table lookup 3";
+	"FAIL: Table lookup with number";
+
+Print If == 1 . List (0 1) T
+	"PASS: Table lookup with list"
+else
+	"FAIL: Table lookup with list";
+
+Print If == "Ab" . Table (\A "b") T
+	"PASS: Table lookup with table"
+else
+	"FAIL: Table lookup with table";
 
 Let T2 be Insert \foo is "baz" into T;
 
@@ -44,13 +56,38 @@ Print If Not Has \foo T3
 else
 	"FAIL: Removing keys";
 ~
-
-Print If == List (12 \foo "bar") Keys T
+Print If == List (12 \foo "bar" List (0 1) Table (\A "b")) Keys T
 	"PASS: Getting list of keys in table"
 else
 	"FAIL: Getting list of keys in table";
 
-Print If == List (13 "bar" \foo) Values T
+Print If == List (13 "bar" \foo 1 "Ab") Values T
 	"PASS: Getting list of values in table"
 else
 	"FAIL: Getting list of values in table";
+
+
+Print If == Table () Table ()
+	"PASS: Table comparison 1"
+else
+	"FAIL: Table comparison 1";
+
+Print If == Table (\A 1) Table (\A 1)
+	"PASS: Table comparison 2"
+else
+	"FAIL: Table comparison 2";
+
+Print If != Table (\A 2) Table (\A 1)
+	"PASS: Table comparison 3"
+else
+	"FAIL: Table comparison 3";
+
+Print If != Table (\A 1) Table (\B 1)
+	"PASS: Table comparison 4"
+else
+	"FAIL: Table compariso 4";
+
+Print If == Table (\C 1 \B 2 \A 3) Table (\C 1 \B 2 \A 3)
+	"PASS: Table comparison 5"
+else
+	"FAIL: Table comparison 5";
