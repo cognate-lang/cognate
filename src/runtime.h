@@ -292,6 +292,7 @@ static BOOLEAN ___booleanQ(ANY);
 static BOOLEAN ___integerQ(ANY);
 static BOOLEAN ___ioQ(ANY);
 static BOOLEAN ___zeroQ(ANY);
+static BOOLEAN ___tableQ(ANY);
 static ANY ___first(ANY);
 static ANY ___rest(ANY);
 static STRING ___first_STRING(STRING);
@@ -1479,6 +1480,7 @@ static BOOLEAN ___symbolQ(ANY a)  { return a.type==symbol; }
 static BOOLEAN ___ioQ(ANY a)      { return a.type==io; }
 static BOOLEAN ___integerQ(ANY a) { return ___numberQ(a) && unbox_NUMBER(a) == floor(unbox_NUMBER(a)); }
 static BOOLEAN ___zeroQ(ANY a)    { return ___numberQ(a) && unbox_NUMBER(a) == 0; }
+static BOOLEAN ___tableQ(ANY a)   { return a.type==table; }
 
 static NUMBER  ___numberX(NUMBER a)  { return a; }
 static LIST    ___listX(LIST a)      { return a; }
@@ -1488,6 +1490,7 @@ static BLOCK   ___blockX(BLOCK a)    { return a; }
 static BOOLEAN ___booleanX(BOOLEAN a){ return a; }
 static SYMBOL  ___symbolX(SYMBOL a)  { return a; }
 static IO      ___ioX(IO a)          { return a; }
+static TABLE   ___tableX(TABLE a)    { return a; }
 
 static BOOLEAN ___match(ANY patt, ANY obj) { return match_objects(patt,obj); }
 
