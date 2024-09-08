@@ -366,6 +366,7 @@ static NUMBER ___tanh(NUMBER);
 
 static const char *lookup_type(cognate_type);
 static ptrdiff_t compare_lists(LIST, LIST);
+static ptrdiff_t compare_tables(TABLE, TABLE);
 static _Bool match_lists(LIST, LIST);
 static void handle_error_signal(int, siginfo_t*, void *);
 static void assert_impure(void);
@@ -931,6 +932,20 @@ static ptrdiff_t compare_lists(LIST lst1, LIST lst2)
 	return diff;
 }
 
+static ptrdiff_t compare_tables(TABLE t1, TABLE t2)
+{
+	if (!t1) return -!!t2;
+	if (!t2) return 1;
+	ptrdiff_t diff;
+
+	if (!(diff = compare_objects(t1->key, t2->key)))
+		if (!(diff = compare_objects(t1->value, t2->value)))
+			if (!(diff = compare_tables(t1->left, t2->left)))
+				return compare_tables(t1->right, t2->right);
+
+	return diff;
+}
+
 static ptrdiff_t compare_blocks(BLOCK b1, BLOCK b2)
 {
 	if (b1.fn != b2.fn) return *(char**)&b1.fn - *(char**)&b2.fn;
@@ -956,6 +971,7 @@ static ptrdiff_t compare_objects(ANY ob1, ANY ob2)
 		case list:    return compare_lists(unbox_LIST(ob1), unbox_LIST(ob2));
 		case block:   return compare_blocks(unbox_BLOCK(ob1), unbox_BLOCK(ob2));
 		case box:     return (char*)unbox_BOX(ob1) - (char*)unbox_BOX(ob2);
+		case table:   return compare_tables(unbox_TABLE(ob1), unbox_TABLE(ob2));
 		default:      return 0; // really shouldn't happen
 		/* NOTE
 		 * The garbage collector *will* reorder objects in memory,
