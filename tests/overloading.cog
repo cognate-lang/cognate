@@ -1,0 +1,10 @@
+Def Q (
+    Let A be Of (Any?);
+    Do If Number? A
+        (Do If > 0 A (Print "PASS: Overloading 1") (Print "PASS: Overloading 2"))
+        (Print "PASS: Overloading 3");
+);
+
+Q -1;
+Q 1;
+Q "";
