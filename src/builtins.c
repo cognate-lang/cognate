@@ -35,6 +35,7 @@
 {.name="string?",             .calltype=call, .argc=1, .args={any},       .returns=true, .rettype=boolean, .overload=true, .overloads={number, symbol, table, string, boolean, block, list, box, io, NIL}},
 {.name="block?",              .calltype=call, .argc=1, .args={any},       .returns=true, .rettype=boolean, .overload=true, .overloads={number, symbol, table, string, boolean, block, list, box, io, NIL}},
 {.name="boolean?",            .calltype=call, .argc=1, .args={any},       .returns=true, .rettype=boolean, .overload=true, .overloads={number, symbol, table, string, boolean, block, list, box, io, NIL}},
+{.name="table?",              .calltype=call, .argc=1, .args={any},       .returns=true, .rettype=boolean, .overload=true, .overloads={number, symbol, table, string, boolean, block, list, box, io, NIL}},
 {.name="number!",             .calltype=call, .argc=1, .args={number}, .returns=true, .rettype=number},
 {.name="symbol!",             .calltype=call, .argc=1, .args={symbol}, .returns=true, .rettype=symbol},
 {.name="io!",                 .calltype=call, .argc=1, .args={io}, .returns=true, .rettype=io},
@@ -43,6 +44,7 @@
 {.name="string!",             .calltype=call, .argc=1, .args={string}, .returns=true, .rettype=string},
 {.name="block!",              .calltype=call, .argc=1, .args={block},  .returns=true, .rettype=block},
 {.name="boolean!",            .calltype=call, .argc=1, .args={boolean},.returns=true, .rettype=boolean},
+{.name="table!",              .calltype=call, .argc=1, .args={table},  .returns=true, .rettype=table},
 
 {.name="first",               .calltype=call, .argc=1, .args={any},      .returns=true, .rettype=any, .overload=true, .overloads={list,string,NIL}, .overload_returns={any, string, NIL}},
 {.name="rest",                .calltype=call, .argc=1, .args={any},      .returns=true, .rettype=any, .overload=true, .overloads={list,string,NIL}, .overload_returns={list, string, NIL}},
