@@ -948,14 +948,15 @@ static ptrdiff_t compare_objects(ANY ob1, ANY ob2)
 	if (ob1.type != ob2.type) return (ptrdiff_t)ob1.type - (ptrdiff_t)ob2.type;
 	else switch (ob1.type)
 	{
-		case number:  return compare_numbers(unbox_NUMBER(ob1), unbox_NUMBER(ob2));
-		case boolean: return (ptrdiff_t)unbox_BOOLEAN(ob1) - (ptrdiff_t)unbox_BOOLEAN(ob2);
-		case string:  return (ptrdiff_t)strcmp(unbox_STRING(ob1), unbox_STRING(ob2));
-		case symbol:  return unbox_SYMBOL(ob1) - unbox_SYMBOL(ob2);
-		case list:    return compare_lists(unbox_LIST(ob1), unbox_LIST(ob2));
-		case block:   return compare_blocks(unbox_BLOCK(ob1), unbox_BLOCK(ob2));
-		case box:     return (char*)unbox_BOX(ob1) - (char*)unbox_BOX(ob2);
-		case table:   return compare_tables(unbox_TABLE(ob1), unbox_TABLE(ob2));
+		case number:  return compare_numbers(ob1.number, ob2.number);
+		case boolean: return (ptrdiff_t)ob1.boolean - (ptrdiff_t)ob2.boolean;
+		case string:  return (ptrdiff_t)strcmp(ob1.string, ob2.string);
+		case symbol:  return ob1.symbol - ob2.symbol;
+		case list:    return compare_lists(ob1.list, ob2.list);
+		case block:   return compare_blocks(ob1.block, ob2.block);
+		case box:     return (char*)ob1.box - (char*)ob2.box;
+		case table:   return compare_tables(ob1.table, ob2.table);
+		case io:      return ob1.io->file - ob2.io->file;
 		default:      return 0; // really shouldn't happen
 		/* NOTE
 		 * The garbage collector *will* reorder objects in memory,
@@ -2173,7 +2174,7 @@ static TABLE ___table (BLOCK expr)
 
 static TABLE ___insert(ANY key, ANY value, TABLE d)
 {
-	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
+	if unlikely(key.type == io || key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
 	TABLE D = gc_malloc(sizeof *D);
 	if (!d)
 	{
@@ -2222,7 +2223,7 @@ static TABLE ___insert(ANY key, ANY value, TABLE d)
 
 static ANY ___D(ANY key, TABLE d)
 {
-	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
+	if unlikely(key.type == io || key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
 	while (d)
 	{
 		ptrdiff_t diff = compare_objects(d->key, key);
@@ -2239,7 +2240,7 @@ static ANY ___D(ANY key, TABLE d)
 
 static BOOLEAN ___has(ANY key, TABLE d)
 {
-	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
+	if unlikely(key.type == io || key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
 	while (d)
 	{
 		ptrdiff_t diff = compare_objects(d->key, key);
@@ -2255,7 +2256,7 @@ static TABLE ___remove(ANY key, TABLE T)
 {
 	// input: X, the key to delete, and T, the root of the tree from which it should be deleted.
    // output: T, balanced, without the value X.
-	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
+	if unlikely(key.type == io || key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
 	if (!T) throw_error_fmt("Key %s not in table", ___show(key));
 	ptrdiff_t diff = compare_objects(T->key, key);
 	TABLE T2 = NULL;
