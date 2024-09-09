@@ -163,7 +163,6 @@ typedef struct gc_heap {
 	size_t alloc;
 } gc_heap;
 
-//static gc_heap eden;
 static gc_heap space[2];
 
 static _Bool z = 0;
@@ -173,7 +172,7 @@ static _Bool pure = 0;
 // Global variables
 static cognate_stack stack;
 static LIST cmdline_parameters = NULL;
-static char* show_buffer = NULL;
+static void* general_purpose_buffer = NULL;
 #ifdef DEBUG
 static const backtrace* trace = NULL;
 static const var_info* vars = NULL;
@@ -197,7 +196,7 @@ const SYMBOL SYMreadHwriteHexisting = "read-write-existing";
 
 // Variables and	needed by functions.c defined in runtime.c
 static void init_stack(void);
-static void init_show_buffer(void);
+static void init_general_purpose_buffer(void);
 static STRING show_object(const ANY object, char*, LIST);
 static void _Noreturn __attribute__((format(printf, 1, 2))) throw_error_fmt(const char* restrict const, ...);
 static void _Noreturn throw_error(const char* restrict const);
@@ -412,7 +411,7 @@ int main(int argc, char** argv)
 	for (size_t i = 0; i < sizeof(signals); ++i)
 		if (sigaction(signals[i], &error_signal_action, NULL) == -1) throw_error("couldn't install signal handler");
 	// Allocate buffer for object printing
-	init_show_buffer();
+	init_general_purpose_buffer();
 	// Initialize the stack.
 	init_stack();
 #ifdef DEBUG
@@ -696,11 +695,17 @@ TABLE table_skew(TABLE T)
 	else if (!T->left) return T;
 	else if (T->left->level == T->level)
 	{
-      // Swap the pointers of horizontal left links.
-		TABLE L = T->left;
-		T->left = L->right;
-		L->right = T; //L->right = table_skew(T);
-		return L;
+		TABLE T2 = gc_malloc(sizeof *T2);
+		TABLE L2 = gc_malloc(sizeof *L2);
+		L2->left = T->left->left;
+		L2->right = T2;
+		T2->left = T->left->right;
+		T2->right = T->right;
+		T2->key = T->key;
+		T2->value = T->value;
+		L2->key = T->left->key;
+		L2->value = T->left->value;
+		return L2;
 	}
 	/*
 	else if (T->right && T->right->left && T->right && T->right->left->level == T->right->level)
@@ -720,13 +725,17 @@ TABLE table_split(TABLE T)
 	else if (!T->right || !T->right->right) return T;
 	else if (T->level == T->right->right->level)
 	{
-		// We have two horizontal right links.  Take the middle node, elevate it, and return it.
-		TABLE R = T->right;
-		T->right = R->left;
-		//R->right = table_split((TABLE)R->right);
-		R->left = T;
-		R->level++;
-		return R;
+		TABLE T2 = gc_malloc(sizeof *T2);
+		TABLE R2 = gc_malloc(sizeof *R2);
+		R2->left = T2;
+		R2->right = T->right->right;
+		T2->left = T->left;
+		T2->right = T->right->left;
+		R2->key = T->right->key;
+		R2->value = T->right->value;
+		T2->key = T->key;
+		T2->value = T->value;
+		return R2;
 	}
 	else return T;
 }
@@ -860,9 +869,9 @@ static STRING show_object (const ANY object, char* buffer, LIST checked)
 	return buffer;
 }
 
-static void init_show_buffer(void)
+static void init_general_purpose_buffer(void)
 {
-	show_buffer = mmap(ALLOC_START, ALLOC_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
+	general_purpose_buffer = mmap(ALLOC_START, ALLOC_SIZE, MEM_PROT, MEM_FLAGS, -1, 0);
 }
 
 static void init_stack(void)
@@ -969,7 +978,6 @@ static ptrdiff_t compare_objects(ANY ob1, ANY ob2)
 		case box:     return (char*)ob1.box - (char*)ob2.box;
 		case table:   return compare_tables(ob1.table, ob2.table);
 		case io:      return ob1.io->file - ob2.io->file;
-		default:      return 0; // really shouldn't happen
 		/* NOTE
 		 * The garbage collector *will* reorder objects in memory,
 		 * which means that the relative addresses of blocks and boxes
@@ -1272,7 +1280,7 @@ static void* gc_malloc(size_t sz)
 	if unlikely(interval < 0)
 	#endif
 	{
-		gc_collect_major();
+		gc_collect_minor();
 		interval = 1024l*1024l*10l;
 	}
 	return gc_malloc_on(&space[z], sz);
@@ -1336,10 +1344,6 @@ static void gc_collect_root(uintptr_t* restrict addr, gc_heap* source, gc_heap* 
 
 static __attribute__((noinline,hot)) void gc_collect(gc_heap* source, gc_heap* dest)
 {
-	memset(dest->bitmap, 0x0, dest->alloc / 4 + 1);
-	dest->alloc = 0;
-	gc_bitmap_set(dest, 0, ALLOC);
-
 	for (uintptr_t* root = (uintptr_t*)stack.absolute_start; root != (uintptr_t*)stack.top; ++root)
 		gc_collect_root(root, source, dest);
 
@@ -1349,21 +1353,27 @@ static __attribute__((noinline,hot)) void gc_collect(gc_heap* source, gc_heap* d
 	for (uintptr_t* root = (uintptr_t*)&a; root < (uintptr_t*)function_stack_start; ++root)
 		gc_collect_root(root, source, dest); // Watch me destructively modify the call stack
 
+<<<<<<< HEAD
 	gc_collect_root((uintptr_t*)&memoized_regexes, source, dest);
+=======
+	memset(source->bitmap, 0x0, source->alloc / 4 + 1);
+	source->alloc = 0;
+	gc_bitmap_set(source, 0, ALLOC);
+>>>>>>> 9d5f658 (More work towards generational gc)
 
 	longjmp(a, 1);
 }
 
 static void gc_collect_minor(void)
 {
-	//gc_collect(&eden, &space[z]);
+	gc_collect(&space[z], &space[!z]);
 }
 
 static void gc_collect_major(void)
 {
-	//gc_collect_minor();
-	gc_collect(&space[z], &space[!z]);
-	z = !z;
+	gc_collect_minor();
+	//gc_collect(&space[!z], &space[z]);
+	//z = !z;
 }
 
 static char* gc_strdup(char* src)
@@ -1745,8 +1755,8 @@ static STRING ___show(ANY o)
 {
 	if (o.type == string) return o.string;
 	if (o.type == symbol) return o.symbol;
-	show_object(o, show_buffer, NULL);
-	return show_buffer;
+	show_object(o, general_purpose_buffer, NULL);
+	return general_purpose_buffer;
 }
 
 static LIST ___split(STRING sep, STRING str)
@@ -1755,6 +1765,7 @@ static LIST ___split(STRING sep, STRING str)
 	LIST lst = NULL;
 	size_t len = strlen(sep);
 	char* found;
+	STRING* buf = (STRING*)general_purpose_buffer;
 	while ((found = strstr(str, sep)))
 	{
 		found = strstr(str, sep);
@@ -1763,30 +1774,19 @@ static LIST ___split(STRING sep, STRING str)
 			char* item = gc_flatmalloc(found - str + 1);
 			memcpy(item, str, found - str);
 			item[found - str] = '\0';
-			cognate_list* node = gc_malloc(sizeof *node);
-			node->object = box_STRING(item);
-			node->next = lst;
-			lst = node;
+			*buf++ = item;
 		}
 		str = found + len;
 	}
-	if (*str)
+	if (*str) *buf++ = str;
+	while (buf > (STRING*)general_purpose_buffer)
 	{
-		cognate_list* node = gc_malloc(sizeof *node);
-		node->object = box_STRING(str);
-		node->next = lst;
-		lst = node;
+		cognate_list* L = gc_malloc(sizeof *L);
+		L->next = lst;
+		L->object = box_STRING(*--buf);
+		lst = L;
 	}
-	cognate_list* prev = NULL;
-	cognate_list* curr = (cognate_list*)lst;
-	while (curr)
-	{
-		cognate_list* next = (cognate_list*)curr->next;
-		curr->next = prev;
-		prev = curr;
-		curr = next;
-	}
-	return prev;
+	return lst;
 }
 
 static STRING ___uppercase(STRING str)
@@ -2055,7 +2055,7 @@ static STRING ___readHfile(IO io)
 static STRING ___readHline(IO io)
 {
 	assert_impure();
-	char* buf = show_buffer;
+	char* buf = (char*)general_purpose_buffer;
 	fgets(buf, INT_MAX, io->file);
 	return gc_strdup(buf); // this can only GC once so won't overwrite the buffer.
 }
@@ -2150,10 +2150,15 @@ static TABLE ___table (BLOCK expr)
 
 static TABLE ___insert(ANY key, ANY value, TABLE d)
 {
+<<<<<<< HEAD
 	if unlikely(key.type == io || key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
 	TABLE D = gc_malloc(sizeof *D);
+=======
+	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
+>>>>>>> 9d5f658 (More work towards generational gc)
 	if (!d)
 	{
+		TABLE D = gc_malloc(sizeof *D);
 		D->left = NULL;
 		D->right = NULL;
 		D->key = key;
@@ -2164,6 +2169,7 @@ static TABLE ___insert(ANY key, ANY value, TABLE d)
 	ptrdiff_t diff = compare_objects(d->key, key);
 	if (diff == 0)
 	{
+		TABLE D = gc_malloc(sizeof *D);
 		D->left = d->left;
 		D->right = d->right;
 		D->key = key;
@@ -2171,21 +2177,28 @@ static TABLE ___insert(ANY key, ANY value, TABLE d)
 		D->level = d->level;
 		return D;
 	}
-	else if (diff > 0)
+
+	TABLE D = NULL;
+
+	if (diff > 0)
 	{
+		TABLE left = ___insert(key, value, d->left);
+		D = gc_malloc(sizeof *D);
 		D->key = d->key;
 		D->value = d->value;
 		D->level = d->level;
 		D->right = d->right;
-		D->left = ___insert(key, value, d->left);
+		D->left = left;
 	}
 	else //if (diff < 0)
 	{
+		TABLE right = ___insert(key, value, d->right);
+		D = gc_malloc(sizeof *D);
 		D->key = d->key;
 		D->value = d->value;
 		D->level = d->level;
 		D->left = d->left;
-		D->right = ___insert(key, value, d->right);
+		D->right = right;
 	}
 
 	// Perform skew and then split. The conditionals that determine whether or
@@ -2239,16 +2252,18 @@ static TABLE ___remove(ANY key, TABLE T)
 	// This part is fairly intuitive - if this breaks it's probably not here:
 	if (diff < 0)
 	{
+		TABLE right = ___remove(key, T->right);
 		T2 = gc_malloc(sizeof *T2);
 		T2->left = T->left;
-		T2->right = ___remove(key, T->right);
+		T2->right = right;
 		T2->value = T->value;
 		T2->key = T->key;
 	}
 	else if (diff > 0)
 	{
+		TABLE left = ___remove(key, T->left);
 		T2 = gc_malloc(sizeof *T2);
-		T2->left = ___remove(key, T->left);
+		T2->left = left;
 		T2->right = T->right;
 		T2->value = T->value;
 		T2->key = T->key;
@@ -2258,20 +2273,22 @@ static TABLE ___remove(ANY key, TABLE T)
 		if (!T->left && !T->right) return NULL;
 		else if (!T->left) // T->right not null
 		{
-			T2 = gc_malloc(sizeof *T2);
 			TABLE L = T->right;
 			while (L->left) L = L->left; // successor
-			T2->right = ___remove(L->key, T->right);
+			TABLE right = ___remove(L->key, T->right);
+			T2 = gc_malloc(sizeof *T2);
+			T2->right = right;
 			T2->left = T->left;
 			T2->key = L->key;
 			T2->value = L->value;
 		}
 		else // left and right not null
 		{
-			T2 = gc_malloc(sizeof *T2);
 			TABLE L = T->left;
 			while (L->right) L = L->right; // predecessor
-			T2->left = ___remove(L->key, T->left);
+			TABLE left = ___remove(L->key, T->left);
+			T2 = gc_malloc(sizeof *T2);
+			T2->left = left;
 			T2->right = T->right;
 			T2->key = L->key;
 			T2->value = L->value;
@@ -2298,14 +2315,14 @@ static TABLE ___remove(ANY key, TABLE T)
 
 	// This part makes at least vague sense:
 
-	T2 = table_skew(T2);
 	if (T2->right)
 	{
-		T2->right = table_skew(T2->right);
 		T2->right->right = table_skew(T2->right->right);
+		T2->right = table_skew(T2->right);
 	}
-	T2 = table_split(T2);
+	T2 = table_skew(T2);
 	if (T2->right) T2->right = table_split(T2->right);
+	T2 = table_split(T2);
 
 	return T2;
 }
@@ -2372,20 +2389,20 @@ static NUMBER ___length(ANY a)
 
 static STRING ___show_NUMBER(NUMBER a)
 {
-	show_number(a, show_buffer);
-	return gc_strdup(show_buffer);
+	show_number(a, (char*)general_purpose_buffer);
+	return gc_strdup((char*)general_purpose_buffer);
 }
 
 static STRING ___show_TABLE(TABLE a)
 {
-	show_table(a, show_buffer, NULL);
-	return gc_strdup(show_buffer);
+	show_table(a, (char*)general_purpose_buffer, NULL);
+	return gc_strdup((char*)general_purpose_buffer);
 }
 
 static STRING ___show_IO(IO a)
 {
-	show_io(a, show_buffer);
-	return gc_strdup(show_buffer);
+	show_io(a, (char*)general_purpose_buffer);
+	return gc_strdup((char*)general_purpose_buffer);
 }
 
 static STRING ___show_STRING(STRING s)
@@ -2405,20 +2422,20 @@ static STRING ___show_SYMBOL(SYMBOL s)
 
 static STRING ___show_BLOCK(BLOCK b)
 {
-	show_block(b, show_buffer);
-	return gc_strdup(show_buffer);
+	show_block(b, (char*)general_purpose_buffer);
+	return gc_strdup((char*)general_purpose_buffer);
 }
 
 static STRING ___show_BOX(BOX b)
 {
-	show_box(b, show_buffer, NULL);
-	return gc_strdup(show_buffer);
+	show_box(b, (char*)general_purpose_buffer, NULL);
+	return gc_strdup((char*)general_purpose_buffer);
 }
 
 static STRING ___show_LIST(LIST l)
 {
-	show_list(l, show_buffer, NULL);
-	return gc_strdup(show_buffer);
+	show_list(l, (char*)general_purpose_buffer, NULL);
+	return gc_strdup((char*)general_purpose_buffer);
 }
 
 
