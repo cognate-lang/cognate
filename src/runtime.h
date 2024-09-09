@@ -41,8 +41,9 @@
 #define ALLOC_SIZE TERABYTE
 #define ALLOC_START (void*)(42l * TERABYTE)
 
-#define GC_RATIO 100
-#define GC_THRESHOLD MEGABYTE
+#define GC_THRESHOLD_MAJOR 100l * MEGABYTE
+#define GC_THRESHOLD_MINOR MEGABYTE
+#define GC_THRESHOLD_MUTABLE MEGABYTE
 
 #define CHECK_DEFINED(str, thing) if (!thing->defined) throw_error(#str" called before definition")
 
@@ -1281,14 +1282,7 @@ static void* gc_malloc_on(gc_heap* heap, size_t sz)
 
 static void* gc_malloc_mutable(size_t sz)
 {
-	static size_t mutable_allocs = 0;
-	mutable_allocs += sz;
-#ifndef GCTEST
-	if (mutable_allocs > GC_THRESHOLD)
-#endif
-	{
-		gc_collect_mutable();
-	}
+	maybe_gc_collect();
 	return gc_malloc_on(&mutable_space[mz], sz);
 }
 
@@ -1386,13 +1380,27 @@ static __attribute__((noinline,hot)) void gc_collect_from_stacks(gc_heap* source
 
 static void maybe_gc_collect(void)
 {
-	static int count = 0;
+	static int space_alloc = 0;
+	static int mutable_space_alloc = 0;
 	#ifndef GCTEST
-	if (space[z].alloc > GC_THRESHOLD) // run the gc every time the alloc buffer fills up
+	if (space[z].alloc > GC_THRESHOLD_MINOR) // run the gc every time the alloc buffer fills up
 	#endif
 	{
-		if (count++ == GC_RATIO) { count = 0; gc_collect_major(); } // every GC_RATIO gcs we run a big gc
-		else gc_collect_minor();
+		gc_collect_minor();
+		#ifndef GCTEST
+		if (mutable_space[mz].alloc - mutable_space_alloc > GC_THRESHOLD_MUTABLE)
+		#endif
+		{
+			gc_collect_mutable();
+			mutable_space_alloc = mutable_space[mz].alloc;
+		}
+		#ifndef GCTEST
+		if (space[!z].alloc - space_alloc > GC_THRESHOLD_MAJOR)
+		#endif
+		{
+			gc_collect_major();
+			space_alloc = space[!z].alloc;
+		}
 	}
 }
 
@@ -1419,7 +1427,6 @@ static void gc_collect_minor(void) // Reclaims any memory allocated in the last 
 
 static void gc_collect_major(void) // Reclaims any memory that isn't needed, no matter when it was allocated
 {
-	gc_collect_minor();
 	/*
 	clock_t start = clock();
 	size_t original_heap = gc_heap_usage();
@@ -1437,7 +1444,6 @@ static void gc_collect_major(void) // Reclaims any memory that isn't needed, no 
 
 static void gc_collect_mutable(void)
 {
-	gc_collect_minor();
 	gc_collect_from_stacks(&mutable_space[mz], &mutable_space[!mz]); // Mutable memory gc
 	gc_collect_from_heap(&space[!z], &mutable_space[mz], &mutable_space[!mz]); // Mutable memory can be referenced by main memory. TODO combine this with main memory gc
 	gc_clear_heap(&mutable_space[mz]);
