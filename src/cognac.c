@@ -1016,10 +1016,20 @@ void to_c(module_t* mod)
 						func_t* v = op->op->funcs->func;
 						if (v->returns)
 						{
-							reg_t* ret = make_register(v->rettype, NULL);
-							fprintf(c_source, "\t%s _%zu = ",
-									c_val_type(ret->type),
-									ret->id);
+							reg_t* r = make_register(v->rettype, NULL);
+							bool nopush = false;
+							if (op->next->op->type == ret && (!op->next->next || (op->next->next->op->type == none && !op->next->next->next)))
+		 					{
+								fprintf(c_source, "\treturn ");
+								remove_op(op->next);
+								nopush = true;
+							}
+							else
+		 					{
+								fprintf(c_source, "\t%s _%zu = ",
+										c_val_type(r->type),
+										r->id);
+							}
 							reg_dequeue_t saved = *registers;
 							for (func_list_t* f = op->op->funcs ; f ; f = f->next)
 							{
@@ -1041,7 +1051,7 @@ void to_c(module_t* mod)
 							}
 							for (size_t i = 0; i < v->argc; ++i)
 								pop_register_front(registers);
-							push_register_front(ret, registers);
+							if (!nopush) push_register_front(r, registers);
 						}
 						else
 						{
@@ -1075,10 +1085,10 @@ void to_c(module_t* mod)
 						reg_t* r2 = pop_register_front(registers);
 						reg_t* r3 = pop_register_front(registers);
 						assert(r2->type == r3->type);
-						reg_t* ret = make_register(r2->type, NULL);
-						push_register_front(ret, registers);
+						reg_t* r = make_register(r2->type, NULL);
+						push_register_front(r, registers);
 						fprintf(c_source, "\t%s _%zu = _%zu ? _%zu : _%zu;\n",
-								c_val_type(r2->type), ret->id, r1->id, r2->id, r3->id);
+							c_val_type(r2->type), r->id, r1->id, r2->id, r3->id);
 					}
 					break;
 				case none: break;
@@ -1184,19 +1194,29 @@ void to_c(module_t* mod)
 					break;
 				case static_call:
 					{
-						reg_t* ret = NULL;
+						reg_t* r = NULL;
 						func_t* fn = op->op->func;
+						bool nopush = false;
 						if (fn->returns)
 						{
-							ret = make_register(fn->rettype, NULL);
-							fprintf(c_source, "\t%s _%zu = ",
-									c_val_type(fn->rettype),
-									ret->id);
+							if (op->next->op->type == ret && (!op->next->next || (op->next->next->op->type == none && !op->next->next->next)))
+							{
+								fprintf(c_source, "\treturn ");
+								remove_op(op->next);
+								nopush = true;
+							}
+							else
+		 					{
+								r = make_register(fn->rettype, NULL);
+								fprintf(c_source, "\t%s _%zu = ",
+										c_val_type(fn->rettype),
+										r->id);
+							}
 						}
 						else fprintf(c_source, "\t");
 						c_emit_funcall(fn, c_source, registers);
 						fprintf(c_source, ";\n");
-						if (fn->returns) push_register_front(ret, registers);
+						if (fn->returns && !nopush) push_register_front(r, registers);
 						break;
 					}
 				case call:
