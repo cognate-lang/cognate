@@ -61,7 +61,7 @@
 typedef struct cognate_object ANY;
 typedef ANY* restrict ANYPTR;
 typedef ANY* restrict BOX;
-typedef struct cognate_block BLOCK;
+typedef struct cognate_block* restrict BLOCK;
 typedef _Bool BOOLEAN;
 typedef double NUMBER;
 typedef const char* restrict STRING;
@@ -73,7 +73,7 @@ typedef struct cognate_table* restrict TABLE;
 typedef struct cognate_block
 {
 	void (*fn)(uint8_t*);
-	uint8_t* env;
+	uint8_t env[0];
 } cognate_block;
 
 typedef enum cognate_type
@@ -215,7 +215,6 @@ static void print_backtrace(int, const backtrace*, int);
 #endif
 
 static void* gc_malloc(size_t);
-static void* gc_flatmalloc(size_t);
 static void* gc_malloc_mutable(size_t);
 static void* gc_malloc_on(gc_heap*, size_t);
 static void maybe_gc_collect(void);
@@ -225,6 +224,12 @@ static void gc_collect_mutable(void);
 static void gc_init(void);
 static char* gc_strdup(char*);
 static char* gc_strndup(char*, size_t);
+static void gc_mark_ptr(void*);
+static void gc_mark_any(ANY*);
+static bool any_is_ptr(ANY);
+static void gc_bitmap_or(gc_heap*, size_t, uint8_t);
+static void gc_bitmap_set(gc_heap*, size_t, uint8_t);
+static uint8_t gc_bitmap_get(gc_heap*, size_t);
 
 // Variables and functions needed by compiled source file defined in runtime.c
 static NUMBER unbox_NUMBER(ANY);
@@ -418,6 +423,8 @@ int main(int argc, char** argv)
 		cognate_list* const tmp = gc_malloc (sizeof *tmp);
 		tmp->object = box_STRING(argv[argc]);
 		tmp->next = cmdline_parameters;
+		gc_mark_any(&tmp->object);
+		gc_mark_ptr((void*)&tmp->next);
 		cmdline_parameters = tmp;
 	}
 	// Bind error signals.
@@ -714,15 +721,23 @@ TABLE table_skew(TABLE T)
 	else if (T->left->level == T->level)
 	{
 		TABLE T2 = gc_malloc(sizeof *T2);
-		TABLE L2 = gc_malloc(sizeof *L2);
-		L2->left = T->left->left;
-		L2->right = T2;
-		T2->left = T->left->right;
-		T2->right = T->right;
 		T2->key = T->key;
 		T2->value = T->value;
+		T2->left = T->left->right;
+		T2->right = T->right;
+		gc_mark_ptr((void*)&T2->left);
+		gc_mark_ptr((void*)&T2->right);
+		gc_mark_any(&T2->key);
+		gc_mark_any(&T2->value);
+		TABLE L2 = gc_malloc(sizeof *L2);
 		L2->key = T->left->key;
 		L2->value = T->left->value;
+		L2->left = T->left->left;
+		L2->right = T2;
+		gc_mark_ptr((void*)&L2->left);
+		gc_mark_ptr((void*)&L2->right);
+		gc_mark_any(&L2->key);
+		gc_mark_any(&L2->value);
 		return L2;
 	}
 	/*
@@ -744,15 +759,23 @@ TABLE table_split(TABLE T)
 	else if (T->level == T->right->right->level)
 	{
 		TABLE T2 = gc_malloc(sizeof *T2);
+		T2->left = T->left;
+		T2->right = T->right->left;
+		T2->key = T->key;
+		T2->value = T->value;
+		gc_mark_ptr((void*)&T2->left);
+		gc_mark_ptr((void*)&T2->right);
+		gc_mark_any(&T2->key);
+		gc_mark_any(&T2->value);
 		TABLE R2 = gc_malloc(sizeof *R2);
 		R2->left = T2;
 		R2->right = T->right->right;
-		T2->left = T->left;
-		T2->right = T->right->left;
 		R2->key = T->right->key;
 		R2->value = T->right->value;
-		T2->key = T->key;
-		T2->value = T->value;
+		gc_mark_ptr((void*)&R2->left);
+		gc_mark_ptr((void*)&R2->right);
+		gc_mark_any(&R2->key);
+		gc_mark_any(&R2->value);
 		return R2;
 	}
 	else return T;
@@ -844,7 +867,7 @@ static char* show_symbol(SYMBOL s, char* buffer)
 
 static char* show_block(BLOCK b, char* buffer)
 {
-	void (*fn)(uint8_t*) = b.fn;
+	void (*fn)(uint8_t*) = b->fn;
 	return buffer + sprintf(buffer, "<block %p>", *(void**)&fn);
 }
 
@@ -970,8 +993,7 @@ static ptrdiff_t compare_tables(TABLE t1, TABLE t2)
 
 static ptrdiff_t compare_blocks(BLOCK b1, BLOCK b2)
 {
-	if (b1.fn != b2.fn) return *(char**)&b1.fn - *(char**)&b2.fn;
-	else return (char*)b1.env - (char*)b2.env;
+	return b1 - b2;
 }
 
 static ptrdiff_t compare_numbers(NUMBER n1, NUMBER n2)
@@ -1022,7 +1044,7 @@ static _Bool match_lists(LIST lst1, LIST lst2)
 
 static void call_block(BLOCK b)
 {
-	b.fn(b.env);
+	b->fn((uint8_t*)&b->env);
 }
 
 static _Bool match_objects(ANY patt, ANY obj)
@@ -1183,7 +1205,7 @@ static BLOCK unbox_BLOCK(ANY box)
 	if likely (box.type == block) return box.block;
 	type_error("block", box);
 	#ifdef __TINYC__
-	return (struct cognate_block) {};
+	return NULL;
 	#endif
 }
 
@@ -1353,26 +1375,55 @@ static ANY early_ANY(BOX box)
 	#endif
 }
 
-#define EMPTY     0x0
-#define ALLOC     0x1
-#define FLATALLOC 0x2
-#define FORWARD   0x3
+#define EMPTY    0x0 // 0000
+#define ALLOC    0x1 // 0001
+#define PTR      0x2 // 0010
+#define ALLOCPTR 0x3 // 0011
+#define FORWARD  0x7 // 0111
+
+static void gc_mark_ptr(void* ptr)
+{
+	//printf("OR[%i] %i -> ", (uintptr_t*)ptr - space[0].start, gc_bitmap_get(&space[0], (uintptr_t*)ptr - space[0].start));
+	gc_bitmap_or(&space[0], (uintptr_t*)ptr - space[0].start, PTR);
+	//printf("%i\n", gc_bitmap_get(&space[0], (uintptr_t*)ptr - space[0].start));
+}
+
+static void gc_mark_mutable_ptr(void* ptr)
+{
+	gc_bitmap_or(&mutable_space[mz], (uintptr_t*)ptr - mutable_space[mz].start, PTR);
+}
+
+static void gc_mark_mutable_any(ANY* a)
+{
+	if (any_is_ptr(*a)) gc_mark_mutable_ptr(&a->ptr);
+}
+
+static void gc_mark_any(ANY* a)
+{
+	if (any_is_ptr(*a)) gc_mark_ptr(&a->ptr);
+}
+
+static void gc_bitmap_or(gc_heap* heap, size_t index, uint8_t value)
+{
+	//printf("bitmap at %p\n", heap->bitmap);
+	heap->bitmap[index / 2] |= (uint8_t)(value << (4 * (index & 0x1)));  // set to value
+}
 
 static void gc_bitmap_set(gc_heap* heap, size_t index, uint8_t value)
 {
 	//printf("bitmap at %p\n", heap->bitmap);
-	heap->bitmap[index / 4] &= (uint8_t)(~(0x3 << (2 * (index & 0x3)))); // set to 00
-	heap->bitmap[index / 4] |= (uint8_t)(value << (2 * (index & 0x3)));  // set to value
+	heap->bitmap[index / 2] &= (uint8_t)(~(0xf << (4 * (index & 0x1)))); // set to 00
+	heap->bitmap[index / 2] |= (uint8_t)(value << (4 * (index & 0x1)));  // set to value
 }
 
 static uint8_t gc_bitmap_get(gc_heap* heap, size_t index)
 {
-	return (heap->bitmap[index / 4] & (0x3 << (2 * (index & 0x3)))) >> (2 * (index & 0x3));
+	return (heap->bitmap[index / 2] >> (4 * (index & 0x1))) & 0xf;
 }
 
 static void gc_init_heap(gc_heap* heap)
 {
-	heap->bitmap = mmap(ALLOC_START, ALLOC_SIZE/32, MEM_PROT, MEM_FLAGS, -1, 0);
+	heap->bitmap = mmap(ALLOC_START, ALLOC_SIZE/16, MEM_PROT, MEM_FLAGS, -1, 0);
 	heap->start  = mmap(ALLOC_START, ALLOC_SIZE,    MEM_PROT, MEM_FLAGS, -1, 0);
 	heap->alloc  = 0;
 	gc_bitmap_set(heap, 0, ALLOC);
@@ -1407,15 +1458,8 @@ static void* gc_malloc(size_t sz)
 	return gc_malloc_on(&space[0], sz);
 }
 
-static void* gc_flatmalloc(size_t sz)
-{
-	maybe_gc_collect();
-	gc_bitmap_set(&space[0], space[0].alloc, FLATALLOC);
-	return gc_malloc_on(&space[0], sz);
-}
-
 __attribute__((hot))
-static _Bool is_gc_ptr(gc_heap* heap, uintptr_t object)
+static bool is_gc_ptr(gc_heap* heap, uintptr_t object)
 {
 	uintptr_t diff = (uintptr_t*)object - heap->start;
 	return diff < heap->alloc;
@@ -1424,6 +1468,7 @@ static _Bool is_gc_ptr(gc_heap* heap, uintptr_t object)
 __attribute__((hot))
 static void gc_collect_root(uintptr_t* restrict addr, gc_heap* source, gc_heap* dest)
 {
+	assert(gc_bitmap_get(source, 0) & ALLOC);
 	if (!is_gc_ptr(source, *addr)) return;
 	struct action {
 		uintptr_t from;
@@ -1439,24 +1484,24 @@ static void gc_collect_root(uintptr_t* restrict addr, gc_heap* source, gc_heap* 
 		const uintptr_t lower_bits = from & 7;
 		uintptr_t index = (uintptr_t*)(from & ~7) - source->start;
 		ptrdiff_t offset = 0;
-		while (gc_bitmap_get(source, index) == EMPTY) index--, offset++; // Ptr to middle of object
+		while (!(gc_bitmap_get(source, index) & ALLOC)) index--, offset++; // Ptr to middle of object
 		uint8_t alloc_mode = gc_bitmap_get(source, index);
-		if (alloc_mode == FORWARD) *to = lower_bits | (uintptr_t)((uintptr_t*)source->start[index] + offset);
+		if (alloc_mode == FORWARD && is_gc_ptr(dest, source->start[index]))
+			*to = lower_bits | (uintptr_t)((uintptr_t*)source->start[index] + offset);
 		else
 		{
 			uintptr_t* buf = dest->start + dest->alloc; // Buffer in newspace
-			if (alloc_mode == FLATALLOC) gc_bitmap_set(dest, dest->alloc, FLATALLOC);
-			size_t sz = 1;
-			for ( ; gc_bitmap_get(source, index+sz) == EMPTY ; sz++ );
-			dest->alloc += sz;
-			gc_bitmap_set(dest, dest->alloc, ALLOC);
-			for (size_t i = 0 ; i < sz ; i++)
+			size_t sz = 0;
+			uint8_t bits = alloc_mode;
+			for ( ; (sz==0) || !((bits = gc_bitmap_get(source, index + sz)) & ALLOC) ; sz++ )
 			{
-				uintptr_t from = source->start[index+i];
-				if (alloc_mode != FLATALLOC && is_gc_ptr(source, from))
-					*act_stk_top++ = (struct action) { .from=from, .to=buf+i };
-				else buf[i] = from;
+				gc_bitmap_set(dest, dest->alloc + sz, bits);
+				uintptr_t from = source->start[index + sz];
+				if ((bits & PTR) && is_gc_ptr(source, from))
+					*act_stk_top++ = (struct action) { .from=from, .to=buf+sz };
+				else buf[sz] = from;
 			}
+			dest->alloc += sz;
 			source->start[index] = (uintptr_t)buf; // Set forwarding address
 			gc_bitmap_set(source, index, FORWARD);
 			*to = lower_bits | (uintptr_t)(buf + offset);
@@ -1466,21 +1511,32 @@ static void gc_collect_root(uintptr_t* restrict addr, gc_heap* source, gc_heap* 
 
 static __attribute__((hot)) void gc_clear_heap(gc_heap* heap)
 {
-	memset(heap->bitmap, 0x0, heap->alloc / 4 + 1);
+	memset(heap->bitmap, 0x0, heap->alloc / 2 + 1);
 	heap->alloc = 0;
 	gc_bitmap_set(heap, 0, ALLOC);
 }
 
 static __attribute__((hot)) void gc_collect_from_heap(gc_heap* roots, gc_heap* source, gc_heap* dest)
 {
-	for (uintptr_t* root = roots->start; root != roots->start + roots->alloc; ++root)
-		gc_collect_root(root, source, dest);
+	for (size_t i = 0 ; i < roots->alloc; ++i)
+		if (gc_bitmap_get(roots, i) & PTR) gc_collect_root(roots->start + i, source, dest);
+
+	gc_bitmap_set(dest, dest->alloc, ALLOC);
+}
+
+static bool any_is_ptr(ANY a)
+{
+	switch (a.type)
+	{
+		case NIL: case number: case boolean: case symbol: return false;
+		default: return true;
+	}
 }
 
 static __attribute__((noinline,hot)) void gc_collect_from_stacks(gc_heap* source, gc_heap* dest)
 {
-	for (uintptr_t* root = (uintptr_t*)stack.absolute_start; root != (uintptr_t*)stack.top; ++root)
-		gc_collect_root(root, source, dest);
+	for (ANY* root = stack.absolute_start; root != stack.top; ++root)
+		if (any_is_ptr(*root)) gc_collect_root((uintptr_t*)&root->ptr, source, dest);
 
 	jmp_buf a;
 	if (setjmp(a)) return;
@@ -1489,6 +1545,8 @@ static __attribute__((noinline,hot)) void gc_collect_from_stacks(gc_heap* source
 		gc_collect_root(root, source, dest); // Watch me destructively modify the call stack
 
 	gc_collect_root((uintptr_t*)&memoized_regexes, source, dest);
+
+	gc_bitmap_set(dest, dest->alloc, ALLOC);
 
 	longjmp(a, 1);
 }
@@ -1522,6 +1580,7 @@ static void gc_collect_cascade(int n)
 	clock_t start = clock();
 	size_t original_heap = gc_heap_usage();
 */
+
 	if unlikely(n + 1 == gc_num_heaps)
 	{
 		if unlikely(gc_num_heaps == GC_MAX_HEAPS) throw_error("GC heap exhausted");
@@ -1550,14 +1609,14 @@ static void gc_collect_mutable(void)
 static char* gc_strdup(char* src)
 {
 	const size_t len = strlen(src);
-	return memcpy(gc_flatmalloc(len + 1), src, len + 1);
+	return memcpy(gc_malloc(len + 1), src, len + 1);
 }
 
 static char* gc_strndup(char* src, size_t bytes)
 {
 	const size_t len = strlen(src);
 	if (len < bytes) bytes = len;
-	char* dest = gc_flatmalloc(bytes + 1);
+	char* dest = gc_malloc(bytes + 1);
 	dest[bytes] = '\0';
 	return memcpy(dest, src, bytes);
 }
@@ -1712,6 +1771,8 @@ static LIST ___push(ANY a, LIST b)
 	// TODO: Better name? Inconsistent with List where pushing to the stack adds to the END.
 	cognate_list* lst = gc_malloc (sizeof *lst);
 	*lst = (cognate_list) {.object = a, .next = b};
+	gc_mark_ptr((void*)&lst->next);
+	gc_mark_any(&lst->object);
 	return lst;
 }
 
@@ -1737,6 +1798,8 @@ static LIST ___list(BLOCK expr)
 		l->object = stack.start[i];
 		l->next = lst;
 		lst = l;
+		gc_mark_any(&l->object);
+		gc_mark_ptr((void*)&l->next);
 	}
 	stack.top = stack.start;
 	stack.start = tmp_stack_start;
@@ -1835,6 +1898,8 @@ static LIST ___stack(void)
 		tmp -> object = stack.start[i];
 		tmp -> next = lst;
 		lst = tmp;
+		gc_mark_ptr((void*)&tmp->next);
+		gc_mark_any((void*)&tmp->object.ptr);
 	}
 	return lst;
 }
@@ -1864,7 +1929,7 @@ static NUMBER ___ordinal(STRING str)
 static STRING ___character(NUMBER d)
 {
 	const wchar_t i = d;
-	char* const str = gc_flatmalloc (MB_CUR_MAX + 1);
+	char* const str = gc_malloc (MB_CUR_MAX + 1);
 	if unlikely(i != d || wctomb(str, i) == -1)
 		throw_error_fmt("Cannot convert %.14g to UTF8 character", d);
 	str[mblen(str, MB_CUR_MAX)] = '\0';
@@ -1941,7 +2006,7 @@ static LIST ___split(STRING sep, STRING str)
 		found = strstr(str, sep);
 		if (found != str)
 		{
-			char* item = gc_flatmalloc(found - str + 1);
+			char* item = gc_malloc(found - str + 1);
 			memcpy(item, str, found - str);
 			item[found - str] = '\0';
 			lst1 = ___push(box_STRING(item), lst1);
@@ -2032,6 +2097,7 @@ static BOX ___box(ANY a) // boxes seem to break the GC sometimes TODO
 {
 	ANY* b = gc_malloc_mutable(sizeof *b);
 	*b = a;
+	gc_mark_mutable_any(b);
 	return b;
 }
 
@@ -2197,6 +2263,9 @@ static IO ___open(SYMBOL m, STRING path)
 	io->path = path;
 	io->mode = mode;
 	io->file = fp;
+	gc_mark_ptr((void*)&io->path);
+	//gc_mark_ptr((void*)&io->mode);
+	//gc_mark_ptr((void*)&io->file);
 	return io;
 }
 
@@ -2210,7 +2279,7 @@ static STRING ___readHfile(IO io)
 	if unlikely(fp == NULL) throw_error_fmt("Cannot open file '%s'", io->path);
 	struct stat st;
 	fstat(fileno(fp), &st);
-	char* const text = gc_flatmalloc (st.st_size + 1);
+	char* const text = gc_malloc (st.st_size + 1);
 	if (fread(text, sizeof(char), st.st_size, fp) != (unsigned long)st.st_size)
 		throw_error_fmt("Error reading file '%s'", io->path);
 	text[st.st_size] = '\0'; // Remove trailing eof.
@@ -2277,13 +2346,13 @@ static void oh_no(uint8_t* env)
 __attribute__((returns_twice))
 static void ___begin(BLOCK f)
 {
-	jmp_buf b;
-	if (!setjmp(b))
+	BLOCK a = gc_malloc(sizeof *a + sizeof(jmp_buf));
+	if (!setjmp(*(jmp_buf*)a->env))
 	{
-		BLOCK a = (BLOCK) {.fn=oh_no, .env=(void*)&b};
+		a->fn = oh_no;
 		push(box_BLOCK(a));
 		call_block(f);
-		a.fn = invalid_jump;
+		a->fn = invalid_jump;
 	}
 }
 
@@ -2323,6 +2392,10 @@ static TABLE ___insert(ANY key, ANY value, TABLE d)
 		D->right = NULL;
 		D->key = key;
 		D->value = value;
+		gc_mark_ptr((void*)&D->left);
+		gc_mark_ptr((void*)&D->right);
+		gc_mark_any(&D->key);
+		gc_mark_any(&D->value);
 		D->level = 1;
 		return D;
 	}
@@ -2335,6 +2408,10 @@ static TABLE ___insert(ANY key, ANY value, TABLE d)
 		D->key = key;
 		D->value = value;
 		D->level = d->level;
+		gc_mark_ptr((void*)&D->left);
+		gc_mark_ptr((void*)&D->right);
+		gc_mark_any(&D->key);
+		gc_mark_any(&D->value);
 		return D;
 	}
 
@@ -2349,6 +2426,10 @@ static TABLE ___insert(ANY key, ANY value, TABLE d)
 		D->level = d->level;
 		D->right = d->right;
 		D->left = left;
+		gc_mark_ptr((void*)&D->left);
+		gc_mark_ptr((void*)&D->right);
+		gc_mark_any(&D->key);
+		gc_mark_any(&D->value);
 	}
 	else //if (diff < 0)
 	{
@@ -2359,6 +2440,10 @@ static TABLE ___insert(ANY key, ANY value, TABLE d)
 		D->level = d->level;
 		D->left = d->left;
 		D->right = right;
+		gc_mark_ptr((void*)&D->left);
+		gc_mark_ptr((void*)&D->right);
+		gc_mark_any(&D->key);
+		gc_mark_any(&D->value);
 	}
 
 	// Perform skew and then split. The conditionals that determine whether or
@@ -2418,6 +2503,11 @@ static TABLE ___remove(ANY key, TABLE T)
 		T2->right = right;
 		T2->value = T->value;
 		T2->key = T->key;
+		gc_mark_ptr((void*)&T2->left);
+		gc_mark_ptr((void*)&T2->right);
+		gc_mark_any(&T2->key);
+		gc_mark_any(&T2->value);
+
 	}
 	else if (diff > 0)
 	{
@@ -2427,6 +2517,10 @@ static TABLE ___remove(ANY key, TABLE T)
 		T2->right = T->right;
 		T2->value = T->value;
 		T2->key = T->key;
+		gc_mark_ptr((void*)&T2->left);
+		gc_mark_ptr((void*)&T2->right);
+		gc_mark_any(&T2->key);
+		gc_mark_any(&T2->value);
 	}
 	else // if (diff == 0
 	{
@@ -2441,6 +2535,10 @@ static TABLE ___remove(ANY key, TABLE T)
 			T2->left = T->left;
 			T2->key = L->key;
 			T2->value = L->value;
+			gc_mark_ptr((void*)&T2->left);
+			gc_mark_ptr((void*)&T2->right);
+			gc_mark_any(&T2->key);
+			gc_mark_any(&T2->value);
 		}
 		else // left and right not null
 		{
@@ -2452,6 +2550,10 @@ static TABLE ___remove(ANY key, TABLE T)
 			T2->right = T->right;
 			T2->key = L->key;
 			T2->value = L->value;
+			gc_mark_ptr((void*)&T2->left);
+			gc_mark_ptr((void*)&T2->right);
+			gc_mark_any(&T2->key);
+			gc_mark_any(&T2->value);
 		}
 	}
 
@@ -2606,7 +2708,7 @@ static regex_t* memoized_regcomp(STRING reg_str)
 	if (___has(box_STRING(reg_str), memoized_regexes)) reg = ___D(box_STRING(reg_str), memoized_regexes).ptr;
 	else
 	{
-		reg = gc_flatmalloc(sizeof *reg);
+		reg = gc_malloc(sizeof *reg);
 		const int status = regcomp(reg, reg_str, REG_EXTENDED | REG_NEWLINE);
 		errno = 0; // Hmmm
 		if unlikely(status)
@@ -2615,7 +2717,7 @@ static regex_t* memoized_regcomp(STRING reg_str)
 			regerror(status, reg, reg_err, 256);
 			throw_error_fmt("Compile error (%s) in regex '%.32s'", reg_err, reg_str);
 		}
-		memoized_regexes = ___insert(box_STRING(reg_str), (cognate_object){.ptr=reg}, memoized_regexes);
+		memoized_regexes = ___insert(box_STRING(reg_str), (cognate_object){.ptr=reg, .type=string}, memoized_regexes);
 	}
 
 	return reg;
@@ -2655,7 +2757,6 @@ static BOOLEAN ___regexHmatch(STRING reg_str, STRING str)
 		{
 			size_t from = matches[g].rm_so;
 			size_t to = matches[g].rm_eo;
-
 			char* item = gc_strndup((char*)str, to);
 			push(box_STRING(item + from));
 		}

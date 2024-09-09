@@ -827,15 +827,15 @@ void to_exe(module_t* mod)
 
 	char* debug_args[] = {
 		STR(CC), c_source_path, "-o", exe_path,
-		"-O0", "-ggdb3", "-g", "-rdynamic", "-DDEBUG",
-		"-lm", "-Wall", "-Wpedantic", "-Wno-unused",
+		"-Og", "-ggdb3", "-g", "-rdynamic", "-DDEBUG",
+		"-lm", "-Wall", "-Wno-unused", "-Wno-unused-result",
 		gc_test ? "-DGCTEST" : NULL, NULL
 	} ;
 
 	char* normal_args[] = {
 		STR(CC), c_source_path, "-o", exe_path,
 		"-O3", "-s", "-w",
-		"-lm", "-Wall", "-Wpedantic", "-Wno-unused",
+		"-lm", "-Wall", "-Wno-unused", "-Wno-unused-result",
 		gc_test ? "-DGCTEST" : NULL, NULL
 	};
 
@@ -994,10 +994,12 @@ void to_c(module_t* mod)
 				fprintf(c_source, "\tBOX %s = ___box(NIL_OBJ);\n",
 					c_word_name(w->word));
 			}
+			/*
 			else
 				fprintf(c_source, "\t%s %s;\n",
 					c_val_type(w->word->val->type),
 					c_word_name(w->word));
+					*/
 		}
 		reg_dequeue_t* registers = make_register_dequeue();
 		reg_t* res = NULL;
@@ -1181,7 +1183,8 @@ void to_c(module_t* mod)
 						}
 						else
 						{
-							fprintf(c_source, "\t%s = _%zu;\n",
+							fprintf(c_source, "\t%s %s = _%zu;\n",
+								c_val_type(op->op->word->val->type),
 								cname,
 								reg_id);
 							/*
@@ -1236,20 +1239,16 @@ void to_c(module_t* mod)
 						//for (word_list_t* w = op->op->func->captures ; w ; w = w->next) num_words++;
 						reg_t* reg = make_register(block, NULL);
 						push_register_front(reg, registers);
-						fprintf(c_source, "\tBLOCK _%zu = (BLOCK) { .fn = %s",
-								reg->id, op->op->func->generic_variant->name);
+						fprintf(c_source, "\tBLOCK _%zu = gc_malloc(sizeof(void*)", reg->id);
 						if (op->op->func->captures)
 						{
-							fprintf(c_source, ", .env = gc_malloc(");
 							for (word_list_t* w = op->op->func->captures ; w ; w = w->next)
-							{
-								fprintf(c_source, "sizeof(%s)", c_val_type(w->word->val->type));
-								if (w->next)
-									fprintf(c_source, " + ");
-							}
-							fprintf(c_source, ")");
+								fprintf(c_source, "+ sizeof(%s)", c_val_type(w->word->val->type));
 						}
-						fprintf(c_source, " };\n");
+						fprintf(c_source, ");\n");
+						if (op->op->func->captures)
+							fprintf(c_source, "\tuint8_t* _%zu_envptr = (uint8_t*)&_%zu->env;\n", reg->id, reg->id);
+						fprintf(c_source, "\t_%zu->fn = %s;\n" , reg->id, op->op->func->generic_variant->name);
 						size_t i = 0;
 						for (word_list_t* w = op->op->func->captures ; w ; w = w->next, i++)
 						{
@@ -1262,16 +1261,21 @@ void to_c(module_t* mod)
 							}
 							else
 							{
-								fprintf(c_source, "\t*(%s*)_%zu.env = %s;\n",
+								fprintf(c_source, "\t*(%s*)_%zu_envptr = %s;\n",
 									c_val_type(w->word->val->type),
 									reg->id, c_word_name(w->word));
+								if (w->word->val->type == any)
+									fprintf(c_source, "\tgc_mark_any((ANY*)_%zu_envptr);\n", reg->id);
+								else if (w->word->val->type != boolean && w->word->val->type != number && w->word->val->type != symbol)
+									fprintf(c_source, "\tgc_mark_ptr((void*)_%zu_envptr);\n", reg->id);
 								if (w->next)
-									fprintf(c_source, "\t_%zu.env += sizeof(%s);\n", reg->id, c_val_type(w->word->val->type));
+									fprintf(c_source, "\t_%zu_envptr += sizeof(%s);\n", reg->id, c_val_type(w->word->val->type));
 							}
 						}
+						/*
 						if (op->op->func->captures && op->op->func->captures->next)
 						{
-							fprintf(c_source, "\t_%zu.env -= ", reg->id);
+							fprintf(c_source, "\t_%zu->env -= ", reg->id);
 							for (word_list_t* w = op->op->func->captures ; w->next ; w = w->next)
 							{
 								if (w->word->used_early)
@@ -1283,6 +1287,7 @@ void to_c(module_t* mod)
 							}
 							fprintf(c_source, ";\n");
 						}
+						*/
 						break;
 					}
 				case to_any:
@@ -3342,6 +3347,7 @@ void add_backtraces(module_t* mod)
 			{
 		 		case var:
 				case call:
+					if (!ops->op->where || !ops->op->where->mod->path || !ops->op->where->symbol) break;
 					insert_op_before(make_op(backtrace_push, NULL, ops->op->where), ops);
 					insert_op_after(make_op(backtrace_pop, NULL, ops->op->where), ops);
 
@@ -3424,6 +3430,7 @@ int main(int argc, char** argv)
 		add_typechecks,
 		remove_unused_funcs,
 		// TODO renaming pass to renumber registers and shadow_ids
+		//print_funcs,
 		to_c,
 		to_exe
 	};
