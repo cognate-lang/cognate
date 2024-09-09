@@ -156,8 +156,14 @@ Print Reverse List (1 2 3);
 ```
 ~
 Def Reverse (
-	Fold ( Push ) from Empty over List!;
-);
+	Def Reverse-helper (
+		Let L1 be List!;
+		Let L2 be List!;
+		Do If Empty? L2 ( L1 ) else ( Reverse-helper Push First L2 to L1 and Rest L2 )
+	);
+
+	Reverse-helper Empty;
+)
 
 ~
 Takes a block (`F`) and a list (`L`) as parameters. Applies a block to each element in a list
@@ -220,14 +226,19 @@ Print;
 ~
 Def Filter (
 	Def Predicate;
-	Let L be Of (List?);
-   Empty;
-	For each in L (
-		Let I;
-		Let R be Predicate I;
-		When R ( Push I );
+
+	Def Filter-helper (
+		Let Acc be List!;
+		Let L be List!;
+		Do If Empty? L ( Acc )
+		else (
+			Let R be Boolean! Predicate First L;
+			Do If R ( Filter-helper Push First L to Acc and Rest L )
+			   else ( Filter-helper Acc and Rest L );
+		)
 	);
-	Reverse;
+
+	Reverse Filter-helper Empty;
 );
 
 ~
@@ -393,15 +404,18 @@ Print
 ~
 Def Map (
 	Def F;
-	Let L be a List!;
 
-	Do If Empty? L ( L )
-	else (
-		Let X be First of L;
-		Let Res be F X;
-
-		return Push Res to Map (F) over Rest of L;
+	Def Map-helper (
+		Let Acc be List!;
+		Let L be List!;
+		Do If Empty? L ( Acc )
+		else (
+			Let R be F of First L;
+			Map-helper Push R to Acc and Rest L
+		)
 	);
+
+	Reverse Map-helper Empty;
 );
 
 ~
@@ -428,13 +442,18 @@ Print Take 4 from Range 1 to 10;
 ```
 ~
 Def Take (
-	Let N be Of (Integer?);
-	Let L be Of (List?);
-
-	Do If Zero? N ( Empty list ) else (
-		When Empty? L ( Error "Cannot Take more elements than in list" );
-		Push First L to Take - 1 N from Rest of L
+	Def Take-helper (
+		Let Acc be List!;
+		Let N be Number!;
+		Let L be List!;
+		Do If Zero? N ( Acc )
+		else (
+			When Empty? L ( Error "Cannot Take more elements than in list" );
+			Take-helper Push First L to Acc taking - 1 N from Rest L;
+		)
 	);
+
+	Reverse Take-helper Empty;
 );
 
 ~
