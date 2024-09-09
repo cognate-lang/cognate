@@ -38,7 +38,7 @@
 #define MEGABYTE 1024l*KILOBYTE
 #define GIGABYTE 1024l*MEGABYTE
 #define TERABYTE 1024l*GIGABYTE
-#define ALLOC_SIZE TERABYTE
+#define ALLOC_SIZE 100l*GIGABYTE
 #define ALLOC_START (void*)(42l * TERABYTE)
 
 #ifdef GCTEST
@@ -2206,12 +2206,7 @@ static TABLE ___table (BLOCK expr)
 
 static TABLE ___insert(ANY key, ANY value, TABLE d)
 {
-<<<<<<< HEAD
 	if unlikely(key.type == io || key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
-	TABLE D = gc_malloc(sizeof *D);
-=======
-	if unlikely(key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
->>>>>>> 9d5f658 (More work towards generational gc)
 	if (!d)
 	{
 		TABLE D = gc_malloc(sizeof *D);
