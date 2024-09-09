@@ -224,6 +224,7 @@ static void maybe_gc_collect(void);
 static void gc_collect(gc_heap*, gc_heap*);
 static void gc_collect_major(void);
 static void gc_collect_minor(void);
+static void gc_collect_mutable(void);
 static void gc_init(void);
 static char* gc_strdup(char*);
 static char* gc_strndup(char*, size_t);
@@ -1280,7 +1281,14 @@ static void* gc_malloc_on(gc_heap* heap, size_t sz)
 
 static void* gc_malloc_mutable(size_t sz)
 {
-	maybe_gc_collect();
+	static size_t mutable_allocs = 0;
+	mutable_allocs += sz;
+#ifndef GCTEST
+	if (mutable_allocs > GC_THRESHOLD)
+#endif
+	{
+		gc_collect_mutable();
+	}
 	return gc_malloc_on(&mutable_space[mz], sz);
 }
 
@@ -1418,17 +1426,22 @@ static void gc_collect_major(void) // Reclaims any memory that isn't needed, no 
 	*/
 	gc_collect_from_heap(&mutable_space[mz], &space[!z], &mutable_space[mz]); // Anything in main memory referenced by mutable space goes to mutable space
 	gc_collect_from_stacks(&space[!z], &space[z]); // Main memory gc
-	gc_collect_from_stacks(&mutable_space[mz], &mutable_space[!mz]); // Mutable memory gc
-	gc_collect_from_heap(&space[z], &mutable_space[mz], &mutable_space[!mz]); // Mutable memory can be referenced by main memory. TODO combine this with main memory gc
 	gc_clear_heap(&space[!z]);
-	gc_clear_heap(&mutable_space[mz]);
 	z = !z;
-	mz = !mz;
 	/*
 	clock_t end = clock();
 	float mseconds = (float)(end - start) * 1000 / CLOCKS_PER_SEC;
 	printf("major gc took %lfms (%zu -> %zu)\n", mseconds, original_heap, gc_heap_usage());
 	*/
+}
+
+static void gc_collect_mutable(void)
+{
+	gc_collect_minor();
+	gc_collect_from_stacks(&mutable_space[mz], &mutable_space[!mz]); // Mutable memory gc
+	gc_collect_from_heap(&space[!z], &mutable_space[mz], &mutable_space[!mz]); // Mutable memory can be referenced by main memory. TODO combine this with main memory gc
+	gc_clear_heap(&mutable_space[mz]);
+	mz = !mz;
 }
 
 static char* gc_strdup(char* src)
