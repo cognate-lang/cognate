@@ -41,9 +41,17 @@
 #define ALLOC_SIZE TERABYTE
 #define ALLOC_START (void*)(42l * TERABYTE)
 
-#define GC_THRESHOLD_MAJOR 100l * MEGABYTE
-#define GC_THRESHOLD_MINOR MEGABYTE
-#define GC_THRESHOLD_MUTABLE MEGABYTE
+#ifdef GCTEST
+#define GC_FIRST_THRESHOLD 16
+#define GC_MUTABLE_THRESHOLD 16
+#define GC_THRESHOLD_RATIO 2
+#define GC_MAX_HEAPS 300
+#else
+#define GC_FIRST_THRESHOLD MEGABYTE
+#define GC_MUTABLE_THRESHOLD MEGABYTE
+#define GC_THRESHOLD_RATIO 8
+#define GC_MAX_HEAPS 8
+#endif
 
 #define CHECK_DEFINED(str, thing) if (!thing->defined) throw_error(#str" called before definition")
 
@@ -171,9 +179,9 @@ typedef struct gc_heap {
 } gc_heap;
 
 static gc_heap mutable_space[2];
-static gc_heap space[2];
+static gc_heap space[GC_MAX_HEAPS];
+static int gc_num_heaps = 1;
 
-static bool z = 0;
 static bool mz = 0;
 
 static _Bool pure = 0;
@@ -223,8 +231,7 @@ static void* gc_malloc_mutable(size_t);
 static void* gc_malloc_on(gc_heap*, size_t);
 static void maybe_gc_collect(void);
 static void gc_collect(gc_heap*, gc_heap*);
-static void gc_collect_major(void);
-static void gc_collect_minor(void);
+static void gc_collect_cascade(int);
 static void gc_collect_mutable(void);
 static void gc_init(void);
 static char* gc_strdup(char*);
@@ -989,6 +996,7 @@ static ptrdiff_t compare_objects(ANY ob1, ANY ob2)
 		case box:     return (char*)ob1.box - (char*)ob2.box;
 		case table:   return compare_tables(ob1.table, ob2.table);
 		case io:      return ob1.io->file - ob2.io->file;
+		default:      return 0; // really shouldn't happen
 		/* NOTE
 		 * The garbage collector *will* reorder objects in memory,
 		 * which means that the relative addresses of blocks and boxes
@@ -1263,11 +1271,9 @@ static void gc_init_heap(gc_heap* heap)
 
 static void gc_init(void)
 {
-	gc_init_heap(&space[0]);
-	gc_init_heap(&space[1]);
 	gc_init_heap(&mutable_space[0]);
 	gc_init_heap(&mutable_space[1]);
-	//gc_init_heap(&eden);
+	gc_init_heap(&space[0]);
 }
 
 
@@ -1289,14 +1295,14 @@ static void* gc_malloc_mutable(size_t sz)
 static void* gc_malloc(size_t sz)
 {
 	maybe_gc_collect();
-	return gc_malloc_on(&space[z], sz);
+	return gc_malloc_on(&space[0], sz);
 }
 
 static void* gc_flatmalloc(size_t sz)
 {
 	maybe_gc_collect();
-	gc_bitmap_set(&space[z], space[z].alloc, FLATALLOC);
-	return gc_malloc_on(&space[z], sz);
+	gc_bitmap_set(&space[0], space[0].alloc, FLATALLOC);
+	return gc_malloc_on(&space[0], sz);
 }
 
 __attribute__((hot))
@@ -1378,74 +1384,56 @@ static __attribute__((noinline,hot)) void gc_collect_from_stacks(gc_heap* source
 	longjmp(a, 1);
 }
 
+__attribute__((hot))
 static void maybe_gc_collect(void)
 {
-	static int space_alloc = 0;
-	static int mutable_space_alloc = 0;
-	#ifndef GCTEST
-	if (space[z].alloc > GC_THRESHOLD_MINOR) // run the gc every time the alloc buffer fills up
-	#endif
+	size_t threshold = GC_FIRST_THRESHOLD;
+	for (int i = 0 ; space[i].alloc > threshold ; ++i, threshold *= GC_THRESHOLD_RATIO)
+		gc_collect_cascade(i);
+
+	static size_t mutable_space_alloc = 0;
+	if (mutable_space[mz].alloc - mutable_space_alloc > GC_MUTABLE_THRESHOLD)
 	{
-		gc_collect_minor();
-		#ifndef GCTEST
-		if (mutable_space[mz].alloc - mutable_space_alloc > GC_THRESHOLD_MUTABLE)
-		#endif
-		{
-			gc_collect_mutable();
-			mutable_space_alloc = mutable_space[mz].alloc;
-		}
-		#ifndef GCTEST
-		if (space[!z].alloc - space_alloc > GC_THRESHOLD_MAJOR)
-		#endif
-		{
-			gc_collect_major();
-			space_alloc = space[!z].alloc;
-		}
+		gc_collect_mutable();
+		mutable_space_alloc = mutable_space[mz].alloc;
 	}
 }
 
 static size_t gc_heap_usage(void)
 {
-	return space[z].alloc + space[!z].alloc + mutable_space[mz].alloc + mutable_space[!mz].alloc;
+	size_t n = 0;
+	for (int i = 0 ; i < gc_num_heaps ; ++i) n += space[i].alloc;
+	return n + mutable_space[mz].alloc + mutable_space[!mz].alloc;
 }
 
-static void gc_collect_minor(void) // Reclaims any memory allocated in the last GC_THRESHOLD that isn't needed
+__attribute__((hot))
+static void gc_collect_cascade(int n)
 {
-	/*
+/*
 	clock_t start = clock();
 	size_t original_heap = gc_heap_usage();
-	*/
-	gc_collect_from_heap(&mutable_space[mz], &space[z], &mutable_space[mz]); // Anything referenced by mutable space in eden goes to mutable space
-	gc_collect_from_stacks(&space[z], &space[!z]); // Anything else goes to the main gc sections
-	gc_clear_heap(&space[z]);
-	/*
+*/
+	if unlikely(n + 1 == gc_num_heaps)
+	{
+		if unlikely(gc_num_heaps == GC_MAX_HEAPS) throw_error("GC heap exhausted");
+		gc_init_heap(&space[n+1]);
+		gc_num_heaps++;
+	}
+	gc_collect_from_heap(&mutable_space[mz], &space[n], &space[n+1]);
+	gc_collect_from_stacks(&space[n], &space[n+1]);
+	gc_clear_heap(&space[n]);
+/*
 	clock_t end = clock();
 	float mseconds = (float)(end - start) * 1000 / CLOCKS_PER_SEC;
-	printf("minor gc took %lfms (%zu -> %zu)\n", mseconds, original_heap, gc_heap_usage());
-	*/
-}
-
-static void gc_collect_major(void) // Reclaims any memory that isn't needed, no matter when it was allocated
-{
-	/*
-	clock_t start = clock();
-	size_t original_heap = gc_heap_usage();
-	*/
-	gc_collect_from_heap(&mutable_space[mz], &space[!z], &mutable_space[mz]); // Anything in main memory referenced by mutable space goes to mutable space
-	gc_collect_from_stacks(&space[!z], &space[z]); // Main memory gc
-	gc_clear_heap(&space[!z]);
-	z = !z;
-	/*
-	clock_t end = clock();
-	float mseconds = (float)(end - start) * 1000 / CLOCKS_PER_SEC;
-	printf("major gc took %lfms (%zu -> %zu)\n", mseconds, original_heap, gc_heap_usage());
-	*/
+	printf("cascade %i->%i took %lfms (%zu -> %zu)\n", n, n+1, mseconds, original_heap, gc_heap_usage());
+*/
 }
 
 static void gc_collect_mutable(void)
 {
 	gc_collect_from_stacks(&mutable_space[mz], &mutable_space[!mz]); // Mutable memory gc
-	gc_collect_from_heap(&space[!z], &mutable_space[mz], &mutable_space[!mz]); // Mutable memory can be referenced by main memory. TODO combine this with main memory gc
+	for (int i = 0 ; i < gc_num_heaps ; ++i)
+		gc_collect_from_heap(&space[i], &mutable_space[mz], &mutable_space[!mz]); // Mutable memory can be referenced by main memory. TODO combine this with main memory gc
 	gc_clear_heap(&mutable_space[mz]);
 	mz = !mz;
 }
