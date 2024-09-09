@@ -492,11 +492,15 @@ Def Range (
 		Error Join Join Join "Invalid range " Show Start "..." Show End;
 	);
 
-	Reverse List (
-		Start;
-		While (Triplet ; < End) ( + 1 );
-		Drop; Drop;
-	)
+	Def Range-helper (
+		Let Start be Number!;
+		Let End be Number!;
+		Let L be List!;
+
+		Do If < End Start ( Range-helper from + 1 Start to End with Push Start to L ) else ( L );
+	);
+
+	Reverse Range-helper from Start to End with Empty;
 );
 
 ~

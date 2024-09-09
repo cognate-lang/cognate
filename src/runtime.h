@@ -34,9 +34,15 @@
 
 #include <regex.h>
 
-#define TERABYTE (1024l*1024l*1024l*1024l)
+#define KILOBYTE 1024l
+#define MEGABYTE 1024l*KILOBYTE
+#define GIGABYTE 1024l*MEGABYTE
+#define TERABYTE 1024l*GIGABYTE
 #define ALLOC_SIZE TERABYTE
 #define ALLOC_START (void*)(42l * TERABYTE)
+
+#define GC_RATIO 100
+#define GC_THRESHOLD MEGABYTE
 
 #define CHECK_DEFINED(str, thing) if (!thing->defined) throw_error(#str" called before definition")
 
@@ -163,9 +169,11 @@ typedef struct gc_heap {
 	size_t alloc;
 } gc_heap;
 
+static gc_heap mutable_space[2];
 static gc_heap space[2];
 
-static _Bool z = 0;
+static bool z = 0;
+static bool mz = 0;
 
 static _Bool pure = 0;
 
@@ -212,6 +220,7 @@ static void* gc_malloc(size_t);
 static void* gc_flatmalloc(size_t);
 static void* gc_malloc_mutable(size_t);
 static void* gc_malloc_on(gc_heap*, size_t);
+static void maybe_gc_collect(void);
 static void gc_collect(gc_heap*, gc_heap*);
 static void gc_collect_major(void);
 static void gc_collect_minor(void);
@@ -1254,6 +1263,8 @@ static void gc_init(void)
 {
 	gc_init_heap(&space[0]);
 	gc_init_heap(&space[1]);
+	gc_init_heap(&mutable_space[0]);
+	gc_init_heap(&mutable_space[1]);
 	//gc_init_heap(&eden);
 }
 
@@ -1269,25 +1280,19 @@ static void* gc_malloc_on(gc_heap* heap, size_t sz)
 
 static void* gc_malloc_mutable(size_t sz)
 {
-	return gc_malloc_on(&space[z], sz);
+	maybe_gc_collect();
+	return gc_malloc_on(&mutable_space[mz], sz);
 }
 
 static void* gc_malloc(size_t sz)
 {
-	static ptrdiff_t interval = 1024l*1024l*10;
-	interval -= sz;
-	#ifndef GCTEST
-	if unlikely(interval < 0)
-	#endif
-	{
-		gc_collect_minor();
-		interval = 1024l*1024l*10l;
-	}
+	maybe_gc_collect();
 	return gc_malloc_on(&space[z], sz);
 }
 
 static void* gc_flatmalloc(size_t sz)
 {
+	maybe_gc_collect();
 	gc_bitmap_set(&space[z], space[z].alloc, FLATALLOC);
 	return gc_malloc_on(&space[z], sz);
 }
@@ -1342,7 +1347,20 @@ static void gc_collect_root(uintptr_t* restrict addr, gc_heap* source, gc_heap* 
 	}
 }
 
-static __attribute__((noinline,hot)) void gc_collect(gc_heap* source, gc_heap* dest)
+static __attribute__((hot)) void gc_clear_heap(gc_heap* heap)
+{
+	memset(heap->bitmap, 0x0, heap->alloc / 4 + 1);
+	heap->alloc = 0;
+	gc_bitmap_set(heap, 0, ALLOC);
+}
+
+static __attribute__((hot)) void gc_collect_from_heap(gc_heap* roots, gc_heap* source, gc_heap* dest)
+{
+	for (uintptr_t* root = roots->start; root != roots->start + roots->alloc; ++root)
+		gc_collect_root(root, source, dest);
+}
+
+static __attribute__((noinline,hot)) void gc_collect_from_stacks(gc_heap* source, gc_heap* dest)
 {
 	for (uintptr_t* root = (uintptr_t*)stack.absolute_start; root != (uintptr_t*)stack.top; ++root)
 		gc_collect_root(root, source, dest);
@@ -1353,27 +1371,64 @@ static __attribute__((noinline,hot)) void gc_collect(gc_heap* source, gc_heap* d
 	for (uintptr_t* root = (uintptr_t*)&a; root < (uintptr_t*)function_stack_start; ++root)
 		gc_collect_root(root, source, dest); // Watch me destructively modify the call stack
 
-<<<<<<< HEAD
 	gc_collect_root((uintptr_t*)&memoized_regexes, source, dest);
-=======
-	memset(source->bitmap, 0x0, source->alloc / 4 + 1);
-	source->alloc = 0;
-	gc_bitmap_set(source, 0, ALLOC);
->>>>>>> 9d5f658 (More work towards generational gc)
 
 	longjmp(a, 1);
 }
 
-static void gc_collect_minor(void)
+static void maybe_gc_collect(void)
 {
-	gc_collect(&space[z], &space[!z]);
+	static int count = 0;
+	#ifndef GCTEST
+	if (space[z].alloc > GC_THRESHOLD) // run the gc every time the alloc buffer fills up
+	#endif
+	{
+		if (count++ == GC_RATIO) { count = 0; gc_collect_major(); } // every GC_RATIO gcs we run a big gc
+		else gc_collect_minor();
+	}
 }
 
-static void gc_collect_major(void)
+static size_t gc_heap_usage(void)
+{
+	return space[z].alloc + space[!z].alloc + mutable_space[mz].alloc + mutable_space[!mz].alloc;
+}
+
+static void gc_collect_minor(void) // Reclaims any memory allocated in the last GC_THRESHOLD that isn't needed
+{
+	/*
+	clock_t start = clock();
+	size_t original_heap = gc_heap_usage();
+	*/
+	gc_collect_from_heap(&mutable_space[mz], &space[z], &mutable_space[mz]); // Anything referenced by mutable space in eden goes to mutable space
+	gc_collect_from_stacks(&space[z], &space[!z]); // Anything else goes to the main gc sections
+	gc_clear_heap(&space[z]);
+	/*
+	clock_t end = clock();
+	float mseconds = (float)(end - start) * 1000 / CLOCKS_PER_SEC;
+	printf("minor gc took %lfms (%zu -> %zu)\n", mseconds, original_heap, gc_heap_usage());
+	*/
+}
+
+static void gc_collect_major(void) // Reclaims any memory that isn't needed, no matter when it was allocated
 {
 	gc_collect_minor();
-	//gc_collect(&space[!z], &space[z]);
-	//z = !z;
+	/*
+	clock_t start = clock();
+	size_t original_heap = gc_heap_usage();
+	*/
+	gc_collect_from_heap(&mutable_space[mz], &space[!z], &mutable_space[mz]); // Anything in main memory referenced by mutable space goes to mutable space
+	gc_collect_from_stacks(&space[!z], &space[z]); // Main memory gc
+	gc_collect_from_stacks(&mutable_space[mz], &mutable_space[!mz]); // Mutable memory gc
+	gc_collect_from_heap(&space[z], &mutable_space[mz], &mutable_space[!mz]); // Mutable memory can be referenced by main memory. TODO combine this with main memory gc
+	gc_clear_heap(&space[!z]);
+	gc_clear_heap(&mutable_space[mz]);
+	z = !z;
+	mz = !mz;
+	/*
+	clock_t end = clock();
+	float mseconds = (float)(end - start) * 1000 / CLOCKS_PER_SEC;
+	printf("major gc took %lfms (%zu -> %zu)\n", mseconds, original_heap, gc_heap_usage());
+	*/
 }
 
 static char* gc_strdup(char* src)
@@ -1762,10 +1817,9 @@ static STRING ___show(ANY o)
 static LIST ___split(STRING sep, STRING str)
 {
 	if (!*sep) throw_error("Seperator cannot be empty");
-	LIST lst = NULL;
+	LIST lst1 = NULL;
 	size_t len = strlen(sep);
 	char* found;
-	STRING* buf = (STRING*)general_purpose_buffer;
 	while ((found = strstr(str, sep)))
 	{
 		found = strstr(str, sep);
@@ -1774,18 +1828,13 @@ static LIST ___split(STRING sep, STRING str)
 			char* item = gc_flatmalloc(found - str + 1);
 			memcpy(item, str, found - str);
 			item[found - str] = '\0';
-			*buf++ = item;
+			lst1 = ___push(box_STRING(item), lst1);
 		}
 		str = found + len;
 	}
-	if (*str) *buf++ = str;
-	while (buf > (STRING*)general_purpose_buffer)
-	{
-		cognate_list* L = gc_malloc(sizeof *L);
-		L->next = lst;
-		L->object = box_STRING(*--buf);
-		lst = L;
-	}
+	if (*str) lst1 = ___push(box_STRING(str), lst1);
+	LIST lst = NULL;
+	for (; lst1 ; lst1 = lst1->next) lst = ___push(lst1->object, lst);
 	return lst;
 }
 
@@ -1865,7 +1914,7 @@ static BLOCK ___pure(BLOCK b)
 
 static BOX ___box(ANY a) // boxes seem to break the GC sometimes TODO
 {
-	ANY* b = gc_malloc(sizeof *b);
+	ANY* b = gc_malloc_mutable(sizeof *b);
 	*b = a;
 	return b;
 }
