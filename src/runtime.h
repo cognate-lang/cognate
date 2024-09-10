@@ -2347,7 +2347,8 @@ __attribute__((returns_twice))
 static void ___begin(BLOCK f)
 {
 	BLOCK a = gc_malloc(sizeof *a + sizeof(jmp_buf));
-	if (!setjmp(*(jmp_buf*)a->env))
+	for (uintptr_t* p = &a->env ; p < (char*)&a->env + sizeof(jmp_buf) ; ++p) gc_mark_ptr(p);
+	if (!setjmp(*(jmp_buf*)&a->env))
 	{
 		a->fn = oh_no;
 		push(box_BLOCK(a));
