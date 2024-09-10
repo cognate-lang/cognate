@@ -53,7 +53,7 @@
 #define GC_MAX_HEAPS 8
 #endif
 
-#define CHECK_DEFINED(str, thing) if (!thing->defined) throw_error(#str" called before definition")
+#define NIL_OBJ (cognate_object) {.type=NIL}
 
 #define MEM_PROT PROT_READ|PROT_WRITE
 #define MEM_FLAGS MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE
@@ -107,17 +107,6 @@ typedef struct cognate_object
 	};
 	cognate_type type;
 } cognate_object;
-
-#define MKEARLY(T) typedef struct _early_##T { T value ; _Bool defined ; } early_##T
-
-MKEARLY(ANY);
-MKEARLY(BOX);
-MKEARLY(BLOCK);
-MKEARLY(BOOLEAN);
-MKEARLY(NUMBER);
-MKEARLY(STRING);
-MKEARLY(LIST);
-MKEARLY(SYMBOL);
 
 typedef struct cognate_table
 {
@@ -256,6 +245,17 @@ static IO unbox_IO(ANY);
 static ANY box_IO(IO);
 static TABLE unbox_TABLE(ANY);
 static ANY box_TABLE(TABLE);
+
+static NUMBER early_NUMBER(BOX);
+static BOX early_BOX(BOX);
+static BOOLEAN early_BOOLEAN(BOX);
+static STRING early_STRING(BOX);
+static LIST early_LIST(BOX);
+static SYMBOL early_SYMBOL(BOX);
+static BLOCK early_BLOCK(BOX);
+static IO early_IO(BOX);
+static TABLE early_TABLE(BOX);
+static ANY early_ANY(BOX);
 
 static NUMBER radians_to_degrees(NUMBER);
 static NUMBER degrees_to_radians(NUMBER);
@@ -1243,6 +1243,115 @@ static TABLE unbox_TABLE(ANY box)
 	#endif
 }
 
+__attribute__((hot))
+static TABLE early_TABLE(BOX box)
+{
+	ANY a = *box;
+	if likely (a.type) return a.table;
+	throw_error("Used before definition");
+	#ifdef __TINYC__
+	return NULL;
+	#endif
+}
+
+__attribute__((hot))
+static LIST early_LIST(BOX box)
+{
+	ANY a = *box;
+	if likely (a.type) return a.list;
+	throw_error("Used before definition");
+	#ifdef __TINYC__
+	return NULL;
+	#endif
+}
+
+__attribute__((hot))
+static NUMBER early_NUMBER(BOX box)
+{
+	ANY a = *box;
+	if likely (a.type) return a.number;
+	throw_error("Used before definition");
+	#ifdef __TINYC__
+	return NULL;
+	#endif
+}
+
+__attribute__((hot))
+static BOOLEAN early_BOOLEAN(BOX box)
+{
+	ANY a = *box;
+	if likely (a.type) return a.boolean;
+	throw_error("Used before definition");
+	#ifdef __TINYC__
+	return NULL;
+	#endif
+}
+
+__attribute__((hot))
+static SYMBOL early_SYMBOL(BOX box)
+{
+	ANY a = *box;
+	if likely (a.type) return a.symbol;
+	throw_error("Used before definition");
+	#ifdef __TINYC__
+	return NULL;
+	#endif
+}
+
+__attribute__((hot))
+static STRING early_STRING(BOX box)
+{
+	ANY a = *box;
+	if likely (a.type) return a.string;
+	throw_error("Used before definition");
+	#ifdef __TINYC__
+	return NULL;
+	#endif
+}
+
+__attribute__((hot))
+static BLOCK early_BLOCK(BOX box)
+{
+	ANY a = *box;
+	if likely (a.type) return a.block;
+	throw_error("Used before definition");
+	#ifdef __TINYC__
+	return NULL;
+	#endif
+}
+
+__attribute__((hot))
+static IO early_IO(BOX box)
+{
+	ANY a = *box;
+	if likely (a.type) return a.io;
+	throw_error("Used before definition");
+	#ifdef __TINYC__
+	return NULL;
+	#endif
+}
+
+__attribute__((hot))
+static BOX early_BOX(BOX box)
+{
+	ANY a = *box;
+	if likely (a.type) return a.box;
+	throw_error("Used before definition");
+	#ifdef __TINYC__
+	return NULL;
+	#endif
+}
+
+__attribute__((hot))
+static ANY early_ANY(BOX box)
+{
+	ANY a = *box;
+	if likely (a.type) return a;
+	throw_error("Used before definition");
+	#ifdef __TINYC__
+	return NULL;
+	#endif
+}
 
 #define EMPTY     0x0
 #define ALLOC     0x1
@@ -1580,7 +1689,7 @@ static ANY ___first(ANY a)
 		default: type_error("string or list", a);
 	}
 #ifdef __TINYC__
-	return (cognate_object){0};
+	return NIL_OBJ;
 #endif
 }
 
@@ -1593,7 +1702,7 @@ static ANY ___rest(ANY a)
 		default: type_error("string or list", a);
 	}
 #ifdef __TINYC__
-	return (cognate_object){0};
+	return NIL_OBJ;
 #endif
 }
 
@@ -2274,7 +2383,7 @@ static ANY ___D(ANY key, TABLE d)
 
 	throw_error_fmt("%s is not in table", ___show(key));
 	#ifdef __TINYC__
-	return (cognate_object){0};
+	return NIL_OBJ;
 	#endif
 }
 

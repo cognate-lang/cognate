@@ -910,7 +910,7 @@ void to_c(module_t* mod)
 		if (!func->func->generic) for (word_list_t* w = func->func->captures ; w ; w = w->next)
 		{
 			if (w->word->used_early)
-				fprintf(c_source, "early_%s*", c_val_type(w->word->val->type));
+				fprintf(c_source, "BOX");
 			else
 				fprintf(c_source, "%s", c_val_type(w->word->val->type));
 			if (w->next || func->func->argc) fprintf(c_source, ", ");
@@ -941,8 +941,7 @@ void to_c(module_t* mod)
 			for (word_list_t* w = func->func->captures ; w ; w = w->next)
 			{
 				if (w->word->used_early)
-					fprintf(c_source, "early_%s* %s",
-							c_val_type(w->word->val->type),
+					fprintf(c_source, "BOX %s",
 							c_word_name(w->word));
 				else
 					fprintf(c_source, "%s %s",
@@ -971,12 +970,10 @@ void to_c(module_t* mod)
 			{
 				if (w->word->used_early)
 				{
-					fprintf(c_source, "\tearly_%s* %s = *(early_%s**)env;\n",
-						c_val_type(w->word->val->type),
-						c_word_name(w->word),
-						c_val_type(w->word->val->type));
+					fprintf(c_source, "\tBOX %s = *(BOX*)env;\n",
+						c_word_name(w->word));
 					if (w->next)
-						fprintf(c_source, "\tenv += sizeof(early_%s*);\n", c_val_type(w->word->val->type));
+						fprintf(c_source, "\tenv += sizeof(BOX);\n");
 				}
 				else
 				{
@@ -993,10 +990,8 @@ void to_c(module_t* mod)
 		{
 			if (w->word->used_early)
 			{
-				fprintf(c_source, "\tearly_%s* %s = gc_malloc(sizeof(early_%s));\n",
-					c_val_type(w->word->val->type),
-					c_word_name(w->word),
-					c_val_type(w->word->val->type));
+				fprintf(c_source, "\tBOX %s = ___box(NIL_OBJ);\n",
+					c_word_name(w->word));
 			}
 			else
 				fprintf(c_source, "\t%s %s;\n",
@@ -1145,13 +1140,13 @@ void to_c(module_t* mod)
 						reg_t* reg = make_register(op->op->word->val->type, NULL);
 						push_register_front(reg, registers);
 						if (op->op->word->used_early)
-							fprintf(c_source, "\tCHECK_DEFINED(%c%s, %s);\n\t%s _%zu = %s->value;\n",
-								toupper(op->op->word->name[0]),
-								op->op->word->name+1,
-								c_word_name(op->op->word),
+		 				{
+							fprintf(c_source, "\t%s _%zu = early_%s(%s);\n",
 								c_val_type(op->op->word->val->type),
 								reg->id,
+								c_val_type(op->op->word->val->type),
 								c_word_name(op->op->word));
+						}
 						else
 							fprintf(c_source, "\t%s _%zu = %s;\n",
 								c_val_type(op->op->word->val->type),
@@ -1165,10 +1160,16 @@ void to_c(module_t* mod)
 						size_t reg_id = pop_register_front(registers)->id;
 						if (op->op->word->used_early)
 						{
-							fprintf(c_source, "\t%s->defined = 1;\n\t%s->value = _%zu;\n",
-								cname,
-								cname,
-								reg_id);
+							if (op->op->word->val->type == any)
+								fprintf(c_source, "\t___set(%s,_%zu);\n",
+									cname,
+									reg_id);
+							else
+								fprintf(c_source, "\t___set(%s,box_%s(_%zu));\n",
+									cname,
+					 				c_val_type(op->op->word->val->type),
+									reg_id);
+
 							/*
 							if (strlen(op->op->word->name) && op->op->where->mod->path)
 							{
@@ -1222,15 +1223,10 @@ void to_c(module_t* mod)
 				case call:
 					// TODO remove call and use var and a do op
 					if (op->op->word->used_early)
-						fprintf(c_source, "\tCHECK_DEFINED(%c%s, %s);\n\t%s->value.fn(%s->value.env);\n",
-							toupper(op->op->word->name[0]),
-							op->op->word->name+1,
-							c_word_name(op->op->word),
-							c_word_name(op->op->word),
+						fprintf(c_source, "\t\tcall_block(early_BLOCK(%s));\n",
 							c_word_name(op->op->word));
 					else
-						fprintf(c_source, "\t%s.fn(%s.env);\n",
-							c_word_name(op->op->word),
+						fprintf(c_source, "\tcall_block(%s);\n",
 							c_word_name(op->op->word));
 					break;
 				case closure:
@@ -1258,11 +1254,10 @@ void to_c(module_t* mod)
 						{
 							if (w->word->used_early)
 							{
-								fprintf(c_source, "\t*(early_%s**)_%zu.env = %s;\n",
-									c_val_type(w->word->val->type),
+								fprintf(c_source, "\t*(BOX*)_%zu_envptr = %s;\n",
 									reg->id, c_word_name(w->word));
 								if (w->next)
-									fprintf(c_source, "\t_%zu.env += sizeof(early_%s*);\n", reg->id, c_val_type(w->word->val->type));
+									fprintf(c_source, "\t_%zu_envptr += sizeof(BOX);\n", reg->id);
 							}
 							else
 							{
