@@ -271,6 +271,8 @@ static ANY pop(void);
 static ANY peek(void);
 static int stack_length(void);
 
+static TABLE mktable(ANY, ANY, TABLE, TABLE, size_t);
+
 // Builtin functions needed by compiled source file defined in functions.c
 static TABLE ___insert(ANY, ANY, TABLE);
 static LIST ___empty(void);
@@ -418,15 +420,7 @@ int main(int argc, char** argv)
 	}
 	srand(ts.tv_nsec ^ ts.tv_sec); // TODO make random more random.
 	// Load parameters
-	while (argc --> 1)
-	{
-		cognate_list* const tmp = gc_malloc (sizeof *tmp);
-		tmp->object = box_STRING(argv[argc]);
-		tmp->next = cmdline_parameters;
-		gc_mark_any(&tmp->object);
-		gc_mark_ptr((void*)&tmp->next);
-		cmdline_parameters = tmp;
-	}
+	while (argc --> 1) cmdline_parameters = ___push(box_STRING(argv[argc]), cmdline_parameters);
 	// Bind error signals.
 	struct sigaction error_signal_action;
    error_signal_action.sa_sigaction = handle_error_signal;
@@ -719,29 +713,10 @@ TABLE table_skew(TABLE T)
 	if (!T) return NULL;
 	else if (!T->left) return T;
 	else if (T->left->level == T->level)
-	{
-		TABLE T2 = gc_malloc(sizeof *T2);
-		T2->key = T->key;
-		T2->value = T->value;
-		T2->level = T->level;
-		T2->left = T->left->right;
-		T2->right = T->right;
-		gc_mark_ptr((void*)&T2->left);
-		gc_mark_ptr((void*)&T2->right);
-		gc_mark_any(&T2->key);
-		gc_mark_any(&T2->value);
-		TABLE L2 = gc_malloc(sizeof *L2);
-		L2->key = T->left->key;
-		L2->value = T->left->value;
-		L2->level = T->left->level;
-		L2->left = T->left->left;
-		L2->right = T2;
-		gc_mark_ptr((void*)&L2->left);
-		gc_mark_ptr((void*)&L2->right);
-		gc_mark_any(&L2->key);
-		gc_mark_any(&L2->value);
-		return L2;
-	}
+		return
+			mktable(T->left->key, T->left->value, T->left->left,
+				mktable(T->key, T->value, T->left->right, T->right, T->level),
+				T->left->level);
 	/*
 	else if (T->right && T->right->left && T->right && T->right->left->level == T->right->level)
 	{
@@ -759,27 +734,10 @@ TABLE table_split(TABLE T)
 	if (!T) return NULL;
 	else if (!T->right || !T->right->right) return T;
 	else if (T->level == T->right->right->level)
-	{
-		TABLE T2 = gc_malloc(sizeof *T2);
-		T2->left = T->left;
-		T2->right = T->right->left;
-		T2->key = T->key;
-		T2->value = T->value;
-		gc_mark_ptr((void*)&T2->left);
-		gc_mark_ptr((void*)&T2->right);
-		gc_mark_any(&T2->key);
-		gc_mark_any(&T2->value);
-		TABLE R2 = gc_malloc(sizeof *R2);
-		R2->left = T2;
-		R2->right = T->right->right;
-		R2->key = T->right->key;
-		R2->value = T->right->value;
-		gc_mark_ptr((void*)&R2->left);
-		gc_mark_ptr((void*)&R2->right);
-		gc_mark_any(&R2->key);
-		gc_mark_any(&R2->value);
-		return R2;
-	}
+		return
+			mktable(T->right->key, T->right->value,
+				mktable(T->key, T->value, T->left, T->right->left, T->level),
+				T->right->right, T->right->level);
 	else return T;
 }
 
@@ -1793,17 +1751,10 @@ static LIST ___list(BLOCK expr)
 	// Eval expr
 	call_block(expr);
 	// Move to a list.
-	cognate_list* lst = NULL;
+	LIST lst = NULL;
 	size_t len = stack_length();
 	for (size_t i = 0; i < len; ++i)
-	{
-		cognate_list* l = gc_malloc(sizeof *l);
-		l->object = stack.start[i];
-		l->next = lst;
-		lst = l;
-		gc_mark_any(&l->object);
-		gc_mark_ptr((void*)&l->next);
-	}
+		lst = ___push(stack.start[i], lst);
 	stack.top = stack.start;
 	stack.start = tmp_stack_start;
 	return lst;
@@ -2388,77 +2339,35 @@ static TABLE ___table (BLOCK expr)
 	return d;
 }
 
+static TABLE mktable(ANY key, ANY value, TABLE left, TABLE right, size_t level)
+{
+	TABLE t = gc_malloc(sizeof *t);
+	t->key = key;
+	t->value = value;
+	t->left = left;
+	t->right = right;
+	t->level = level;
+	gc_mark_ptr((void*)&t->left);
+	gc_mark_ptr((void*)&t->right);
+	gc_mark_any(&t->key);
+	gc_mark_any(&t->value);
+	return t;
+}
+
 static TABLE ___insert(ANY key, ANY value, TABLE d)
 {
 	if unlikely(key.type == io || key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
-	if (!d)
-	{
-		TABLE D = gc_malloc(sizeof *D);
-		D->left = NULL;
-		D->right = NULL;
-		D->key = key;
-		D->value = value;
-		gc_mark_ptr((void*)&D->left);
-		gc_mark_ptr((void*)&D->right);
-		gc_mark_any(&D->key);
-		gc_mark_any(&D->value);
-		D->level = 1;
-		return D;
-	}
+	if (!d) return mktable(key, value, NULL, NULL, 1);
 	ptrdiff_t diff = compare_objects(d->key, key);
-	if (diff == 0)
-	{
-		TABLE D = gc_malloc(sizeof *D);
-		D->left = d->left;
-		D->right = d->right;
-		D->key = key;
-		D->value = value;
-		D->level = d->level;
-		gc_mark_ptr((void*)&D->left);
-		gc_mark_ptr((void*)&D->right);
-		gc_mark_any(&D->key);
-		gc_mark_any(&D->value);
-		return D;
-	}
-
-	TABLE D = NULL;
-
+	if (diff == 0) return mktable(key, value, d->left, d->right, d->level);
 	if (diff > 0)
-	{
-		TABLE left = ___insert(key, value, d->left);
-		D = gc_malloc(sizeof *D);
-		D->key = d->key;
-		D->value = d->value;
-		D->level = d->level;
-		D->right = d->right;
-		D->left = left;
-		gc_mark_ptr((void*)&D->left);
-		gc_mark_ptr((void*)&D->right);
-		gc_mark_any(&D->key);
-		gc_mark_any(&D->value);
-	}
+		return
+			table_split(table_skew(
+				mktable(d->key, d->value, ___insert(key, value, d->left), d->right, d->level)));
 	else //if (diff < 0)
-	{
-		TABLE right = ___insert(key, value, d->right);
-		D = gc_malloc(sizeof *D);
-		D->key = d->key;
-		D->value = d->value;
-		D->level = d->level;
-		D->left = d->left;
-		D->right = right;
-		gc_mark_ptr((void*)&D->left);
-		gc_mark_ptr((void*)&D->right);
-		gc_mark_any(&D->key);
-		gc_mark_any(&D->value);
-	}
-
-	// Perform skew and then split. The conditionals that determine whether or
-   // not a rotation will occur or not are inside of the procedures, as given
-   // above.
-	D = table_skew(D);
-	D = table_split(D);
-
-	return D;
+		return
+			table_split(table_skew(
+				mktable(d->key, d->value, d->left, ___insert(key, value, d->right), d->level)));
 }
 
 static ANY ___D(ANY key, TABLE d)
@@ -2502,69 +2411,21 @@ static TABLE ___remove(ANY key, TABLE T)
 	TABLE T2 = NULL;
 	// This part is fairly intuitive - if this breaks it's probably not here:
 	if (diff < 0)
-	{
-		TABLE right = ___remove(key, T->right);
-		T2 = gc_malloc(sizeof *T2);
-		T2->left = T->left;
-		T2->right = right;
-		T2->value = T->value;
-		T2->key = T->key;
-		T2->level = T->level;
-		gc_mark_ptr((void*)&T2->left);
-		gc_mark_ptr((void*)&T2->right);
-		gc_mark_any(&T2->key);
-		gc_mark_any(&T2->value);
-
-	}
+		T2 = mktable(T->key, T->value, T->left, ___remove(key, T->right), T->level);
 	else if (diff > 0)
+		T2 = mktable(T->key, T->value, ___remove(key, T->left), T->right, T->level);
+	else if (!T->left && !T->right) return NULL;
+	else if (!T->left) // T->right not null
 	{
-		TABLE left = ___remove(key, T->left);
-		T2 = gc_malloc(sizeof *T2);
-		T2->left = left;
-		T2->right = T->right;
-		T2->value = T->value;
-		T2->key = T->key;
-		T2->level = T->level;
-		gc_mark_ptr((void*)&T2->left);
-		gc_mark_ptr((void*)&T2->right);
-		gc_mark_any(&T2->key);
-		gc_mark_any(&T2->value);
+		TABLE L = T->right;
+		while (L->left) L = L->left; // successor
+		T2 = mktable(L->key, L->value, T->left, ___remove(L->key, T->right), L->level);
 	}
-	else // if (diff == 0
+	else // left and right not null
 	{
-		if (!T->left && !T->right) return NULL;
-		else if (!T->left) // T->right not null
-		{
-			TABLE L = T->right;
-			while (L->left) L = L->left; // successor
-			TABLE right = ___remove(L->key, T->right);
-			T2 = gc_malloc(sizeof *T2);
-			T2->right = right;
-			T2->left = T->left;
-			T2->key = L->key;
-			T2->value = L->value;
-			T2->level = L->level;
-			gc_mark_ptr((void*)&T2->left);
-			gc_mark_ptr((void*)&T2->right);
-			gc_mark_any(&T2->key);
-			gc_mark_any(&T2->value);
-		}
-		else // left and right not null
-		{
-			TABLE L = T->left;
-			while (L->right) L = L->right; // predecessor
-			TABLE left = ___remove(L->key, T->left);
-			T2 = gc_malloc(sizeof *T2);
-			T2->left = left;
-			T2->right = T->right;
-			T2->key = L->key;
-			T2->value = L->value;
-			T2->level = L->level;
-			gc_mark_ptr((void*)&T2->left);
-			gc_mark_ptr((void*)&T2->right);
-			gc_mark_any(&T2->key);
-			gc_mark_any(&T2->value);
-		}
+		TABLE L = T->left;
+		while (L->right) L = L->right; // predecessor
+		T2 = mktable(L->key, L->value, ___remove(L->key, T->left), T->right, L->level);
 	}
 
 	// below here idk really what's going on, but it seems to work:
