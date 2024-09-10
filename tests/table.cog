@@ -48,14 +48,13 @@ Print If And Has \foo T Not Has \bar T
 else
 	"FAIL: Has";
 
-~
 Let T3 be Remove \foo from T;
 
 Print If Not Has \foo T3
 	"PASS: Removing keys"
 else
 	"FAIL: Removing keys";
-~
+
 Print If == List (12 \foo "bar" List (0 1) Table (\A "b")) Keys T
 	"PASS: Getting list of keys in table"
 else

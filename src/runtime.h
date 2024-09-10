@@ -723,6 +723,7 @@ TABLE table_skew(TABLE T)
 		TABLE T2 = gc_malloc(sizeof *T2);
 		T2->key = T->key;
 		T2->value = T->value;
+		T2->level = T->level;
 		T2->left = T->left->right;
 		T2->right = T->right;
 		gc_mark_ptr((void*)&T2->left);
@@ -732,6 +733,7 @@ TABLE table_skew(TABLE T)
 		TABLE L2 = gc_malloc(sizeof *L2);
 		L2->key = T->left->key;
 		L2->value = T->left->value;
+		L2->level = T->left->level;
 		L2->left = T->left->left;
 		L2->right = T2;
 		gc_mark_ptr((void*)&L2->left);
@@ -981,14 +983,14 @@ static ptrdiff_t compare_tables(TABLE t1, TABLE t2)
 {
 	if (!t1) return -!!t2;
 	if (!t2) return 1;
+
 	ptrdiff_t diff;
 
-	if (!(diff = compare_objects(t1->key, t2->key)))
-		if (!(diff = compare_objects(t1->value, t2->value)))
-			if (!(diff = compare_tables(t1->left, t2->left)))
-				return compare_tables(t1->right, t2->right);
+	if ((diff = compare_objects(t1->key, t2->key))) return diff;
+	if ((diff = compare_objects(t1->value, t2->value))) return diff;
+	if ((diff = compare_tables(t1->left, t2->left))) return diff;
 
-	return diff;
+	return compare_tables(t1->right, t2->right);
 }
 
 static ptrdiff_t compare_blocks(BLOCK b1, BLOCK b2)
@@ -1005,8 +1007,9 @@ static ptrdiff_t compare_numbers(NUMBER n1, NUMBER n2)
 
 static ptrdiff_t compare_objects(ANY ob1, ANY ob2)
 {
+	// TODO this function should be overloaded
 	if (ob1.type != ob2.type) return (ptrdiff_t)ob1.type - (ptrdiff_t)ob2.type;
-	if (memcmp(&ob1, &ob2, sizeof ob1) == 0) return 0;
+	//if (memcmp(&ob1, &ob2, sizeof ob1) == 0) return 0;
 	else switch (ob1.type)
 	{
 		case number:  return compare_numbers(ob1.number, ob2.number);
@@ -1371,7 +1374,7 @@ static ANY early_ANY(BOX box)
 	if likely (a.type) return a;
 	throw_error("Used before definition");
 	#ifdef __TINYC__
-	return NULL;
+	return NIL_OBJ;
 	#endif
 }
 
@@ -1680,12 +1683,12 @@ static void ___clear(void) { stack.top=stack.start; }
 
 static BOOLEAN ___true(void)  { return 1; }
 static BOOLEAN ___false(void) { return 0; }
-static BOOLEAN ___or(BOOLEAN a, BOOLEAN b) { return a || b; }
-static BOOLEAN ___and(BOOLEAN a, BOOLEAN b)   { return a && b; }
+static BOOLEAN ___or(BOOLEAN a, BOOLEAN b)  { return a || b; }
+static BOOLEAN ___and(BOOLEAN a, BOOLEAN b) { return a && b; }
 static BOOLEAN ___xor(BOOLEAN a, BOOLEAN b) { return a ^ b;  }
-static BOOLEAN ___not(BOOLEAN a)               { return !a;     }
-static BOOLEAN ___EE(ANY a, ANY b)  { return !compare_objects(a,b); }
-static BOOLEAN ___XE(ANY a, ANY b) { return compare_objects(a,b); }
+static BOOLEAN ___not(BOOLEAN a)            { return !a;     }
+static BOOLEAN ___EE(ANY a, ANY b) { return 0 == compare_objects(a,b); }
+static BOOLEAN ___XE(ANY a, ANY b) { return 0 != compare_objects(a,b); }
 static BOOLEAN ___G(NUMBER a, NUMBER b)  { return a < b; }
 static BOOLEAN ___L(NUMBER a, NUMBER b)  { return a > b; }
 static BOOLEAN ___GE(NUMBER a, NUMBER b) { return a <= b; }
@@ -2109,6 +2112,7 @@ static ANY ___unbox(BOX b)
 static void ___set(BOX b, ANY a)
 {
 	*b = a;
+	gc_mark_mutable_any(b);
 }
 
 /* math */
@@ -2347,7 +2351,8 @@ __attribute__((returns_twice))
 static void ___begin(BLOCK f)
 {
 	BLOCK a = gc_malloc(sizeof *a + sizeof(jmp_buf));
-	for (uintptr_t* p = &a->env ; p < (char*)&a->env + sizeof(jmp_buf) ; ++p) gc_mark_ptr(p);
+	for (uintptr_t* p = (uintptr_t*)&a->env ; (char*)p < (char*)&a->env + sizeof(jmp_buf) ; ++p)
+		gc_mark_ptr(p);
 	if (!setjmp(*(jmp_buf*)&a->env))
 	{
 		a->fn = oh_no;
@@ -2504,6 +2509,7 @@ static TABLE ___remove(ANY key, TABLE T)
 		T2->right = right;
 		T2->value = T->value;
 		T2->key = T->key;
+		T2->level = T->level;
 		gc_mark_ptr((void*)&T2->left);
 		gc_mark_ptr((void*)&T2->right);
 		gc_mark_any(&T2->key);
@@ -2518,6 +2524,7 @@ static TABLE ___remove(ANY key, TABLE T)
 		T2->right = T->right;
 		T2->value = T->value;
 		T2->key = T->key;
+		T2->level = T->level;
 		gc_mark_ptr((void*)&T2->left);
 		gc_mark_ptr((void*)&T2->right);
 		gc_mark_any(&T2->key);
@@ -2536,6 +2543,7 @@ static TABLE ___remove(ANY key, TABLE T)
 			T2->left = T->left;
 			T2->key = L->key;
 			T2->value = L->value;
+			T2->level = L->level;
 			gc_mark_ptr((void*)&T2->left);
 			gc_mark_ptr((void*)&T2->right);
 			gc_mark_any(&T2->key);
@@ -2551,14 +2559,13 @@ static TABLE ___remove(ANY key, TABLE T)
 			T2->right = T->right;
 			T2->key = L->key;
 			T2->value = L->value;
+			T2->level = L->level;
 			gc_mark_ptr((void*)&T2->left);
 			gc_mark_ptr((void*)&T2->right);
 			gc_mark_any(&T2->key);
 			gc_mark_any(&T2->value);
 		}
 	}
-
-	T2->level = T->level;
 
 	// below here idk really what's going on, but it seems to work:
 
@@ -2578,13 +2585,17 @@ static TABLE ___remove(ANY key, TABLE T)
 
 	// This part makes at least vague sense:
 
+	/* Commented these bits out because the GC can't handle them
+	 * Probably worth implementing a recursive skew and split at some point.
+	 * IDK how balanced the table is gonna be after this
 	if (T2->right)
 	{
 		T2->right->right = table_skew(T2->right->right);
 		T2->right = table_skew(T2->right);
 	}
+	*/
 	T2 = table_skew(T2);
-	if (T2->right) T2->right = table_split(T2->right);
+	//if (T2->right) T2->right = table_split(T2->right);
 	T2 = table_split(T2);
 
 	return T2;
