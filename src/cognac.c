@@ -36,6 +36,7 @@ char* strdup (const char*);
 
 bool debug = false;
 bool gc_test = false;
+bool noinline = false;
 
 static bool is_prelude(module_t* mod)
 {
@@ -2622,6 +2623,7 @@ void _inline_functions(func_t* f, func_list_t** funcs)
 
 void inline_functions(module_t* m)
 {
+	if (noinline) return;
 	_inline_functions(m->entry, &m->funcs);
 }
 
@@ -3359,6 +3361,7 @@ int main(int argc, char** argv)
 	{
 		if (!strcmp(argv[i], "-debug")) debug = true;
 		else if (!strcmp(argv[i], "-GCTEST")) gc_test = true;
+		else if (!strcmp(argv[i], "-NOINLINE")) noinline = true;
 		else
 		{
 			char* ext = strrchr(argv[i], '.');

@@ -39,6 +39,9 @@ $(TESTS): cognac
 	./$@ >> $@-debug.log
 	./cognac $@.cog -GCTEST > $@-GCTEST.log
 	./$@ >> $@-GCTEST.log
+	./cognac $@.cog -NOINLINE > $@-NOINLINE.log
+	./$@ >> $@-NOINLINE.log
 	@! grep "^FAIL" $@.log --color
 	@! grep "^FAIL" $@-debug.log --color
 	@! grep "^FAIL" $@-GCTEST.log --color
+	@! grep "^FAIL" $@-NOINLINE.log --color
