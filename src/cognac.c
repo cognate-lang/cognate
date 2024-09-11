@@ -827,7 +827,7 @@ void to_exe(module_t* mod)
 
 	char* debug_args[] = {
 		STR(CC), c_source_path, "-o", exe_path,
-		"-Og", "-ggdb3", "-g", "-rdynamic", "-DDEBUG",
+		"-O0", "-ggdb3", "-g", "-rdynamic", "-DDEBUG",
 		"-lm", "-Wall", "-Wno-unused", "-Wno-unused-result",
 		gc_test ? "-DGCTEST" : NULL, NULL
 	} ;
@@ -991,7 +991,7 @@ void to_c(module_t* mod)
 		{
 			if (w->word->used_early)
 			{
-				fprintf(c_source, "\tBOX %s = ___box(NIL_OBJ);\n",
+				fprintf(c_source, "\tBOX %s = ___box(NIL);\n",
 					c_word_name(w->word));
 			}
 			/*
@@ -1243,7 +1243,7 @@ void to_c(module_t* mod)
 						if (op->op->func->captures)
 						{
 							for (word_list_t* w = op->op->func->captures ; w ; w = w->next)
-								fprintf(c_source, "+ sizeof(%s)", c_val_type(w->word->val->type));
+								fprintf(c_source, " + sizeof(%s)", c_val_type(w->word->val->type));
 						}
 						fprintf(c_source, ");\n");
 						if (op->op->func->captures)

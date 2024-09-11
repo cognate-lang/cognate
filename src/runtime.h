@@ -53,22 +53,27 @@
 #define GC_MAX_HEAPS 8
 #endif
 
-#define NIL_OBJ (cognate_object) {.type=NIL}
+#define NIL       ((uint64_t)0x7ffc000000000000) // NaN
+#define PTR_MASK  ((uint64_t)0x0000fffffffffff8) // 48 bit aligned pointers
+#define TYPE_MASK ((uint64_t)0xffff000000000007) // Everything left
+
+#define UNALIGNED_PTR_MASK  ((uint64_t)0x0000ffffffffffff) // 48 bit unaligned pointers
 
 #define MEM_PROT PROT_READ|PROT_WRITE
 #define MEM_FLAGS MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE
 
-typedef struct cognate_object ANY;
-typedef ANY* restrict ANYPTR;
-typedef ANY* restrict BOX;
-typedef struct cognate_block* restrict BLOCK;
-typedef _Bool BOOLEAN;
+typedef uint64_t ANY;
+typedef uint64_t cognate_type;
+typedef ANY* ANYPTR;
+typedef ANY* BOX;
+typedef struct cognate_block* BLOCK;
+typedef char BOOLEAN;
 typedef double NUMBER;
-typedef const char* restrict STRING;
-typedef const struct cognate_list* restrict LIST;
-typedef const char* restrict SYMBOL;
-typedef struct cognate_file* restrict IO;
-typedef struct cognate_table* restrict TABLE;
+typedef const char* STRING;
+typedef const struct cognate_list* LIST;
+typedef const char* SYMBOL;
+typedef struct cognate_file* IO;
+typedef struct cognate_table* TABLE;
 
 typedef struct cognate_block
 {
@@ -76,19 +81,15 @@ typedef struct cognate_block
 	uint8_t env[0];
 } cognate_block;
 
-typedef enum cognate_type
-{
-	NIL = 0,
-	number,
-	symbol,
-	boolean,
-	string,
-	box,
-	list,
-	table,
-	io,
-	block,
-} cognate_type;
+#define NUMBER_TYPE  ( NIL | 0x0000000000000008 ) // Use NaN boxing, so the value here is irrelevant.
+#define STRING_TYPE  ( NIL | 0x0002000000000000 ) // Use a higher bit to signify strings, since they're not necessarily aligned.
+#define SYMBOL_TYPE  ( NIL | 0x0001000000000000 ) // Same with symbols.
+#define BOOLEAN_TYPE ( NIL | 0x0000000000000001 )
+#define BOX_TYPE     ( NIL | 0x0000000000000002 )
+#define LIST_TYPE    ( NIL | 0x0000000000000003 )
+#define TABLE_TYPE   ( NIL | 0x0000000000000004 )
+#define IO_TYPE      ( NIL | 0x0000000000000005 )
+#define BLOCK_TYPE   ( NIL | 0x0000000000000006 )
 
 typedef struct cognate_object
 {
@@ -141,7 +142,7 @@ typedef struct cognate_stack
 
 typedef struct backtrace
 {
-	const struct backtrace* restrict next;
+	const struct backtrace* next;
 	const char* name;
 	const size_t line;
 	const size_t col;
@@ -151,7 +152,7 @@ typedef struct backtrace
 
 typedef struct var_info
 {
-	const struct var_info* restrict next;
+	const struct var_info* next;
 	const char* name;
 	const ANY value;
 } var_info;
@@ -186,7 +187,7 @@ static const var_info* vars = NULL;
 
 extern int main(int, char**);
 
-static const char* restrict function_stack_start;
+static const char* function_stack_start;
 
 static TABLE memoized_regexes = NULL;
 
@@ -204,10 +205,10 @@ const SYMBOL SYMreadHwriteHexisting = "read-write-existing";
 static void init_stack(void);
 static void init_general_purpose_buffer(void);
 static STRING show_object(const ANY object, char*, LIST);
-static void _Noreturn __attribute__((format(printf, 1, 2))) throw_error_fmt(const char* restrict const, ...);
-static void _Noreturn throw_error(const char* restrict const);
+static void _Noreturn __attribute__((format(printf, 1, 2))) throw_error_fmt(const char* const, ...);
+static void _Noreturn throw_error(const char* const);
 static ptrdiff_t compare_objects(ANY, ANY);
-static _Bool match_objects(ANY, ANY);
+//static _Bool match_objects(ANY, ANY);
 static void destructure_lists(LIST, LIST);
 static void destructure_objects(ANY, ANY);
 #ifdef DEBUG
@@ -300,7 +301,7 @@ static BOOLEAN ___L(NUMBER, NUMBER);
 static BOOLEAN ___G(NUMBER, NUMBER);
 static BOOLEAN ___LE(NUMBER, NUMBER);
 static BOOLEAN ___GE(NUMBER, NUMBER);
-static BOOLEAN ___match(ANY, ANY);
+//static BOOLEAN ___match(ANY, ANY);
 static BOOLEAN ___numberQ(ANY);
 static BOOLEAN ___symbolQ(ANY);
 static BOOLEAN ___listQ(ANY);
@@ -427,8 +428,8 @@ int main(int argc, char** argv)
    sigemptyset(&error_signal_action.sa_mask);
    error_signal_action.sa_flags = SA_SIGINFO;
 	char signals[] = { SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGABRT, SIGBUS, SIGFPE, SIGPIPE, SIGTERM, SIGCHLD, SIGSEGV };
-	for (size_t i = 0; i < sizeof(signals); ++i)
-		if (sigaction(signals[i], &error_signal_action, NULL) == -1) throw_error("couldn't install signal handler");
+	//for (size_t i = 0; i < sizeof(signals); ++i)
+	//	if (sigaction(signals[i], &error_signal_action, NULL) == -1) throw_error("couldn't install signal handler");
 	// Allocate buffer for object printing
 	init_general_purpose_buffer();
 	// Initialize the stack.
@@ -569,7 +570,7 @@ ask:
 				fputs("Usage: v [NAME]\n", stderr);
 				break;
 			}
-			for (const var_info* restrict v = vars; v; v = v->next)
+			for (const var_info* v = vars; v; v = v->next)
 			{
 				if (!strcmp(v->name, str_arg))
 				{
@@ -658,7 +659,7 @@ static void print_backtrace(int n, const backtrace* b, int last_spaces)
 }
 #endif
 
-static _Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(const char* restrict const fmt, ...)
+static _Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(const char* const fmt, ...)
 {
 	char buf[1024];
 	fputs("\n\n\033[31;1m    ", stderr);
@@ -683,7 +684,7 @@ static _Noreturn __attribute__((format(printf, 1, 2))) void throw_error_fmt(cons
 	exit(EXIT_FAILURE);
 }
 
-static _Noreturn void throw_error(const char* restrict const msg)
+static _Noreturn void throw_error(const char* const msg)
 {
 	throw_error_fmt("%s", msg);
 }
@@ -692,13 +693,21 @@ static void handle_error_signal(int sig, siginfo_t *info, void *ucontext)
 {
 	if (sig == SIGSEGV)
 	{
-		char* addr = info->si_addr;
+		char* addr = (char*)info->si_addr;
 		if (addr >= (char*)stack.absolute_start && addr <= (char*)stack.absolute_start + ALLOC_SIZE)
 			throw_error_fmt("Stack overflow (%zu items on the stack)", stack.top - stack.absolute_start);
 		else
 			throw_error("Memory error");
 	}
 	else throw_error_fmt("Received signal %i (%s)", sig, strsignal(sig));
+}
+
+static cognate_type type_of(ANY a)
+{
+	if ((NIL & a) != NIL) return NUMBER_TYPE;
+	if ((STRING_TYPE & a) == STRING_TYPE) return STRING_TYPE;
+	if ((SYMBOL_TYPE & a) == SYMBOL_TYPE) return SYMBOL_TYPE;
+	return (cognate_type)(a & TYPE_MASK);
 }
 
 static void assert_impure(void)
@@ -835,7 +844,7 @@ static char* show_box(BOX b, char* buffer, LIST checked)
 {
 	bool found = false;
 	for (LIST l = checked ; l ; l = l->next)
-		if (l->object.box == b)
+		if ((BOX)(l->object & PTR_MASK) == b)
 		{
 			*buffer++ = '.';
 			*buffer++ = '.';
@@ -854,18 +863,18 @@ static char* show_box(BOX b, char* buffer, LIST checked)
 
 static STRING show_object (const ANY object, char* buffer, LIST checked)
 {
-	switch (object.type)
+	switch (type_of(object))
 	{
 		case NIL: throw_error("This shouldn't happen"); break;
-		case number:  buffer = show_number (object.number,  buffer);          break;
-		case io:      buffer = show_io     (object.io,      buffer);          break;
-		case string:  buffer = show_string (object.string,  buffer);          break;
-		case boolean: buffer = show_boolean(object.boolean, buffer);          break;
-		case symbol:  buffer = show_symbol (object.symbol,  buffer);          break;
-		case block:   buffer = show_block  (object.block,   buffer);          break;
-		case table:   buffer = show_table  (object.table,   buffer, checked); break;
-		case list:    buffer = show_list   (object.list,    buffer, checked); break;
-		case box:     buffer = show_box    (object.box,     buffer, checked); break;
+		case NUMBER_TYPE:  buffer = show_number (*(NUMBER*)&object,             buffer);           break;
+		case IO_TYPE:      buffer = show_io     ((IO)      (object & PTR_MASK), buffer);           break;
+		case BOOLEAN_TYPE: buffer = show_boolean((BOOLEAN) (object & PTR_MASK), buffer);           break;
+		case STRING_TYPE:  buffer = show_string ((STRING)  (object & UNALIGNED_PTR_MASK), buffer); break;
+		case SYMBOL_TYPE:  buffer = show_symbol ((SYMBOL)  (object & UNALIGNED_PTR_MASK), buffer); break;
+		case BLOCK_TYPE:   buffer = show_block  ((BLOCK)   (object & PTR_MASK), buffer);           break;
+		case TABLE_TYPE:   buffer = show_table  ((TABLE)   (object & PTR_MASK), buffer, checked);  break;
+		case LIST_TYPE:    buffer = show_list   ((LIST)    (object & PTR_MASK), buffer, checked);  break;
+		case BOX_TYPE:     buffer = show_box    ((BOX)     (object & PTR_MASK), buffer, checked);  break;
 	}
 	return buffer;
 }
@@ -910,14 +919,15 @@ static const char* lookup_type(cognate_type type)
 {
 	switch(type)
 	{
-		case box:     return "box";
-		case string:  return "string";
-		case number:  return "number";
-		case list:    return "list";
-		case block:   return "block";
-		case symbol:  return "symbol";
-		case boolean: return "boolean";
-		default:      return NULL;
+		case NIL:          return "nil";
+		case BOX_TYPE:     return "box";
+		case STRING_TYPE:  return "string";
+		case NUMBER_TYPE:  return "number";
+		case LIST_TYPE:    return "list";
+		case BLOCK_TYPE:   return "block";
+		case SYMBOL_TYPE:  return "symbol";
+		case BOOLEAN_TYPE: return "boolean";
+		default:           return NULL;
 	}
 }
 
@@ -966,20 +976,22 @@ static ptrdiff_t compare_numbers(NUMBER n1, NUMBER n2)
 static ptrdiff_t compare_objects(ANY ob1, ANY ob2)
 {
 	// TODO this function should be overloaded
-	if (ob1.type != ob2.type) return (ptrdiff_t)ob1.type - (ptrdiff_t)ob2.type;
+	cognate_type t1 = type_of(ob1);
+	cognate_type t2 = type_of(ob2);
+	if (t1 != t2) return (ptrdiff_t)t1 - (ptrdiff_t)t2;
 	//if (memcmp(&ob1, &ob2, sizeof ob1) == 0) return 0;
-	else switch (ob1.type)
+	else switch (t1)
 	{
-		case number:  return compare_numbers(ob1.number, ob2.number);
-		case boolean: return (ptrdiff_t)ob1.boolean - (ptrdiff_t)ob2.boolean;
-		case string:  return (ptrdiff_t)strcmp(ob1.string, ob2.string);
-		case symbol:  return ob1.symbol - ob2.symbol;
-		case list:    return compare_lists(ob1.list, ob2.list);
-		case block:   return compare_blocks(ob1.block, ob2.block);
-		case box:     return (char*)ob1.box - (char*)ob2.box;
-		case table:   return compare_tables(ob1.table, ob2.table);
-		case io:      return ob1.io->file - ob2.io->file;
-		default:      return 0; // really shouldn't happen
+		case NUMBER_TYPE:  return compare_numbers(*(NUMBER*)&ob1, *(NUMBER*)&ob2);
+		case STRING_TYPE:  return (ptrdiff_t)strcmp((char*)(ob1 & UNALIGNED_PTR_MASK), (char*)(ob2 & UNALIGNED_PTR_MASK));
+		case LIST_TYPE:    return compare_lists((LIST)(ob1 & PTR_MASK), (LIST)(ob2 & PTR_MASK));
+		case BLOCK_TYPE:   return compare_blocks((BLOCK)(ob1 & PTR_MASK), (BLOCK)(ob2 & PTR_MASK));
+		case TABLE_TYPE:   return compare_tables((TABLE)(ob1 & PTR_MASK), (TABLE)(ob2 & PTR_MASK));
+		case IO_TYPE:      return ((IO)(ob1 & PTR_MASK))->file - ((IO)(ob2 & PTR_MASK))->file;
+		case BOOLEAN_TYPE:
+		case BOX_TYPE:
+		case SYMBOL_TYPE:  return (ob1 & UNALIGNED_PTR_MASK) - (ob2 & UNALIGNED_PTR_MASK);
+		default:           return 0; // really shouldn't happen
 		/* NOTE
 		 * The garbage collector *will* reorder objects in memory,
 		 * which means that the relative addresses of blocks and boxes
@@ -989,6 +1001,14 @@ static ptrdiff_t compare_objects(ANY ob1, ANY ob2)
 	}
 }
 
+static void call_block(BLOCK b)
+{
+	b->fn((uint8_t*)&b->env);
+}
+
+
+
+/*
 static _Bool match_lists(LIST lst1, LIST lst2)
 {
 	if (!lst1) return !lst2;
@@ -1001,11 +1021,6 @@ static _Bool match_lists(LIST lst1, LIST lst2)
 		lst2 = lst2 -> next;
 	}
 	return 0;
-}
-
-static void call_block(BLOCK b)
-{
-	b->fn((uint8_t*)&b->env);
 }
 
 static _Bool match_objects(ANY patt, ANY obj)
@@ -1032,6 +1047,7 @@ static _Bool match_objects(ANY patt, ANY obj)
 	}
 }
 
+
 static void destructure_lists(LIST patt, LIST obj)
 {
 	if (!patt) return;
@@ -1054,6 +1070,7 @@ static void destructure_objects(ANY patt, ANY obj)
 	}
 
 }
+*/
 
 static _Noreturn void type_error(char* expected, ANY got)
 {
@@ -1065,10 +1082,11 @@ static _Noreturn void type_error(char* expected, ANY got)
 }
 
 __attribute__((hot))
-static NUMBER unbox_NUMBER(ANY box)
+static NUMBER unbox_NUMBER(ANY b)
 {
-	if likely (box.type == number) return box.number;
-	type_error("number", box);
+	if likely((b & NIL) != NIL)
+		return *(NUMBER*)&b;
+	type_error("number", b);
 	#ifdef __TINYC__
 	return 0.0;
 	#endif
@@ -1077,13 +1095,14 @@ static NUMBER unbox_NUMBER(ANY box)
 __attribute__((hot))
 static ANY box_NUMBER(NUMBER num)
 {
-	return (ANY) {.type = number, .number = num};
+	return *(ANY*)&num;
 }
 
 __attribute__((hot))
 static BOX unbox_BOX(ANY b)
 {
-	if likely (b.type == box) return b.box;
+	if likely((b & TYPE_MASK) == BOX_TYPE)
+		return (BOX)(b & PTR_MASK);
 	type_error("box", b);
 	#ifdef __TINYC__
 	return NULL;
@@ -1093,14 +1112,15 @@ static BOX unbox_BOX(ANY b)
 __attribute__((hot))
 static ANY box_BOX(BOX b)
 {
-	return (ANY) {.type = box, .box = b};
+	return BOX_TYPE | (ANY)b;
 }
 
 __attribute__((hot))
-static BOOLEAN unbox_BOOLEAN(ANY box)
+static BOOLEAN unbox_BOOLEAN(ANY b)
 {
-	if likely (box.type == boolean) return box.boolean;
-	type_error("boolean", box);
+	if likely((b & TYPE_MASK) == BOOLEAN_TYPE)
+		return (BOOLEAN)(b & PTR_MASK);
+	type_error("boolean", b);
 	#ifdef __TINYC__
 	return 0;
 	#endif
@@ -1109,14 +1129,15 @@ static BOOLEAN unbox_BOOLEAN(ANY box)
 __attribute__((hot))
 static ANY box_BOOLEAN(BOOLEAN b)
 {
-	return (ANY) {.type = boolean, .boolean = b};
+	return BOOLEAN_TYPE | (ANY)(0x8 * (b != false));
 }
 
 __attribute__((hot))
-static STRING unbox_STRING(ANY box)
+static STRING unbox_STRING(ANY b)
 {
-	if likely (box.type == string) return box.string;
-	type_error("string", box);
+	if likely((b & STRING_TYPE) == STRING_TYPE)
+		return (STRING)(b & UNALIGNED_PTR_MASK);
+	type_error("string", b);
 	#ifdef __TINYC__
 	return NULL;
 	#endif
@@ -1125,30 +1146,32 @@ static STRING unbox_STRING(ANY box)
 __attribute__((hot))
 static ANY box_STRING(STRING s)
 {
-	return (ANY) {.type = string, .string = s};
+	return STRING_TYPE | (ANY)s;
 }
 
 __attribute__((hot))
-static LIST unbox_LIST(ANY box)
+static LIST unbox_LIST(ANY b)
 {
-	if likely (box.type == list) return box.list;
-	type_error("list", box);
+	if likely((b & TYPE_MASK) == LIST_TYPE)
+		return (LIST)(b & PTR_MASK);
+	type_error("list", b);
 	#ifdef __TINYC__
 	return NULL;
 	#endif
 }
 
 __attribute__((hot))
-static ANY box_LIST(LIST s)
+static ANY box_LIST(LIST l)
 {
-	return (ANY) {.type = list, .list = s};
+	return LIST_TYPE | (ANY)l;
 }
 
 __attribute__((hot))
-static SYMBOL unbox_SYMBOL(ANY box)
+static SYMBOL unbox_SYMBOL(ANY b)
 {
-	if likely (box.type == symbol) return box.symbol;
-	type_error("list", box);
+	if likely((b & SYMBOL_TYPE) == SYMBOL_TYPE)
+		return (SYMBOL)(b & UNALIGNED_PTR_MASK);
+	type_error("list", b);
 	#ifdef __TINYC__
 	return NULL;
 	#endif
@@ -1157,14 +1180,15 @@ static SYMBOL unbox_SYMBOL(ANY box)
 __attribute__((hot))
 static ANY box_SYMBOL(SYMBOL s)
 {
-	return (ANY) {.type = symbol, .symbol = s};
+	return SYMBOL_TYPE | (ANY)s;
 }
 
 __attribute__((hot))
-static BLOCK unbox_BLOCK(ANY box)
+static BLOCK unbox_BLOCK(ANY b)
 {
-	if likely (box.type == block) return box.block;
-	type_error("block", box);
+	if likely((b & TYPE_MASK) == BLOCK_TYPE)
+		return (BLOCK)(b & PTR_MASK);
+	type_error("block", b);
 	#ifdef __TINYC__
 	return NULL;
 	#endif
@@ -1188,23 +1212,24 @@ BLOCK block_copy(BLOCK b)
 }
 */
 __attribute__((hot))
-static ANY box_BLOCK(BLOCK s)
+static ANY box_BLOCK(BLOCK b)
 {
-	return (ANY) {.type = block, .block = s};
+	return BLOCK_TYPE | (ANY)b;
 }
 
 __attribute__((hot))
 static ANY box_IO(IO i)
 {
-	return (ANY) {.type = io, .io = i};
+	return IO_TYPE | (ANY)i;
 }
 
 
 __attribute__((hot))
-static IO unbox_IO(ANY box)
+static IO unbox_IO(ANY b)
 {
-	if likely (box.type == io) return box.io;
-	type_error("io", box);
+	if likely((b & TYPE_MASK) == IO_TYPE)
+		return (IO)(b & PTR_MASK);
+	type_error("io", b);
 	#ifdef __TINYC__
 	return NULL;
 	#endif
@@ -1213,14 +1238,15 @@ static IO unbox_IO(ANY box)
 __attribute__((hot))
 static ANY box_TABLE(TABLE d)
 {
-	return (ANY) {.type = table, .table = d};
+	return TABLE_TYPE | (ANY)d;
 }
 
 __attribute__((hot))
-static TABLE unbox_TABLE(ANY box)
+static TABLE unbox_TABLE(ANY b)
 {
-	if likely (box.type == table) return box.table;
-	type_error("table", box);
+	if likely((b & TYPE_MASK) == TABLE_TYPE)
+		return (TABLE)(b & PTR_MASK);
+	type_error("table", b);
 	#ifdef __TINYC__
 	return NULL;
 	#endif
@@ -1230,7 +1256,7 @@ __attribute__((hot))
 static TABLE early_TABLE(BOX box)
 {
 	ANY a = *box;
-	if likely (a.type) return a.table;
+	if likely (a != NIL) return (TABLE) (a & PTR_MASK);
 	throw_error("Used before definition");
 	#ifdef __TINYC__
 	return NULL;
@@ -1241,7 +1267,7 @@ __attribute__((hot))
 static LIST early_LIST(BOX box)
 {
 	ANY a = *box;
-	if likely (a.type) return a.list;
+	if likely (a != NIL) return (LIST) (a & PTR_MASK);
 	throw_error("Used before definition");
 	#ifdef __TINYC__
 	return NULL;
@@ -1252,10 +1278,10 @@ __attribute__((hot))
 static NUMBER early_NUMBER(BOX box)
 {
 	ANY a = *box;
-	if likely (a.type) return a.number;
+	if likely (a != NIL) return *(NUMBER*)&a;
 	throw_error("Used before definition");
 	#ifdef __TINYC__
-	return NULL;
+	return 0;
 	#endif
 }
 
@@ -1263,10 +1289,10 @@ __attribute__((hot))
 static BOOLEAN early_BOOLEAN(BOX box)
 {
 	ANY a = *box;
-	if likely (a.type) return a.boolean;
+	if likely (a != NIL) return (BOOLEAN) (a & PTR_MASK);
 	throw_error("Used before definition");
 	#ifdef __TINYC__
-	return NULL;
+	return 0;
 	#endif
 }
 
@@ -1274,7 +1300,7 @@ __attribute__((hot))
 static SYMBOL early_SYMBOL(BOX box)
 {
 	ANY a = *box;
-	if likely (a.type) return a.symbol;
+	if likely (a != NIL) return (SYMBOL) (a & PTR_MASK);
 	throw_error("Used before definition");
 	#ifdef __TINYC__
 	return NULL;
@@ -1285,7 +1311,7 @@ __attribute__((hot))
 static STRING early_STRING(BOX box)
 {
 	ANY a = *box;
-	if likely (a.type) return a.string;
+	if likely (a != NIL) return (STRING) (a & UNALIGNED_PTR_MASK);
 	throw_error("Used before definition");
 	#ifdef __TINYC__
 	return NULL;
@@ -1296,7 +1322,7 @@ __attribute__((hot))
 static BLOCK early_BLOCK(BOX box)
 {
 	ANY a = *box;
-	if likely (a.type) return a.block;
+	if likely (a != NIL) return (BLOCK) (a & PTR_MASK);
 	throw_error("Used before definition");
 	#ifdef __TINYC__
 	return NULL;
@@ -1307,7 +1333,7 @@ __attribute__((hot))
 static IO early_IO(BOX box)
 {
 	ANY a = *box;
-	if likely (a.type) return a.io;
+	if likely (a != NIL) return (IO) (a & PTR_MASK);
 	throw_error("Used before definition");
 	#ifdef __TINYC__
 	return NULL;
@@ -1318,7 +1344,7 @@ __attribute__((hot))
 static BOX early_BOX(BOX box)
 {
 	ANY a = *box;
-	if likely (a.type) return a.box;
+	if likely (a != NIL) return (BOX) (a & PTR_MASK);
 	throw_error("Used before definition");
 	#ifdef __TINYC__
 	return NULL;
@@ -1329,10 +1355,10 @@ __attribute__((hot))
 static ANY early_ANY(BOX box)
 {
 	ANY a = *box;
-	if likely (a.type) return a;
+	if likely (a != NIL) return a;
 	throw_error("Used before definition");
 	#ifdef __TINYC__
-	return NIL_OBJ;
+	return NIL;
 	#endif
 }
 
@@ -1356,12 +1382,12 @@ static void gc_mark_mutable_ptr(void* ptr)
 
 static void gc_mark_mutable_any(ANY* a)
 {
-	if (any_is_ptr(*a)) gc_mark_mutable_ptr(&a->ptr);
+	if (any_is_ptr(*a)) gc_mark_mutable_ptr(a);
 }
 
 static void gc_mark_any(ANY* a)
 {
-	if (any_is_ptr(*a)) gc_mark_ptr(&a->ptr);
+	if (any_is_ptr(*a)) gc_mark_ptr(a);
 }
 
 static void gc_bitmap_or(gc_heap* heap, size_t index, uint8_t value)
@@ -1422,33 +1448,32 @@ static void* gc_malloc(size_t sz)
 __attribute__((hot))
 static bool is_gc_ptr(gc_heap* heap, uintptr_t object)
 {
-	uintptr_t diff = (uintptr_t*)object - heap->start;
+	uintptr_t diff = (uintptr_t*)(object & PTR_MASK) - heap->start;
 	return diff < heap->alloc;
 }
 
 __attribute__((hot))
-static void gc_collect_root(uintptr_t* restrict addr, gc_heap* source, gc_heap* dest)
+static void gc_collect_root(uintptr_t* addr, gc_heap* source, gc_heap* dest)
 {
-	assert(gc_bitmap_get(source, 0) & ALLOC);
 	if (!is_gc_ptr(source, *addr)) return;
 	struct action {
 		uintptr_t from;
-		uintptr_t* restrict to;
+		uintptr_t* to;
 	};
-	struct action* restrict act_stk_start = (struct action*)source->start + source->alloc;
-	struct action* restrict act_stk_top = act_stk_start;
+	struct action* act_stk_start = (struct action*)source->start + source->alloc;
+	struct action* act_stk_top = act_stk_start;
 	*act_stk_top++ = (struct action) { .from=*addr, .to=addr };
 	while (act_stk_top-- != act_stk_start)
 	{
 		uintptr_t from = act_stk_top->from;
 		uintptr_t* to = act_stk_top->to;
-		const uintptr_t lower_bits = from & 7;
-		uintptr_t index = (uintptr_t*)(from & ~7) - source->start;
+		const uintptr_t extra_bits = from & ~PTR_MASK;
+		uintptr_t index = (uintptr_t*)(from & PTR_MASK) - source->start;
 		ptrdiff_t offset = 0;
 		while (!(gc_bitmap_get(source, index) & ALLOC)) index--, offset++; // Ptr to middle of object
 		uint8_t alloc_mode = gc_bitmap_get(source, index);
 		if (alloc_mode == FORWARD && is_gc_ptr(dest, source->start[index]))
-			*to = lower_bits | (uintptr_t)((uintptr_t*)source->start[index] + offset);
+			*to = extra_bits | (uintptr_t)((uintptr_t*)source->start[index] + offset);
 		else
 		{
 			uintptr_t* buf = dest->start + dest->alloc; // Buffer in newspace
@@ -1465,7 +1490,7 @@ static void gc_collect_root(uintptr_t* restrict addr, gc_heap* source, gc_heap* 
 			dest->alloc += sz;
 			source->start[index] = (uintptr_t)buf; // Set forwarding address
 			gc_bitmap_set(source, index, FORWARD);
-			*to = lower_bits | (uintptr_t)(buf + offset);
+			*to = extra_bits | (uintptr_t)(buf + offset);
 		}
 	}
 }
@@ -1473,6 +1498,7 @@ static void gc_collect_root(uintptr_t* restrict addr, gc_heap* source, gc_heap* 
 static __attribute__((hot)) void gc_clear_heap(gc_heap* heap)
 {
 	memset(heap->bitmap, 0x0, heap->alloc / 2 + 1);
+	memset(heap->start, 0x0, heap->alloc * 8 + 1);
 	heap->alloc = 0;
 	gc_bitmap_set(heap, 0, ALLOC);
 }
@@ -1487,17 +1513,17 @@ static __attribute__((hot)) void gc_collect_from_heap(gc_heap* roots, gc_heap* s
 
 static bool any_is_ptr(ANY a)
 {
-	switch (a.type)
+	switch (type_of(a))
 	{
-		case NIL: case number: case boolean: case symbol: return false;
+		case NIL: case NUMBER_TYPE: case BOOLEAN_TYPE: case SYMBOL_TYPE: return false;
 		default: return true;
 	}
 }
 
 static __attribute__((noinline,hot)) void gc_collect_from_stacks(gc_heap* source, gc_heap* dest)
 {
-	for (ANY* root = stack.absolute_start; root != stack.top; ++root)
-		if (any_is_ptr(*root)) gc_collect_root((uintptr_t*)&root->ptr, source, dest);
+	for (ANY* root = stack.absolute_start; root < stack.top; ++root)
+		if (any_is_ptr(*root)) gc_collect_root((uintptr_t*)root, source, dest);
 
 	jmp_buf a;
 	if (setjmp(a)) return;
@@ -1639,28 +1665,28 @@ invalid_range:
 
 static void ___clear(void) { stack.top=stack.start; }
 
-static BOOLEAN ___true(void)  { return 1; }
-static BOOLEAN ___false(void) { return 0; }
+static BOOLEAN ___true(void)  { return true; }
+static BOOLEAN ___false(void) { return false; }
 static BOOLEAN ___or(BOOLEAN a, BOOLEAN b)  { return a || b; }
 static BOOLEAN ___and(BOOLEAN a, BOOLEAN b) { return a && b; }
 static BOOLEAN ___xor(BOOLEAN a, BOOLEAN b) { return a ^ b;  }
-static BOOLEAN ___not(BOOLEAN a)            { return !a;     }
+static BOOLEAN ___not(BOOLEAN a)            { return a ? false : true; }
 static BOOLEAN ___EE(ANY a, ANY b) { return 0 == compare_objects(a,b); }
 static BOOLEAN ___XE(ANY a, ANY b) { return 0 != compare_objects(a,b); }
 static BOOLEAN ___G(NUMBER a, NUMBER b)  { return a < b; }
 static BOOLEAN ___L(NUMBER a, NUMBER b)  { return a > b; }
 static BOOLEAN ___GE(NUMBER a, NUMBER b) { return a <= b; }
 static BOOLEAN ___LE(NUMBER a, NUMBER b) { return a >= b; }
-static BOOLEAN ___numberQ(ANY a)  { return a.type==number; }
-static BOOLEAN ___listQ(ANY a)    { return a.type==list;   }
-static BOOLEAN ___stringQ(ANY a)  { return a.type==string; }
-static BOOLEAN ___blockQ(ANY a)   { return a.type==block;  }
-static BOOLEAN ___booleanQ(ANY a) { return a.type==boolean;}
-static BOOLEAN ___symbolQ(ANY a)  { return a.type==symbol; }
-static BOOLEAN ___ioQ(ANY a)      { return a.type==io; }
+static BOOLEAN ___numberQ(ANY a)  { return (a & NIL) != NIL; }
+static BOOLEAN ___listQ(ANY a)    { return (a & TYPE_MASK)   == LIST_TYPE;    }
+static BOOLEAN ___stringQ(ANY a)  { return (a & STRING_TYPE) == STRING_TYPE;  }
+static BOOLEAN ___blockQ(ANY a)   { return (a & TYPE_MASK)   == BLOCK_TYPE;   }
+static BOOLEAN ___booleanQ(ANY a) { return (a & TYPE_MASK)   == BOOLEAN_TYPE; }
+static BOOLEAN ___symbolQ(ANY a)  { return (a & SYMBOL_TYPE) == SYMBOL_TYPE;  }
+static BOOLEAN ___ioQ(ANY a)      { return (a & TYPE_MASK)   == IO_TYPE;      }
+static BOOLEAN ___tableQ(ANY a)   { return (a & TYPE_MASK)   == TABLE_TYPE;   }
 static BOOLEAN ___integerQ(ANY a) { return ___numberQ(a) && unbox_NUMBER(a) == floor(unbox_NUMBER(a)); }
 static BOOLEAN ___zeroQ(ANY a)    { return ___numberQ(a) && unbox_NUMBER(a) == 0; }
-static BOOLEAN ___tableQ(ANY a)   { return a.type==table; }
 
 static NUMBER  ___numberX(NUMBER a)  { return a; }
 static LIST    ___listX(LIST a)      { return a; }
@@ -1672,7 +1698,7 @@ static SYMBOL  ___symbolX(SYMBOL a)  { return a; }
 static IO      ___ioX(IO a)          { return a; }
 static TABLE   ___tableX(TABLE a)    { return a; }
 
-static BOOLEAN ___match(ANY patt, ANY obj) { return match_objects(patt,obj); }
+//static BOOLEAN ___match(ANY patt, ANY obj) { return match_objects(patt,obj); }
 
 static ANY ___first_LIST(LIST lst)
 {
@@ -1702,27 +1728,27 @@ static STRING ___rest_STRING(STRING str)
 
 static ANY ___first(ANY a)
 {
-	switch(a.type)
+	switch(type_of(a))
 	{
-		case list:   return ___first_LIST(a.list);
-		case string: return box_STRING(___first_STRING(a.string));
+		case LIST_TYPE:   return ___first_LIST((LIST)(a & PTR_MASK));
+		case STRING_TYPE: return box_STRING(___first_STRING((STRING)(a & UNALIGNED_PTR_MASK)));
 		default: type_error("string or list", a);
 	}
 #ifdef __TINYC__
-	return NIL_OBJ;
+	return NIL;
 #endif
 }
 
 static ANY ___rest(ANY a)
 {
-	switch(a.type)
+	switch(type_of(a))
 	{
-		case list:   return box_LIST(___rest_LIST(a.list));
-		case string: return box_STRING(___rest_STRING(a.string));
+		case LIST_TYPE:   return box_LIST(___rest_LIST((LIST)(a & PTR_MASK)));
+		case STRING_TYPE: return box_STRING(___rest_STRING((STRING)(a & UNALIGNED_PTR_MASK)));
 		default: type_error("string or list", a);
 	}
 #ifdef __TINYC__
-	return NIL_OBJ;
+	return NIL;
 #endif
 }
 
@@ -1853,7 +1879,7 @@ static LIST ___stack(void)
 		tmp -> next = lst;
 		lst = tmp;
 		gc_mark_ptr((void*)&tmp->next);
-		gc_mark_any((void*)&tmp->object.ptr);
+		gc_mark_any((void*)&tmp->object);
 	}
 	return lst;
 }
@@ -1943,8 +1969,8 @@ static BLOCK ___precompute(BLOCK blk)
 
 static STRING ___show(ANY o)
 {
-	if (o.type == string) return o.string;
-	if (o.type == symbol) return o.symbol;
+	if ((o & STRING_TYPE) == STRING_TYPE || (o & SYMBOL_TYPE) == SYMBOL_TYPE)
+		return (STRING)(o & UNALIGNED_PTR_MASK);
 	show_object(o, general_purpose_buffer, NULL);
 	return general_purpose_buffer;
 }
@@ -2258,7 +2284,7 @@ static void ___close(IO io)
 
 static BOOLEAN ___openQ(IO io)
 {
-	return (BOOLEAN)io->file;
+	return io->file ? true : false;
 }
 
 static STRING ___fileHname(IO io)
@@ -2356,7 +2382,8 @@ static TABLE mktable(ANY key, ANY value, TABLE left, TABLE right, size_t level)
 
 static TABLE ___insert(ANY key, ANY value, TABLE d)
 {
-	if unlikely(key.type == io || key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
+	cognate_type t = TYPE_MASK & key;
+	if unlikely(t == IO_TYPE || t == BLOCK_TYPE || t == BOX_TYPE) throw_error_fmt("Can't index a table with %s", ___show(key));
 	if (!d) return mktable(key, value, NULL, NULL, 1);
 	ptrdiff_t diff = compare_objects(d->key, key);
 	if (diff == 0) return mktable(key, value, d->left, d->right, d->level);
@@ -2372,7 +2399,8 @@ static TABLE ___insert(ANY key, ANY value, TABLE d)
 
 static ANY ___D(ANY key, TABLE d)
 {
-	if unlikely(key.type == io || key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
+	cognate_type t = TYPE_MASK & key;
+	if unlikely(t == IO_TYPE || t == BLOCK_TYPE || t == BOX_TYPE) throw_error_fmt("Can't index a table with %s", ___show(key));
 	while (d)
 	{
 		ptrdiff_t diff = compare_objects(d->key, key);
@@ -2383,13 +2411,14 @@ static ANY ___D(ANY key, TABLE d)
 
 	throw_error_fmt("%s is not in table", ___show(key));
 	#ifdef __TINYC__
-	return NIL_OBJ;
+	return NIL;
 	#endif
 }
 
 static BOOLEAN ___has(ANY key, TABLE d)
 {
-	if unlikely(key.type == io || key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
+	cognate_type t = TYPE_MASK & key;
+	if unlikely(t == IO_TYPE || t == BLOCK_TYPE || t == BOX_TYPE) throw_error_fmt("Can't index a table with %s", ___show(key));
 	while (d)
 	{
 		ptrdiff_t diff = compare_objects(d->key, key);
@@ -2405,7 +2434,8 @@ static TABLE ___remove(ANY key, TABLE T)
 {
 	// input: X, the key to delete, and T, the root of the tree from which it should be deleted.
    // output: T, balanced, without the value X.
-	if unlikely(key.type == io || key.type == block || key.type == box) throw_error_fmt("Can't index a table with %s", ___show(key));
+	cognate_type t = TYPE_MASK & key;
+	if unlikely(t == IO_TYPE || t == BLOCK_TYPE || t == BOX_TYPE) throw_error_fmt("Can't index a table with %s", ___show(key));
 	if (!T) throw_error_fmt("Key %s not in table", ___show(key));
 	ptrdiff_t diff = compare_objects(T->key, key);
 	TABLE T2 = NULL;
@@ -2510,11 +2540,11 @@ static NUMBER ___length_STRING(STRING str)
 
 static NUMBER ___length(ANY a)
 {
-	switch(a.type)
+	switch(type_of(a))
 	{
-		case list: return ___length_LIST(unbox_LIST(a));
-		case string: return ___length_STRING(unbox_STRING(a));
-		case table: return ___length_TABLE(unbox_TABLE(a));
+		case LIST_TYPE:   return ___length_LIST(unbox_LIST(a));
+		case STRING_TYPE: return ___length_STRING(unbox_STRING(a));
+		case TABLE_TYPE:  return ___length_TABLE(unbox_TABLE(a));
 		default: type_error("list or string or table", a);
 	}
 #ifdef __TINYC__
@@ -2578,7 +2608,7 @@ static STRING ___show_LIST(LIST l)
 static regex_t* memoized_regcomp(STRING reg_str)
 {
 	regex_t* reg;
-	if (___has(box_STRING(reg_str), memoized_regexes)) reg = ___D(box_STRING(reg_str), memoized_regexes).ptr;
+	if (___has(box_STRING(reg_str), memoized_regexes)) reg = (regex_t*)unbox_STRING(___D(box_STRING(reg_str), memoized_regexes));
 	else
 	{
 		reg = gc_malloc(sizeof *reg);
@@ -2590,7 +2620,7 @@ static regex_t* memoized_regcomp(STRING reg_str)
 			regerror(status, reg, reg_err, 256);
 			throw_error_fmt("Compile error (%s) in regex '%.32s'", reg_err, reg_str);
 		}
-		memoized_regexes = ___insert(box_STRING(reg_str), (cognate_object){.ptr=reg, .type=string}, memoized_regexes);
+		memoized_regexes = ___insert(box_STRING(reg_str), box_STRING((char*)reg), memoized_regexes);
 	}
 
 	return reg;

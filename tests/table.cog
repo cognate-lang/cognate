@@ -55,12 +55,12 @@ Print If Not Has \foo T3
 else
 	"FAIL: Removing keys";
 
-Print If == List (12 \foo "bar" List (0 1) Table (\A "b")) Keys T
+Print If == List (List (0 1) Table (\A "b") 12 \foo "bar") Keys T
 	"PASS: Getting list of keys in table"
 else
 	"FAIL: Getting list of keys in table";
 
-Print If == List (13 "bar" \foo 1 "Ab") Values T
+Print If == List (1 "Ab" 13 "bar" \foo) Values T
 	"PASS: Getting list of values in table"
 else
 	"FAIL: Getting list of values in table";
