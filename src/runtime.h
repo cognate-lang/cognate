@@ -1527,7 +1527,6 @@ static void gc_collect_root(uintptr_t* addr, gc_heap* source, gc_heap* dest)
 static __attribute__((hot)) void gc_clear_heap(gc_heap* heap)
 {
 	memset(heap->bitmap, 0x0, heap->alloc / 2 + 1);
-	memset(heap->start, 0x0, heap->alloc * 8 + 1);
 	heap->alloc = 0;
 	gc_bitmap_set(heap, 0, ALLOC);
 }
