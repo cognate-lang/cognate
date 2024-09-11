@@ -1,89 +1,91 @@
-Print If == 1 Sind 90
+Def Almost== as ( Let N ; Let M ; < 0.0000000000001 Abs - N M );
+
+Print If Almost== 1 Sind 90
       "PASS: Degree sin"
 else
       "FAIL: Degree sin";
 
-Print If == 1 Cosd 360
+Print If Almost== 1 Cosd 360
       "PASS: Degree cos"
 else
       "FAIL: Degree cos";
 
-Print If == / Cosd 90 Sind 90 Tand 90
+Print If Almost== / Cosd 90 Sind 90 Tand 90
       "PASS: Degree tan"
 else
       "FAIL: Degree tan";
 
-Print If == 1 Sin / 2 3.14159265358979323846
+Print If Almost== 1 Sin / 2 3.14159265358979323846
       "PASS: Radian sin"
 else
       "FAIL: Radian sin";
 
-Print If == 1 Cos 0
+Print If Almost== 1 Cos 0
       "PASS: Radian cos"
 else
       "FAIL: Radian cos";
 
-Print If == / Cos 90 Sin 90 Tan 90
+Print If Almost== / Cos 90 Sin 90 Tan 90
       "PASS: Radian tan"
 else
       "FAIL: Radian tan";
 
-Print If == 30 Asind 0.5
+Print If Almost== 30 Asind 0.5
       "PASS: Degree arcsin"
 else
       "FAIL: Degree arcsin";
 
-Print If == 60 Acosd 0.5
+Print If Almost== 60 Acosd 0.5
       "PASS: Degree arccos"
 else
       "FAIL: Degree arccos";
 
-Print If == 26.565051177078 Atand 0.5
+Print If Almost== 26.565051177078 Atand 0.5
       "PASS: Degree arctan"
 else
       "FAIL: Degree arctan";
 
-Print If == 0.5235987755983 Asin 0.5
+Print If Almost== 0.5235987755983 Asin 0.5
       "PASS: Radian arcsin"
 else
       "FAIL: Radian arcsin";
 
-Print If == 1.0471975511966 Acos 0.5
+Print If Almost== 1.0471975511966 Acos 0.5
       "PASS: Radian arccos"
 else
       "FAIL: Radian arccos";
 
-Print If == 10 Tan Atan 10
+Print If Almost== 10 Tan Atan 10
       "PASS: Radian arctan"
 else
       "FAIL: Radian arctan";
 
-Print If == 0.17542037193601015 Sinhd 10
+Print If Almost== 0.17542037193601015 Sinhd 10
       "PASS: Degree hyperbolic sin"
 else
       "FAIL: Degree hyperbolic sin";
 
-Print If == 1.0001523125762564 Coshd 1
+Print If Almost== 1.0001523125762564 Coshd 1
       "PASS: Degree hyperbolic cos"
 else
       "FAIL: Degree hyperbolic cos";
 
-Print If == 0.17278206351636377 Tanhd 10
+Print If Almost== 0.17278206351636377 Tanhd 10
       "PASS: Degree hyperbolic tan"
 else
       "FAIL: Degree hyperbolic tan";
 
-Print If == 74.20321057778875 Sinh 5
+Print If Almost== 74.20321057778875 Sinh 5
       "PASS: Radian hyperbolic sin"
 else
       "FAIL: Radian hyperbolic sin";
 
-Print If == 74.20994852478785 Cosh 5
+Print If Almost== 74.20994852478785 Cosh 5
       "PASS: Radian hyperbolic cos"
 else
       "FAIL: Radian hyperbolic cos";
 
-Print If == Tanh 8 / Cosh 8 Sinh 8
+Print If Almost== Tanh 8 / Cosh 8 Sinh 8
       "PASS: Radian hyperbolic tan"
 else
       "FAIL: Radian hyperbolic tan";

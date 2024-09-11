@@ -967,9 +967,12 @@ static ptrdiff_t compare_blocks(BLOCK b1, BLOCK b2)
 
 static ptrdiff_t compare_numbers(NUMBER n1, NUMBER n2)
 {
-	double diff = n1 - n2;
-	if (fabs(diff) <= 0.5e-14 * fabs(n1)) return 0;
-	else return diff > 0 ? 1 : -1;
+	// Floating point maths is rather difficult.
+	// This solution is usually better than the naive comparison that most languages use.
+	// But if correctness is important one should implement their own comparison operator.
+	// Def Exact== as ( Let N1 ; Let N2 ; Both <= N1 N2 and <= N2 N1 );
+	ptrdiff_t diff = *(uint64_t*)&n1 - *(uint64_t*)&n2;
+	return diff / 2;
 }
 
 static ptrdiff_t compare_strings(STRING s1, STRING s2)
