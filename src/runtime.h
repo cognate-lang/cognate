@@ -965,6 +965,8 @@ static ptrdiff_t compare_blocks(BLOCK b1, BLOCK b2)
 	return b1 - b2;
 }
 
+#define FLOAT_MAX_ULPS 4 // Arbitrarily chosen - higher is more tolerant
+
 static ptrdiff_t compare_numbers(NUMBER n1, NUMBER n2)
 {
 	// Floating point maths is rather difficult.
@@ -972,7 +974,7 @@ static ptrdiff_t compare_numbers(NUMBER n1, NUMBER n2)
 	// But if correctness is important one should implement their own comparison operator.
 	// Def Exact== as ( Let N1 ; Let N2 ; Both <= N1 N2 and <= N2 N1 );
 	ptrdiff_t diff = *(uint64_t*)&n1 - *(uint64_t*)&n2;
-	return diff / 2;
+	return diff / (FLOAT_MAX_ULPS + 1);
 }
 
 static ptrdiff_t compare_strings(STRING s1, STRING s2)
