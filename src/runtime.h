@@ -296,7 +296,6 @@ static BOOLEAN ___and(BOOLEAN, BOOLEAN);
 static BOOLEAN ___xor(BOOLEAN, BOOLEAN);
 static BOOLEAN ___not(BOOLEAN);
 static BOOLEAN ___EE(ANY, ANY);
-static BOOLEAN ___XE(ANY, ANY);
 static BOOLEAN ___L(NUMBER, NUMBER);
 static BOOLEAN ___G(NUMBER, NUMBER);
 static BOOLEAN ___LE(NUMBER, NUMBER);
@@ -973,6 +972,31 @@ static ptrdiff_t compare_numbers(NUMBER n1, NUMBER n2)
 	else return diff > 0 ? 1 : -1;
 }
 
+static ptrdiff_t compare_strings(STRING s1, STRING s2)
+{
+	return strcmp(s1, s2);
+}
+
+static ptrdiff_t compare_io(IO i1, IO i2)
+{
+	return i1->file - i2->file;
+}
+
+static ptrdiff_t compare_booleans(BOOLEAN b1, BOOLEAN b2)
+{
+	return (ptrdiff_t)b1 - (ptrdiff_t)b2;
+}
+
+static ptrdiff_t compare_boxes(BOX b1, BOX b2)
+{
+	return b1 - b2;
+}
+
+static ptrdiff_t compare_symbols(SYMBOL s1, SYMBOL s2)
+{
+	return s1 - s2;
+}
+
 static ptrdiff_t compare_objects(ANY ob1, ANY ob2)
 {
 	// TODO this function should be overloaded
@@ -980,17 +1004,17 @@ static ptrdiff_t compare_objects(ANY ob1, ANY ob2)
 	cognate_type t2 = type_of(ob2);
 	if (t1 != t2) return (ptrdiff_t)t1 - (ptrdiff_t)t2;
 	//if (memcmp(&ob1, &ob2, sizeof ob1) == 0) return 0;
-	else switch (t1)
+	switch (t1)
 	{
 		case NUMBER_TYPE:  return compare_numbers(*(NUMBER*)&ob1, *(NUMBER*)&ob2);
-		case STRING_TYPE:  return (ptrdiff_t)strcmp((char*)(ob1 & UNALIGNED_PTR_MASK), (char*)(ob2 & UNALIGNED_PTR_MASK));
+		case STRING_TYPE:  return compare_strings((STRING)(ob1 & UNALIGNED_PTR_MASK), (STRING)(ob2 & UNALIGNED_PTR_MASK));
 		case LIST_TYPE:    return compare_lists((LIST)(ob1 & PTR_MASK), (LIST)(ob2 & PTR_MASK));
 		case BLOCK_TYPE:   return compare_blocks((BLOCK)(ob1 & PTR_MASK), (BLOCK)(ob2 & PTR_MASK));
 		case TABLE_TYPE:   return compare_tables((TABLE)(ob1 & PTR_MASK), (TABLE)(ob2 & PTR_MASK));
-		case IO_TYPE:      return ((IO)(ob1 & PTR_MASK))->file - ((IO)(ob2 & PTR_MASK))->file;
-		case BOOLEAN_TYPE:
-		case BOX_TYPE:
-		case SYMBOL_TYPE:  return (ob1 & UNALIGNED_PTR_MASK) - (ob2 & UNALIGNED_PTR_MASK);
+		case IO_TYPE:      return compare_io((IO)(ob1 & PTR_MASK), ((IO)(ob2 & PTR_MASK)));
+		case BOOLEAN_TYPE: return compare_booleans((BOOLEAN)(ob1 & PTR_MASK), (BOOLEAN)(ob2 & PTR_MASK));
+		case BOX_TYPE:     return compare_boxes((BOX)(ob1 & PTR_MASK), (BOX)(ob2 & PTR_MASK));
+		case SYMBOL_TYPE:  return compare_symbols((SYMBOL)(ob1 & UNALIGNED_PTR_MASK), (SYMBOL)(ob2 & UNALIGNED_PTR_MASK));
 		default:           return 0; // really shouldn't happen
 		/* NOTE
 		 * The garbage collector *will* reorder objects in memory,
@@ -1672,7 +1696,6 @@ static BOOLEAN ___and(BOOLEAN a, BOOLEAN b) { return a && b; }
 static BOOLEAN ___xor(BOOLEAN a, BOOLEAN b) { return a ^ b;  }
 static BOOLEAN ___not(BOOLEAN a)            { return a ? false : true; }
 static BOOLEAN ___EE(ANY a, ANY b) { return 0 == compare_objects(a,b); }
-static BOOLEAN ___XE(ANY a, ANY b) { return 0 != compare_objects(a,b); }
 static BOOLEAN ___G(NUMBER a, NUMBER b)  { return a < b; }
 static BOOLEAN ___L(NUMBER a, NUMBER b)  { return a > b; }
 static BOOLEAN ___GE(NUMBER a, NUMBER b) { return a <= b; }
@@ -2756,5 +2779,15 @@ static BOOLEAN ___blockQ_BOOLEAN(BOOLEAN _)   { return false; }
 static BOOLEAN ___blockQ_STRING(STRING _)     { return false; }
 static BOOLEAN ___blockQ_SYMBOL(SYMBOL _)     { return false; }
 static BOOLEAN ___blockQ_BLOCK(BLOCK _)       { return true;  }
+
+static BOOLEAN ___EE_NUMBER(NUMBER n1, NUMBER n2)    { return !compare_numbers(n1, n2); }
+static BOOLEAN ___EE_LIST(LIST l1, LIST l2)          { return !compare_lists(l1, l2); }
+static BOOLEAN ___EE_BOX(BOX b1, BOX b2)             { return !compare_boxes(b1, b2); }
+static BOOLEAN ___EE_TABLE(TABLE t1, TABLE t2)       { return !compare_tables(t1, t2); }
+static BOOLEAN ___EE_IO(IO i1, IO i2)                { return !compare_io(i1, i2); }
+static BOOLEAN ___EE_BOOLEAN(BOOLEAN b1, BOOLEAN b2) { return !compare_booleans(b1, b2); }
+static BOOLEAN ___EE_STRING(STRING s1, STRING s2)    { return !compare_strings(s1, s2); }
+static BOOLEAN ___EE_SYMBOL(SYMBOL s1, SYMBOL s2)    { return !compare_symbols(s1, s2); }
+static BOOLEAN ___EE_BLOCK(BLOCK b1, BLOCK b2)       { return !compare_blocks(b1, b2); }
 
 // ---------- ACTUAL PROGRAM ----------

@@ -1951,7 +1951,7 @@ bool add_var_types_forwards(module_t* mod)
 										memcpy(new_fn, fn, sizeof *fn);
 										new_fn->args = clone_vals(fn->args);
 										for ( val_list_t* vv = new_fn->args ; vv ; vv = vv->next )
-											if (vv->val == v->val) vv->val = make_value(t, v->val->source);
+											if (vv->val->type == any) vv->val = make_value(t, v->val->source);
 										new_fn->overloaded_to = t;
 										if (fn->overload_returns[0] != NIL && new_fn->returns)
 											new_fn->rettype = fn->overload_returns[i];
@@ -1968,12 +1968,15 @@ bool add_var_types_forwards(module_t* mod)
 								strcat(buf, print_val_type(t));
 								throw_error(buf, op->op->where);
 							}
-							else if (fn->overload && v->val->type != any && v->val->type != t && fn->overloaded_to == v->val->type)
+							else if (fn->overload && v->val->type != any && v->val->type != t)
 							{
 								// un-overloads your function
+								// kinda ham-fisted about it
 								fn->overload = false;
 								fn->overloaded_to = NIL;
-								v->val->type = any;
+								val_type_t o = v->val->type;
+								for ( val_list_t* vv = fn->args ; vv ; vv = vv->next )
+									if (vv->val->type == o) vv->val->type = any;
 								if (fn->overload_returns[0] != NIL) fn->rettype = any;
 							}
 						end:;
