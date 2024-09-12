@@ -459,7 +459,7 @@ Def Take (
 );
 
 ~
-Takes an integer (`N`) and a list (`L`) as parameters. Returns the `N`th element (indexed from zero) of `L`.
+Takes an integer (`N`) and a list or string (`L`) as parameters. Returns the `N`th element (indexed from zero) of `L`.
 
 ```
 Print Index 4 of Range 0 to 100;
@@ -467,13 +467,13 @@ Print Index 4 of Range 0 to 100;
 ~
 Def Index (
 	Let N be Of (Integer?);
-	Let L be List!;
+	Let L;
 
 	When < 0 N ( Error Join "Invalid index " Show N );
 
 	Do If Zero? N ( return First element of L )
 	else (
-		When Empty? L ( Error "Index is beyond end of list" );
+		When Empty? L ( Error "Index is beyond the end" );
 		Index - 1 N of Rest of L
 	);
 );

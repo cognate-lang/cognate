@@ -320,7 +320,7 @@ static LIST ___rest_LIST(LIST);
 static STRING ___head(STRING);
 static STRING ___tail(STRING);
 static LIST ___push(ANY, LIST);
-static BOOLEAN ___emptyQ(LIST);
+static BOOLEAN ___emptyQ(ANY);
 static LIST ___list(BLOCK);
 static STRING ___join(STRING, STRING);
 static STRING ___substring(NUMBER, NUMBER, STRING);
@@ -1790,11 +1790,35 @@ static LIST ___push(ANY a, LIST b)
 	return lst;
 }
 
-static BOOLEAN ___emptyQ(LIST lst)
+static BOOLEAN ___emptyQ_LIST(LIST l)
+{
+	return !l;
+}
+
+static BOOLEAN ___emptyQ_STRING(STRING s)
+{
+	return !*s;
+}
+
+static BOOLEAN ___emptyQ_TABLE(TABLE t)
+{
+	return !t;
+}
+
+static BOOLEAN ___emptyQ(ANY a)
 {
 	// Returns true is a list or string is empty. O(1).
 	// Can be used to to write a Length function.
-	return !lst;
+	switch (type_of(a))
+	{
+		case LIST_TYPE: return ___emptyQ_LIST(unbox_LIST(a));
+		case STRING_TYPE: return ___emptyQ_STRING(unbox_STRING(a));
+		case TABLE_TYPE: return ___emptyQ_TABLE(unbox_TABLE(a));
+		default: type_error("List or String or Table", a);
+	}
+	#ifdef __TINYC__
+	return 0;
+	#endif
 }
 
 static LIST ___list(BLOCK expr)

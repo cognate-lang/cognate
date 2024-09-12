@@ -48,7 +48,7 @@
 {.name="first",               .calltype=call, .argc=1, .args={any},      .returns=true, .rettype=any, .overload=true, .overloads={list,string,NIL}, .overload_returns={any, string, NIL}},
 {.name="rest",                .calltype=call, .argc=1, .args={any},      .returns=true, .rettype=any, .overload=true, .overloads={list,string,NIL}, .overload_returns={list, string, NIL}},
 {.name="push",                .calltype=call, .argc=2, .args={any, list}, .returns=true, .rettype=list},
-{.name="empty?",              .calltype=call, .argc=1, .args={list},      .returns=true, .rettype=boolean},
+{.name="empty?",              .calltype=call, .argc=1, .args={any},      .returns=true, .rettype=boolean, .overload=true, .overloads={list, string, table, NIL}},
 {.name="join",                .calltype=call, .argc=2, .args={string, string}, .returns=true, .rettype=string},
 {.name="substring",           .calltype=call, .argc=3, .args={number, number, string}, .returns=true, .rettype=string},
 {.name="regex",               .calltype=call, .argc=2, .args={string, string},    .returns=true, .rettype=boolean},
