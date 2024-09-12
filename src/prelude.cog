@@ -1,3 +1,11 @@
+~
+Compares two values and returns True if they differ.
+
+```
+Print != 1 2;
+Print != 1 1;
+```
+~
 Def != as ( Not == );
 
 ~
@@ -470,12 +478,10 @@ Def Index (
 	Let L;
 
 	When < 0 N ( Error Join "Invalid index " Show N );
+	When Empty? L ( Error "Index is beyond the end" );
 
 	Do If Zero? N ( return First element of L )
-	else (
-		When Empty? L ( Error "Index is beyond the end" );
-		Index - 1 N of Rest of L
-	);
+	else ( Index - 1 N of Rest of L )
 );
 
 ~

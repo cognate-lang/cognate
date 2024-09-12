@@ -2515,7 +2515,7 @@ static TABLE ___remove(ANY key, TABLE T)
 	{
 		long llevel = T2->left->level;
 		long rlevel = T2->right->level;
-		long should_be = 1 + llevel < rlevel ? llevel : rlevel;
+		long should_be = 1 + (llevel < rlevel ? llevel : rlevel);
 
 		if (should_be < T2->level)
 		{
