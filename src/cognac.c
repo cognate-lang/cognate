@@ -38,6 +38,8 @@ bool debug = false;
 bool gc_test = false;
 bool noinline = false;
 
+char* sanitize(char*);
+
 static bool is_prelude(module_t* mod)
 {
 	return mod == &prelude1 || mod == &prelude2;
@@ -724,7 +726,7 @@ const char* c_literal(lit_t* literal)
 		char s[strlen(literal->string) + strlen(prefix) + 1];
 		s[0] = '\0';
 		strcat(s, prefix);
-		strcat(s, literal->string);
+		strcat(s, sanitize((char*)literal->string));
 		return strdup(s);
 	}
 	return literal->string; // TODO
@@ -899,7 +901,7 @@ void to_c(module_t* mod)
 	{
 		for (int i = 0 ; i < sizeof(builtin_symbols) / sizeof(builtin_symbols[0]) ; ++i)
 			if (!strcmp(builtin_symbols[i], syms->text)) goto next;
-		fprintf(c_source, "const SYMBOL SYM%s = \"%s\";\n", syms->text, syms->text);
+		fprintf(c_source, "const SYMBOL SYM%s = \"%s\";\n", sanitize(syms->text), syms->text);
 	next:;
 	}
 	if (mod->symbols) fputc('\n', c_source);
