@@ -1960,6 +1960,7 @@ bool add_var_types_forwards(module_t* mod)
 										op->op->func = new_fn;
 										goto end;
 									}
+								/*
 								char buf[100] = "expected ";
 								for (int i = 0 ; fn->overloads[i] != NIL ; ++i)
 								{
@@ -1969,6 +1970,7 @@ bool add_var_types_forwards(module_t* mod)
 								strcat(buf, "\ngot ");
 								strcat(buf, print_val_type(t));
 								throw_error(buf, op->op->where);
+								*/
 							}
 							else if (fn->overload && v->val->type != any && v->val->type != t)
 							{
@@ -1985,9 +1987,11 @@ bool add_var_types_forwards(module_t* mod)
 						}
 						if (fn->stack) assert(registers->len == 0);
 						if (fn->returns)
+						{
 							push_register_front(
 									make_register(fn->rettype, op),
 									registers);
+						}
 						break;
 					}
 				case bind:

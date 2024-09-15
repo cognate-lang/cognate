@@ -214,7 +214,7 @@ Builds a string from a block parameter and prints it to standard output, without
 Puts ( "The square of 10 is " * Twin 10 "\n");
 ```
 ~
-Def Puts ( Put Fold ( Join Show ) from "" over Reverse List);
+Def Puts ( Put Fold ( Prepend Show ) from "" over Reverse List);
 
 ~
 Builds a string from a block parameter and prints it to standard output, with a newline.
@@ -223,7 +223,7 @@ Builds a string from a block parameter and prints it to standard output, with a 
 Puts ( "The square of 10 is " * Twin 10);
 ```
 ~
-Def Prints ( Print Fold ( Join Show ) from "" over Reverse List);
+Def Prints ( Print Fold ( Prepend Show ) from "" over Reverse List);
 
 ~
 Takes a block parameter `Predicate` and a list `L`. Applies `Predicate` to each element in `L`. Returns a list containing only the elements where `Predicate` evaluated to True.
@@ -335,26 +335,11 @@ Def None (
 );
 
 ~
-Takes two list parameters and returns a new list created by joining the first list onto the end of the second list.
-
-```
-Print Append List (4 5 6) to List (1 2 3);
-```
-~
-Def Append (
-	Let L2;
-	Let L1;
-	L2;
-	For each in Reverse L1 (
-		Push;
-	)
-);
-
-~
-Takes two list parameters and returns a new list created by joining the second list onto the end of the first list.
+Takes two list or string parameters and returns a new list/string created by joining the second list/string onto the end of the first list/string.
 
 ```
 Print Prepend List (1 2 3) to List (4 5 6);
+Print Prepend "hello" to "world";
 ```
 ~
 Def Prepend ( Swap ; Append );
@@ -477,7 +462,7 @@ Def Index (
 	Let N be Of (Integer?);
 	Let L;
 
-	When < 0 N ( Error Join "Invalid index " Show N );
+	When < 0 N ( Error Prepend "Invalid index " Show N );
 	When Empty? L ( Error "Index is beyond the end" );
 
 	Do If Zero? N ( return First element of L )
@@ -497,7 +482,7 @@ Def Range (
 
 	When > End Start ~~ TODO? maybe we could have this create a reverse range.
 	(
-		Error Join Join Join "Invalid range " Show Start "..." Show End;
+		Error Prepend Prepend Prepend "Invalid range " Show Start "..." Show End;
 	);
 
 	Def Range-helper (
@@ -523,7 +508,7 @@ Def Assert (
 	Let Assertion be String!;
 	Let Result be Boolean!;
 
-	Unless Result ( Error Join Join "Failed assertion: '" Assertion "'" );
+	Unless Result ( Error Prepend Prepend "Failed assertion: '" Assertion "'" );
 );
 
 ~

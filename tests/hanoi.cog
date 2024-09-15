@@ -1,4 +1,4 @@
-Def Concatenate as ( Fold ( Join Show ) from "" over Reverse List );
+Def Concatenate as ( Fold ( Prepend Show ) from "" over Reverse List );
 
 Def Move discs as (
 

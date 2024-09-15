@@ -2729,6 +2729,39 @@ static BOOLEAN ___regexHmatch(STRING reg_str, STRING str)
 	return found != REG_NOMATCH;
 }
 
+static LIST ___append_LIST(LIST l1, LIST l2)
+{
+	if (!l2) return l1;
+	else return ___push(___first_LIST(l2), ___append_LIST(l1, ___rest_LIST(l2)));
+}
+
+static STRING ___append_STRING(STRING s1, STRING s2)
+{
+	size_t len1 = strlen(s1);
+	size_t len2 = strlen(s2);
+	char* output = gc_malloc(len1 + len2 + 1);
+	strcpy(output, s2);
+	strcpy(output+len2, s1);
+	output[len1+len2] = '\0';
+	return (STRING)output;
+}
+
+static ANY ___append(ANY a1, ANY a2)
+{
+	cognate_type t = type_of(a1);
+	switch (t)
+	{
+		case LIST_TYPE:
+			return box_LIST(___append_LIST(unbox_LIST(a1), unbox_LIST(a2)));
+		case STRING_TYPE:
+			return box_STRING(___append_STRING(unbox_STRING(a1), unbox_STRING(a2)));
+		default: type_error("List or String", a1);
+	}
+	#ifdef __TINYC__
+	return NIL;
+	#endif
+}
+
 static BOOLEAN ___numberQ_NUMBER(NUMBER _)    { return true;  }
 static BOOLEAN ___numberQ_LIST(LIST _)        { return false; }
 static BOOLEAN ___numberQ_BOX(BOX _)          { return false; }
