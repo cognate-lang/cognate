@@ -600,7 +600,7 @@ static void check_breakpoint(size_t line)
 
 static void print_backtrace(int n, const backtrace* b, int last_spaces)
 {
-	if (!b || !n) return;
+	if (!b || !n || !b->name || !b->line_str) return;
 	int len = strlen(b->name);
 	char* ln = strdup(b->line_str);
 	char* tabs = ln;
@@ -2372,13 +2372,24 @@ static void invalid_jump(uint8_t* env)
 
 static void oh_no(uint8_t* env)
 {
+#ifdef DEBUG
+	// Remove all the now-invalid backtraces.
+	while ((char*)trace < *(char**)(1 + (jmp_buf*)env)) trace = trace->next;
+#endif
 	longjmp(*(jmp_buf*)env, 1);
 }
 
 __attribute__((returns_twice))
 static void ___begin(BLOCK f)
 {
+#ifdef DEBUG
+	BLOCK a = gc_malloc(sizeof *a + sizeof(jmp_buf) + sizeof(char*));
+	// Add the address of the stack pointer so we know which backtraces to pop.
+	char c;
+	*(char**)(1 + (jmp_buf*)&a->env) = &c;
+#else
 	BLOCK a = gc_malloc(sizeof *a + sizeof(jmp_buf));
+#endif
 	for (uintptr_t* p = (uintptr_t*)&a->env ; (char*)p < (char*)&a->env + sizeof(jmp_buf) ; ++p)
 		gc_mark_ptr(p);
 	if (!setjmp(*(jmp_buf*)&a->env))
