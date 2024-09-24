@@ -77,8 +77,8 @@ typedef struct cognate_table* TABLE;
 
 typedef struct cognate_block
 {
-	void (*fn)(uint8_t*);
-	uint8_t env[0];
+	void (*fn)(ANY*);
+	ANY env[0];
 } cognate_block;
 
 #define NUMBER_TYPE  ( NIL | 0x0000000000000008 ) // Use NaN boxing, so the value here is irrelevant.
@@ -835,7 +835,7 @@ static char* show_symbol(SYMBOL s, char* buffer)
 
 static char* show_block(BLOCK b, char* buffer)
 {
-	void (*fn)(uint8_t*) = b->fn;
+	void (*fn)(ANY*) = b->fn;
 	return buffer + sprintf(buffer, "<block %p>", *(void**)&fn);
 }
 
@@ -1032,7 +1032,7 @@ static ptrdiff_t compare_objects(ANY ob1, ANY ob2)
 
 static void call_block(BLOCK b)
 {
-	b->fn((uint8_t*)&b->env);
+	b->fn((ANY*)&b->env);
 }
 
 
@@ -2355,12 +2355,12 @@ static void ___seek(SYMBOL ref, NUMBER n, IO io)
 		throw_error_fmt("Can't seek to position %.14g relative to %s", n, ref);
 }
 
-static void invalid_jump(uint8_t* env)
+static void invalid_jump(ANY* env)
 {
 	throw_error("Cannot resume expired continuation");
 }
 
-static void oh_no(uint8_t* env)
+static void oh_no(ANY* env)
 {
 #ifdef DEBUG
 	// Remove all the now-invalid backtraces.

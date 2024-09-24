@@ -920,7 +920,7 @@ void to_c(module_t* mod)
 		}
 		else
 		{
-			fprintf(c_source, "uint8_t* env");
+			fprintf(c_source, "ANY* env");
 			if (func->func->argc) fprintf(c_source, ", ");
 		}
 		//reg_dequeue_t* ar = make_register_dequeue();
@@ -954,7 +954,7 @@ void to_c(module_t* mod)
 			}
 		else
 		{
-			fprintf(c_source, "uint8_t* env");
+			fprintf(c_source, "ANY* env");
 			if (func->func->argc) fprintf(c_source, ", ");
 		}
 		reg_dequeue_t* ar = make_register_dequeue();
@@ -976,7 +976,7 @@ void to_c(module_t* mod)
 					fprintf(c_source, "\tBOX %s = *(BOX*)env;\n",
 						c_word_name(w->word));
 					if (w->next)
-						fprintf(c_source, "\tenv += sizeof(BOX);\n");
+						fprintf(c_source, "\tenv++;\n");
 				}
 				else
 				{
@@ -985,7 +985,7 @@ void to_c(module_t* mod)
 						c_word_name(w->word),
 						c_val_type(w->word->val->type));
 					if (w->next)
-						fprintf(c_source, "\tenv += sizeof(%s);\n", c_val_type(w->word->val->type));
+						fprintf(c_source, "\tenv++;\n");
 				}
 			}
 
@@ -1242,7 +1242,7 @@ void to_c(module_t* mod)
 						reg_t* reg = make_register(block, NULL);
 						push_register_front(reg, registers);
 						if (!op->op->func->captures)
-							fprintf(c_source, "\tBLOCK _%zu = gc_malloc(sizeof(void*));", reg->id);
+							fprintf(c_source, "\tBLOCK _%zu = gc_malloc(sizeof(void*));\n", reg->id);
 						else
 						{
 							size_t sz = 0;
