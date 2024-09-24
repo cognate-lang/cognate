@@ -18,7 +18,7 @@ src/runtime_bytes.h: src/runtime.h
 	xxd -i src/runtime.h > src/runtime_bytes.h
 
 src/prelude.h: src/prelude.cog
-	xxd -i src/prelude.cog src/prelude.h
+	xxd -i src/prelude.cog > src/prelude.h
 
 src/lexer.c: src/lexer.l
 	flex -o src/lexer.c src/lexer.l
