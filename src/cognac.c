@@ -1229,7 +1229,7 @@ void to_c(module_t* mod)
 				case call:
 					// TODO remove call and use var and a do op
 					if (op->op->word->used_early)
-						fprintf(c_source, "\t\tcall_block(early_BLOCK(%s));\n",
+						fprintf(c_source, "\tcall_block(early_BLOCK(%s));\n",
 							c_word_name(op->op->word));
 					else
 						fprintf(c_source, "\tcall_block(%s);\n",
@@ -1241,16 +1241,17 @@ void to_c(module_t* mod)
 						//for (word_list_t* w = op->op->func->captures ; w ; w = w->next) num_words++;
 						reg_t* reg = make_register(block, NULL);
 						push_register_front(reg, registers);
-						fprintf(c_source, "\tBLOCK _%zu = gc_malloc(sizeof(void*)", reg->id);
-						if (op->op->func->captures)
+						if (!op->op->func->captures)
+							fprintf(c_source, "\tBLOCK _%zu = gc_malloc(sizeof(void*));", reg->id);
+						else
 						{
-							for (word_list_t* w = op->op->func->captures ; w ; w = w->next)
-								fprintf(c_source, " + sizeof(%s)", c_val_type(w->word->val->type));
+							size_t sz = 0;
+							for (word_list_t* w = op->op->func->captures ; w ; w = w->next) sz++;
+							fprintf(c_source, "\tBLOCK _%zu = gc_malloc(sizeof(void*) + %zu * sizeof(ANY));\n", reg->id, sz);
 						}
-						fprintf(c_source, ");\n");
-						if (op->op->func->captures)
-							fprintf(c_source, "\tuint8_t* _%zu_envptr = (uint8_t*)&_%zu->env;\n", reg->id, reg->id);
 						fprintf(c_source, "\t_%zu->fn = %s;\n" , reg->id, op->op->func->generic_variant->name);
+						if (op->op->func->captures)
+							fprintf(c_source, "\tANY* _%zu_envptr = (ANY*)&_%zu->env;\n", reg->id, reg->id);
 						size_t i = 0;
 						for (word_list_t* w = op->op->func->captures ; w ; w = w->next, i++)
 						{
@@ -1259,7 +1260,7 @@ void to_c(module_t* mod)
 								fprintf(c_source, "\t*(BOX*)_%zu_envptr = %s;\n",
 									reg->id, c_word_name(w->word));
 								if (w->next)
-									fprintf(c_source, "\t_%zu_envptr += sizeof(BOX);\n", reg->id);
+									fprintf(c_source, "\t_%zu_envptr++;\n", reg->id);
 							}
 							else
 							{
@@ -1271,7 +1272,7 @@ void to_c(module_t* mod)
 								else if (w->word->val->type != boolean && w->word->val->type != number && w->word->val->type != symbol)
 									fprintf(c_source, "\tgc_mark_ptr((void*)_%zu_envptr);\n", reg->id);
 								if (w->next)
-									fprintf(c_source, "\t_%zu_envptr += sizeof(%s);\n", reg->id, c_val_type(w->word->val->type));
+									fprintf(c_source, "\t_%zu_envptr++;\n", reg->id);
 							}
 						}
 						/*

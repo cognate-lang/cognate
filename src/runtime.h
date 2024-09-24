@@ -1837,16 +1837,6 @@ static LIST ___list(BLOCK expr)
 	return lst;
 }
 
-static STRING ___join(STRING s1, STRING s2)
-{
-	size_t l1 = strlen(s1);
-	size_t l2 = strlen(s2);
-	char* result = gc_malloc(l1 + l2 + 1);
-	strcpy(result, s1);
-	strcpy(result+l1, s2);
- 	return result;
-}
-
 static STRING ___substring(NUMBER startf, NUMBER endf, STRING str)
 {
 	// O(end).
