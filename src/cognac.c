@@ -890,7 +890,7 @@ void to_c(module_t* mod)
 {
 	mkstemps(runtime_filename, 2);
 	FILE* runtime_file = fopen(runtime_filename, "w");
-	fprintf(runtime_file, "%.*s", (int)(sizeof(src_runtime_h) / sizeof(src_runtime_h[0])), (char*)src_runtime_h);
+	fprintf(runtime_file, "%.*s", src_runtime_h_len, (char*)src_runtime_h);
 	fclose(runtime_file);
 
 	char* c_source_path = strdup(mod->path);
@@ -3531,7 +3531,7 @@ void load_preludes(void)
 	prelude2.tree = NULL;
 	prelude2.funcs = NULL;
 	prelude2.uses = preludes.next;
-	fprintf(prelude2.file, "%.*s", (int)(sizeof(src_prelude_cog) / sizeof(src_prelude_cog[0])), (char*)src_prelude_cog);
+	fprintf(prelude2.file, "%.*s", src_prelude_cog_len, (char*)src_prelude_cog);
 	rewind(prelude2.file);
 	module_parse(&prelude2);
 	add_backlinks(&prelude2);
