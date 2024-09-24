@@ -1453,7 +1453,7 @@ static void gc_init(void)
 }
 
 
-__attribute__((noinline, hot, assume_aligned(sizeof(uint64_t)), returns_nonnull))
+__attribute__((assume_aligned(sizeof(uint64_t)), returns_nonnull))
 static void* gc_malloc_on(gc_heap* heap, size_t sz)
 {
 	void* buf = heap->start + heap->alloc;
@@ -1462,26 +1462,26 @@ static void* gc_malloc_on(gc_heap* heap, size_t sz)
 	return buf;
 }
 
-static void* gc_malloc_mutable(size_t sz)
+static void* __attribute__((noinline)) gc_malloc_mutable(size_t sz)
 {
+	asm("");
 	maybe_gc_collect();
 	return gc_malloc_on(&mutable_space[mz], sz);
 }
 
-static void* gc_malloc(size_t sz)
+static void* __attribute__((noinline)) gc_malloc(size_t sz)
 {
+	asm("");
 	maybe_gc_collect();
 	return gc_malloc_on(&space[0], sz);
 }
 
-__attribute__((hot))
 static bool is_gc_ptr(gc_heap* heap, uintptr_t object)
 {
 	uintptr_t diff = (uintptr_t*)(object & PTR_MASK) - heap->start;
 	return diff < heap->alloc;
 }
 
-__attribute__((hot))
 static void gc_collect_root(uintptr_t* addr, gc_heap* source, gc_heap* dest)
 {
 	if (!is_gc_ptr(source, *addr)) return;
@@ -1524,15 +1524,16 @@ static void gc_collect_root(uintptr_t* addr, gc_heap* source, gc_heap* dest)
 	}
 }
 
-static __attribute__((hot)) void gc_clear_heap(gc_heap* heap)
+static void gc_clear_heap(gc_heap* heap)
 {
 	memset(heap->bitmap, 0x0, heap->alloc / 2 + 1);
 	heap->alloc = 0;
 	gc_bitmap_set(heap, 0, ALLOC);
 }
 
-static __attribute__((hot)) void gc_collect_from_heap(gc_heap* roots, gc_heap* source, gc_heap* dest)
+static void gc_collect_from_heap(gc_heap* roots, gc_heap* source, gc_heap* dest)
 {
+	asm("");
 	for (size_t i = 0 ; i < roots->alloc; ++i)
 		if (gc_bitmap_get(roots, i) & PTR) gc_collect_root(roots->start + i, source, dest);
 
@@ -1548,8 +1549,10 @@ static bool any_is_ptr(ANY a)
 	}
 }
 
-static __attribute__((noinline,hot)) void gc_collect_from_stacks(gc_heap* source, gc_heap* dest)
+__attribute__((noinline))
+static void gc_collect_from_stacks(gc_heap* source, gc_heap* dest)
 {
+	asm("");
 	for (ANY* root = stack.absolute_start; root < stack.top; ++root)
 		if (any_is_ptr(*root)) gc_collect_root((uintptr_t*)root, source, dest);
 
@@ -1566,7 +1569,6 @@ static __attribute__((noinline,hot)) void gc_collect_from_stacks(gc_heap* source
 	longjmp(a, 1);
 }
 
-__attribute__((hot))
 static void maybe_gc_collect(void)
 {
 	size_t threshold = GC_FIRST_THRESHOLD;
@@ -1588,9 +1590,10 @@ static size_t gc_heap_usage(void)
 	return n + mutable_space[mz].alloc + mutable_space[!mz].alloc;
 }
 
-__attribute__((hot))
+__attribute__((noinline))
 static void gc_collect_cascade(int n)
 {
+	asm("");
 /*
 	clock_t start = clock();
 	size_t original_heap = gc_heap_usage();
