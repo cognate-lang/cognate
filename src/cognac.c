@@ -1259,6 +1259,7 @@ void to_c(module_t* mod)
 							{
 								fprintf(c_source, "\t*(BOX*)_%zu_envptr = %s;\n",
 									reg->id, c_word_name(w->word));
+								fprintf(c_source, "\tgc_mark_ptr((void*)_%zu_envptr);\n", reg->id);
 								if (w->next)
 									fprintf(c_source, "\t_%zu_envptr++;\n", reg->id);
 							}
