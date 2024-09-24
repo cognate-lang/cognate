@@ -34,7 +34,7 @@ jobs:
           make test -j8
       - name: Upload test output
         if: failure()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: tests-macOS-clang
           path: tests/*.*
