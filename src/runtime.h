@@ -427,8 +427,8 @@ int main(int argc, char** argv)
    sigemptyset(&error_signal_action.sa_mask);
    error_signal_action.sa_flags = SA_SIGINFO;
 	char signals[] = { SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGABRT, SIGBUS, SIGFPE, SIGPIPE, SIGTERM, SIGCHLD, SIGSEGV };
-	//for (size_t i = 0; i < sizeof(signals); ++i)
-	//	if (sigaction(signals[i], &error_signal_action, NULL) == -1) throw_error("couldn't install signal handler");
+	for (size_t i = 0; i < sizeof(signals); ++i)
+		if (sigaction(signals[i], &error_signal_action, NULL) == -1) throw_error("couldn't install signal handler");
 	// Allocate buffer for object printing
 	init_general_purpose_buffer();
 	// Initialize the stack.
