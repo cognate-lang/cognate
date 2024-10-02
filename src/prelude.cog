@@ -531,3 +531,35 @@ Def Of as (
 	Unless Result ( Error "Predicate failed" );
 	X;
 );
+
+~
+Takes a single block parameter - this block should take one parameter and return one value deterministically. Returns a block that performs the same computation but has an internal cache (which persists between calls) to avoid recomputing inputs that it's already seen. This cache has a logarithmic lookup time. If the provided block performs IO, then that IO will not be performed in the case of an input it's seen before.
+
+```
+Def Fib as Cache
+	Case (< 3) then (1 Drop)
+	else (Let N ; Fib of - 1 N ; + Fib of - 2 N);
+
+Put "The 100th fibonacci number is... ";
+Print the Fib of 100;
+```
+~
+Def Cache as (
+	Def F;
+	Let BT be Box Table ();
+
+	(
+		Let X;
+		Let T be Unbox BT;
+		Do If Has X T
+		then ( . X T )
+		else (
+			Let Y be F X;
+			Unbox BT;
+			Insert X is Y;
+			Set BT;
+			Y
+		)
+	)
+);
+
