@@ -435,7 +435,12 @@ module_t* create_module(char* path)
 	char* path3 = path2;
 	for (char* s = path2 ; *s ; ++s) if (*s == '/') path2 = s+1;
 	for (char* s = path2 ; *s ; ++s) if (*s == '.') { *s = '\0'; break; }
-	path2[-1] = '\0';
+	if (path2 != path3) {
+		path2[-1] = '\0';
+		path3 = lowercase(path3);
+	} else {
+		path3 = NULL;
+	}
 	mod->prefix = lowercase(path2);
 	mod->dir = path3;
 	mod->tree = NULL;
@@ -3289,10 +3294,12 @@ void _compute_modules(ast_list_t* A, module_t* m)
 			*i = '\0';
 			for (module_list_t* mm = m->uses ; mm ; mm = mm->next)
 				if (!strcmp(mm->mod->prefix, mod_name)) goto end;
-			char* filename = alloc(strlen(m->dir) + strlen(mod_name) + 6);
+			char* filename = alloc((m->dir ? strlen(m->dir) : 0) + strlen(mod_name) + 6);
 			*filename = '\0';
-			strcpy(filename, m->dir);
-			strcat(filename, "/");
+			if (m->dir) {
+				strcpy(filename, m->dir);
+				strcat(filename, "/");
+			}
 			strcat(filename, mod_name);
 			strcat(filename, ".cog");
 			module_t* M = create_module(filename);
