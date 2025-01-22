@@ -144,7 +144,7 @@ _Noreturn void throw_error(char* message, where_t* where)
 	message = strdup(message);
 	char number_box[64];
 	sprintf(number_box, "[%s %zu:%zu] ", where->mod->path, where->line, where->col);
-	size_t offset = strlen(number_box) + where->col - 1;
+	size_t offset = strlen(number_box) - 1 + where->col;
 
 	// Ok now we need to actually get the line
 	fclose(where->mod->file);
@@ -154,18 +154,21 @@ _Noreturn void throw_error(char* message, where_t* where)
 	while (--where->line)
 	{
 		char c;
-		do { c = fgetc(where->mod->file); } while (c != '\n'); // read one line. TODO this is bad
+		do { c = fgetc(where->mod->file); } while (c && c != EOF && c != '\n'); // read one line. TODO this is bad
 	}
 
 	char line_start[MAX_ERROR_LINE_LENGTH];
 	char* line = line_start;
+	*line = '\0';
 	fgets(line, MAX_ERROR_LINE_LENGTH, where->mod->file);
 
+	for (char* p = line ; p ; p++) if (*p == '\n') { *p = '\0'; break; }
+
 	// Now we strip leading whitespace
-	while (isspace(*line)) line++, offset--;
+	while (*line && *line != '\n' && isspace(*line)) line++, offset--;
 
 	// Now print shit
-	fprintf(stderr, "\n\033[0;2m%s\033[0;1m%s", number_box, line); // Should have newline already(?)
+	fprintf(stderr, "\n\033[0;2m%s\033[0;1m%s\n", number_box, line); // Should have newline already(?)
 	for (int i = 1 ; i < offset ; ++i) fputc(' ', stderr);
 	fprintf(stderr, "\033[31;1m|\\");
 	for (char* p = message + 1; *p != '\n' && *p != '\0' ; p++) fputc('_', stderr);
