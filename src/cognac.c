@@ -2071,12 +2071,9 @@ bool add_var_types_backwards(module_t* mod)
 								{
 									if (!ff->func->builtin)
 									{
-										if (ff->func->tentative_rettype != strong_any && ff->func->tentative_rettype != r->type)
+										if (ff->func->tentative_rettype != any && ff->func->tentative_rettype != strong_any && ff->func->tentative_rettype != r->type)
 										{
-											if (ff->func->tentative_rettype != any)
-												ff->func->tentative_rettype = strong_any;
-											else
-												ff->func->tentative_rettype = r->type;
+											ff->func->tentative_rettype = strong_any;
 											changed = 1;
 										}
 									}
@@ -2097,10 +2094,10 @@ bool add_var_types_backwards(module_t* mod)
 						if (op->op->word->val->type != strong_any && t != any && op->op->word->val->type != t)
 						{
 							if (op->op->word->val->type != any)
+							{
 								op->op->word->val->type = strong_any;
-							else
-								op->op->word->val->type = t;
-							changed = true;
+								changed = true;
+							}
 						}
 					}
 					break;
@@ -2143,10 +2140,10 @@ bool add_var_types_backwards(module_t* mod)
 							if (!fn->builtin && fn->tentative_rettype != strong_any && fn->tentative_rettype != r->type && r->type != any)
 							{
 								if (fn->tentative_rettype != any)
+								{
 									fn->tentative_rettype = strong_any;
-								else
-									fn->tentative_rettype = r->type;
-								changed = 1;
+									changed = 1;
+								}
 							}
 						}
 						if (fn->stack) assert(registers->len == 0);
@@ -2173,10 +2170,10 @@ bool add_var_types_backwards(module_t* mod)
 			if (!func->func->builtin && v->val->type != strong_any && t != any && v->val->type != t && !func->func->branch)
 			{
 				if (v->val->type != any)
+				{
 					v->val->type = strong_any;
-				else
-					v->val->type = t;
-				changed = 1;
+					changed = 1;
+				}
 			}
 			args = args->next;
 		}
