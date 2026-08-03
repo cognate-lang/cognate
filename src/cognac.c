@@ -1412,7 +1412,7 @@ void add_generics(module_t* mod)
 
 bool _determine_arguments(func_t* f)
 {
-	if (f->has_args || f->builtin) return 0;
+	if (f->has_args || f->builtin || f->entry) return 0;
 	size_t argc = 0;
 	bool returns = false;
 	f->has_args = true;
@@ -1435,7 +1435,7 @@ bool _determine_arguments(func_t* f)
 					// If this causes weird stack underflows on branches
 					// revert it to 25a175e05dc72537569f49eeb5bedee3fc21ec74
 					if (registers) registers--;
-					else if (can_use_args && !f->entry) argc++;
+					else if (can_use_args) argc++;
 					for (func_list_t* f = op->funcs ; f ; f = f->next)
 						changed |= _determine_arguments(f->func);
 					int min_argc = INT_MAX;
@@ -1452,9 +1452,9 @@ bool _determine_arguments(func_t* f)
 					for (size_t i = 0 ; i < min_argc ; ++i)
 					{
 						if (registers) registers--;
-						else if (can_use_args && !f->entry) argc++;
+						else if (can_use_args) argc++;
 					}
-					if (stack) can_use_args = false;
+					if (stack) can_use_args = false, registers = 0;
 					if (returns) registers++;
 					break;
 				}
@@ -1462,16 +1462,8 @@ bool _determine_arguments(func_t* f)
 				//printf("[ %s\n", f->name);
 				for (int i = 0; i < 3; ++i)
 				{
-					if (registers)
-					{
-						//printf("REGS %li -> %li\n", registers, registers-1);
-						registers--;
-					}
-					else if (can_use_args && !f->entry)
-					{
-						//printf("ARGC %li -> %li\n", argc, argc+1);
-						argc++;
-					}
+					if (registers) registers--;
+					else if (can_use_args) argc++;
 				}
 				registers++;
 				break;
@@ -1484,27 +1476,31 @@ bool _determine_arguments(func_t* f)
 					for (size_t i = 0 ; i < fn->argc ; ++i)
 					{
 						if (registers) registers--;
-						else if (can_use_args && !f->entry) argc++;
+						else if (can_use_args) argc++;
 					}
 					if (fn->stack) can_use_args = false;
+					assert(!fn->stack || registers==0);
 					if (fn->returns) registers++;
 					break;
 				}
 			case bind:
 			case drop:
 				if (registers) registers--;
-				else if (can_use_args && !f->entry) argc++;
+				else if (can_use_args) argc++;
 				break;
 			case backtrace_push: case backtrace_pop: case define: case none: case pick: case unpick: break;
 			default: unreachable();
 		}
 
 	}
-	if (registers && !f->entry && can_use_args)
+
+	if (registers)
 	{
 		returns = true;
-		if (registers > 1) f->stack = true;
+		registers--;
 	}
+
+	if (registers) f->stack = true;
 
 	changed |= (f->argc != argc || f->returns != returns);
 	f->argc = argc;
@@ -1533,7 +1529,7 @@ void _add_arguments(func_t* f)
 void determine_arguments(module_t* mod)
 {
 	for (func_list_t* f = mod->funcs ; f ; f = f->next)
-		f->func->returns = true;
+		f->func->returns = false;
 	bool changed = true;
 	for (int i = 0 ; i < RESOLVE_TRIES && changed ; ++i) {
 		changed = false;
@@ -2062,24 +2058,21 @@ bool add_var_types_backwards(module_t* mod)
 					{
 						// hopefully balanced
 						func_t* fn = op->op->funcs->func;
-						/*
 						if (fn->returns)
 						{
 							reg_t* r = pop_register_front(registers);
 							if (r->type != any)
 								for (func_list_t* ff = op->op->funcs ; ff ; ff = ff->next)
 								{
-									if (!ff->func->builtin)
+									if (!ff->func->builtin && r->type != any && ff->func->tentative_rettype != r->type)
 									{
-										if (ff->func->tentative_rettype != any && ff->func->tentative_rettype != strong_any && ff->func->tentative_rettype != r->type)
-										{
+										if (ff->func->tentative_rettype != any)
 											ff->func->tentative_rettype = strong_any;
-											changed = 1;
-										}
+										else ff->func->tentative_rettype = r->type;
+										changed = true;
 									}
 								}
 						}
-						*/
 						if (fn->stack) assert(registers->len == 0);
 						val_list_t* reversed_args = reverse(fn->args);
 						for ( val_list_t* a = reversed_args ; a ; a = a->next )
@@ -2090,14 +2083,11 @@ bool add_var_types_backwards(module_t* mod)
 				case var:
 					{
 						val_type_t t = pop_register_front(registers)->type;
-						if (op->op->word->val->type != t)
-						if (op->op->word->val->type != strong_any && t != any && op->op->word->val->type != t)
+						if (t != any && op->op->word->val->type != t)
 						{
-							if (op->op->word->val->type != any)
-							{
-								op->op->word->val->type = strong_any;
-								changed = true;
-							}
+							if (op->op->word->val->type != any) op->op->word->val->type = strong_any;
+							else op->op->word->val->type = t;
+							changed = true;
 						}
 					}
 					break;
@@ -2137,13 +2127,11 @@ bool add_var_types_backwards(module_t* mod)
 						if (fn->returns)
 						{
 							reg_t* r = pop_register_front(registers);
-							if (!fn->builtin && fn->tentative_rettype != strong_any && fn->tentative_rettype != r->type && r->type != any)
+							if (!fn->builtin && fn->tentative_rettype != r->type && r->type != any)
 							{
-								if (fn->tentative_rettype != any)
-								{
-									fn->tentative_rettype = strong_any;
-									changed = 1;
-								}
+								if (fn->tentative_rettype != any) fn->tentative_rettype = strong_any;
+								else fn->tentative_rettype = r->type;
+								changed = 1;
 							}
 						}
 						if (fn->stack) assert(registers->len == 0);
@@ -2167,13 +2155,11 @@ bool add_var_types_backwards(module_t* mod)
 		for (val_list_t* v = func->func->args; v ; v = v->next)
 		{
 			val_type_t t = args->val->type;
-			if (!func->func->builtin && v->val->type != strong_any && t != any && v->val->type != t && !func->func->branch)
+			if (!func->func->builtin && t != any && v->val->type != t && !func->func->branch)
 			{
-				if (v->val->type != any)
-				{
-					v->val->type = strong_any;
-					changed = 1;
-				}
+				if (v->val->type != any) v->val->type = strong_any;
+				else v->val->type = t;
+				changed = 1;
 			}
 			args = args->next;
 		}
