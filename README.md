@@ -31,7 +31,7 @@ Cognate borrows from other concatenative languages, but also adds unique feature
 - Predicate pattern matching
 - Natural language programming
 
-Interested? Read the [tutorial](/learn/), and check out one of Cognate's implementations:
+Interested? Read the [tutorial](https://cognate-lang.github.io/learn/), and check out one of Cognate's implementations:
 
 - CognaC (this repository) is the original compiler -- it performs type inference and produces efficient binaries.
 - [Cognate Playground](https://cognate-playground.hedy.dev/) (developed by [hedyhli](https://github.com/hedyhli)) runs Cognate programs in a web browser.
