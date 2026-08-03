@@ -840,7 +840,7 @@ void to_exe(module_t* mod)
 	char* debug_args[] = {
 		STR(CC), c_source_path, "-o", exe_path,
 		"-O0", "-ggdb3", "-g", "-rdynamic", "-DDEBUG",
-		"-lm", "-Wall", "-Wno-unused", "-Wno-unused-result",
+		"-lm", "-Wall", "-Wno-unused", "-Wno-unused-result", "-Wno-infinite-recursion",
 		gc_test ? "-DGCTEST" : NULL, NULL
 	} ;
 
@@ -1491,9 +1491,6 @@ bool _determine_arguments(func_t* f)
 					break;
 				}
 			case bind:
-				if (registers) registers--;
-				else if (can_use_args && !f->entry) argc++;
-				break;
 			case drop:
 				if (registers) registers--;
 				else if (can_use_args && !f->entry) argc++;
@@ -1501,11 +1498,12 @@ bool _determine_arguments(func_t* f)
 			case backtrace_push: case backtrace_pop: case define: case none: case pick: case unpick: break;
 			default: unreachable();
 		}
-		if (!n->next && registers && !f->entry)
-		{
-			returns = true;
-			if (registers > 1) f->stack = true;
-		}
+
+	}
+	if (registers && !f->entry && can_use_args)
+	{
+		returns = true;
+		if (registers > 1) f->stack = true;
 	}
 
 	changed |= (f->argc != argc || f->returns != returns);
@@ -2064,6 +2062,7 @@ bool add_var_types_backwards(module_t* mod)
 					{
 						// hopefully balanced
 						func_t* fn = op->op->funcs->func;
+						/*
 						if (fn->returns)
 						{
 							reg_t* r = pop_register_front(registers);
@@ -2083,6 +2082,7 @@ bool add_var_types_backwards(module_t* mod)
 									}
 								}
 						}
+						*/
 						if (fn->stack) assert(registers->len == 0);
 						val_list_t* reversed_args = reverse(fn->args);
 						for ( val_list_t* a = reversed_args ; a ; a = a->next )
@@ -2093,6 +2093,7 @@ bool add_var_types_backwards(module_t* mod)
 				case var:
 					{
 						val_type_t t = pop_register_front(registers)->type;
+						if (op->op->word->val->type != t)
 						if (op->op->word->val->type != strong_any && t != any && op->op->word->val->type != t)
 						{
 							if (op->op->word->val->type != any)
