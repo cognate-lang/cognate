@@ -20,6 +20,8 @@
 #define STR(x) STR_(x)
 #define MAX_ERROR_LINE_LENGTH 256
 
+#define RESOLVE_TRIES 100
+
 ast_list_t* full_ast = NULL;
 module_t* pmod = NULL;
 char* heap = NULL;
@@ -1535,7 +1537,7 @@ void determine_arguments(module_t* mod)
 	for (func_list_t* f = mod->funcs ; f ; f = f->next)
 		f->func->returns = true;
 	bool changed = true;
-	while (changed) {
+	for (int i = 0 ; i < RESOLVE_TRIES && changed ; ++i) {
 		changed = false;
 		for (func_list_t* f = mod->funcs ; f ; f = f->next)
 			f->func->has_args = false;
@@ -1643,7 +1645,7 @@ void determine_registers(module_t* mod)
 {
 	// Honestly? idk if this pass is needed.
 	bool changed = 1;
-	while (changed)
+	for (int i = 0 ; i < RESOLVE_TRIES && changed ; ++i)
 	{
 		changed = false;
 		for (func_list_t* f = mod->funcs ; f ; f = f->next)
@@ -1816,7 +1818,7 @@ void add_registers(module_t* mod)
 	for (func_list_t* f = mod->funcs ; f ; f = f->next)
 		f->func->has_regs = false;
 	bool changed = true;
-	while (changed)
+	for (int i = 0 ; i < RESOLVE_TRIES && changed ; ++i)
 	{
 		changed = false;
 		for (func_list_t* f = mod->funcs ; f ; f = f->next)
@@ -2187,7 +2189,7 @@ bool add_var_types_backwards(module_t* mod)
 void add_var_types(module_t* mod)
 {
 	bool changed = 1;
-	while (changed)
+	for (int i = 0 ; i < RESOLVE_TRIES && changed ; ++i)
 	{
 		changed = 0;
 		changed |= add_var_types_forwards(mod);
@@ -2880,7 +2882,7 @@ void remove_defines(module_t* m)
 void compute_variables(module_t* m)
 {
 	bool changed = 1;
-	while (changed)
+	for (int i = 0 ; i < RESOLVE_TRIES && changed ; ++i)
 	{
 		changed = 0;
 		mark_all_unused(m);
